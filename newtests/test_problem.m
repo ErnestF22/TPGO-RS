@@ -74,7 +74,7 @@ g=stiefel_tangentProj(x,egrad(x,problem));
 end
 
 function h=ehess(x,u,problem)
-h = matUnstack(problem.L + problem.L', problem.sz(1));
+h = matUnstack((problem.L + problem.L')*matStack(u), problem.sz(1));
 end
 
 function h=rhess(x,u,problem)
