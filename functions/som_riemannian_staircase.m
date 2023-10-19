@@ -1,0 +1,79 @@
+function transf_out = som_riemannian_staircase(T_globalframe, Tijs_vec, edges, params, R_initguess, T_initguess)
+%SOM_RIEMANNIAN_STAIRCASE Run Riemannian Staircase on Y
+%This function substitutes the ICP-like part of the SoM Manopt pipeline
+
+d = params.d;
+N = params.N;
+
+r0 = d;
+
+first_initguess_set = boolean(0);
+
+for num_rows_stiefel = r0:d*N+1
+    if ~first_initguess_set
+        %setup first initguess
+        %rot
+        R_initguess_stiefel = zeros(num_rows_stiefel, d, N);
+        for ii = 1:N
+            R_initguess_stiefel(:,:,ii) = cat_zero_row(R_initguess(:,:,ii), num_rows_stiefel-d);
+        end
+        %transl
+%         T_initguess_stiefel = zeros(num_rows_stiefel, N);
+        T_initguess_stiefel = cat_zero_row(T_initguess, num_rows_stiefel-d);
+        first_initguess_set = boolean(1);
+    else
+        %rot
+        R_initguess_stiefel_new = zeros(num_rows_stiefel, d, N);
+        for ii = 1:N
+            R_initguess_stiefel_new(:,:,ii) = cat_zero_row(R_stiefel(:,:,ii));
+        end
+        R_initguess_stiefel = R_initguess_stiefel_new;
+        %transl
+%         T_initguess_stiefel_new = zeros(num_rows_stiefel, N);
+        T_initguess_stiefel_new = cat_zero_row(reshape(T_stiefel, num_rows_stiefel-1, N));
+        T_initguess_stiefel = T_initguess_stiefel_new;
+        params.initguess_is_available = boolean(1);
+    end
+
+    disp("NOTE: in som_simple_coord_desc() at least one iteration is done by default");
+    %COORD DESC - step 1
+    cost_const_term_tij = compute_fixed_cost_term(Tijs_vec, d);
+
+    % Solve
+    % options.maxiter = 5;
+    options.verbosity = 0;
+    disp("Manopt_stiefel eval rot with initguess");
+
+    [R_stiefel, R_cost, R_info, R_options] = som_stepone_manopt_stiefel(T_globalframe, Tijs_vec, edges, cost_const_term_tij, num_rows_stiefel, params, R_initguess_stiefel);
+    % disp(R);
+    
+    % Avoid errors when computing R
+    % R = G2R(testdata.gitruth);
+    
+    %COORD DESC - step 2
+    [T_stiefel, T_cost, T_info, T_options] = som_steptwo_manopt_stiefel(R_stiefel, T_globalframe, Tijs_vec, edges, num_rows_stiefel, params, T_initguess_stiefel);
+
+    if rank(matStack(R_stiefel)) < num_rows_stiefel
+        break;
+    end
+end
+
+R_lastRowsAllZeros = matStack(any(multitransp(R_stiefel)));
+transl_lastRowsAllZeros = any(reshape(T_stiefel, [], N)');
+
+if (~any(R_lastRowsAllZeros(:,end))) && (transl_lastRowsAllZeros(end) ==0)
+    fprintf("Last rows all zeros! d = %g\n", d);
+    R_out = zeros(d,d,N);
+    for ii = 1:N
+        R_out(:,:,ii) = R_stiefel(1:d, 1:d, ii);
+    end
+    T_stiefel_resh = reshape(T_stiefel, [], N);
+    T_out = T_stiefel_resh(1:d, :);
+    transf_out = RT2G(R_out, T_out);
+else
+    [R_out, T_out] = lowRankLocalization_solution_extractProjection(matStack(multitransp(R_stiefel)) * reshape(T_stiefel, [], N));
+    transf_out = RT2G(R_out, T_out);
+end
+
+end %function
+
