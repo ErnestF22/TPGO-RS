@@ -14,7 +14,7 @@ df=@(t) sum(stiefel_metric([],egradf(t),dc(t),'euclidean'));
 ehessf = @(t) problem.ehess(c(t),dc(t));
 ddf_1 = @(t) stiefel_metric([], ehessf(t), dc(t), 'euclidean');
 ddf_2 = @(t) stiefel_metric([], egradf(t), ddc(t), 'euclidean');
-ddf = @(t) sum(ddf_1(t) + ddf_2(t));
+ddf = @(t) sum(ddf_1(t) + ddf_2(t));    
 
 %%%
 df(0)

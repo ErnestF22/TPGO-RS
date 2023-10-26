@@ -26,7 +26,7 @@ thr = 0.01;
 for ii= -1:0.01:1
     stm_a = stiefel_metric([], rhessf(ii), c(ii));
     stm_b = stiefel_metric([], c(ii), rhessf(ii));
-    if (max(abs(stm_a - stm_b))) > thr
+    if max(abs(stm_a - stm_b), [], "all") > thr
         disp("symmetry test failed");
         break;
     end
