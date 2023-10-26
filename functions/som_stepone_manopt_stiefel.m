@@ -19,22 +19,29 @@ fprintf("R_manopt_stiefel size %g\n", R_manopt_stiefel.dim());
 step1.M = R_manopt_stiefel; %M = manifold
 
 % Define the step1 cost function and its gradient.
-step1.cost = @(x) mycost(x, L_stiefel, P_stiefel, fixed_cost_term);
+sz = [num_rows_stiefel, d, N];
+problem_struct.sz = sz;
+problem_struct.L = L_stiefel;
+problem_struct.P = P_stiefel;
+step1.cost = @(x) som_cost_rot_stiefel(x, problem_struct);
+
+
 
 %step1.egrad = @(x) (L_T+L_T')*x + P_T;
-step1.egrad = @(x) myeuclgradient(x, L_stiefel, P_stiefel);
+step1.egrad = @(x) som_egrad_rot_stiefel(x, problem);
 %     step1.grad = @(x) R_manopt_stiefel.egrad2rgrad(matStack(x), step1.egrad);
 %     %egrad2rgrad does not seem to work in this case...
 
 % disp(params.riem_grad_mode)
 if(strcmp(params.riem_grad_mode, 'manual') == 1)
-    step1.grad = @(x) step1.M.proj(x, myeuclgradient(x, L_stiefel, P_stiefel));
+    step1.grad = @(x) som_rgrad_rot_stiefel(x, problem_struct);
     fprintf("Rot grad mode: manual\n");
 else
     fprintf("Rot grad mode: auto\n");
 end
 if(strcmp(params.hessian_mode, 'manual') == 1)
-    step1.hess = @(x, u) step1.M.proj(x, myeuclhess(x, u, L_stiefel, P_stiefel));
+    step1.ehess = @(x, u) som_ehess_rot_stiefel(x, u, problem_struct);
+    step1.hess = @(x, u) som_rhess_rot_stiefel(x, u, problem_struct);
     fprintf("Rot Hess mode: manual\n");
 else
     fprintf("Rot Hess mode: auto\n");
