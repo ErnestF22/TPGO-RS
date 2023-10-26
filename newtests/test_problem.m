@@ -78,14 +78,30 @@ h = matUnstack((problem.L + problem.L')*matStack(u), problem.sz(1));
 end
 
 function h=rhess(x,u,problem)
-r = rgrad(x,problem);
-a = stiefel_tangentProj(x, r);
-% a = r - (multiprod(x, symm(multiprod(x, r))))
-h = multiprod(x, symm(multiprod(multitransp(x), a)));
+eh = ehess(x,u,problem);
+X = matStack(x);
+X_dot = matStack(u);
+U = matStack(egrad(x,problem));
+stief_proj_differential = 0.5 .* X_dot * (X' * U + U' * X) + ...
+    0.5 .* X * (X_dot' * U + U' * X_dot);
+h = stp_boumal(x, matUnstack(stief_proj_differential, problem.sz(1))) + ...
+    stp_boumal(x, eh);
 end
 
-% function h=rhess(x,u,problem)
-% eh = ehess(x,u,problem);
-% 
-% h = eh + 
-% end
+function Up = stp_boumal(X, U) %copied from stiefelfactory.m
+        
+XtU = multiprod(multitransp(X), U);
+symXtU = multisym(XtU);
+Up = U - multiprod(X, symXtU);
+
+% The code above is equivalent to, but faster than, the code below.
+%         
+%     Up = zeros(size(U));
+%     function A = sym(A), A = .5*(A+A'); end
+%     for i = 1 : k
+%         Xi = X(:, :, i);
+%         Ui = U(:, :, i);
+%         Up(:, :, i) = Ui - Xi*sym(Xi'*Ui);
+%     end
+
+end
