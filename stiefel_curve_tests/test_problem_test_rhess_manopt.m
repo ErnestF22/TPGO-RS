@@ -40,62 +40,15 @@ manifold = stiefelfactory(num_rows_stiefel, d, N);
 problem.M = manifold;
  
 % Define the problem cost function and its Euclidean gradient.
-problem.cost  = @(x) cost(x, problem_struct);
-problem.egrad = @(x) egrad(x, problem_struct);
-problem.rgrad = @(x) rgrad(x, problem_struct);
+problem.cost  = @(x) som_cost_rot_stiefel(x, problem_struct);
+problem.egrad = @(x) som_egrad_rot_stiefel(x, problem_struct);
+problem.rgrad = @(x) som_rgrad_rot_stiefel(x, problem_struct);
+figure(1)
 checkgradient(problem); % Numerically check gradient consistency
-problem.ehess = @(x, u) ehess(x, u, problem_struct);
-problem.rhess = @(x,u) rhess(x, u, problem_struct);
+problem.ehess = @(x, u) som_ehess_rot_stiefel(x, u, problem_struct);
+problem.rhess = @(x,u) som_rhess_rot_stiefel(x, u, problem_struct);
+figure(2)
 checkhessian(problem) % Numerically check gradient consistency
 
 end %file function
-
-
-function c=cost(x,problem)
-xStack=matStack(x);
-c=trace(xStack'*problem.L*xStack+xStack'*problem.P);
-end
-
-function g=egrad(x,problem)
-xStack=matStack(x);
-g=matUnstack((problem.L+problem.L')*xStack+problem.P,problem.sz(1));
-end
-
-function g=rgrad(x,problem)
-g=stiefel_tangentProj(x,egrad(x,problem));
-end
-
-function h=ehess(x,u,problem)
-h = matUnstack((problem.L + problem.L')*matStack(u), problem.sz(1));
-end
-
-function h=rhess(x,u,problem)
-eh = ehess(x,u,problem);
-X = matStack(x);
-X_dot = matStack(u);
-U = matStack(egrad(x,problem));
-stief_proj_differential = X_dot * (X' * U + U' * X) + ...
-    X * (X_dot' * U + U' * X_dot);
-h = stp_boumal(x, matUnstack(stief_proj_differential, problem.sz(1))) + ...
-    stp_boumal(x, eh);
-end
-
-function Up = stp_boumal(X, U) %copied from stiefelfactory.m
-        
-XtU = multiprod(multitransp(X), U);
-symXtU = multisym(XtU);
-Up = U - multiprod(X, symXtU);
-
-% The code above is equivalent to, but faster than, the code below.
-%         
-%     Up = zeros(size(U));
-%     function A = sym(A), A = .5*(A+A'); end
-%     for i = 1 : k
-%         Xi = X(:, :, i);
-%         Ui = U(:, :, i);
-%         Up(:, :, i) = Ui - Xi*sym(Xi'*Ui);
-%     end
-
-end
-
 
