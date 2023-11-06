@@ -1,5 +1,5 @@
-function v_max = pam(A, thresh)
-%PAM (acronym for Power Augmentation Method) Iterative method that returns 
+function v_max = pim(A, thresh)
+%PIM (acronym for Power Iteration Method) Iterative method that returns 
 %an eigenvector associated to che maximum eigenvalue of matrix A
 
 if ~exist('thresh','var')

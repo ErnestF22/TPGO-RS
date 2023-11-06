@@ -1,4 +1,4 @@
-% testNetwork_test(1); %argument omanoptf som.testNetwork_test should be the test number
+% testNetwork_test(1); %argument should be the test number
 % run ("../manopt/importmanopt.m");
 % run ("../codemeta/pathdefrepository.m");
 

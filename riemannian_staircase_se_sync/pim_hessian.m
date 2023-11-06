@@ -1,5 +1,5 @@
-function v_max = pam_hessian(x, f, thresh)
-%PAM_HESSIAN (PAM is an acronym for Power Augmentation Method) 
+function v_max = pim_hessian(x, f, thresh)
+%PIM_HESSIAN (PIM is an acronym for Power Iteration Method) 
 % Iterative method that processes function f at point x in a similar fashion
 % to applying the power augmentation method with the linear map f in place
 % of the matrix of which the maximum eigenvalue would be computed

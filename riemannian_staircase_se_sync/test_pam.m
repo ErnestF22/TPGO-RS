@@ -7,7 +7,7 @@ A = [[4 0 1]; [2 3 2]; [1 0 4]];
 
 thresh = 1e-5;
 
-v_max = pam(A, thresh);
+v_max = pim(A, thresh);
 
 disp("v_max")
 disp(v_max)
@@ -20,7 +20,7 @@ disp(lambda_max)
 
 A2 = A - (lambda_max) * eye(size(A));
 
-v_max2 = pam(A2, thresh);
+v_max2 = pim(A2, thresh);
 
 disp("v_max2")
 disp(v_max2)

@@ -1,4 +1,4 @@
-function rconn = riemannian_connection_stiefel(f,x,u,problem)
+function rconn = riemannian_connection_stiefel(x,u,problem)
 %RIEMANNIAN_CONNECTION_STIEFEL
 % implementing \nabla_u V = Proj_x D \overline{V}(x)[u]
 % V = function i.e., f
@@ -8,7 +8,8 @@ function rconn = riemannian_connection_stiefel(f,x,u,problem)
 xStack=matStack(x);
 g=matUnstack((problem.L+problem.L')*xStack+problem.P,problem.sz(1));
 
-rconn = stiefel_tangentProj(x, g);
+
+rconn = stp_manopt(x, g);
 
 end
 

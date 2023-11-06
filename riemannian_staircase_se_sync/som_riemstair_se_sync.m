@@ -234,7 +234,7 @@ for r = SE_Sync_opts.r0 : SE_Sync_opts.rmax
     
 %     if (r == problem_data.d)
 %         rhess = step1.hess(Yopt, u_tmp);
-%         v_max = pam_hessian(rhess, thresh)
+%         v_max = pim_hessian(rhess, thresh)
 %         lambda_max = rayleigh_quotient(v_max, rhess_ii)
 %     end
 

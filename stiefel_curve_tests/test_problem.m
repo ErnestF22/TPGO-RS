@@ -56,6 +56,7 @@ problem.egrad=@(x) egrad(x,problem);
 problem.rgrad=@(x) rgrad(x,problem);
 problem.ehess=@(x,u) ehess(x,u,problem);
 problem.rhess=@(x,u) rhess(x,u,problem);
+problem.rhess_rconn=@(x,u) rhess_rconn(x,u,problem);
 
 end
 
@@ -84,16 +85,22 @@ X_dot = matStack(u);
 U = matStack(egrad(x,problem));
 stief_proj_differential = X_dot * (X' * U + U' * X) + ...
     X * (X_dot' * U + U' * X_dot);
-h = stp_boumal(x, matUnstack(stief_proj_differential, problem.sz(1))) + ...
-    stp_boumal(x, eh);
+h = stp_manopt(x, matUnstack(stief_proj_differential, problem.sz(1))) + ...
+    stp_manopt(x, eh);
 end
 
-function Up = stp_boumal(X, U) %copied from stiefelfactory.m
-        
-XtU = multiprod(multitransp(X), U);
-symXtU = multisym(XtU);
-Up = U - multiprod(X, symXtU);
+function h=rhess_rconn(x,u,problem)
+xStack=matStack(x);
+g=matUnstack((problem.L+problem.L')*xStack+problem.P,problem.sz(1));
+rconn = stp_manopt(x, g);
+end
 
+% function Up = stp_boumal(X, U) %copied from stiefelfactory.m
+%         
+% XtU = multiprod(multitransp(X), U);
+% symXtU = multisym(XtU);
+% Up = U - multiprod(X, symXtU);
+% 
 % The code above is equivalent to, but faster than, the code below.
 %         
 %     Up = zeros(size(U));
@@ -103,5 +110,5 @@ Up = U - multiprod(X, symXtU);
 %         Ui = U(:, :, i);
 %         Up(:, :, i) = Ui - Xi*sym(Xi'*Ui);
 %     end
-
-end
+% 
+% end
