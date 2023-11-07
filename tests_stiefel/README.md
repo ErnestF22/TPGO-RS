@@ -66,10 +66,10 @@ Test whether step 1 (ref. eq. \eqref{eq:coord_desc_first_step}) costs defined wi
 Test whether step 2 (ref. eq. \eqref{eq:coord_desc_second_step}) costs defined with R on $SO(3)^N$ and, respectively, Stiefel manifold, are the same, for a randomly generated R.
 
 - test\_manopt\_step1\_gradients\_stiefel.m\
-Test Manopt step 1 gradients and Hessians through Manopt built-in "check...()" functions with $num\_rows\_stiefel = d+1$
+Test Manopt step 1 gradients and Hessians through Manopt built-in "check...()" functions with $num\\_rows\\_stiefel = d+1$
 
 - test\_manopt\_step2\_gradients\_stiefel.m\
-Test Manopt step 2 gradients and Hessians through Manopt built-in "check...()" functions $num\_rows\_stiefel = d+1$
+Test Manopt step 2 gradients and Hessians through Manopt built-in "check...()" functions $num\\_rows\\_stiefel = d+1$
 
 - test\_stiefel\_randn.m\
 Just to explore how to make "stiefel\_randn()" and "stiefel\_randGeodFun()" work
