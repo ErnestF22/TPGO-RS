@@ -7,7 +7,7 @@ Test that contains a trivial set/setup of points that can be translated and rota
 The cost function of step 1, when rotations are given and equal to ground truth, must be equal to 0
 
 - test\_translation\_cost.m\ 
-The cost function of step 2, when translation are given and equal to ground truth, must be equal to 0 \\
+The cost function of step 2, when translation are given and equal to ground truth, must be equal to 0.\
 Without noise, and with known rotations (e.g. setting all rotations equal to gt, with all rotations equal to $I$ in the first try), $A T - B = \mathbf{0}$ must be true, with $A$, $B$ as in \eqref{eq:Lij_step1} and \eqref{eq:Pij_step1} and $T$ filled with ground truth translation values.
 
 - test\_make\_LT\_PT.m\
@@ -25,12 +25,12 @@ Test taken from codemeta, to be adapted and reused for testing gradients
 - Manopt gradients \
 Test correctness of translation estimation gradients hand-written expression, using an adapted version of codemeta's funCheckDer \
 In particular, when it comes to gradients, we test:
-    - Euclidean gradient wrt R \
-      (in "test\_manopt\_step1\_gradients.m")
-    - Riemannian gradient wrt R \
-      (in "test\_manopt\_step1\_gradients.m")
-    - Euclidean gradient wrt T \
-      (in "test\_manopt\_step2\_gradients.m")
+    - Euclidean gradient wrt R\
+    (in "test\_manopt\_step1\_gradients.m")
+    - Riemannian gradient wrt R\
+    (in "test\_manopt\_step1\_gradients.m")
+    - Euclidean gradient wrt T\
+    (in "test\_manopt\_step2\_gradients.m")
 Without noise, they must be equal to 0\
 In code, $g$ indicates Euclidean gradient, $h$ indicates Riemannian gradient.
 
