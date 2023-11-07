@@ -5,6 +5,10 @@ function transf_out = som_riemannian_staircase(T_globalframe, Tijs_vec, edges, p
 d = params.d;
 N = params.N;
 
+problem_struct = struct;
+problem_struct.d = d;
+problem_struct.N = N;
+
 r0 = d;
 
 first_initguess_set = boolean(0);
@@ -23,11 +27,7 @@ for num_rows_stiefel = r0:d*N+1
         first_initguess_set = boolean(1);
     else
         %rot
-        R_initguess_stiefel_new = zeros(num_rows_stiefel, d, N);
-        for ii = 1:N
-            R_initguess_stiefel_new(:,:,ii) = cat_zero_row(R_stiefel(:,:,ii));
-        end
-        R_initguess_stiefel = R_initguess_stiefel_new;
+        R_initguess_stiefel = Y_opt;
         %transl
 %         T_initguess_stiefel_new = zeros(num_rows_stiefel, N);
         T_initguess_stiefel_new = cat_zero_row(reshape(T_stiefel, num_rows_stiefel-1, N));
@@ -56,6 +56,16 @@ for num_rows_stiefel = r0:d*N+1
     if rank(matStack(R_stiefel)) < num_rows_stiefel
         break;
     end
+
+    nrsNext = num_rows_stiefel + 1;
+    Y_opt_new = cat_zero_rows_3d_array(R_stiefel);
+    T_gf_exp = cat_zero_rows_3d_array(T_globalframe);
+    [L_stiefel, P_stiefel] = make_LT_PT_noloops_stiefel(T_gf_exp, Tijs_vec, edges, nrsNext, params);
+    problem_struct.L = L_stiefel;
+    problem_struct.P = P_stiefel;
+    problem_struct.num_rows_stiefel = nrsNext;
+    problem_struct.sz = [nrsNext, d, N];
+    Y_opt = pim_hessian(Y_opt_new, problem_struct);
 end
 
 R_lastRowsAllZeros = matStack(any(multitransp(R_stiefel)));

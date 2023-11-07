@@ -1,6 +1,8 @@
-function [rotation_error_procrustes,translation_error_procrustes, ...
+function [rotation_error_som_riemstair,translation_error_som_riemstair, ...
+    rotation_error_procrustes,translation_error_procrustes, ...
     rotation_error_manopt_sep,translation_error_manopt_sep, ...
     rotation_error_manopt_gen,translation_error_manopt_gen, ...
+    exectime_som_riemstair, ...
     exectime_procrustes, ...
     exectime_manopt, ...
     exectime_manopt_sep] = do_som_cp2m_noiseinit(testdata, ...
@@ -49,34 +51,50 @@ transf_initguess.R = R_initguess;
 transf_initguess.A = transl_initguess;
 % transf_gt = testdata.gitruth;
 
+% 3
+% 3a) execute with step 1 through SOM_RIEMANNIAN_STAIRCASE
+som_riemstair_start_time = tic();
+transf_som_riemstair = som_riemannian_staircase(T_globalframe_nois, Tijs_vec_nois, edges, params, R_initguess, transl_initguess);
+% procrustes_end_time = tic();
+exectime_som_riemstair = toc(som_riemstair_start_time);
+
 % 3b) execute with step 1 through PROCRUSTES
 procrustes_start_time = tic();
 transf_procrustes = som_procrustes(T_globalframe_nois, Tijs_vec_nois, edges, params);
 % procrustes_end_time = tic();
 exectime_procrustes = toc(procrustes_start_time);
 
+% 3c) execute with step 1 through MANOPT
 manopt_start_time = tic();
 transf_manopt_sep = som_manopt(T_globalframe_nois, Tijs_vec_nois, edges, params, matStack(RT2G(R_initguess, transl_initguess)));
 % manopt_end_time = tic();
 exectime_manopt = toc(manopt_start_time);
 
-% 3b) execute with step 1 through MANOPT GENPROC
+% 3d) execute with step 1 through MANOPT GENPROC
 manopt_sep_start_time = tic();
 transf_manopt_gen = som_manopt_genproc(T_globalframe_nois, Tijs_vec_nois, edges, params, matStack(transf_initguess));
 % procrustes_end_time = tic();
 exectime_manopt_sep = toc(manopt_sep_start_time);
 
+
 %4) compare output results
+% [rotErr,translErr,scale_ratio,translErrNorm] = testNetworkComputeErrors(testdata)
+
+testdata.gi = transf_som_riemstair;
+[rotation_error_som_riemstair,translation_error_som_riemstair] = ...
+    testNetworkComputeErrors(testdata);
 
 testdata.gi = matUnstack(transf_procrustes, 4);
-[rotation_error_procrustes,translation_error_procrustes] = testNetworkComputeErrors(testdata);
+[rotation_error_procrustes,translation_error_procrustes] = ...
+    testNetworkComputeErrors(testdata);
 
 testdata.gi = transf_manopt_sep;
-% [rotErr,translErr,scale_ratio,translErrNorm] = testNetworkComputeErrors(testdata)
-[rotation_error_manopt_sep,translation_error_manopt_sep] = testNetworkComputeErrors(testdata);
+[rotation_error_manopt_sep,translation_error_manopt_sep] = ...
+    testNetworkComputeErrors(testdata);
 
 testdata.gi = transf_manopt_gen;
-[rotation_error_manopt_gen,translation_error_manopt_gen] = testNetworkComputeErrors(testdata);
+[rotation_error_manopt_gen,translation_error_manopt_gen] = ...
+    testNetworkComputeErrors(testdata);
 
 end
 

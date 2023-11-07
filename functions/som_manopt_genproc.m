@@ -92,7 +92,7 @@ problem.grad = @grad;
 % problem = manoptAD(problem);
 
 % For debugging, it's always nice to check the gradient a few times.
-checkgradient(problem);
+% checkgradient(problem);
 % pause;
 % checkhessian(problem);
 % pause;

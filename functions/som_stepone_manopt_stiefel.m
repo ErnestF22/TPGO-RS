@@ -23,12 +23,13 @@ sz = [num_rows_stiefel, d, N];
 problem_struct.sz = sz;
 problem_struct.L = L_stiefel;
 problem_struct.P = P_stiefel;
+problem_struct.fixed_cost_term = fixed_cost_term;
 step1.cost = @(x) som_cost_rot_stiefel(x, problem_struct);
 
 
 
 %step1.egrad = @(x) (L_T+L_T')*x + P_T;
-step1.egrad = @(x) som_egrad_rot_stiefel(x, problem);
+step1.egrad = @(x) som_egrad_rot_stiefel(x, problem_struct);
 %     step1.grad = @(x) R_manopt_stiefel.egrad2rgrad(matStack(x), step1.egrad);
 %     %egrad2rgrad does not seem to work in this case...
 
@@ -61,6 +62,8 @@ else
 end
 
 end %file function
+
+
 
 %%
 function f = mycost(x, L_stiefel, P_stiefel, fixed_cost_term)
