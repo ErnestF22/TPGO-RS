@@ -1,4 +1,4 @@
-The "do\_som()" functions have their equivalent on the Stiefel manifold, on files whose name is obtained by adding the "\_stiefel" suffix.
+The $do\\_som()$ functions have their equivalent on the Stiefel manifold, on files whose name is obtained by adding the "\_stiefel" suffix.
 Generally, the Manopt manifold constructed has been of size $num\\_rows\\_stiefel \times d \times N$. $num\\_rows\\_stiefel$ is passed as an argument to the SoM-Stiefel functions.
 
 
@@ -12,7 +12,7 @@ Compare Procrustes, Manopt and Manopt with the SE-Sync Riemannian Staircase addi
 Usage example for creating a geodesic on Stiefel manifold
 
 - lastNRowsAllZeros.m\
-Util function that checks whether all last N rows in a written point on the 3D-$Stiefel^N$ manifold are equal to 0; this means that the first $d$ rows of each submatrix can be directly taken as the $SO(d)$ projection of that submatrix ($\pm$ determinant sign to be precise)
+Util function that checks whether all last N rows in a written point on the 3D- $Stiefel^N$ manifold are equal to 0; this means that the first $d$ rows of each submatrix can be directly taken as the $SO(d)$ projection of that submatrix ($\pm$ determinant sign to be precise)
 
 - make\_rand\_stiefel\_mat.m\
 Function that creates a random matrix on a 3D Stiefel manifold (i.e., every matrix of the third dimension is on the Stiefel manifold specified in the function's input parameters)
