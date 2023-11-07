@@ -63,9 +63,13 @@ for num_rows_stiefel = r0:d*N+1
     [L_stiefel, P_stiefel] = make_LT_PT_noloops_stiefel(T_gf_exp, Tijs_vec, edges, nrsNext, params);
     problem_struct.L = L_stiefel;
     problem_struct.P = P_stiefel;
+    problem_struct.fixed_cost_term = cost_const_term_tij;
     problem_struct.num_rows_stiefel = nrsNext;
     problem_struct.sz = [nrsNext, d, N];
     Y_opt = pim_hessian(Y_opt_new, problem_struct);
+    %check if cost has decreased
+    check_prev_cost_script
+    som_cost_rot_stiefel(Y_opt, problem_struct)
 end
 
 R_lastRowsAllZeros = matStack(any(multitransp(R_stiefel)));
