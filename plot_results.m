@@ -174,8 +174,8 @@ elseif (mode == "cp2m_noiseinit")
         "DisplayName", "manopt\_gen mean rot error", 'markersize', 15)
     plot (sigmas, results.procrustes_rot_errs, 'g+', ...
         "DisplayName", "procrustes mean rot error", 'markersize', 15)
-    plot (sigmas, results.som_riemstair_rot_errs, 'g+', ...
-        "DisplayName", "som_riemstair mean rot error", 'markersize', 15)
+    plot (sigmas, results.som_riemstair_rot_errs, 'ms', ...
+        "DisplayName", "som\_riemstair mean rot error", 'markersize', 15)
     legend;
     hold off
     
@@ -189,8 +189,8 @@ elseif (mode == "cp2m_noiseinit")
         "DisplayName", "manopt\_gen mean transl error", 'markersize', 10)
     plot (sigmas, results.procrustes_transl_errs, 'g+', ...
         "DisplayName", "procrustes mean transl error", 'markersize', 15)
-    plot (sigmas, results.som_riemstair_transl_errs, 'g+', ...
-        "DisplayName", "som_riemstair mean transl error", 'markersize', 15)
+    plot (sigmas, results.som_riemstair_transl_errs, 'ms', ...
+        "DisplayName", "som\_riemstair mean transl error", 'markersize', 15)
     legend;
     hold off
     
@@ -204,8 +204,8 @@ elseif (mode == "cp2m_noiseinit")
         "DisplayName", "manopt\_gen mean exec time", 'markersize', 10)
     plot (sigmas, results.procrustes_exec_times, 'g+', ...
         "DisplayName", "procrustes mean exec time", 'markersize', 15)
-    plot (sigmas, results.som_riemstair_exec_times, 'g+', ...
-        "DisplayName", "som_riemstair mean exec time", 'markersize', 15)
+    plot (sigmas, results.som_riemstair_exec_times, 'ms', ...
+        "DisplayName", "som\_riemstair mean exec time", 'markersize', 15)
     legend
     hold off
 
