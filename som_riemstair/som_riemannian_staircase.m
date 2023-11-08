@@ -57,8 +57,11 @@ for num_rows_stiefel = r0:d*N+1
         break;
     end
 
+    % computing new direction
+    SDPLRval = R_cost;
     nrsNext = num_rows_stiefel + 1;
-    Y_opt_new = cat_zero_rows_3d_array(R_stiefel);
+    Y_plus = cat_zero_rows_3d_array(R_stiefel);
+    Y_dot = stiefel_randTangentNormVector(Y_plus);
     T_gf_exp = cat_zero_rows_3d_array(T_globalframe);
     [L_stiefel, P_stiefel] = make_LT_PT_noloops_stiefel(T_gf_exp, Tijs_vec, edges, nrsNext, params);
     problem_struct.L = L_stiefel;
@@ -66,10 +69,22 @@ for num_rows_stiefel = r0:d*N+1
     problem_struct.fixed_cost_term = cost_const_term_tij;
     problem_struct.num_rows_stiefel = nrsNext;
     problem_struct.sz = [nrsNext, d, N];
-    Y_opt = pim_hessian(Y_opt_new, problem_struct);
+    Y_opt = pim_hessian(Y_plus, problem_struct);
+    %manopt data
+    R_manopt_stiefel = stiefelfactory(nrsNext,d,N);
+    fprintf("R_manopt_stiefel size %g\n", R_manopt_stiefel.dim());
+    manopt_data.M = R_manopt_stiefel; %M = manifold
+    manopt_data.cost = @(x) som_cost_rot_stiefel(x, problem_struct);
+    manopt_data.egrad = @(x) som_cost_egrad_stiefel(x, problem_struct);
+    manopt_data.grad = @(x) som_cost_rgrad_stiefel(x, problem_struct);
+    manopt_data.ehess = @(x,u) som_cost_ehess_stiefel(x, u, problem_struct);
+    manopt_data.rhess = @(x,u) som_cost_rhess_stiefel(x, u, problem_struct);
+    %
+    alpha = 5.0693e-07; %FIXME!
+    [stepsize, Y02d] = linesearch_decrease(manopt_data, matStack(Y_plus), alpha * matStack(Y_dot), SDPLRval);
     %check if cost has decreased
     check_prev_cost_script
-    som_cost_rot_stiefel(Y_opt, problem_struct)
+    som_cost_rot_stiefel(matUnstack(Y02d, nrsNext), problem_struct)
 end
 
 R_lastRowsAllZeros = matStack(any(multitransp(R_stiefel)));
