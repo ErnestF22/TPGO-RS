@@ -6,4 +6,4 @@ Hessians on Stiefel for a bilinear cost function report (PDF) -> [link](https://
 
 Dependencies:
 - Manopt -> [link](https://www.manopt.org/)
-- CVX (Gurobi) -> [link](http://cvxr.com/)
+- CVX -> [link](http://cvxr.com/)
