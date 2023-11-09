@@ -27,7 +27,7 @@ for num_rows_stiefel = r0:d*N+1
         first_initguess_set = boolean(1);
     else
         %rot
-        R_initguess_stiefel = Y_opt;
+        R_initguess_stiefel = matUnstack(Y02d, num_rows_stiefel);
         %transl
 %         T_initguess_stiefel_new = zeros(num_rows_stiefel, N);
         T_initguess_stiefel_new = cat_zero_row(reshape(T_stiefel, num_rows_stiefel-1, N));
@@ -85,6 +85,7 @@ for num_rows_stiefel = r0:d*N+1
     %check if cost has decreased
     check_prev_cost_script
     som_cost_rot_stiefel(matUnstack(Y02d, nrsNext), problem_struct)
+    %
 end
 
 R_lastRowsAllZeros = matStack(any(multitransp(R_stiefel)));
