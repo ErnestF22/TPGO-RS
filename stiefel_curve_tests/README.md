@@ -19,6 +19,9 @@ Check that the expression for the Euclidean gradient is correct
 - test\_problem\_test\_ehess.m\
 Check that the expression for the Euclidean Hessian is correct
 
+- test\_problem\_test\_hess\_antidiag.m
+Check whether the antidiagonal part of the Hessian, computed as $\frac{\partial^2 R}{\partial T^2}$ is the same as the one computed by $\frac{\partial^2 T}{\partial R^2}$
+
 - test\_problem\_test\_rgrad.m\
 Check that the expression for the Riemannian gradient is correct
 

@@ -57,6 +57,8 @@ problem.rgrad=@(x) rgrad(x,problem);
 problem.ehess=@(x,u) ehess(x,u,problem);
 problem.rhess=@(x,u) rhess(x,u,problem);
 problem.rhess_rconn=@(x,u) rhess_rconn(x,u,problem);
+problem.ahess_f=@(x,u) ahess_f(x,u,problem);
+problem.bhess_f=@(x,u) bhess_f(x,u,problem);
 
 end
 
@@ -112,3 +114,21 @@ end
 %     end
 % 
 % end
+
+function h = ahess_f(x,u,problem)
+disp("")
+end
+
+function h = bhess_f(x,u,problem)
+L = problem.L;
+uSt = matStack(u);
+xSt = matStack(x);
+e = som_egrad_rot_stiefel(xSt,problem);
+eSt = matStack(e);
+eDer = (L + L') * xSt;
+sndPartA = uSt * xSt' * eSt + xSt * uSt' * eSt + xSt * xSt' * eDer;
+sndPartB = uSt * eSt' * xSt + xSt * eDer' * xSt + xSt * eSt' * uSt;
+sndPart = 0.5 .* (sndPartA + sndPartB);
+h = (L + L')*uSt - sndPart;
+h = matUnstack(h, problem.sz(1));
+end
