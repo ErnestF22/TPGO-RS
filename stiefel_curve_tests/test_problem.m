@@ -52,8 +52,13 @@ L = readmatrix("../data/L_stiefel_noisy.csv");
 P = readmatrix("../data/P_stiefel_noisy.csv");
 A = readmatrix("../data/A_stiefel_noisy.csv");
 B = readmatrix("../data/B_stiefel_noisy.csv");
+fixed_cost_term = readmatrix("../data/fixed_cost_term.csv");
 
-problem=struct('sz',sz,'L',L,'P',P,'A',A,'B',B);
+problem=struct('sz',sz, ...
+    'L',L,'P',P, ...
+    'fixed_cost_term', fixed_cost_term, ...
+    'A',A,'B',B);
+
 problem.cost=@(x) cost(x,problem);
 problem.egrad=@(x) egrad(x,problem);
 problem.rgrad=@(x) rgrad(x,problem);
@@ -67,7 +72,7 @@ end
 
 function c=cost(x,problem)
 xStack=matStack(x);
-c=trace(xStack'*problem.L*xStack+xStack'*problem.P);
+c=trace(xStack'*problem.L*xStack+xStack'*problem.P) + problem.fixed_cost_term;
 end
 
 function g=egrad(x,problem)
@@ -135,3 +140,4 @@ sndPart = 0.5 .* (sndPartA + sndPartB);
 h = (L + L')*uSt - sndPart;
 h = matUnstack(h, problem.sz(1));
 end
+

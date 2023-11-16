@@ -16,17 +16,14 @@ iteration_num = 0;
 while (iterative_change > thresh) && (iteration_num < 1000)
     hes =  som_rhess_rot_stiefel(x, v_prev, problem);
     iteration_num = iteration_num + 1;
-    stm_3d(1,1,:) = stiefel_metric([], hes, hes, 'euclidean');
-    hes = multidiv(hes, stm_3d);
-    % H*v ???
-    v = - hes;
+    v = - stiefel_normalize(hes);
     iterative_change = min( max(stiefel_metric([], v_prev, v, 'euclidean')), ...
         max(stiefel_metric([], v, v_prev, 'euclidean')) ) ;
     v_prev = v;
 end
 
 v_max = v;
-lambda_max = multiprod3(multitransp(v_max), hes(x, v_max), v_max) / ...
+lambda_max = multiprod3(multitransp(v_max), som_rhess_rot_stiefel(x, v_max, problem), v_max) / ...
     multiprod(multitransp(v_max), v_max);
 
 
