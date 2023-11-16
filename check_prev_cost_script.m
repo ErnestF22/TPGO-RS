@@ -4,5 +4,5 @@ problem_struct_prev.P = P_stiefel_prev;
 problem_struct_prev.fixed_cost_term = cost_const_term_tij;
 problem_struct_prev.num_rows_stiefel = num_rows_stiefel;
 problem_struct_prev.sz = [num_rows_stiefel, d, N];
-% Y_opt = pim_hessian(Y_opt_new, problem_struct);
+%%%
 som_cost_rot_stiefel(R_stiefel, problem_struct_prev)

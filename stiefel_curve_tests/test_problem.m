@@ -48,9 +48,12 @@ P = [-163.472936424418	16.7969898749502	-220.787576755502;
 -33.6108486755905	11.8134601464868	25.0651163506788;
 0	0	0];
 
+L = readmatrix("../data/L_stiefel_noisy.csv");
+P = readmatrix("../data/P_stiefel_noisy.csv");
+A = readmatrix("../data/A_stiefel_noisy.csv");
+B = readmatrix("../data/B_stiefel_noisy.csv");
 
-
-problem=struct('sz',sz,'L',L,'P',P);
+problem=struct('sz',sz,'L',L,'P',P,'A',A,'B',B);
 problem.cost=@(x) cost(x,problem);
 problem.egrad=@(x) egrad(x,problem);
 problem.rgrad=@(x) rgrad(x,problem);

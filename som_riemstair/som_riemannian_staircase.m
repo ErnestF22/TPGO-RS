@@ -69,7 +69,7 @@ for num_rows_stiefel = r0:d*N+1
     problem_struct.fixed_cost_term = cost_const_term_tij;
     problem_struct.num_rows_stiefel = nrsNext;
     problem_struct.sz = [nrsNext, d, N];
-    Y_opt = pim_hessian(Y_plus, problem_struct);
+    [lambda_opt, Y_opt] = pim_hessian(Y_plus, problem_struct);
     %manopt data
     R_manopt_stiefel = stiefelfactory(nrsNext,d,N);
     fprintf("R_manopt_stiefel size %g\n", R_manopt_stiefel.dim());

@@ -1,6 +1,6 @@
-function v_max = pim(A, thresh)
+function [lambda_max, v_max] = pim(A, thresh)
 %PIM (acronym for Power Iteration Method) Iterative method that returns 
-%an eigenvector associated to che maximum eigenvalue of matrix A
+%an eigenvector associated to the maximum eigenvalue of matrix A
 
 if ~exist('thresh','var')
   thresh=1e-5;
@@ -19,6 +19,7 @@ while (iterative_change > thresh) && (iteration_num < 1000)
 end
 
 v_max = v;
+lambda_max = rayleigh_quotient(v_max, A);
 
 end
 

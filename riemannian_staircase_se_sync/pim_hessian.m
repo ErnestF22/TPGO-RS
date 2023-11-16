@@ -1,4 +1,4 @@
-function v_max = pim_hessian(x, problem, thresh)
+function [lambda_max, v_max] = pim_hessian(x, problem, thresh)
 %PIM_HESSIAN (PIM is an acronym for Power Iteration Method) 
 % Iterative method that processes function f at point x in a similar fashion
 % to applying the power augmentation method with the linear map f in place
@@ -26,6 +26,9 @@ while (iterative_change > thresh) && (iteration_num < 1000)
 end
 
 v_max = v;
+lambda_max = multiprod3(multitransp(v_max), hes(x, v_max), v_max) / ...
+    multiprod(multitransp(v_max), v_max);
+
 
 end
 
