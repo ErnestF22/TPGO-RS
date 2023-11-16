@@ -17,8 +17,10 @@ ddf_2 = @(t) stiefel_metric([], egradf(t), ddc(t), 'euclidean');
 ddf = @(t) sum(ddf_1(t) + ddf_2(t));    
 
 %%%
-df(0)
-ddf(0)
+disp("df(0)")
+disp(df(0))
+disp("ddf(0)")
+disp(ddf(0))
 
 %%
 thr = 0.01;
@@ -40,7 +42,6 @@ funCheckDer(df,ddf,'angle')
 
 
 
-
 %%
 % code from SO(n) hessian test
 %
@@ -52,3 +53,4 @@ funCheckDer(df,ddf,'angle')
 % funCheckDer(dft_rot, hess_rot)
 
 
+end %file function
