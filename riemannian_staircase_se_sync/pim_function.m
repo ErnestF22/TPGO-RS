@@ -1,4 +1,4 @@
-function [x_max, lambda_max] = pim_function(f, x_start, normalization_fun, thresh)
+function [lambda_max, x_max] = pim_function(f, x_start, normalization_fun, thresh)
 %PIM_FUNCTION (where PIM is an acronym for Power Iteration Method) 
 % Iterative method that returns an eigenvector associated to the maximum 
 % eigenvalue of matrix A
@@ -23,8 +23,8 @@ while (iterative_change > thresh) && (iteration_num < 1000)
 end
 
 x_max = x;
-lambda_max = multiprod3(multitransp(x_max), f(x_max), x_max) / ...
-    multiprod(multitransp(x_max), x_max);
+lambda_max = sum(stiefel_metric([], (x_max), f(x_max))) / ...
+    sum(stiefel_metric([], x_max, x_max));
 
 end
 

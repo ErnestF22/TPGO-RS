@@ -30,4 +30,8 @@ problem_next.sz(1) = problem_next.sz(1) + 1;
 
 %plot...
 
+%!! the function plotted (after padding with zeros) will need to be concave
+%linesearch will give the new point with decreased cost (i.e., the initial
+%guess point for the next step of the Riemannian Staircase)
+
 
