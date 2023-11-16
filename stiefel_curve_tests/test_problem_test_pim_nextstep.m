@@ -19,15 +19,17 @@ options.maxiter = 100;
 [R, R_cost, R_info, R_options] = trustregions(problem_manopt, R_initguess, options);
 
 problem_manopt.rgrad(R)
-max(problem_manopt.rgrad(R),[], 'all')
-L = @(u) problem_manopt.rhess(R,u);
-[lambda_pim, v_pim] = pim_hessian(R, L, problem);
+max(problem_manopt.rgrad(R),[], 'all');
+[lambda_pim, v_pim] = pim_hessian(R, problem);
 
 R_next = cat_zero_rows_3d_array(R);
-% v_pim_next = cat_zero_rows_3d_array(v_pim);
+v_pim_next = cat_zero_rows_3d_array(v_pim);
 problem_next = problem;
-L_next = @(u) problem_manopt.rhess(R_next,u);
 problem_next.sz(1) = problem_next.sz(1) + 1;
-[lambda_pim_next, v_pim_next] = pim_hessian(R_next, L_next, problem_next);
+L_next = from_L_to_L_next(problem.L, problem_next);
+P_next = from_P_to_P_next(problem.P, problem_next);
+problem_next.L = L_next;
+problem_next.P = P_next;
+[lambda_pim_next, v_pim_next] = pim_hessian(R_next, problem_next);
 
-end
+end %file function

@@ -10,7 +10,8 @@ end
 
 iterative_change = 1e+6;
 
-v_prev = stiefel_randTangentNormVector(x); %??
+v_prev = stiefel_randTangentNormVector(x);
+v_prev = stiefel_normalize(v_prev);
 
 iteration_num = 0;
 while (iterative_change > thresh) && (iteration_num < 1000)
@@ -23,8 +24,8 @@ while (iterative_change > thresh) && (iteration_num < 1000)
 end
 
 v_max = v;
-lambda_max = multiprod3(multitransp(v_max), som_rhess_rot_stiefel(x, v_max, problem), v_max) / ...
-    multiprod(multitransp(v_max), v_max);
+lambda_max = sum(stiefel_metric([], v_max, som_rhess_rot_stiefel(x, v_max, problem))) / ...
+    sum(stiefel_metric([], v_max, v_max));
 
 
 end
