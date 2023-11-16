@@ -34,6 +34,7 @@ t_ijs_stiefel = G2T(testdata.gij);
 
 problem_struct.L = LT;
 problem_struct.P = PT;
+problem_struct.fixed_cost_term = compute_fixed_cost_term(G2T(testdata.gij), d);
 
 % Create the problem structure.
 manifold = stiefelfactory(num_rows_stiefel, d, N);
