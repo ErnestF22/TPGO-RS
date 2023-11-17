@@ -3,8 +3,11 @@ function test_problem_test_pim_nextstep
 problem_struct = test_problem();
 curve=test_problem_curve(problem_struct);
 
+nrs = problem_struct.sz(1);
+d = problem_struct.sz(2);
+N = problem_struct.sz(3);
 
-manif = stiefelfactory(problem_struct.sz(1),problem_struct.sz(2),problem_struct.sz(3));
+manif = stiefelfactory(nrs, d, N);
 problem_manopt.M = manif;
 
 problem_manopt.cost = @(x) som_cost_rot_stiefel(x, problem_struct);
@@ -14,7 +17,7 @@ problem_manopt.ehess = @(x,u) som_ehess_rot_stiefel(x,u, problem_struct);
 problem_manopt.rhess = @(x,u) som_rhess_rot_stiefel(x,u, problem_struct);
 
 
-R_initguess = eye3d(problem_struct.sz(1),problem_struct.sz(2),problem_struct.sz(3));
+R_initguess = make_rand_stiefel_3d_array(nrs, d, N);
 options.maxiter = 100;
 [R, R_cost, R_info, R_options] = trustregions(problem_manopt, R_initguess, options);
 
