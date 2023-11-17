@@ -11,19 +11,20 @@ end
 iterative_change = 1e+6;
 
 v_prev = stiefel_randTangentNormVector(x);
-v_prev = stiefel_normalize(v_prev);
+v_prev = stiefel_normalize(x, v_prev);
+v = v_prev;
 
 iteration_num = 0;
 while (iterative_change > thresh) && (iteration_num < 1000)
-    hes =  som_rhess_rot_stiefel(x, v_prev, problem);
     iteration_num = iteration_num + 1;
-    v = - stiefel_normalize(hes);
-    iterative_change = min( max(stiefel_metric([], v_prev, v, 'euclidean')), ...
-        max(stiefel_metric([], v, v_prev, 'euclidean')) ) ;
     v_prev = v;
+    v = stiefel_normalize(x, v);
+    v = - som_rhess_rot_stiefel(x, v_prev, problem);
+    iterative_change = min( max(stiefel_metric(x, v_prev, v, 'canonical')), ...
+        max(stiefel_metric(x, v, v_prev, 'canonical')) ) ;
 end
 
-v_max = v;
+v_max = stiefel_normalize(x, v);
 lambda_max = sum(stiefel_metric([], v_max, som_rhess_rot_stiefel(x, v_max, problem))) / ...
     sum(stiefel_metric([], v_max, v_max));
 

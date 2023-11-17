@@ -12,7 +12,7 @@ B = readmatrix("../data/B_stiefel_noisy.csv");
 
 problem=struct('sz',sz,'L',L,'P',P,'A',A,'B',B);
 
-x = rand_stiefel_tmp (num_rows_stiefel, d, N, array_type);
+x = rand_stiefel_tmp(num_rows_stiefel, d, N, array_type);
 v_start = stiefel_randTangentNormVector(x);
 
 % [eigvecs, eigvals] = eig(A);
