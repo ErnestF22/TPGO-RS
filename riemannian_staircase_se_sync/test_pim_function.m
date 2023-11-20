@@ -34,7 +34,7 @@ disp(lambda_max)
 disp("is lambda_max an eigenvalue?")
 disp([lambda_max * v_max, som_rhess_rot_stiefel(x, v_max, problem_struct)])
 
-%% MAKE THIS WORK ONCE AND FOR ALL!!!
+
 x_next = cat_zero_rows_3d_array(x);
 v_start_next = stiefel_randTangentNormVector(x_next);
 % v_max_next = cat_zero_rows_3d_array(v_max);

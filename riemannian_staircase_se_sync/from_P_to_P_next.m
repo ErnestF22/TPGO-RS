@@ -16,7 +16,7 @@ ids_to_sum = 0:size(ids_P,2)-1;
 ids_P_next = ids_P + ids_to_sum;
 
 for ii = 1:N
-    P_next(ids_P_next, :) = P(ids_P, :);
+    P_next(ids_P_next(:,ii), :) = P(ids_P(:,ii), :);
 end
 
 

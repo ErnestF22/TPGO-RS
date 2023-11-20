@@ -2,147 +2,127 @@ close all;
 clear;
 clc;
 
-num_rows_stiefel = 4;
 d = 3;
+nrs = d;
+nrs_next = nrs + 1;
 N = 5;
+sz = [nrs, d, N];
+sz_next = [nrs_next,d,N];
 
-R_manopt_stiefel = stiefelfactory(num_rows_stiefel,d,N);
+thresh = 1e-5;
+
+array_type = 'double';
+
+L_next = readmatrix("../data/L_stiefel_noisy.csv");
+P_next = readmatrix("../data/P_stiefel_noisy.csv");
+A_next = readmatrix("../data/A_stiefel_noisy.csv");
+B_next = readmatrix("../data/B_stiefel_noisy.csv");
+fixed_cost_term = readmatrix("../data/fixed_cost_term.csv");
+
+problem_struct=struct('sz',sz);
+
+problem_struct_next=struct('sz',sz_next, ... %!!
+    'L',L_next,'P',P_next, 'fixed_cost_term', fixed_cost_term, ...
+    'A',A_next,'B',B_next);
+
+
+L = from_Lnext_to_L(L_next, problem_struct);
+P = from_Pnext_to_P(P_next, problem_struct);
+problem_struct=struct('sz',sz, ... %!!
+    'L',L,'P',P, 'fixed_cost_term', fixed_cost_term, ...
+    'A',A_next,'B',B_next);
+
+
+R_manopt_stiefel = stiefelfactory(nrs,d,N);
 % fprintf("R_manopt_stiefel size %g\n", R_manopt_stiefel.dim());
 
-step1.M = R_manopt_stiefel; %M = manifold
+problem_manopt.M = R_manopt_stiefel; %M = manifold
 
-pre_L_stiefel=randn(num_rows_stiefel, num_rows_stiefel,N);
-pre_L_stiefel=multiprod(pre_L_stiefel,multitransp(pre_L_stiefel));
-pre_L_stiefel=num2cell(pre_L_stiefel);
-L_stiefel = blkdiag(pre_L_stiefel{:});
-P_stiefel = randn(num_rows_stiefel*N, d);
+problem_manopt.cost = @(x) som_cost_rot_stiefel(x, problem_struct);
+problem_manopt.egrad = @(x) som_egrad_rot_stiefel(x, problem_struct);
+problem_manopt.rgrad = @(x) som_rgrad_rot_stiefel(x, problem_struct);
+problem_manopt.ehess = @(x,u) som_ehess_rot_stiefel(x,u, problem_struct);
+problem_manopt.rhess = @(x,u) som_rhess_rot_stiefel(x,u, problem_struct);
+%Run Manopt with rand init guess
 
-step1.ehess = @(x, u) myeuclhess(x, u, L_stiefel, P_stiefel);
-step1.hess = @(x, u) step1.M.proj(x, myeuclhess(x, u, L_stiefel, P_stiefel));
+R_initguess = make_rand_stiefel_3d_array(nrs, d, N);
+options.maxiter = 100;
+[R, R_cost, R_info, R_options] = trustregions(problem_manopt, R_initguess, options);
 
-x = repmat(eye(num_rows_stiefel,d),[1,1,N]);
-u_start = zeros(size(x));
-for k=1:size(x,3)
-    u_start(:,:,k)=stiefel_randTangentNormVector(x(:,:,k));
-end
 
-% ehess = step1.ehess(x, u);
-% rhess = step1.hess(x, u);
+%%% Run P.I.M. for Hessian
 
-num_max_iterations = 1000;
-iteration_num = 0;
-iterative_change = 1e+8;
-thresh = 1e-5;
-u = u_start;
-sub_angles=NaN(1,num_max_iterations);
-while (iteration_num < num_max_iterations) % && (iterative_change > thresh)
-    iteration_num = iteration_num + 1;
-    u_prev = u;
-    sm = sum(stiefel_metric(x, u, u));
-    u = u / sqrt(sm);
-    u = step1.hess(x, u);
-    ip=sum(stiefel_metric(x,u,u_prev));
-    if ip<0
-        u=-u;
-    end
-    iterative_change = min(sum(stiefel_metric(x, u_prev, u)), sum(stiefel_metric(x, u, u_prev)));
-    sub_angles(iteration_num)=acos(max(-1,min(1,sum(stiefel_metric(x,u,u_prev)))));
-end
+% x = make_rand_stiefel_3d_array(num_rows_stiefel, d, N, array_type);
+x = cat_zero_rows_3d_array(R);
+u_start = stiefel_randTangentNormVector(x);
+stiefel_normalize_han = @(x) x./ (norm(x(:)));
+fun_han = @(u) som_rhess_rot_stiefel(x,u,problem_struct_next);
 
-disp("u")
-disp(u)
 
-hess_i = step1.hess(x, u);
-lambda=sum(stiefel_metric(x,u,hess_i))/sum(stiefel_metric(x,u,u));
+[lambda_pim, v_pim] = pim_function(fun_han, u_start, stiefel_normalize_han, thresh);
+hess_step1 = fun_han(v_pim);
+lambda_pim_prev = lambda_pim;
+v_pim_prev = v_pim;
 
-disp('Difference between lambda*u and H(u) should be in the order of the tolerance')
-disp(norm(lambda*u(:)-hess_i(:),'inf'))
-% % lambdas = zeros(N,1);
-% % for ii = 1:N    
-% %     lambdas(ii) = stiefel_metric(x(:,:,ii), u(:,:,ii), hess_i(:,:,ii)) / stiefel_metric(x(:,:,ii), u(:,:,ii), u(:,:,ii));
-% % end
-% 
-% 
-% 
-% %check eigenvalue basic property (for standard eigenvector, that would be:
-% % lambda*v = A*v
-% for ii = 1:N    
-%     lambda_u = lambdas(ii) * u(:,:,ii);
-%     hess_u = hess_i(:,:,ii);
-%     diff_val = max(max(abs(lambda_u - hess_u)));
-%     fprintf("ii %g diff_max %g\n", ii, diff_val);
-%     disp([lambda_u hess_u])
-% end
+disp("lambda_pim found after first iteration of P.I.M.")
+disp(lambda_pim)
 
-if lambda<0
-    disp("All N eigenvalues are > 0: terminating");
-else
+disp('Difference between lambda*v_max and H(v_max) should be in the order of the tolerance:')
+disp(norm(lambda_pim*v_pim(:)- hess_step1(:),'inf'))
 
-    u_start_moved = zeros(size(x));
-    for k=1:size(x,3)
-        u_start_moved(:,:,k)=stiefel_randTangentNormVector(x(:,:,k));
-    end
+%%%%step2
+num_iterations = 0;
+if lambda_pim>0
+    num_iterations = num_iterations + 1;
+    fprintf("iteration %g lambda_pim %g\n", num_iterations, lambda_pim);
     
+    mu = 2 * lambda_pim;
+
+    fun_han_next = @(u) som_rhess_rot_stiefel(x,u,problem_struct_next) - ...
+        mu .* som_rhess_rot_stiefel(x,eye3d(nrs_next, d, N),problem_struct_next);
+            
     %run shifted power iteration
-    u = u_start_moved;
-    iteration_num = 0;
-    mu=1.1*lambda; %shift by more than lambda_max
-    while (iteration_num < num_max_iterations) % && (iterative_change > thresh)
-        iteration_num = iteration_num + 1;
-        u_prev = u;
-        sm = sum(stiefel_metric(x, u, u));
-        u = u ./ sm;
-        u = step1.hess(x, u) - mu*u;
-        iterative_change = min(sum(stiefel_metric(x, u_prev, u)), sum(stiefel_metric(x, u, u_prev)));
-    end
+    u_start_new = stiefel_randTangentNormVector(x);
+    [lambda_pim, v_pim] = pim_function(fun_han_next, u_start_new, stiefel_normalize_han, thresh);
     
-    hess_i = step1.hess(x, u);
-    lambda=sum(stiefel_metric(x,u,hess_i))/sum(stiefel_metric(x,u,u));
-
-    disp("linesearch and reiterate manopt...");
+    disp('Difference between lambda*v_max and H(v_max) should be in the order of the tolerance:')
+    hess_next = fun_han_next(v_pim);
+    disp(norm(lambda_pim*v_pim(:)- hess_next(:),'inf'))
 end
 
-
+disp("Now performing linesearch...");
 %linesearch
-nrs_next = num_rows_stiefel+1;
 step2.M = stiefelfactory(nrs_next,d,N);
-L2 = randn(nrs_next*N, d);
-P2 = randn(nrs_next*N, d);
-cost_const_term_tij = 0.0; %k.i.s. for this example
-step2.cost = @(x) mycost(x, L2, P2, cost_const_term_tij);
-step2.egrad = @(x) myeuclgradient(x, L2, P2);
-step2.grad = @(x) step1.M.proj(myeuclgradient(x, L2, P2));
-step2.ehess = @(x, u) myeuclhess(x, u, L2, P2);
-step2.hess = @(x, u) step2.M.proj(myeuclhess(x, u, L2, P2));
+step2.cost = @(x) som_cost_rot_stiefel(x, problem_struct_next);
+step2.egrad = @(x) som_egrad_rot_stiefel(x, problem_struct_next);
+step2.rgrad = @(x) som_rgrad_rot_stiefel(x, problem_struct_next);
+step2.ehess = @(x,u) som_ehess_rot_stiefel(x,u, problem_struct_next);
+step2.rhess = @(x,u) som_rhess_rot_stiefel(x,u, problem_struct_next);
 
-alpha = min(lambdas_moved) + lambdas_max;
-SDPLRval = 10; %k.i.s. for this example
+% alpha = min(lambdas_moved) + lambdas_max;
+alpha = 1e-3; %TODO: set this correctly
+SDPLRval = 10; %TODO: set this correctly 
 
 [stepsize, Y0T] = linesearch_decrease(step2, ...
-    matStack(u), alpha * matStack(x), SDPLRval);
+    matStack(v_pim), alpha * matStack(x), SDPLRval);
 
 %manopt
+disp("Reiterating Manopt...");
+% R_initguess_next = make_rand_stiefel_3d_array(nrs_next, d, N);
+R_initguess_next = matUnstack(Y0T, problem_struct_next.sz(1));
+[R_next, R_cost, R_info, R_options] = trustregions(step2, R_initguess_next, options);
+
+% [R_out, T_out] = lowRankLocalization_solution_extractProjection(matStack(multitransp(R_stiefel)) * reshape(T_stiefel, [], N));
+% [R_out, T_out] = lowRankLocalization_solution_extractProjection(matStack(multitransp(R_next)));
+problem_struct_round_solution = struct("d", d, "n", N);
+R_out = round_solution_se_sync(matStackH(R_next), problem_struct_round_solution);
+
+c = trace(matStack(R)'*problem_struct.L*matStack(R)+matStack(R)'*problem_struct.P) + problem_struct.fixed_cost_term
+second_cost_input = matStack(multitransp(matUnstack(R_out'))); 
+c = trace( ...
+    second_cost_input'*problem_struct.L*second_cost_input + ...
+    second_cost_input'*problem_struct.P ) + ...
+    problem_struct.fixed_cost_term
 
 
-
-%%
-function f = mycost(x,L_stiefel,P_stiefel,cost_const_term_tij)
-    f = trace(matStack(x)' * L_stiefel * matStack(x) + matStack(x)' * P_stiefel) ... 
-        + cost_const_term_tij;
-end
-
-%%
-function g = myeuclgradient(x, L_stiefel, P_stiefel)
-    g = matUnstack(L_stiefel*matStack(x) + (L_stiefel')*matStack(x) + P_stiefel, size(x, 1));
-end
-
-%%
-function eucl_hess = myeuclhess(x, u, L, P)
-P_3d = matUnstack(P, size(x, 1));
-eucl_hess = multiprod3(u, multitransp(x), P_3d) ... 
-        + multiprod3(x, multitransp(u), P_3d) ...
-        - multiprod3(u, multitransp(P_3d), x) ...
-        - multiprod3(x, multitransp(P_3d), u);
-eucl_hess = 0.5 .* eucl_hess;
-end
 

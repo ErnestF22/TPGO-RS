@@ -15,7 +15,7 @@ ids_to_sum = 0:size(ids_L,2)-1;
 ids_L_next = ids_L + ids_to_sum;
 
 for ii = 1:N
-    L_next(ids_L_next, ids_L_next) = L(ids_L, ids_L);
+    L_next(ids_L_next(:,ii), ids_L_next(:,ii)) = L(ids_L(:,ii), ids_L(:,ii));
 end
 
 

@@ -24,10 +24,10 @@ iteration_num = 0;
 while (iterative_change > thresh) && (iteration_num < 1000)
     iteration_num = iteration_num + 1;
     v_prev = v;
-    v = v ./ problem_manopt.M.norm(x, v);
+    v = v ./ (norm(v(:)));
     v = - som_rhess_rot_stiefel(x, v, problem_struct);
-    iterative_change = min( problem_manopt.M.inner(x, v_prev, v), ...
-        problem_manopt.M.inner(x, v, v_prev) ) ;
+%     iterative_change = min( problem_manopt.M.inner(x, v_prev, v), ...
+%         problem_manopt.M.inner(x, v, v_prev) ) ;
 end
 
 v_max = v;
