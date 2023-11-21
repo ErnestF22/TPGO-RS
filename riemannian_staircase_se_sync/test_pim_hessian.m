@@ -79,7 +79,7 @@ if lambda_pim>0
     mu = 2 * lambda_pim;
 
     fun_han_next = @(u) som_rhess_rot_stiefel(x,u,problem_struct_next) - ...
-        mu .* som_rhess_rot_stiefel(x,eye3d(nrs_next, d, N),problem_struct_next);
+        mu .* eye3d(nrs_next, d, N);
             
     %run shifted power iteration
     u_start_new = stiefel_randTangentNormVector(x);
@@ -87,7 +87,7 @@ if lambda_pim>0
     
     disp('Difference between lambda*v_max and H(v_max) should be in the order of the tolerance:')
     hess_next = fun_han_next(v_pim);
-    disp(norm(lambda_pim*v_pim(:)- hess_next(:),'inf'))
+    disp(norm(lambda_pim*v_pim(:) - hess_next(:), 'inf'))
 end
 
 disp("Now performing linesearch...");
