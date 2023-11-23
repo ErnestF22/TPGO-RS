@@ -11,12 +11,14 @@ rgradf=@(t) problem.rgrad(c(t));
 
 % A
 ahess = @(t) problem.ahess_f(c(t),dc(t));
-ahess(0);
+disp("ahess(0)");
+disp(ahess(0));
 
 
 %B
 bhess = @(t) problem.bhess_f(c(t),dc(t));
-bhess(0)
+disp("bhess(0)");
+disp(bhess(0));
 
 
 

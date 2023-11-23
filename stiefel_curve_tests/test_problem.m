@@ -124,7 +124,16 @@ end
 % end
 
 function h = ahess_f(x,u,problem)
-disp("")
+A_stiefel = problem.A;
+b = problem.B;
+x_transl = reshape(x(:), problem.sz(1) * problem.sz(3), []);
+u_transl = reshape(u(:), problem.sz(1) * problem.sz(3), []);
+g = 2*(A_stiefel' * A_stiefel) * x_transl + 2*A_stiefel'*b; %??
+h = 2.*(A_stiefel'*A_stiefel)*u_transl;
+h = stp_manopt(x, matUnstack(h, problem.sz(1))) + ...
+    stp_manopt(x, matUnstack(g, problem.sz(1)));
+% stp_manopt(x, matUnstack(stief_proj_differential, problem.sz(1))) + ...
+%     stp_manopt(x, eh);
 end
 
 function h = bhess_f(x,u,problem)

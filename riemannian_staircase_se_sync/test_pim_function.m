@@ -12,7 +12,7 @@ B = readmatrix("../data/B_stiefel_noisy.csv");
 
 problem_struct=struct('sz',sz,'L',L,'P',P,'A',A,'B',B);
 
-x = rand_stiefel_tmp(num_rows_stiefel, d, N, array_type);
+x = make_rand_stiefel_3d_array(num_rows_stiefel, d, N);
 v_start = stiefel_randTangentNormVector(x);
 
 % [eigvecs, eigvals] = eig(A);
@@ -54,10 +54,6 @@ fun_han_next = @(u) som_rhess_rot_stiefel(x_next,u,problem_next_struct);
 
 %%%%%%%%%%%%%%%
 
-
-function rst = rand_stiefel_tmp(n, p, k, array_type)
-    rst =  qr_unique(randn(n, p, k, array_type));
-end    
     
 function U = rand_stiefel_vec_tmp(X, n, p, k, array_type)
     U = stiefel_tangentProj(X, randn(n, p, k, array_type));
