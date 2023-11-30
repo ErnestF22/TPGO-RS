@@ -46,7 +46,7 @@ problem_manopt.rhess = @(x,u) som_rhess_rot_stiefel(x,u, problem_struct);
 %Run Manopt with rand init guess
 
 R_initguess = make_rand_stiefel_3d_array(nrs, d, N);
-options.maxiter = 100;
+options.maxiter = 1000;
 [R, R_cost, R_info, R_options] = trustregions(problem_manopt, R_initguess, options);
 
 
@@ -96,7 +96,8 @@ if lambda_pim>0
 
     disp('Checking Eigenvalue shift')
     hess_next2 = som_rhess_rot_stiefel(x,v_pim_next,problem_struct_next);
-    disp(norm((lambda_pim+lambda_pim_next)*v_pim_next(:)- hess_next2(:),'inf'))
+    disp(norm(((lambda_pim_next + mu)*v_pim_next(:)) - ...
+        hess_next2(:),'inf'))
 end
 
 disp("Now performing linesearch...");
@@ -112,13 +113,13 @@ step2.rhess = @(x,u) som_rhess_rot_stiefel(x,u, problem_struct_next);
 alpha = 1e-3; %TODO: set this correctly
 SDPLRval = 10; %TODO: set this correctly 
 
-[stepsize, Y0T] = linesearch_decrease(step2, ...
-    matStack(x), matStack(v_pim), som_cost_rot_stiefel(x,problem_struct_next));
+[stepsize, Y0] = linesearch_decrease(step2, ...
+    x, -alpha.*v_pim_next, som_cost_rot_stiefel(x,problem_struct_next));
 
 %manopt
 disp("Reiterating Manopt...");
-% R_initguess_next = make_rand_stiefel_3d_array(nrs_next, d, N);
-R_initguess_next = matUnstack(Y0T, problem_struct_next.sz(1));
+% R_initguess_next = matUnstack(Y0T, problem_struct_next.sz(1));
+R_initguess_next = Y0;
 [R_next, R_cost, R_info, R_options] = trustregions(step2, R_initguess_next, options);
 
 % [R_out, T_out] = lowRankLocalization_solution_extractProjection(matStack(multitransp(R_stiefel)) * reshape(T_stiefel, [], N));
@@ -126,12 +127,38 @@ R_initguess_next = matUnstack(Y0T, problem_struct_next.sz(1));
 problem_struct_round_solution = struct("d", d, "n", N);
 R_out = round_solution_se_sync(matStackH(R_next), problem_struct_round_solution);
 
-c = trace(matStack(R)'*problem_struct.L*matStack(R)+matStack(R)'*problem_struct.P) + problem_struct.fixed_cost_term
-second_cost_input = matStack(multitransp(matUnstack(R_out'))); 
-c = trace( ...
+
+%%% check cost progression
+
+disp("R -> cost (prev)")
+c_R = trace(matStack(R)'*problem_struct.L*matStack(R)+matStack(R)'*problem_struct.P) + problem_struct.fixed_cost_term; 
+disp(c_R)
+
+disp("x -> cost (prev)")
+c_x = trace(matStack(x)'*problem_struct_next.L*matStack(x)+matStack(x)'*problem_struct_next.P) + problem_struct_next.fixed_cost_term; 
+disp(c_x)
+
+disp("Y0 -> cost")
+c_Y0 = trace( ...
+    matStack(Y0)'*problem_struct_next.L*matStack(Y0) + ...
+    matStack(Y0)'*problem_struct_next.P ) + ...
+    problem_struct_next.fixed_cost_term;
+disp(c_Y0)
+
+disp("R_next -> cost")
+c_Rnext = trace( ...
+    matStack(R_next)'*problem_struct_next.L*matStack(R_next) + ...
+    matStack(R_next)'*problem_struct_next.P ) + ...
+    problem_struct_next.fixed_cost_term;
+disp(c_Rnext)
+
+disp("second cost input -> cost")
+second_cost_input = matStack(multitransp(matUnstack(R_out')));
+c_sci = trace( ...
     second_cost_input'*problem_struct.L*second_cost_input + ...
     second_cost_input'*problem_struct.P ) + ...
-    problem_struct.fixed_cost_term
+    problem_struct.fixed_cost_term;
+disp(c_sci)
 
 
 

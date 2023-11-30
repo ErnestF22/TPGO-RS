@@ -5,7 +5,7 @@ function [lambda_max, x_max] = pim_function(f, x_start, normalization_fun, thres
 % x_start is the random vector from which PIM starts
 
 if ~exist('thresh','var')
-  thresh=1e-5;
+  thresh=1e-10;
 end
 
 iterative_change = 1e+6;
@@ -13,13 +13,13 @@ dim = size(x_start);
 x = x_start;
 iteration_num = 0;
 iterative_change = 1e+6;
-while (iterative_change > thresh) && (iteration_num < 1000)
+while (abs(iterative_change) > thresh) && (iteration_num < 500)
     iteration_num = iteration_num + 1;
     x_prev = x;
     x = normalization_fun(x);
     x = - f(x);
-%     iterative_change = min(normalization_fun(x_prev - x), ...
-%         normalization_fun(x_prev + x));
+    iterative_change = max(min(normalization_fun(x_prev - x), ...
+        normalization_fun(x_prev + x)),[],"all");
 end
 
 x_max = normalization_fun(x);
