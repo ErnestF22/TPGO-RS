@@ -22,7 +22,7 @@ while (iterative_change > thresh) && (iteration_num < 1000)
 %         normalization_fun(x_prev + x));
 end
 
-x_max = x;
+x_max = normalization_fun(x);
 lambda_max = sum(stiefel_metric([], (x_max), f(x_max))) / ...
     sum(stiefel_metric([], x_max, x_max));
 

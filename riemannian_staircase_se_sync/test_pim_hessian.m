@@ -56,13 +56,18 @@ options.maxiter = 100;
 x = cat_zero_rows_3d_array(R);
 u_start = stiefel_randTangentNormVector(x);
 stiefel_normalize_han = @(x) x./ (norm(x(:)));
+u_start = stiefel_normalize(x, u_start);
 fun_han = @(u) som_rhess_rot_stiefel(x,u,problem_struct_next);
 
 
 [lambda_pim, v_pim] = pim_function(fun_han, u_start, stiefel_normalize_han, thresh);
 hess_step1 = fun_han(v_pim);
 lambda_pim_prev = lambda_pim;
+
+
+% v_pim = stiefel_normalize_han(v_pim);
 v_pim_prev = v_pim;
+
 
 disp("lambda_pim found after first iteration of P.I.M.")
 disp(lambda_pim)
@@ -76,18 +81,22 @@ if lambda_pim>0
     num_iterations = num_iterations + 1;
     fprintf("iteration %g lambda_pim %g\n", num_iterations, lambda_pim);
     
-    mu = 2 * lambda_pim;
+    mu = 1.1 * lambda_pim;
 
     fun_han_next = @(u) som_rhess_rot_stiefel(x,u,problem_struct_next) - ...
-        mu .* eye3d(nrs_next, d, N);
+        mu .* u;
             
     %run shifted power iteration
     u_start_new = stiefel_randTangentNormVector(x);
-    [lambda_pim, v_pim] = pim_function(fun_han_next, u_start_new, stiefel_normalize_han, thresh);
+    [lambda_pim_next, v_pim_next] = pim_function(fun_han_next, u_start_new, stiefel_normalize_han, thresh);
     
     disp('Difference between lambda*v_max and H(v_max) should be in the order of the tolerance:')
-    hess_next = fun_han_next(v_pim);
-    disp(norm(lambda_pim*v_pim(:) - hess_next(:), 'inf'))
+    hess_next = fun_han_next(v_pim_next);
+    disp(norm((lambda_pim_next)*v_pim_next(:) - hess_next(:), 'inf'))
+
+    disp('Checking Eigenvalue shift')
+    hess_next2 = som_rhess_rot_stiefel(x,v_pim_next,problem_struct_next);
+    disp(norm((lambda_pim+lambda_pim_next)*v_pim_next(:)- hess_next2(:),'inf'))
 end
 
 disp("Now performing linesearch...");
@@ -104,7 +113,7 @@ alpha = 1e-3; %TODO: set this correctly
 SDPLRval = 10; %TODO: set this correctly 
 
 [stepsize, Y0T] = linesearch_decrease(step2, ...
-    matStack(v_pim), alpha * matStack(x), SDPLRval);
+    matStack(x), matStack(v_pim), som_cost_rot_stiefel(x,problem_struct_next));
 
 %manopt
 disp("Reiterating Manopt...");
