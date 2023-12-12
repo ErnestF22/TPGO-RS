@@ -1,7 +1,0 @@
-[submodule "utilities"]
-	path = utilities
-	url = git@bitbucket.org:tronroberto/codenetworkutilities.git
-	update = merge
-[submodule "localization/codenetworklocalizationrotation"]
-	path = localization/rotationLocalization
-	url = git@bitbucket.org:tronroberto/codenetworklocalizationrotation.git

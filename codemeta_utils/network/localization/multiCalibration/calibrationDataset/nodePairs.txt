@@ -1,3 +1,0 @@
-april_hok.mat  camera  hokuyo
-april_vel.mat  camera  velodyne
-hok_vel.mat    velodyne   hokuyo

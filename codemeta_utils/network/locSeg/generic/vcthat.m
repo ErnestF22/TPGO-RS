@@ -1,9 +1,0 @@
-function Vhat=vcthat(V)
-dim=size(V,1);
-Vhat=zeros(3*dim,3);
-Vhat(1:dim,2)=-V(:,3);
-Vhat(1:dim,3)=V(:,2);
-Vhat(dim+1:2*dim,1)=V(:,3);
-Vhat(dim+1:2*dim,3)=-V(:,1);
-Vhat(2*dim+1:3*dim,1)=-V(:,2);
-Vhat(2*dim+1:3*dim,2)=V(:,1);

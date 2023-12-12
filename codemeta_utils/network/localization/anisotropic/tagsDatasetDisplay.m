@@ -1,3 +1,0 @@
-function tagsDatasetDisplay(t_node)
-testNetworkDisplay(t_node,'DisplayEdges','references',...
-    'OptionsDrawCamera',{'Scale',0.1,'FlagAxes',0});
