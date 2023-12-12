@@ -1,0 +1,532 @@
+\documentclass[12pt]{article}
+\input{mydef.tex}
+\DeclareMathOperator{\nullspace}{null}
+\DeclareMathOperator{\rangespace}{range}
+\newcommand{\dx}{\dot{x}}
+\newcommand{\xixj}{x_i-x_j}
+\newcommand{\dxixj}{\dot{x}_i-\dot{x}_j}
+\newcommand{\nxixj}{\frac{\xixj}{\norm{\xixj}}}
+\newcommand{\Ri}{R_i}
+\newcommand{\dxi}{\dot{x}_i}
+\newcommand{\dxj}{\dot{x}_j}
+\newcommand{\kron}{\otimes}
+\newcommand{\htij}{\hat{t}_{ij}}
+\newcommand{\rangeint}{\texttt{rangeint}}
+\newcommand{\niT}{n_i^{(T)}}
+\newcommand{\niR}{n_i^{(R)}}
+\newcommand{\njR}{n_j^{(R)}}
+\begin{document}
+
+\todo{Clean up or explain notation with $x_{i0}$ and $R_{i0}$.}
+
+\section{Introduction}
+\todo{Say what \emph{shakes} are.}
+
+\todo{Assume nodes not on top of each other.}
+
+We consider an approach based on computing and analyzing the null-space of the matrix obtained by stacking the Jacobian of the constraint. In practice, given a solution to a localization problem, or a desired formation, the proposed algorithm provides a way to detect and analyze the shakes of the network.
+\paragraph{Contributions.} We consider a common framework which can be applied to networks with several different kinds of constraints and to both 2-D and 3-D problems. Moreover, we consider the entire pose, rotation and translation, as opposed to previous approaches which considered only the translation part. 
+\section{Notation}
+\begin{itemize}
+\item $d_T$ dimension of the space (two for 2-D, three for 3-D)
+\item $d_R$ dimension of the rotations (one for 2-D, three for 3-D)
+\item $V=\{1,\ldots,N\}$
+\item $\nullspace(A)$ represents null-space of the matrix $A$. When used in equalities such as $N=\nullspace(A)$, where $N$ is a matrix, we use the convention that $N$ is an orthonormal basis for $\nullspace(A)$. 
+\item $\rangespace(A)$ represents the range of the matrix $A$.
+\item $\stack(A_1,\ldots,A_N)=\stack(\{A_i\}_\iV)$ represents the matrix obtained by stacking all the matrices $A_1,\ldots,A_N$.
+\item $\hat{v}$ or $v^\wedge$. When $v\in\real{2}$, this is equivalent to $Sv$. When $v\in\real{3}$, this denotes the matrix representation of the cross product in 3-D, \ie, $\hat{v}w=v\times w$ for all $w\in\real{3}$.
+\item $S=\bmat{0 & -1\\ 1 & 0}\in SO(2)$ represents a 2-D rotation by $90^\circ$. It appears naturally when taking derivatives of 2-D rotations.
+\item $\vct{0}$, $\vct{1}$ and $I$ represent, respectively, the matrix of all zeros, of all ones and the identity matrix. If present, two subscripts (\eg, $\vct{0}_{d_1,d_2}$) indicate the dimensions of the matrix. A single subscript (\eg, $\vct{0}_N$) indicates the dimension of a column vector.
+\item $e_i$ represents the $i$-th vector of the standard basis.
+\item $v\orth$ represents an orthonormal basis for the space orthonormal to the vector $v$. In other words, if $v\in\real{d}$, $v\orth\in\real{d-1\times d}$ is an orthonormal matrix such that $v\orth v=\vct{0}$. 
+\end{itemize}
+\section{Preliminaries}
+\subsection{Problem definition}
+We have
+\begin{itemize}
+\item A set of vertices with translations $x_i\in\real{d_T}$ and rotations $R_i\in SO(d_T)$, $\iV$.
+\item A set of constraints from which we can compute a Jacobian matrix $J(x,R)$ and a basis for its nullspace $N=\nullspace(J(x,R))$.
+\item A set of test transformations, which include one of more of the following
+  \begin{itemize}
+  \item Translation of one or more nodes in a common, arbitrary direction.
+  \item Rotation of one or more nodes, each around its own center, but with a common, arbitrary axis.
+  \item Rotation of one or more nodes around a center with an arbitrary axis.
+  \item Scaling of one or more nodes around a center.
+  \end{itemize}
+  To each one of these transformations is associated a tangent vector $w(x,R)$ and a set of nodes $s$.
+\end{itemize}
+ We say that a transformation is \emph{allowed} if the corresponding tangent $w(x,R)$ satisfies $Jw=0$, \ie, $w\in N$. Each allowed transformation defines a partition of all the nodes $V=\{s,V\backslash s\}$. The set of \emph{rigid components} with respect to the given transformations and constraints is obtained as the intersection of all such partitions.
+A couple of observations:
+\begin{itemize}
+\item By increasing the number of test transformations, the number of rigid components cannot decrease, and the number of nodes in each component cannot increase (this follows from the definition of rigid components which uses intersections).
+\item There might be a combination of transformations which give the same tangents. In other words, all tangents $w$ might not be all linearly independent from each other.
+\item The set of all tangents $w$ might not span the entire null-space $N$. If there are vectors in $N$ not in the span of the tangents $w$, it means that there might be additional splitting of the rigid components induced by transformations corresponding to such vectors.
+\end{itemize}
+In theory, one could test all the transformations and check whether they are allowed or not. However, since one would need to test every possible subset of nodes, this approach has combinatorial complexity. To circumvent this problem, we propose ad-hoc algorithms based on clustering.
+
+\subsection{Intersection of the ranges of two matrices}
+\label{sec:intersection-ranges}
+
+\todo{Use method based on angles between subspaces, which we use also}
+
+Let $N\in\real{d\times d_N}$, $d_N\leq d$, and $H\in\real{d\times d_H}$, $d_H\leq d$, be two matrices with the same number of rows $d$. In this section we give a simple algorithm for finding a basis $S\in\real{d\times d_S}$ for $\Sset=\rangespace(N)\cap\rangespace(H)\subseteq \real{d}$. Note that, in general, $N$ and $H$ do not need to be orthonormal or even full-rank. Also, we have only one constraint on the dimension of $\Sset$, that is $d_S\leq\min\{d_N,d_H\}$.
+
+To derive the algorithm, first notice that a vector $v\in\real{d}$ belongs to $\Sset$ if and only if there are $n\in\real{d_N}$ and $h\in\real{d_H}$ such that
+\begin{equation}
+v=Nn=Hh.
+\end{equation}
+The second equality is equivalent to
+\begin{equation}
+  \bmat{N & -H}\bmat{n\\h}=0.  
+\end{equation}
+Let $M=\nullspace\left(\bmat{N & -H}\right)\in\real{(d_N+d_H)\times d_S}$ and let $M=\stack(M_1,M_2)$, be a partition of $M$, where $M_1\in\real{d_N\times d_S}$ and $M_2\in\real{d_H\times d_S}$. Then, the desired basis $S$ can be found equivalently as $S=NM_1$ or $S=HM_2$. For the sake of brevity, we will denote this result as $S=\rangeint(N,H)$.
+
+\section{Transformations}
+In this section we list the transformations that our algorithm will try to detect, and derive expressions for the kind of tangent vectors they produce.
+
+\todo{This is a good place to introduce notation $R_{i0}$, $x_{i0}$, $\hat{v}$ for 2-D and 3-D cases, etc. }
+\subsection{Basic transformations}
+\begin{align}
+  T(t)&=ut,\\
+  \dot{T}(t)&=u.  
+\end{align}
+\begin{align}
+  R(t)&=\exp(t\hat{v}),\\
+  \dot{R}(t)&= R(t)\hat{v}.  
+\end{align}
+where $u\in\real{2}$ and $v\in\real{}$ for the 2-D case and $u,v\in\real{3}$ for the 3-D case.
+
+\todo{Add scale transformation $S(t)=at$ and modify paragraph below}
+
+% \subsection{Individual rotation}
+% In this section we examine rotations of a single node around its own position. This kind of transformation can be expressed as
+% \begin{align}
+% \label{eq:singleRotation}
+%   x_i(t)&=x_{i0},  \\
+%   R_i(t)&=R(t) R_{i0}.
+% \end{align}
+% The expressions for the tangents are different for the 2-D and 3-D case, and can be easily obtained by differentiating the constraint $R(t)\transpose R(t)=I_{3,3}$.
+% \paragraph{The 2-D case.} The derivative of \eqref{eq:singleRotation} is given by
+% \begin{align}
+% \label{eq:derSingleRotation-2D}
+% x_i(t)&=\vct{0},\\
+% \dR_i(t)&=R(t)Sv.
+% \end{align}
+
+% \paragraph{The 3-D case.} The derivative of \eqref{eq:singleRotation} is given by
+% \begin{align}
+% \label{eq:derSingleRotation-3D}
+% \dx_i(t)&=\vct{0},\\
+% \dR_i(t)&=R(t)\hat{v}.
+% \end{align}
+
+% In both cases, the tangent vectors have the form
+% \begin{equation}
+%   w=\vct{e}_i \kron \bmat{\vct{0}\\v}.
+% \end{equation}
+
+\subsection{Translation}
+In this section we examine translation of the position of single node without changing its orientation. This kind of transformation can be expressed as
+\begin{align}
+\label{eq:singleTranslation}
+  x_i(t)&=x_{i0}+T(t),  \\
+  R_i(t)&= R_{i0}.
+\end{align}
+This produces derivatives of the form
+\begin{align}
+\label{eq:derSingleTranslation}
+  \dx_i(t)&=u,  \\
+  \dR_i(t)&=\vct{0}.
+\end{align}
+and tangent vectors of the form
+\begin{equation}
+  \label{eq:tangentVectorTranslation}
+  w=\vct{e}_i \kron \bmat{u\\\vct{0}}.
+\end{equation}
+
+\subsection{Rotation around a center}
+The transformation given by a rotation around a center $c$ can be expressed as
+\begin{equation}
+\begin{aligned}
+\label{eq:rotation}
+  x_i(t)&=R(t)(x_{i0}-c)+c,\\
+  R_i(t)&=R(t)R_{i0}.
+\end{aligned}
+\end{equation}
+where $R(0)=I$ and $\dR(0)=\hat{v}$.
+The tangent vectors corresponding to \eqref{eq:rotation} can then be expressed as
+\begin{equation}
+\begin{aligned}
+\label{eq:derRotation}
+  \dxi(0)&=\hat{v}(x_{i0}-c)=\hat{v}y_i,\\
+  \dR_i(0)&=\hat{v}R_{i0}
+\end{aligned}
+\end{equation}
+where $y_i=x_{i0}-c$ for all $i\in V$.
+\paragraph{The 2-D case.} We can rewrite \eqref{eq:derRotation} as 
+\begin{equation}
+\begin{aligned}
+\label{eq:derRotation-2D}
+  \dxi(0)&=Sy_iv,\\
+  \dR_i(0)&=SR_{i0}v_i=R_{i0}Sv,
+\end{aligned}
+\end{equation}
+where we used the fact that $R_{i0}$ and $S$ both belong to $SO(2)$, and hence commute.
+This produces tangent vectors of the form
+\begin{equation}
+  \label{eq:tangentVectorRotation-2D}
+  w=\vct{e}_i \kron \bmat{Sy_i v\\v}.  
+\end{equation}
+\paragraph{The 3-D case.} We can rewrite \eqref{eq:derRotation} as
+\begin{equation}
+\begin{aligned}
+\label{eq:derRotation-3D}
+  \dxi(0)&=-\hat{y}_iv,\\
+  \dR_i(0)&=R_{i0}(R_{i0}\transpose v)^\wedge,
+\end{aligned}
+\end{equation}
+where we used the fact that $R\hat{v}R\transpose=(R\transpose v)^\wedge$ when $\det(R)=1$. 
+This produces tangent vectors of the form
+\begin{equation}
+  \label{eq:tangentVectorRotation-3D}
+  w=\vct{e}_i \kron \bmat{\hat{y}_i v\\R_{i0}\transpose v}.  
+\end{equation}
+
+Note that, in both cases, when the center of rotation corresponds to the position of the node, \ie, $c=x_i$, then we have $\dx_i=\vct{0}$.
+
+\subsection{Scaling around a center}
+A scaling around a center $c$ can be expressed as
+\begin{equation}
+\begin{aligned}
+\label{eq:scaling}
+  x_i(t)&=(x_{i0}-c)at+c,\\
+  \Ri(t)&=R_{i0},
+\end{aligned}
+\end{equation}
+where $a\in\real{}$ is an arbitrary constant.
+This produces derivatives of the form
+\begin{equation}
+\label{eq:derScaling}
+\begin{aligned}
+  \dxi(0)&=(x_{i0}-c)a=y_ia,\\
+  \dRi(0)&=\vct{0},
+\end{aligned}
+\end{equation}
+and tangent vectors of the form
+\begin{equation}
+  w=\vct{e}_i\kron a\bmat{y_i\\\vct{0}}.
+\end{equation}
+
+
+\subsection{Relation between transformations and tangent vectors}
+In the algorithm that we will present below, we will try to detect transformations of the form given in the sections above. However, there is a difficulty here: the relation between the two is not one-to-one, and the same tangent vector could be obtained by combining different transformations. For instance, if we combine a rotation around an arbitrary center $c\neq x_i$ with a carefully chosen rotation around the position of the node $c=x_i$ (see \eqref{eq:tangentVectorRotation-2D} and \eqref{eq:tangentVectorRotation-3D}), we can produce tangent vectors of the form given by a single translation (see \eqref{eq:derSingleTranslation}). There are two elements that allow us to get around this difficulty. First, the contraints in the network might not allow combinations such as the one described above. Second, since our algorithm will detect exactly the parameter of the transformation from the tangent vectors, we will be able to actually apply the transformation (with a non-infinitesimal amount) and verify if the constraints remain satisfied, and hence avoid spurious detections.
+ 
+\section{Jacobian of the constraints}
+\subsection{Fixed bearing contraint}
+\begin{equation}
+  \nxixj-\tij=0.
+\end{equation}
+To extract the Jacobian, we study the function
+\begin{equation}
+  f(t)=u\transpose\left(\nxixj-\tij\right)  
+\end{equation}
+where $x_i$ and $x_j$ depend on $t$ and $u\in\real{3}$ is an arbitrary constant vector.
+First, we compute a couple of derivatives that are going to be useful below.
+\begin{gather}
+  \dert\frac{1}{2}\norm{\xixj}^2=(\xixj)\transpose(\dxixj)\\
+  \dert\norm{\xixj}=\frac{1}{\norm{\xixj}}\dert\frac{1}{2}\norm{\xixj}^2 =(\dxixj)\transpose\nxixj\label{eq:dernormxixj}
+\end{gather}
+The derivative of $f$ is then:
+\begin{multline}
+\dot{f}(t)=\\\frac{1}{\norm{\xixj}^2}\left(u\transpose(\dxixj)\norm{\xixj}-u\transpose(\xixj)\left(\nxixj\right)\transpose(\dxixj)\right)\\
+=u\transpose\left(\frac{1}{\norm{\xixj}}\left(I-\left(\nxixj\right)\left(\nxixj\right)\transpose\right)\right)(\dxixj)\\
+=u\transpose\left(\bmat{1 & -1}\kron \frac{1}{\norm{\xixj}}\left(I-\left(\nxixj\right)\left(\nxixj\right)\transpose\right)\right)\bmat{\dxi\\\dxj}
+\end{multline}
+The Jacobian is then equal to
+\begin{equation}
+J_1(x_i,x_j)=\frac{1}{\norm{\xixj}}\bmat{1 & -1}\kron\left(I-\left(\nxixj\right)\left(\nxixj\right)\transpose\right)
+\end{equation}
+\subsection{Relative bearing constraint}
+\begin{equation}
+  \nxixj-\Ri\tij=0,
+\end{equation}
+where $\Ri$ is the rotation matrix that passes from local to global coordinates.
+Similarly to before, we study the function
+\begin{equation}
+  f(t)=u\transpose\left(\nxixj-R_i\tij\right),
+\end{equation}
+where now also $\Ri$ is a function of $t$.
+\paragraph{The 2-D case.} We have $\dRi=\Ri S v_i$, where $v\in\real{}$. The derivative of $f$ with respect to $t$ is then equal to:
+\begin{equation}
+  \dot{f}(t)=u\transpose\left(J_1(x_i,x_j) \bmat{\dxi\\\dxj}-\Ri S\tij v_i\right)
+\end{equation}
+The Jacobian is then equal to
+\begin{equation}
+  J_2(x_i,x_j,R_i)=\bmat{J_1(x_i,x_j) & - \Ri S \tij & 0}
+\end{equation}
+for the tangent vector in the form
+\begin{equation}
+  \bmat{\dxi\\\dxj\\v_i\\v_j}\in\real{8}.
+\end{equation}
+\paragraph{The 3-D case.} We have $\dRi=\Ri\hat{v}_i$, for some $v_i\in\real{3}$. The derivative of $f$ with respect to $t$ is then equal to:
+\begin{multline}
+  \dot{f}(t)=u\transpose\left(\dert\nxixj-\dRi\tij\right)\\
+=u\transpose\left(J_1(x_i,x_j) \bmat{\dxi\\\dxj}-\Ri\hat{v}_i\tij\right)
+=u\transpose\left(J_1(x_i,x_j) \bmat{\dxi\\\dxj}+\Ri\htij v_i\right).
+\end{multline}
+The Jacobian is then equal to
+\begin{equation}
+  J_2(x_i,x_j,R_i)=\bmat{J_1(x_i,x_j) & \Ri\htij & \vct{0}}
+\end{equation}
+for the tangent vector in the form
+\begin{equation}
+  \bmat{\dxi\\\dxj\\v_i\\v_j}\in\real{12}.
+\end{equation}
+\subsection{Distance constraint}
+\begin{equation}
+  \norm{\xixj}-d_{ij}=0  
+\end{equation}
+Since the constraint is one dimensional, we can directly use (\ref{eq:dernormxixj}), and we obtain the Jacobian
+\begin{equation}
+  J(x_i,x_j)=\bmat{1 & -1}\kron\frac{(\xixj)\transpose}{\norm{\xixj}}
+\end{equation}
+for the tangent vector in the form
+\begin{equation}
+  \bmat{\dxi\\\dxj}.  
+\end{equation}
+\subsection{Relative rotations}
+\begin{equation}
+  R_i(t)=R_{ij}Rj(t)  
+\end{equation}
+Taking the derivative, we obtain
+\begin{equation}
+  \label{eq:derRelativeRotation}
+  R_{i0}\hat{v}_i=R_{ij} R_{j0} \hat{v}_j  
+\end{equation}
+\paragraph{The 2-D case.} We can rewrite \eqref{eq:derRelativeRotation} as
+\begin{equation}
+  \bmat{(R_{i0}S) ^v & -(R_{ij}R_{j0}S)^v}\bmat{v_i\\v_j}=0
+\end{equation}
+\paragraph{The 3-D case.} We can rewrite \eqref{eq:derRelativeRotation} as
+\begin{equation}
+  R_{i0}\hat{v}_i=\Rij R_{j0} \hat{v}_j
+\end{equation}
+By defining $R_{i0}=\bmat{r_{i1} & r_{i2} & r_{i3}}$, multiplying out and equating the columns, we obtain
+\begin{equation}
+\begin{aligned}
+  \bmat{\vct{0} & -r_{i3} & r_{i2}}v_i&=   \bmat{\vct{0} & -\Rij r_{j3} & \Rij r_{j2}}v_j\\
+  \bmat{r_{i3} & \vct{0} & -r_{i1}}v_i&=   \bmat{\Rij r_{j3} & \vct{0} & -\Rij r_{j1}}v_j\\
+  \bmat{-r_{i2} & r_{i1} & \vct{0}}v_i&=   \bmat{-\Rij r_{j2} & \Rij r_{j1} & \vct{0}}v_j
+\end{aligned}
+\end{equation}
+\todo{Explain with $\hat{R}$}
+\subsection{Fixed translations}
+\begin{equation}
+  x_i(t)=x_j(t)+T_{ij}
+\end{equation}
+Taking the derivative, we obtain
+\begin{equation}
+  \bmat{I & -I}\bmat{\dx_i}{\dx_j}=0  
+\end{equation}
+\subsection{Relative translation}
+\begin{equation}
+    x_i(t)-x_j(t)-R_i(t)T_{ij}=0
+\end{equation}
+Taking the derivative, we get
+\begin{equation}
+  \dx_i-\dx_j-\dR_iT_{ij}=0  
+\end{equation}
+\paragraph{The 2-D case.} This becomes
+\begin{equation}
+    \dx_i-\dx_j-R_iST_{ij}v_i=0,
+\end{equation}
+which, in matrix form, is equal to
+\begin{equation}
+  \bmat{I & -I & -R_iST_{ij} & \vct{0}}\bmat{\dx_i\\\dx_j\\v_i\\v_j}=0
+\end{equation}
+\paragraph{The 3-D case.} This becomes
+\begin{equation}
+    \dx_i-\dx_j+R_i\hat{T}_{ij}v_i=0,
+\end{equation}
+which, in matrix form, is equal to
+\begin{equation}
+  \bmat{I & -I & R_i\hat{T}_{ij} & \vct{0}}\bmat{\dx_i\\\dx_j\\v_i\\v_j}=0
+\end{equation}
+\subsection{Gravity vector}
+\begin{equation}
+  R_ig-g_w=\vct{0},  
+\end{equation}
+where $g,g_w\in\real{d_T}$ are fixed vectors (e.g., the gravity vector).
+
+\paragraph{The 2-D case.}
+\begin{equation}
+  R_iSg v_i=\vct{0}
+\end{equation}
+
+\paragraph{The 3-D case.}
+\begin{equation}
+  -R_i\hat{g} v_i=0  
+\end{equation}
+
+\subsection{Fixed plane}
+\begin{equation}
+  n\transpose x_i=c,  
+\end{equation}
+where $n\in\real{d_T}$ is the normal to the plane and $c\in\real{}$ is a scalar. Both $n$ and $c$ are constants.
+
+\begin{equation}
+  n\transpose \dx_i=0.  
+\end{equation}
+
+\subsection{Fixed line}
+\begin{equation}
+  n^\bot x_i=0,  
+\end{equation}
+where $n\in\real{d_T}$ is the direction of the line.
+
+\begin{equation}
+  n^\bot \dx_i=0.  
+\end{equation}
+
+
+
+\section{Exploring the nullspace}
+Let $J$ be the Jacobian of all the contraints in the network (see previous section) for tangent vectors of the form $w=\stack(\{\dx_i,v_i\}_\iV)$.
+Let $N=\nullspace(J)$. The vectors in $N$ represent all the possible infinitesimal transformations that we can apply to the nodes which do not change the value for the constraints. In this section, we will give strategies for exploring to which transformations these vectors correspond. We first look for global transformations which affect every node. Then for local transformations which affect each node independently. Finally, we consider transformations which define segments in the networks, \ie, different segments can be transformed independently.
+
+\subsection{Common translations}
+\label{sec:common-translations}
+A common translation is obtained by applying the same transformation \eqref{eq:singleTranslation} to all the nodes $\iV$. This produces tangent vectors of the form
+\begin{equation}
+  \label{eq:nullvectCommonTransl}
+  w=\vct{1}\kron\bmat{u\\\vct{0}}=H_Tu,  
+\end{equation}
+where
+\begin{equation}
+  H_T=\vct{1}_N\kron\bmat{I_{d_T,d_T}\\\vct{0}_{d_T,d_R}}.
+\end{equation}
+By computing $S_T=\rangeint(N,H_T)$, we obtain a basis for all the vectors of the form \eqref{eq:nullvectCommonTransl} in the range of $N$. These vectors correspond to common translations of all the nodes.
+
+\subsection{Common rotations around a center}
+In order to consider rotations, we need to consider a center $c\in\real{d_T}$ around which the rotation happens. Since the constraints are applied to nodes, we need to consider only the case $c=x_i$ for some $i \in V$.
+
+\todo{Check if this is ok.}
+
+A common rotation is obtained by applying the same transformation \eqref{eq:rotation} to all the nodes $\iV$. This produces tangent vectors of the form
+\begin{equation}
+  w=H_R v,
+\end{equation}
+where $H_R$ is a matrix and $v$ is a vector which are different depending on the dimension of the ambient space (2-D versus 3-D).
+\paragraph{The 2-D case.} The matrix $H_R$ is then of the form $H_R=\stack(\{Sy_i,1\}_\iV)$ and $v\in\real{}$.
+\paragraph{The 3-D case.} The matrix $H_R$ is then of the form $H_R=\stack(\{-\hat{y}_i,R_{i0}\transpose\})$ and $v\in\real{3}$.
+
+Once the specific form of $H_R$ is determined, we can obtain a basis $S$ for all the vectors spanned by $N$ that correspond to a global rotation as $S_R=\rangeint(N,H_R)$.
+
+\subsection{Common scaling}
+Similar to the common rotation case, we consider only the case where the center corresponds to one of the nodes, \ie, $c=x_i$. By applying \eqref{eq:scaling} to all the nodes $\iV$, we obtain tangent vectors of the form
+\begin{equation}
+  w=\vct{1}\kron\bmat{y_i\\\vct{0}}=H_Sa,
+\end{equation}
+where $H_S=\stack(\{y_i,\vct{0}\}_\iV\})$. As before, we can obtain a basis $S$ for all vectors spanned by $N$ that correspond to a global scaling as $S_S=\rangeint(N,H_S)$.
+
+\subsection{Clustering transformations}
+In the next sections, we will consider shakes that induce clusters in the formation. In particular, a group of nodes constitutes a cluster if there is at least one infinitesimal transformation (translation, rotation or scaling) which acts on them while leaving all the others unaffected.
+
+\todo{There is some gap between the definition given here and what is done in the clustering algorithms}
+
+\todo{Put outline of how it works}
+
+%we will show how to detect groups of nodes that can be independently translated, rotated or scaled. The basic idea is to consider one of the nodes and isolate from $\rangespace(N)$ only the vectors which produce valid transformations for at least one node, \ie, for which the tangent vectors have the potential to be the same as those generated by a transformation. In addition, we also look for transformations that are orthogonal to the global ones, which were already detected before. These potential candidates vectors are then processed in order to generate partitions of the nodes, using the fact that each node might be influenced differently from each transformation.
+
+\subsection{Clustering scaling}
+\todo{make derivation of $K$ more rigorous}
+
+\todo{add the separate case for the center}
+
+We use $N_S \in \real{N(d_T+d_R)\times K_S}$ to represent the basis of vectors in the null-space of $J$, compatible with scaling transformations, and perpendicular to those in $S_N$ (which represent a common global scaling). This basis can be found as $N_S=\nullspace(\stack(J,K,S_N\transpose))$, where $K=\stack(\{K_i\}_\iV)$ and $K_i=e_i\transpose\kron\bigl(\stack(y_i\orth, \vct{0}_{d_R,d_T})\bigr)$. The orthogonal complement $y_i\orth$ can be efficiently computed using Householder transformations. 
+
+\todo{Extract the result below in a proposition}
+
+Let $N_{Si}^{(T)} \in \real{d_T\times K_S}$ contain the rows of $N_S$ corresponding to $\dx_i$, $\iV$, and let $n_S\in\real{K_S}$. Given two nodes $i,j\in V$ such that $x_i\neq c$ and $x_j\neq c$, then, using \eqref{eq:derScaling}, we have that
+\begin{equation}
+  \frac{y_i\transpose N_{Si}^{(T)} n_S}{y_i\transpose y_i}=\frac{y_j\transpose N_{Sj}^{(T)} n_S}{y_j\transpose y_j}
+\end{equation}
+for all $n_S\in\real{K_S}$ if and only if $i$ and $j$ belong to the same cluster. Assemble a matrix $C\in\real{N\times K_S}$ where each row $c_i\transpose$ is given by 
+\begin{equation}
+    c_i\transpose=\begin{cases} \frac{y_i\transpose N_{Si}^{(T)}}{y_i\transpose y_i} & \textrm{if } y_i\neq\vct{0}\\\vct{0}\transpose & \textrm{otherwise}\end{cases}.
+\end{equation}
+Then the above is equivalent to saying that $i$ and $j$ are in the same group if and only if the corresponding rows in $C$ are the same. Notice that scaling trasformations do not affect the node at the center, \ie, the node $i$ for which $x_i=c$. This can be interpreted as node $i$ simultaneously belonging to all the groups.
+
+\subsection{Clustering rotations}
+First, we present how to isolate from $\nullspace(J)$ only the tangent vectors that satisfy \eqref{eq:derRotation} for every $\iV$. Let $n\in\real{N(d_T+d_R)}$ be any of such vectors, and denote as $\niT$ and $\niR$ the parts of $n$ corresponding to $\dxi$ and $v_i$, respectively.
+\paragraph{The 2-D case.} By definition, from \eqref{eq:derRotation-2D} we have
+\begin{align}
+  \label{eq:nullConstraintDerRotation-2D-T}
+  \niT&=Sy_iv\\
+  \label{eq:nullConstraintDerRotation-2D-R}
+  \niR&=v,
+\end{align}
+where $v$ is the axis of the infinitesimal rotation. Substituting the second equation in the first, we obtain
+\begin{align}
+    \niT&=Sy_i\niR\\
+    \iff \bmat{I & -Sy_i}\bmat{\niT\\\niR}&=0 
+    \label{eq:nullConstraintDerRotation-2D-2}
+\end{align}
+Note that, for the node $x_i=c$, we have $y_i=0$. This means that any value of $\niR$ will satisfy this constraint. This means that the number of tangent vectors in $\nullspace(J)$ and also satisfying the constraints~\eqref{eq:nullConstraintDerRotation-2D-2} for all $i$ will depend not only on the number of clusters, but also on whether the rotation at the center is fixed or not.
+\paragraph{The 3-D case.} By definition, from \eqref{eq:derRotation-3D} we have
+\begin{align}
+  \label{eq:nullConstraintDerRotation-3D-T}
+    \niT&=-\hat{y}_i v,\\
+  \label{eq:nullConstraintDerRotation-3D-R}
+    \niR&=R_{i0}\transpose v,
+\end{align}
+where $v$ is the axis of the infinitesimal rotation. The second equation implies $v=R_{i0}\niR$. Hence, \eqref{eq:nullConstraintDerRotation-3D} is equivalent to 
+\begin{align}
+    \niT&=-\hat{y}_i R_{i0}\niR\\
+    \iff \bmat{I & \hat{y}_i R_{i0}}\bmat{\niT\\\niR}&=0 
+    \label{eq:nullConstraintDerRotation-3D-2}
+\end{align}
+Similar to the 2-D case, for the center $x_i=c$, the constraint \eqref{eq:nullConstraintDerRotation-3D-2} will be satisfied for any value of $\niR$. Moreover, and differently from the 2-D case, if the constraint is satisfied by the pair $(\niT,\niR)$ then it is going to be satisfied also by $(\niT,\niR+\alpha R_{i0}\transpose y_i)$ (due to the presence of $\hat{y}_i$). Intuitively, this is due to the fact that if we rotate one of the points, or tilt the axis of rotation toward the point and then rotate it again, in both cases $\niT$ will have the same direction (in both cases, it will be normal to the plane containing the axis of rotation and the point).
+
+\todo{A figure would be nice here}
+
+This means that the number of tangent vectors in $\nullspace(J)$ and also satisfying the constraints~\eqref{eq:nullConstraintDerRotation-3D-2} will depend not only on the number of clusters, but also whether the rotations are fixed. Luckily, we can check for each node if this kind of ambiguity exists, as we now explain. If both $(\niT,\niR)$ and $(\niT,\niR+\alpha R_{i0}\transpose y_i)$ give rise to tangent vectors which are both in $\rangespace(N_S)$, then, by the properties of vector spaces, also the vector corresponding to $(\vct{0}, R_{i0}\transpose y_i)$ will be in $\rangespace(N_S)$. Therefore, we can check if the ambiguity is present by looking at the angle between such vector and $\rangespace(N_S)$.
+
+Once we have isolated candidate vectors, we can use them to find the clusters. Let $N_R$ be a basis for the space of vectors in $\null(J)$ and satisfying the contraints above.
+
+\todo{Make this more rigorous by introducing the $K_i$'s}
+\paragraph{The 2-D case.} Let $N_{Ri}^{(R)} \in \real{1 \times K_R}$ represent the row in $N_R$ corresponding to $v_i$. Then, from condition \eqref{eq:nullConstraintDerRotation-2D-R}, we will have that, for all $n\in\real{K_R}$, and for all $i,j\in V$, $x_i\neq c$, $x_j\neq c$ such that nodes $i$ and $j$ can be rotated together, 
+\begin{align}
+    N_{Ri}^{(R)}n&=N_{Rj}^{(R)}n\\
+\iff N_{Ri}^{(R)}&=N_{Rj}^{(R)}.
+\end{align}
+Therefore, the clusters can be obtained by simply computing the distances between the different rows $N_{Ri}^{(R)}$ and cluster them. Notice that the center of the rotation, \ie, the node for which $x_i=c$, will always belong to all the clusters.
+\paragraph{The 3-D case.} For the 3-D case, we need a different strategy, due to the fact that, as mentioned above, rotations around the single nodes could introduce entire subspaces of spurious vectors.
+Consider two nodes $i,j\in V$, $x_i\neq c$, $x_j\neq c$ that can be rotated together and a vector $n$ in the span of $N_R$. From \eqref{eq:nullConstraintDerRotation-3D-R} and the discussion above, there must be a $v$ (the axis of rotation) and coefficients $\alpha_i,\beta_i,\alpha_j,\beta_j\in\real{}$, satisfying
+\begin{equation}
+  v=\alpha_i R_{i0} \niR + \beta_i \tilde{y}_i=\alpha_j R_{j0} \njR + \beta_j \tilde{y}_j,
+\end{equation}
+where $\tilde{y}_i=y_i$ if the ambiguity from the local rotation is present, and $\tilde{y}=\vct{0}$ if it is not (following the test given above).
+This means that
+\begin{equation}
+\label{eq:candidateVFromEdges}
+  v\sim \rangeint(\bmat{R_{i0}\niR,\tilde{y}_i},\bmat{R_{j0}\njR,\tilde{y}_j}),
+\end{equation}
+where $\sim$ represents equality up to a scaling factor. We can evaluate \eqref{eq:candidateVFromEdges} on all the edges in the network for which a constraint is defined. Note that we can exclude the edges for which one of the endpoints is the center (because the center belongs to all the clusters). This will produce a set of candidate rotation axes $\{v_{k}\}$.
+
+\todo{Add here the case of nodes only connected to the center}
+
+ We can then check for which nodes each candidate rotation axis satisfies \eqref{eq:nullConstraintDerRotation-3D-T} and the subspace angle between $v_k$ and $\rangespace(\bmat{R_{i0}\niR,\tilde{y}_i})$ is almost zero, \ie, if $v_k$ is compatible with the values of $\niR$ and $\niT$ for that node. This produces a clustering for the particular chosen vector $n$ (where each cluster is given by one or more $v_{k}$). The final rotation clusters can then be obtained by considering clusters that are consistent among all the possible choice of $n$ (\eg, for all the columns of $N_R$).
+
+\todo{Clean this section}
+
+\todo{Think about constraints on segmentations obtained by different modes}
+
+\section{Conclusion and future work}
+We have presented an algorithm for finding and analyzing shakes in a localized network or team formation. Our approach is based on null-space of the Jacobian of the constraints, and it is, therefore, of numerical nature. In practice, this might create problems for special cases where some of the constraints are redundant or nearly redundant. It would be interesting to see if purely combinatorial algorithms, in the spirit of \cite{??}, could be developed for the kind of networks considered in this paper.
+\end{document}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: t
+%%% End: 

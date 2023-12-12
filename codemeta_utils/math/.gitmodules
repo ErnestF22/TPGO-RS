@@ -1,0 +1,12 @@
+[submodule "RiemannianGeometry"]
+	path = RiemannianGeometry
+	url = git@bitbucket.org:tronroberto/codemathriemanniangeometry.git
+	update = merge
+[submodule "utilities"]
+	path = utilities
+	url = git@bitbucket.org:tronroberto/codemathutilities.git
+	update = merge
+[submodule "EuclideanGeometry"]
+	path = EuclideanGeometry
+	url = git@bitbucket.org:tronroberto/codematheuclideangeometry.git
+	update = merge

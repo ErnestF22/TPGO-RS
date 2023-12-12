@@ -1,0 +1,137 @@
+\ Model Double Integrators_copy
+\ LP format - for model browsing. Use MPS format to capture full model detail.
+Minimize
+ 
+Subject To
+ initial_state_constr_x1: x[0,0] = 0.8
+ initial_state_constr_x2: x[0,1] = 0
+ dynamics_constr_x1_step0: 0.0246913580246914 u[0] + x[0,0]
+   + 0.2222222222222222 x[0,1] - x[1,0] = 0
+ dynamics_constr_x2_step0: 0.2222222222222222 u[0] + x[0,1] - x[1,1] = 0
+ dynamics_constr_x1_step1: 0.0246913580246914 u[1] + x[1,0]
+   + 0.2222222222222222 x[1,1] - x[2,0] = 0
+ dynamics_constr_x2_step1: 0.2222222222222222 u[1] + x[1,1] - x[2,1] = 0
+ dynamics_constr_x1_step2: 0.0246913580246914 u[2] + x[2,0]
+   + 0.2222222222222222 x[2,1] - x[3,0] = 0
+ dynamics_constr_x1_step3: 0.0246913580246914 u[3] + x[3,0]
+   + 0.2222222222222222 x[3,1] - x[4,0] = 0
+ dynamics_constr_x2_step3: 0.2222222222222222 u[3] + x[3,1] - x[4,1] = 0
+ dynamics_constr_x1_step4: 0.0246913580246914 u[4] + x[4,0]
+   + 0.2222222222222222 x[4,1] - x[5,0] = 0
+ dynamics_constr_x2_step4: 0.2222222222222222 u[4] + x[4,1] - x[5,1] = 0
+ dynamics_constr_x1_step5: 0.0246913580246914 u[5] + x[5,0]
+   + 0.2222222222222222 x[5,1] - x[6,0] = 0
+ dynamics_constr_x2_step5: 0.2222222222222222 u[5] + x[5,1] - x[6,1] = 0
+ dynamics_constr_x1_step6: 0.0246913580246914 u[6] + x[6,0]
+   + 0.2222222222222222 x[6,1] - x[7,0] = 0
+ dynamics_constr_x2_step6: 0.2222222222222222 u[6] + x[6,1] - x[7,1] = 0
+ dynamics_constr_x1_step7: 0.0246913580246914 u[7] + x[7,0]
+   + 0.2222222222222222 x[7,1] - x[8,0] = 0
+ dynamics_constr_x2_step7: 0.2222222222222222 u[7] + x[7,1] - x[8,1] = 0
+ dynamics_constr_x1_step8: 0.0246913580246914 u[8] + x[8,0]
+   + 0.2222222222222222 x[8,1] - x[9,0] = 0
+ R20: 99999 Z_integer[0,0] - mu[0,0] <= 99999
+ R22: 99999 Z_integer[0,1] - mu[0,1] <= 99999
+ R24: 99999 Z_integer[1,0] - mu[1,0] <= 99999
+ R26: 99999 Z_integer[1,1] - mu[1,1] <= 99999
+ R28: 99999 Z_integer[2,0] - mu[2,0] <= 99999
+ R30: 99999 Z_integer[2,1] - mu[2,1] <= 99999
+ R32: 99999 Z_integer[3,0] - mu[3,0] <= 99999
+ R34: 99999 Z_integer[3,1] - mu[3,1] <= 99999
+ R36: 99999 Z_integer[4,0] - mu[4,0] <= 99999
+ R38: 99999 Z_integer[4,1] - mu[4,1] <= 99999
+ R40: 99999 Z_integer[5,0] - mu[5,0] <= 99999
+ R42: 99999 Z_integer[5,1] - mu[5,1] <= 99999
+ R44: 99999 Z_integer[6,0] - mu[6,0] <= 99999
+ R46: 99999 Z_integer[6,1] - mu[6,1] <= 99999
+ R48: 99999 Z_integer[7,0] - mu[7,0] <= 99999
+ R50: 99999 Z_integer[7,1] - mu[7,1] <= 99999
+ R52: 99999 Z_integer[8,0] - mu[8,0] <= 99999
+ R54: 99999 Z_integer[8,1] - mu[8,1] <= 99999
+ R56: 99999 Z_integer[9,0] - mu[9,0] <= 99999
+ R58: 99999 Z_integer[9,1] - mu[9,1] <= 99999
+ Eventually_Predicate: - x[0,0] + mu[0,0] = -3
+ Eventually_Predicate: x[0,0] + mu[0,1] = -2
+ Eventually_Predicate: - x[1,0] + mu[1,0] = -3
+ Eventually_Predicate: x[1,0] + mu[1,1] = -2
+ Eventually_Predicate: - x[2,0] + mu[2,0] = -3
+ Eventually_Predicate: x[2,0] + mu[2,1] = -2
+ Eventually_Predicate: - x[3,0] + mu[3,0] = -3
+ Eventually_Predicate: x[3,0] + mu[3,1] = -2
+ Eventually_Predicate: - x[4,0] + mu[4,0] = -3
+ Eventually_Predicate: x[4,0] + mu[4,1] = -2
+ Eventually_Predicate: - x[5,0] + mu[5,0] = -3
+ Eventually_Predicate: x[5,0] + mu[5,1] = -2
+ Eventually_Predicate: - x[6,0] + mu[6,0] = -3
+ Eventually_Predicate: x[6,0] + mu[6,1] = -2
+ Eventually_Predicate: - x[7,0] + mu[7,0] = -3
+ Eventually_Predicate: x[7,0] + mu[7,1] = -2
+ Eventually_Predicate: - x[8,0] + mu[8,0] = -3
+ Eventually_Predicate: x[8,0] + mu[8,1] = -2
+ Eventually_Predicate: - x[9,0] + mu[9,0] = -3
+ Eventually_Predicate: x[9,0] + mu[9,1] = -2
+ Eventually_Integer_Constraint: z_STL - Z_integer[0,0] - Z_integer[1,0]
+   - Z_integer[2,0] - Z_integer[3,0] - Z_integer[4,0] - Z_integer[5,0]
+   - Z_integer[6,0] - Z_integer[7,0] - Z_integer[8,0] - Z_integer[9,0]
+   <= 0
+ Eventually_Integer_Constraint: z_STL - Z_integer[0,1] - Z_integer[1,1]
+   - Z_integer[2,1] - Z_integer[3,1] - Z_integer[4,1] - Z_integer[5,1]
+   - Z_integer[6,1] - Z_integer[7,1] - Z_integer[8,1] - Z_integer[9,1]
+   <= 0
+ R92: z_STL = 1
+Bounds
+ -7 <= u[0] <= 7
+ -7 <= u[1] <= 7
+ -7 <= u[2] <= 7
+ -7 <= u[3] <= 7
+ -7 <= u[4] <= 7
+ -7 <= u[5] <= 7
+ -7 <= u[6] <= 7
+ -7 <= u[7] <= 7
+ -7 <= u[8] <= 7
+ x[0,0] free
+ x[0,1] free
+ x[1,0] free
+ x[1,1] free
+ x[2,0] free
+ x[2,1] free
+ x[3,0] free
+ x[3,1] free
+ x[4,0] free
+ x[4,1] free
+ x[5,0] free
+ x[5,1] free
+ x[6,0] free
+ x[6,1] free
+ x[7,0] free
+ x[7,1] free
+ x[8,0] free
+ x[8,1] free
+ x[9,0] free
+ mu[0,0] free
+ mu[0,1] free
+ mu[1,0] free
+ mu[1,1] free
+ mu[2,0] free
+ mu[2,1] free
+ mu[3,0] free
+ mu[3,1] free
+ mu[4,0] free
+ mu[4,1] free
+ mu[5,0] free
+ mu[5,1] free
+ mu[6,0] free
+ mu[6,1] free
+ mu[7,0] free
+ mu[7,1] free
+ mu[8,0] free
+ mu[8,1] free
+ mu[9,0] free
+ mu[9,1] free
+Binaries
+ z_STL Z_integer[0,0] Z_integer[0,1] Z_integer[1,0] Z_integer[1,1]
+ Z_integer[2,0] Z_integer[2,1] Z_integer[3,0] Z_integer[3,1] Z_integer[4,0]
+ Z_integer[4,1] Z_integer[5,0] Z_integer[5,1] Z_integer[6,0] Z_integer[6,1]
+ Z_integer[7,0] Z_integer[7,1] Z_integer[8,0] Z_integer[8,1] Z_integer[9,0]
+ Z_integer[9,1]
+End

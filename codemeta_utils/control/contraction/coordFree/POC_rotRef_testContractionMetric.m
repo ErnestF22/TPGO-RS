@@ -1,0 +1,133 @@
+% Compute and compare the contraction metric on TSO(3)xSO(3) by computing
+% the covarient derivative and metric in "nonnatural" coordinates. This is
+% as opposed to computing the covar. der. and metric by using the "natural"
+% coordinates. The idea being that the analytical form should be "simpler"
+% without cross terms introduced by the mixing using "natural" coordinates.
+% Created on: 20190930
+
+%% Define Parameters
+clear all; close all; clc;
+
+% Defined random tangent vectors
+nu = 10*randn(3,1);
+zeta = 10*randn(3,1);
+eta=10*randn(3,1);
+w=10*randn(3,1);
+% Choose a random point to evaluate at
+R_t = rot_randn; RRef_t = rot_randn;
+% Random metric on product manifold
+M_nonnatural=10*randn(3,3);
+M_nonnatural=M_nonnatural'*M_nonnatural;
+m1=M_nonnatural(2,2);m2=M_nonnatural(2,3);m3=M_nonnatural(3,3);
+m4=M_nonnatural(1,1);m5=M_nonnatural(1,2);m6=M_nonnatural(1,3);
+% Compute the transformation matrix from "nonnatural" to "natural" coords
+% using Schur's complement
+[J,M_natural]=rotRef_SchurComplement(M_nonnatural);
+alpha = J(2,1); beta = J(3,1);
+kd = 5; kv = 2;
+
+%% Test <D_Y_X_SO3, Y>
+% NOTE: D_Y_X_SO3 is the vector field on the SO(3) component of the 
+% manifold at RRef
+% <D_Y_X_SO3, Y> = <D_Y_X_SO3, RRef*hat3(m4*nu + m5*zeta + m6*eta)>
+
+g_DYXSO3_Y = rot_metric(RRef_t,...
+    -RRef_t*(hat3(nu)*rot_log(eye(3),RRef_t)+hat3(rot3_logDiffMat(eye(3),RRef_t)*nu)),...
+    RRef_t*hat3(m4*nu + m5*zeta + m6*eta));
+g_DYXSO3_Y_analytical = -m4*nu'*rot3_logDiffMat(eye(3),RRef_t)*nu...
+    -m5*zeta'*rot3_logDiffMat(eye(3),RRef_t)*nu + m5/2*zeta'*rot_log(eye(3),RRef_t)*nu...
+    -m6*eta'*rot3_logDiffMat(eye(3),RRef_t)*nu + m6/2*eta'*rot_log(eye(3),RRef_t)*nu;
+fprintf('g_DYXSO3_Y error: %0.5f\n', g_DYXSO3_Y - g_DYXSO3_Y_analytical);
+
+%% Test <D_JYh_JXh + JYv - alpha*R*RRef'*RRef_dot*X_SO3, Y>
+% Note: D_JYh_JXh is computed using the covar on TSO(3) using the
+% transformed vector fields. JYv is the term to account for changes along
+% the fibers.
+
+% The Y vector field is left translated to R for the metric
+g_DJYhJXh_Y = rot_metric(R_t,...
+    R_t*hat3(zeta+alpha*nu)*(hat3(w)-alpha*rot_log(eye(3),RRef_t))+R_t*hat3(eta+beta*nu)+alpha*R_t*hat3(nu)*rot_log(eye(3),RRef_t),...
+    R_t*hat3(m5*nu + m1*zeta + m2*eta));
+g_DJYhJXh_Y_analytical = ...
+    +m5/2*nu'*(alpha*rot_log(eye(3),RRef_t)-hat3(w))*zeta+m5*nu'*eta+m5*beta*nu'*nu...
+    +m1/2*zeta'*(alpha^2*rot_log(eye(3),RRef_t)-alpha*hat3(w)-alpha*rot_log(eye(3),RRef_t))*nu + m1*zeta'*eta + m1*beta*zeta'*nu...
+    +m2/2*eta'*(alpha*rot_log(eye(3),RRef_t)*zeta-hat3(w)*zeta + alpha^2*rot_log(eye(3),RRef_t)*nu - alpha*hat3(w)*nu - alpha*rot_log(eye(3),RRef_t)*nu) + m2*eta'*eta + m2*beta*eta'*nu;
+fprintf('g_DJYhJXh_Y error: %0.5f\n', g_DJYhJXh_Y - g_DJYhJXh_Y_analytical);
+
+%% Test <D_JYh_JXv -kv*JYv - beta*R*RRef'*RRef_dot*X_SO3, Y>
+g_DJYh_JXv_Y = rot_metric(R_t,R_t*hat3(zeta+alpha*nu)*(-kv*hat3(w)-beta*rot_log(eye(3),RRef_t)+kd*rot_log(eye(3),R_t'*RRef_t))...
+    -kd*R_t*hat3(rot3_logDiffMat(RRef_t,R_t)*(zeta+alpha*nu)) + kd*R_t*hat3(rot3_logDiffMat(R_t,RRef_t)*nu) - kv*R_t*hat3(eta+beta*nu)...
+    +beta*R_t*hat3(nu)*rot_log(eye(3),RRef_t),...
+    R_t*hat3(m6*nu+m2*zeta+m3*eta));
+g_DJYh_JXv_Y_analytical = m6/2*nu'*(kv*hat3(w)+beta*rot_log(eye(3),RRef_t)-kd*rot_log(eye(3),R_t'*RRef_t))*zeta...
+    +m6*kd*nu'*rot3_logDiffMat(R_t,RRef_t)*nu - m6*kd*nu'*rot3_logDiffMat(RRef_t,R_t)*zeta - m6*kd*alpha*nu'*rot3_logDiffMat(RRef_t,R_t)*nu...
+    -m6*kv*nu'*eta - m6*kv*beta*nu'*nu...
+    +m2/2*zeta'*(alpha*kv*hat3(w) + alpha*beta*rot_log(eye(3),RRef_t) - alpha*kd*rot_log(eye(3),R_t'*RRef_t))*nu...
+    -m2*kd*zeta'*rot3_logDiffMat(RRef_t,R_t)*zeta - m2*kd*alpha*zeta'*rot3_logDiffMat(RRef_t,R_t)*nu + m2*kd*zeta'*rot3_logDiffMat(R_t,RRef_t)*nu...
+    -m2/2*beta*zeta'*rot_log(eye(3),RRef_t)*nu...
+    -m2*kv*zeta'*eta-m2*kv*beta*zeta'*nu...
+    +m3/2*eta'*(kv*hat3(w)+beta*rot_log(eye(3),RRef_t)-kd*rot_log(eye(3),R_t'*RRef_t))*zeta...
+    +m3/2*eta'*(alpha*kv*hat3(w)+alpha*beta*rot_log(eye(3),RRef_t)-alpha*kd*rot_log(eye(3),R_t'*RRef_t))*nu...
+    -m3*kd*eta'*rot3_logDiffMat(RRef_t,R_t)*zeta-m3*kd*alpha*eta'*rot3_logDiffMat(RRef_t,R_t)*nu+m3*kd*eta'*rot3_logDiffMat(R_t,RRef_t)*nu...
+    -m3/2*beta*eta'*rot_log(eye(3),RRef_t)*nu...
+    -m3*kv*eta'*eta-m3*kv*beta*eta'*nu;
+fprintf('g_DJYh_JXv_Y error: %0.5f\n', g_DJYh_JXv_Y - g_DJYh_JXv_Y_analytical);
+
+%% Test (<m2*m3*rot_curve(U,JYh)JXh,R*hat3(m5*nu + m1*zeta + m2*eta)> + <-m2^2*rot_curve(U,JYh)JXh,R*hat3(m6*nu + m2*zeta + m3*eta)>)/(m1*m3-m2^2)
+% NOTE: rot_curve is the curvature tensor calculated at R
+
+R_U_JYh_JXh = rot_curvature(R_t,R_t*hat3(w),R_t*hat3(zeta+alpha*nu),R_t*(hat3(w)-alpha*rot_log(eye(3),RRef_t)));
+g_R_U_JYh_JXh = (rot_metric(R_t,m2*m3*R_U_JYh_JXh,R_t*hat3(m5*nu+m1*zeta+m2*eta))...
+    +rot_metric(R_t,-m2^2*R_U_JYh_JXh,R_t*hat3(m6*nu+m2*zeta+m3*eta)))/(m1*m3-m2^2);
+% g_R_U_JYh_JXh_analytical = rot_metric(R_t,(m2*m3*m5-m2^2*m6)*R_U_JYh_JXh,R_t*hat3(nu))/(m1*m3-m2^2)...
+%     +m2*rot_metric(R_t,R_U_JYh_JXh,R_t*hat3(zeta));
+g_R_U_JYh_JXh_analytical = m2*alpha/4*(zeta+alpha*nu)'*hat3(w)*(hat3(w)-alpha*rot_log(eye(3),RRef_t))*nu...
+    +m2/4*(zeta+alpha*nu)'*hat3(w)*(hat3(w)-alpha*rot_log(eye(3),RRef_t))*zeta;
+fprintf('g_R_U_JYh_JXh error: %0.5f\n', g_R_U_JYh_JXh - g_R_U_JYh_JXh_analytical);
+
+%% Test (<m2*m3*rot_curve(JYh,JXh)U,R*hat3(m5*nu + m1*zeta + m2*eta)> + <-m1*m3*rot_curve(JYh,JXh)U,R*hat3(m6*nu + m2*zeta + m3*eta)>)/(m1*m3-m2^2)
+
+R_JYh_JXh_U = rot_curvature(R_t,R_t*hat3(zeta+alpha*nu),R_t*(hat3(w)-alpha*rot_log(eye(3),RRef_t)),R_t*hat3(w));
+g_R_JYh_JXh_U = (rot_metric(R_t,m2*m3/2*R_JYh_JXh_U,R_t*hat3(m5*nu+m1*zeta+m2*eta))...
+    + rot_metric(R_t,-m1*m3/2*R_JYh_JXh_U,R_t*hat3(m6*nu+m2*zeta+m3*eta)))/(m1*m3-m2^2);
+% g_R_JYh_JXh_U_analytical = rot_metric(R_t,(m2*m3*m5-m1*m3*m6)/2*R_JYh_JXh_U,R_t*hat3(nu))/(m1*m3-m2^2)...
+%     -m3/2*rot_metric(R_t,R_JYh_JXh_U,R_t*hat3(eta));
+g_R_JYh_JXh_U_analytical = (m1*m3*m6-m2*m3*m5)/(8*(m1*m3-m2^2))*(zeta+alpha*nu)'*(hat3(w)-alpha*rot_log(eye(3),RRef_t))*hat3(w)*nu...
+    +m3/8*(zeta+alpha*nu)'*(hat3(w)-alpha*rot_log(eye(3),RRef_t))*hat3(w)*eta;
+fprintf('g_R_JYh_JXh_U error: %0.5f\n', g_R_JYh_JXh_U - g_R_JYh_JXh_U_analytical);
+
+%% Test (<m3^2/2*rot_curve(U,JXv)JYh,R*hat3(m5*nu + m1*zeta + m2*eta)> + <-m2*m3/2*rot_curve(U,JXv)JYh,R*hat3(m6*nu + m2*zeta + m3*eta)>)/(m1*m3-m2^2)
+
+R_U_JXv_JYh = rot_curvature(R_t,R_t*hat3(w),R_t*hat3(w)-alpha*R_t*rot_log(eye(3),RRef_t),R_t*hat3(zeta+alpha*nu));
+g_R_U_JXv_JYh = (rot_metric(R_t,m3^2/2*R_U_JXv_JYh,R_t*hat3(m5*nu+m1*zeta+m2*eta))...
+    +rot_metric(R_t,-m2*m3/2*R_U_JXv_JYh,R_t*hat3(m6*nu+m2*zeta+m3*eta)))/(m1*m3-m2^2);
+% g_R_U_JXv_JYh_analytical = rot_metric(R_t,(m3^2*m5-m2*m3*m6)/2*R_U_JXv_JYh,R_t*hat3(nu))/(m1*m3-m2^2)...
+%     +m3/2*rot_metric(R_t,R_U_JXv_JYh,R_t*hat3(zeta));
+% g_R_U_JXv_JYh_analytical = m3*alpha/8*(zeta+alpha*nu)'*hat3(hat3(w)*rot_vee(R_t,kd*rot_log(R_t,RRef_t)-kv*R_t*hat3(w)-beta*R_t*rot_log(eye(3),RRef_t)))*nu...
+%     +m3/8*(zeta+alpha*nu)'*hat3(hat3(w)*rot_vee(R_t,kd*rot_log(R_t,RRef_t)-kv*R_t*hat3(w)-beta*R_t*rot_log(eye(3),RRef_t)))*zeta;
+g_R_U_JXv_JYh_analytical = 0;
+fprintf('g_R_U_JXv_JYh error: %0.5f\n', g_R_U_JXv_JYh - g_R_U_JXv_JYh_analytical);
+% THIS TERM IS ALWAYS ZERO
+%% Test (<m3^2/2*rot_curve(U,JYv)JXh,R*hat3(m5*nu + m1*zeta + m2*eta)> + <-m2*m3/2*rot_curve(U,JYv)JXh,R*hat3(m6*nu + m2*zeta + m3*eta)>)/(m1*m3-m2^2)
+
+R_U_JYv_JXh = rot_curvature(R_t,R_t*hat3(w),R_t*hat3(eta+beta*nu),R_t*(hat3(w)-alpha*rot_log(eye(3),RRef_t)));
+g_R_U_JYv_JXh = (rot_metric(R_t,m3^2/2*R_U_JYv_JXh,R_t*hat3(m5*nu+m1*zeta+m2*eta))...
+    +rot_metric(R_t,-m2*m3/2*R_U_JYv_JXh,R_t*hat3(m6*nu+m2*zeta+m3*eta)))/(m1*m3-m2^2);
+% g_R_U_JYv_JXh_analytical = rot_metric(R_t,(m3^2*m5-m2*m3*m6)/2*R_U_JYv_JXh,R_t*hat3(nu))/(m1*m3-m2^2)...
+%     +m3/2*rot_metric(R_t,R_U_JYv_JXh,R_t*hat3(zeta));
+g_R_U_JYv_JXh_analytical = m3*alpha/8*(eta+beta*nu)'*hat3(w)*(hat3(w)-alpha*rot_log(eye(3),RRef_t))*nu...
+    +m3/8*(eta+beta*nu)'*hat3(w)*(hat3(w)-alpha*rot_log(eye(3),RRef_t))*zeta;
+fprintf('g_R_U_JYv_JXh error: %0.5f\n', g_R_U_JYv_JXh - g_R_U_JYv_JXh_analytical);
+
+%% Sum all parts 
+% 'gTest_natural =g_DYJX_JY_fun + g_DYmXm_Ym_SO3'
+g_analytical = g_DYXSO3_Y_analytical + g_DJYhJXh_Y_analytical...
+    + g_DJYh_JXv_Y_analytical + g_R_U_JYh_JXh_analytical ...
+    + g_R_JYh_JXh_U_analytical + g_R_U_JXv_JYh_analytical...
+    + g_R_U_JYv_JXh_analytical;
+
+contractionMatrix = rotRef_contractionMat(@(R) R*hat3(w),0,kd,kv,M_nonnatural);
+fprintf('Nonnatural contraction metric error: %0.5f\n',...
+g_analytical-[nu;zeta;eta]'*contractionMatrix(R_t,RRef_t)*[nu;zeta;eta]);
+fprintf('Natural contraction metric error: %0.5f\n',...
+g_analytical-rotRef_contractionMetric_natural(R_t,R_t*hat3(w),RRef_t,[RRef_t*hat3(nu);R_t*hat3(zeta);R_t*hat3(eta)],M_nonnatural,kd,kv));

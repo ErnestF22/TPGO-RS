@@ -1,0 +1,3 @@
+function c=rigidDyn_metricPacked(v1,v2)
+c=rotDyn_metricPacked(v1(1:12,:),v2(1:12,:))...
+    +sum(v1(13:18,:).*v2(13:18,:));

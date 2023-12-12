@@ -1,0 +1,28 @@
+function [sMin,sMax,zMax,zMin] = MinMaxDis(y,L,flag_test,s)
+sMin = inf*ones(size(L,2),1);
+sMax = zeros(size(L,2),1);
+zMax = sMax;
+zMin = sMin;
+for i=1:size(L,2)
+    for j=1:size(y,2)
+        t = 1/norm(L(:,i)-y(:,j));
+        if t<=sMin(i)
+            if ~flag_test
+                sMin(i)=t;
+                zMax(i) = 1/t;
+            else
+                sMin(i)= 1/s;
+            end
+        end
+        if t>sMax(i)
+            if ~flag_test
+                sMax(i)=t;
+                zMin(i) = 1/t;
+            else
+                sMax(i)= s;
+            end
+        end
+    end
+end
+
+end

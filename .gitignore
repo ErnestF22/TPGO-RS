@@ -32,3 +32,6 @@ octave-workspace
 
 #Matlab Drive files
 .MATLABDriveTag
+
+#Manopt old version inside codemeta
+codemeta_utils/math/RiemannianGeometry/manopt/

@@ -1,0 +1,9 @@
+function [w1,w2,a,b,c]=POCReviewRzTow(R)
+e1=[1;0;0];
+e2=[0;1;0];
+e3=[0;0;1];
+a=e1'*R*e3;
+b=e2'*R*e3;
+c=e3'*R*e3;
+w1=b/(1+c);
+w2=-a/(1+c);
