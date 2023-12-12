@@ -1,5 +1,0 @@
-quickshift
-clusteringInit
-nearestNeighborGraph
-sparseBoost
-spectralClustering
