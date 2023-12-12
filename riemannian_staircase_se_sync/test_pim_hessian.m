@@ -130,35 +130,37 @@ R_out = round_solution_se_sync(matStackH(R_next), problem_struct_round_solution)
 
 %%% check cost progression
 
-disp("R -> cost (prev)")
+disp("first RTR output (R) -> cost")
 c_R = trace(matStack(R)'*problem_struct.L*matStack(R)+matStack(R)'*problem_struct.P) + problem_struct.fixed_cost_term; 
 disp(c_R)
 
-disp("x -> cost (prev)")
+disp("first RTR output padded (x) -> cost")
 c_x = trace(matStack(x)'*problem_struct_next.L*matStack(x)+matStack(x)'*problem_struct_next.P) + problem_struct_next.fixed_cost_term; 
 disp(c_x)
 
-disp("Y0 -> cost")
+disp("second RTR input (Y0) -> cost")
 c_Y0 = trace( ...
     matStack(Y0)'*problem_struct_next.L*matStack(Y0) + ...
     matStack(Y0)'*problem_struct_next.P ) + ...
     problem_struct_next.fixed_cost_term;
 disp(c_Y0)
 
-disp("R_next -> cost")
+disp("second RTR output (R_next) -> cost")
 c_Rnext = trace( ...
     matStack(R_next)'*problem_struct_next.L*matStack(R_next) + ...
     matStack(R_next)'*problem_struct_next.P ) + ...
     problem_struct_next.fixed_cost_term;
 disp(c_Rnext)
 
-disp("second cost input -> cost")
+disp("second RTR output projected onto SO(d)^N (R_out) -> cost")
 second_cost_input = matStack(multitransp(matUnstack(R_out')));
 c_sci = trace( ...
     second_cost_input'*problem_struct.L*second_cost_input + ...
     second_cost_input'*problem_struct.P ) + ...
     problem_struct.fixed_cost_term;
 disp(c_sci)
+
+
 
 
 
