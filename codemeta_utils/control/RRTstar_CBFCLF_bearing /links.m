@@ -1,1 +1,0 @@
-https://math.stackexchange.com/questions/2248617/shortest-distance-between-a-point-and-a-line-segment
