@@ -2,6 +2,15 @@ close all;
 clear;
 clc;
 
+% resetRands();
+%%%
+% seed = datetime;
+% seedint = datenum(seed);
+% randn('state',seedint)
+% rand('state',seedint)
+
+stream = RandStream('mt19937ar','Seed',0)
+
 d = 3;
 nrs = d;
 nrs_next = nrs + 1;
@@ -109,12 +118,24 @@ step2.rgrad = @(x) som_rgrad_rot_stiefel(x, problem_struct_next);
 step2.ehess = @(x,u) som_ehess_rot_stiefel(x,u, problem_struct_next);
 step2.rhess = @(x,u) som_rhess_rot_stiefel(x,u, problem_struct_next);
 
+alpha = -0.2:0.01:0.2;
+plot_vals = zeros(size(alpha));
+for ii = 1:length(alpha)
+    xcost = step2.M.retr(x, v_pim_next, alpha(ii));
+    plot_vals(ii) = step2.cost(xcost);
+end
+
+plot(alpha, plot_vals);
+
+
 % alpha = min(lambdas_moved) + lambdas_max;
 alpha = 1e-3; %TODO: set this correctly
 SDPLRval = 10; %TODO: set this correctly 
 
 [stepsize, Y0] = linesearch_decrease(step2, ...
     x, -alpha.*v_pim_next, som_cost_rot_stiefel(x,problem_struct_next));
+
+
 
 %manopt
 disp("Reiterating Manopt...");
