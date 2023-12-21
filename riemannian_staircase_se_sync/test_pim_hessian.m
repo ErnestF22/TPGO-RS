@@ -2,14 +2,9 @@ close all;
 clear;
 clc;
 
-% resetRands();
+resetRands();
 %%%
-% seed = datetime;
-% seedint = datenum(seed);
-% randn('state',seedint)
-% rand('state',seedint)
-
-stream = RandStream('mt19937ar','Seed',0)
+% stream = RandStream('mt19937ar','Seed',0)
 
 d = 3;
 nrs = d;
@@ -39,24 +34,24 @@ L = from_Lnext_to_L(L_next, problem_struct);
 P = from_Pnext_to_P(P_next, problem_struct);
 problem_struct=struct('sz',sz, ... %!!
     'L',L,'P',P, 'fixed_cost_term', fixed_cost_term, ...
-    'A',A_next,'B',B_next);
+    'A',A_next,'B',B_next); %should be A, B instead of A_next, B_next
 
 
 R_manopt_stiefel = stiefelfactory(nrs,d,N);
 % fprintf("R_manopt_stiefel size %g\n", R_manopt_stiefel.dim());
 
-problem_manopt.M = R_manopt_stiefel; %M = manifold
+step1.M = R_manopt_stiefel; %M = manifold
 
-problem_manopt.cost = @(x) som_cost_rot_stiefel(x, problem_struct);
-problem_manopt.egrad = @(x) som_egrad_rot_stiefel(x, problem_struct);
-problem_manopt.rgrad = @(x) som_rgrad_rot_stiefel(x, problem_struct);
-problem_manopt.ehess = @(x,u) som_ehess_rot_stiefel(x,u, problem_struct);
-problem_manopt.rhess = @(x,u) som_rhess_rot_stiefel(x,u, problem_struct);
+step1.cost = @(x) som_cost_rot_stiefel(x, problem_struct);
+step1.egrad = @(x) som_egrad_rot_stiefel(x, problem_struct);
+step1.rgrad = @(x) som_rgrad_rot_stiefel(x, problem_struct);
+step1.ehess = @(x,u) som_ehess_rot_stiefel(x,u, problem_struct);
+step1.rhess = @(x,u) som_rhess_rot_stiefel(x,u, problem_struct);
 %Run Manopt with rand init guess
 
 R_initguess = make_rand_stiefel_3d_array(nrs, d, N);
 options.maxiter = 1000;
-[R, R_cost, R_info, R_options] = trustregions(problem_manopt, R_initguess, options);
+[R, R_cost, R_info, R_options] = trustregions(step1, R_initguess, options);
 
 
 %%% Run P.I.M. for Hessian
@@ -103,11 +98,21 @@ if lambda_pim>0
     hess_next = fun_han_next(v_pim_next);
     disp(norm((lambda_pim_next)*v_pim_next(:) - hess_next(:), 'inf'))
 
-    disp('Checking Eigenvalue shift')
-    hess_next2 = som_rhess_rot_stiefel(x,v_pim_next,problem_struct_next);
-    disp(norm(((lambda_pim_next + mu)*v_pim_next(:)) - ...
-        hess_next2(:),'inf'))
+%     disp('Checking Eigenvalue shift')
+%     hess_next2 = som_rhess_rot_stiefel(x,v_pim_next,problem_struct_next);
+%     disp(norm(((lambda_pim_next + mu)*v_pim_next(:)) - ...
+%         hess_next2(:),'inf'))
 end
+
+%0.267038609
+%1 / 0.267038609 = 3.7448
+disp('Checking if highest_norm_eigenval is an eigenval for initial function')
+disp('Difference between lambda_min*v_max and H(v_max) should be in the order of the tolerance:')
+hess_hne = fun_han(v_pim);
+highest_norm_eigenval = lambda_pim_next + mu;
+disp(norm((highest_norm_eigenval)*v_pim(:) - hess_hne(:),'inf'))
+
+
 
 disp("Now performing linesearch...");
 %linesearch
@@ -118,10 +123,10 @@ step2.rgrad = @(x) som_rgrad_rot_stiefel(x, problem_struct_next);
 step2.ehess = @(x,u) som_ehess_rot_stiefel(x,u, problem_struct_next);
 step2.rhess = @(x,u) som_rhess_rot_stiefel(x,u, problem_struct_next);
 
-alpha = -0.2:0.01:0.2;
+alpha = -0.2:0.001:0.2;
 plot_vals = zeros(size(alpha));
 for ii = 1:length(alpha)
-    xcost = step2.M.retr(x, v_pim_next, alpha(ii));
+    xcost = step2.M.retr(x, v_pim, alpha(ii));
     plot_vals(ii) = step2.cost(xcost);
 end
 
@@ -129,13 +134,14 @@ plot(alpha, plot_vals);
 
 
 % alpha = min(lambdas_moved) + lambdas_max;
-alpha = 1e-3; %TODO: set this correctly
+alpha = 10; %TODO: set this correctly
 SDPLRval = 10; %TODO: set this correctly 
 
 [stepsize, Y0] = linesearch_decrease(step2, ...
-    x, -alpha.*v_pim_next, som_cost_rot_stiefel(x,problem_struct_next));
+    x, -alpha.*v_pim, som_cost_rot_stiefel(x,problem_struct_next));
 
-
+disp("max(abs(x - Y0), [], all)");
+disp(max(abs(x - Y0), [], "all"));
 
 %manopt
 disp("Reiterating Manopt...");
