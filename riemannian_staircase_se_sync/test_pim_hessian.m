@@ -123,22 +123,41 @@ step2.rgrad = @(x) som_rgrad_rot_stiefel(x, problem_struct_next);
 step2.ehess = @(x,u) som_ehess_rot_stiefel(x,u, problem_struct_next);
 step2.rhess = @(x,u) som_rhess_rot_stiefel(x,u, problem_struct_next);
 
-alpha = -0.2:0.001:0.2;
-plot_vals = zeros(size(alpha));
-for ii = 1:length(alpha)
-    xcost = step2.M.retr(x, v_pim, alpha(ii));
+% alphas = -0.2:0.001:0.2;
+% plot_vals = zeros(size(alphas));
+% for ii = 1:length(alphas)
+%     xcost = step2.M.retr(x, v_pim, alphas(ii));
+%     plot_vals(ii) = step2.cost(xcost);
+% end
+% 
+% plot(alphas, plot_vals);
+
+alphas = linspace(-0.01,0.01,51); %-0.2:0.01:0.2;
+plot_vals = zeros(size(alphas));
+plot_vals_taylor = zeros(size(alphas));
+for ii = 1:length(alphas)
+    xcost = step2.M.retr(x, v_pim_next, alphas(ii));
     plot_vals(ii) = step2.cost(xcost);
+    % terms containing the gradient should be zero
+    plot_vals_taylor(ii) = step2.cost(x)+...
+        alphas(ii)^2/2*sum(stiefel_metric(x,v_pim_next,step2.rhess(x,v_pim_next),'euclidean'));
 end
 
-plot(alpha, plot_vals);
+plot(alphas, plot_vals,'b')
+hold on
+plot(alphas,plot_vals_taylor,'k.');
+hold off
 
 
 % alpha = min(lambdas_moved) + lambdas_max;
-alpha = 10; %TODO: set this correctly
+alpha_linesearch = 10; %TODO: set this correctly
 SDPLRval = 10; %TODO: set this correctly 
 
-[stepsize, Y0] = linesearch_decrease(step2, ...
-    x, -alpha.*v_pim, som_cost_rot_stiefel(x,problem_struct_next));
+% [stepsize, Y0] = linesearch_decrease(step2, ...
+%     x, -alpha_linesearch.*v_pim, som_cost_rot_stiefel(x,problem_struct_next));
+
+Y0 = linesearch_decrease_hessian(step2, ...
+    x, v_pim, som_cost_rot_stiefel(x,problem_struct_next));
 
 disp("max(abs(x - Y0), [], all)");
 disp(max(abs(x - Y0), [], "all"));
