@@ -34,16 +34,16 @@ end
 
 
 retractions_vec = zeros([size(x), size(alphas)]);
-% for ii = 1:length(alphas)
-%     retractions_vec(:,:,:,ii) = retraction_stiefel(x,xi_vec(:,:,:,ii));
-% end
 for ii = 1:length(alphas)
-    retractions_vec(:,:,:,ii) = retraction_stiefel_qr(x,xi_vec(:,:,:,ii));
+    retractions_vec(:,:,:,ii) = retraction_stiefel(x,xi_vec(:,:,:,ii));
 end
+% for ii = 1:length(alphas)
+%     retractions_vec(:,:,:,ii) = retraction_stiefel_qr(x,xi_vec(:,:,:,ii));
+% end
 
 % First, go towards 0+ (positive direction)
 for ii = pos_start:length(alphas)
-    candidate_val = real(x + retractions_vec(:,:,:,ii));
+    candidate_val = retractions_vec(:,:,:,ii);
     %check 
     disp("Is candidate_val on Stiefel?")
     if max(abs( ...
@@ -55,9 +55,10 @@ for ii = pos_start:length(alphas)
         disp("NO");
         continue;
     end
-    plot_vals_taylor(ii) = initial_cost+...
-        alphas(ii)^2/2*sum(stiefel_metric(x,v,problem.rhess(x,v),'euclidean'));
-    if plot_vals_taylor(ii) < initial_cost
+    cand_val_cost = problem.cost(candidate_val);
+    %check_tangent_curve(x0, v)
+    disp([initial_cost, cand_val_cost])
+    if cand_val_cost < initial_cost
         found_lower = boolean(1);
         Y_out = candidate_val;
         break;
@@ -67,7 +68,7 @@ end
 if ~found_lower
     % Else, go towards 0+ (positive direction)
     for ii = 1:neg_end
-        candidate_val = real(x + retractions_vec(:,:,:,ii));
+        candidate_val = retractions_vec(:,:,:,ii);
         %check 
         disp("Is candidate_val on Stiefel?")
         if max(abs( ...
@@ -79,9 +80,9 @@ if ~found_lower
             disp("NO");
             continue;
         end
-        plot_vals_taylor(ii) = initial_cost+...
-            alphas(ii)^2/2*sum(stiefel_metric(x,v,problem.rhess(x,v),'euclidean'));
-        if plot_vals_taylor(ii) < initial_cost
+        cand_val_cost = problem.cost(candidate_val);
+        disp([initial_cost, cand_val_cost])
+        if cand_val_cost < initial_cost
             found_lower = boolean(1);
             Y_out = candidate_val;
             break;

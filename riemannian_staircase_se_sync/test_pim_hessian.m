@@ -132,7 +132,7 @@ step2.rhess = @(x,u) som_rhess_rot_stiefel(x,u, problem_struct_next);
 % 
 % plot(alphas, plot_vals);
 
-alphas = linspace(-0.01,0.01,51); %-0.2:0.01:0.2;
+alphas = linspace(-0.01,0.01,501); %-0.2:0.01:0.2;
 plot_vals = zeros(size(alphas));
 plot_vals_taylor = zeros(size(alphas));
 for ii = 1:length(alphas)
@@ -157,7 +157,7 @@ SDPLRval = 10; %TODO: set this correctly
 %     x, -alpha_linesearch.*v_pim, som_cost_rot_stiefel(x,problem_struct_next));
 
 Y0 = linesearch_decrease_hessian(step2, ...
-    x, v_pim, som_cost_rot_stiefel(x,problem_struct_next));
+    x, -v_pim, som_cost_rot_stiefel(x,problem_struct_next));
 
 disp("max(abs(x - Y0), [], all)");
 disp(max(abs(x - Y0), [], "all"));

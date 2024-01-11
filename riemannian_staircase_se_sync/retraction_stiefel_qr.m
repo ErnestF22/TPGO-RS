@@ -10,18 +10,16 @@ p = size(x,2);
 
 if N > 1
     rxe = zeros(size(x));
-    i_p = eye3d(p,p,N);
     for ii = 1:N
         x_ii = x(:,:,ii);
         e_ii = e(:,:,ii);
-        snd_term_ii = inv(sqrtm((i_p(ii) + e_ii' * e_ii)));
-        rxe(:,:,N) = (x_ii + e_ii)*snd_term_ii;
+        [Q,R] = qr(x_ii + e_ii);
+        rxe(:,:,ii) = R;
     end
 else
 %     rxe = zeros(size(x));
-    i_p = eye(p,p);
-    snd_term = inv(sqrtm((i_p + e' * e)));
-    rxe = (x + e)*snd_term;
+    [Q,R] = qr(x + e);
+    rxe = R;
 end
 
 

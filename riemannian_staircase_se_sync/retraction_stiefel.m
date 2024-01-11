@@ -14,8 +14,8 @@ if N > 1
     for ii = 1:N
         x_ii = x(:,:,ii);
         e_ii = e(:,:,ii);
-        snd_term_ii = inv(sqrtm((i_p(ii) + e_ii' * e_ii)));
-        rxe(:,:,N) = (x_ii + e_ii)*snd_term_ii;
+        snd_term_ii = inv(sqrtm((i_p(:,:,ii) + e_ii' * e_ii)));
+        rxe(:,:,ii) = (x_ii + e_ii)*snd_term_ii;
     end
 else
 %     rxe = zeros(size(x));
