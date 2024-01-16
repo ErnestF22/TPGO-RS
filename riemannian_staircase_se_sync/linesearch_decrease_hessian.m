@@ -2,9 +2,9 @@ function Y_out = linesearch_decrease_hessian(problem, x, v, initial_cost, alphas
 % LINESEARCH_DECREASE_HESSIAN
 % Backtracking line-search aiming merely for a decrease in cost value.
 %
-% The Line-search algorithm based on a simple backtracking method. The 
+% The Line-search algorithm based on a simple backtracking method. The
 % search direction v provided has to be a descent direction, but needs not to
-% be a first-order descent, 
+% be a first-order descent,
 % i.e.: this line-search can be used even if x is a
 % critical point, as long as the cost function is strictly decreasing
 % along the direction d.
@@ -19,7 +19,7 @@ function Y_out = linesearch_decrease_hessian(problem, x, v, initial_cost, alphas
 
 
 if ~exist('alphas','var')
-  alphas=linspace(-1e-3, 1e-3, 21); %t
+    alphas=linspace(-1e-3, 1e-3, 21); %t
 end
 
 
@@ -34,16 +34,18 @@ neg_end = floor(length(alphas)/2) - 1; %TODO: check if this works with even alph
 % First, go towards 0+ (positive direction)
 for ii = pos_start:length(alphas)
     candidate_val = x + alphas(ii) * v;
-    %check 
+    %check
     disp("Is candidate_val on Stiefel?")
-    if max(abs( ...
-        multiprod(multitransp(candidate_val), candidate_val) - ...
-        eye3d(size(x,2), size(x,2), size(x,3)) ), [], 'all') < 1e-6
-        
+    if check_is_on_stiefel(candidate_val)
         disp("YES")
     else
         disp("NO");
     end
+    cand_val_cost = problem.cost(candidate_val);
+    disp("[initial_cost, cand_val_cost]")
+    disp([initial_cost, cand_val_cost])
+
+
     plot_vals_taylor(ii) = initial_cost+...
         alphas(ii)^2/2*sum(stiefel_metric(x,v,problem.rhess(x,v),'euclidean'));
     if plot_vals_taylor(ii) < initial_cost
@@ -57,12 +59,9 @@ if ~found_lower
     % Else, go towards 0+ (positive direction)
     for ii = 1:neg_end
         candidate_val = x + alphas(ii) * v;
-        %check 
+        %check
         disp("Is candidate_val on Stiefel?")
-        if max(abs( ...
-            multiprod(multitransp(candidate_val), candidate_val) - ...
-            eye3d(size(x,2), size(x,2), size(x,3)) ), [], 'all') < 1e-6
-            
+        if check_is_on_stiefel(candidate_val)
             disp("YES")
         else
             disp("NO");
@@ -80,3 +79,6 @@ end
 %linesearch decrease has failed
 Y_out = x;
 
+
+
+end %file function

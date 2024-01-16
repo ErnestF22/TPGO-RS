@@ -1,4 +1,4 @@
-function Y_out = linesearch_decrease_hessian(problem, x, v, initial_cost, alphas)
+function Y_out = linesearch_decrease_hessian_retraction(problem, x, v, initial_cost, alphas)
 % LINESEARCH_DECREASE_HESSIAN
 % Backtracking line-search aiming merely for a decrease in cost value.
 %
@@ -18,7 +18,7 @@ function Y_out = linesearch_decrease_hessian(problem, x, v, initial_cost, alphas
 %
 
 if ~exist('alphas','var')
-  alphas=linspace(-0.1, 0.1, 51); %t
+  alphas=linspace(-0.001, 0.001, 51); %t
 end
 
 plot_vals_taylor = zeros(size(alphas));
@@ -46,10 +46,7 @@ for ii = pos_start:length(alphas)
     candidate_val = retractions_vec(:,:,:,ii);
     %check 
     disp("Is candidate_val on Stiefel?")
-    if max(abs( ...
-        multiprod(multitransp(candidate_val), candidate_val) - ...
-        eye3d(size(x,2), size(x,2), size(x,3)) ), [], 'all') < 1e-6
-        
+    if check_is_on_stiefel(candidate_val)        
         disp("YES")
     else
         disp("NO");
@@ -71,16 +68,14 @@ if ~found_lower
         candidate_val = retractions_vec(:,:,:,ii);
         %check 
         disp("Is candidate_val on Stiefel?")
-        if max(abs( ...
-            multiprod(multitransp(candidate_val), candidate_val) - ...
-            eye3d(size(x,2), size(x,2), size(x,3)) ), [], 'all') < 1e-6
-            
+        if check_is_on_stiefel(candidate_val)            
             disp("YES")
         else
             disp("NO");
             continue;
         end
         cand_val_cost = problem.cost(candidate_val);
+        disp("[initial_cost, cand_val_cost]")
         disp([initial_cost, cand_val_cost])
         if cand_val_cost < initial_cost
             found_lower = boolean(1);
