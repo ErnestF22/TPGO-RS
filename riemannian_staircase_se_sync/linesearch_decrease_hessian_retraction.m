@@ -17,23 +17,33 @@ function Y_out = linesearch_decrease_hessian(problem, x, v, initial_cost, alphas
 % to negative eigenvalues, for example.
 %
 
-
 if ~exist('alphas','var')
-  alphas=linspace(-1e-3, 1e-3, 21); %t
+  alphas=linspace(-0.1, 0.1, 51); %t
 end
 
-
-
-retractions_vec = zeros(size(alphas));
 plot_vals_taylor = zeros(size(alphas));
 found_lower = boolean(0);
 
 pos_start = ceil(length(alphas)/2) + 1; %TODO: check if this works with even alphas size
 neg_end = floor(length(alphas)/2) - 1; %TODO: check if this works with even alphas size
 
+xi_vec = zeros([size(v),size(alphas,2)]);
+for ii = 1:size(alphas,2)
+    xi_vec(:,:,:,ii) = v.*alphas(ii);
+end
+
+
+retractions_vec = zeros([size(x), size(alphas)]);
+for ii = 1:length(alphas)
+    retractions_vec(:,:,:,ii) = retraction_stiefel(x,xi_vec(:,:,:,ii));
+end
+% for ii = 1:length(alphas)
+%     retractions_vec(:,:,:,ii) = retraction_stiefel_qr(x,xi_vec(:,:,:,ii));
+% end
+
 % First, go towards 0+ (positive direction)
 for ii = pos_start:length(alphas)
-    candidate_val = x + alphas(ii) * v;
+    candidate_val = retractions_vec(:,:,:,ii);
     %check 
     disp("Is candidate_val on Stiefel?")
     if max(abs( ...
@@ -43,10 +53,12 @@ for ii = pos_start:length(alphas)
         disp("YES")
     else
         disp("NO");
+        continue;
     end
-    plot_vals_taylor(ii) = initial_cost+...
-        alphas(ii)^2/2*sum(stiefel_metric(x,v,problem.rhess(x,v),'euclidean'));
-    if plot_vals_taylor(ii) < initial_cost
+    cand_val_cost = problem.cost(candidate_val);
+    %check_tangent_curve(x0, v)
+    disp([initial_cost, cand_val_cost])
+    if cand_val_cost < initial_cost
         found_lower = boolean(1);
         Y_out = candidate_val;
         break;
@@ -56,7 +68,7 @@ end
 if ~found_lower
     % Else, go towards 0+ (positive direction)
     for ii = 1:neg_end
-        candidate_val = x + alphas(ii) * v;
+        candidate_val = retractions_vec(:,:,:,ii);
         %check 
         disp("Is candidate_val on Stiefel?")
         if max(abs( ...
@@ -66,10 +78,11 @@ if ~found_lower
             disp("YES")
         else
             disp("NO");
+            continue;
         end
-        plot_vals_taylor(ii) = initial_cost+...
-            alphas(ii)^2/2*sum(stiefel_metric(x,v,problem.rhess(x,v),'euclidean'));
-        if plot_vals_taylor(ii) < initial_cost
+        cand_val_cost = problem.cost(candidate_val);
+        disp([initial_cost, cand_val_cost])
+        if cand_val_cost < initial_cost
             found_lower = boolean(1);
             Y_out = candidate_val;
             break;
@@ -77,6 +90,8 @@ if ~found_lower
     end
 end
 
-%linesearch decrease has failed
+disp("linesearch decrease has failed");
 Y_out = x;
 
+
+end %file function
