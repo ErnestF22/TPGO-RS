@@ -101,8 +101,7 @@ if lambda_pim>0
     eigencheck_hessian(lambda_pim_next + mu, v_pim_next, rhess_fun_han);
 end
 
-%0.267038609
-%1 / 0.267038609 = 3.7448
+%%%
 disp('Checking if highest_norm_eigenval is an eigenval for initial function')
 disp('Difference between lambda_min*v_max and H(v_max) should be in the order of the tolerance:')
 hess_hne = rhess_fun_han(v_pim);
@@ -133,8 +132,8 @@ step2.rhess = @(x,u) som_rhess_rot_stiefel(x,u, problem_struct_next);
 % alphas = -0.2:0.001:0.2;
 % plot_vals = zeros(size(alphas));
 % for ii = 1:length(alphas)
-%     xcost = step2.M.retr(x, v_pim, alphas(ii));
-%     plot_vals(ii) = step2.cost(xcost);
+%     x_retr_ii = step2.M.retr(x, v_pim, alphas(ii));
+%     plot_vals(ii) = step2.cost(x_retr_ii);
 % end
 % 
 % plot(alphas, plot_vals);
@@ -143,11 +142,11 @@ alphas = linspace(-0.01,0.01,501); %-0.2:0.01:0.2;
 plot_vals = zeros(size(alphas));
 plot_vals_taylor = zeros(size(alphas));
 for ii = 1:length(alphas)
-    xcost = step2.M.retr(x, v_pim_next, alphas(ii));
-    disp("Is xcost on Stiefel? (Taylor)")
-    disp(check_is_on_stiefel(xcost));
-    disp([matStack(x), matStack(xcost)])
-    plot_vals(ii) = step2.cost(xcost);
+    x_retr_ii = step2.M.retr(x, v_pim_next, alphas(ii));
+    disp("Is x_retr_ii on Stiefel? (Taylor)")
+    disp(check_is_on_stiefel(x_retr_ii));
+    disp([matStack(x), matStack(x_retr_ii)])
+    plot_vals(ii) = step2.cost(x_retr_ii);
     % terms containing the gradient should be zero
     plot_vals_taylor(ii) = step2.cost(x)+...
         alphas(ii)^2/2*sum(stiefel_metric(x,v_pim_next,step2.rhess(x,v_pim_next),'euclidean'));
