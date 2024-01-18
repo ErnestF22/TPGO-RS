@@ -16,16 +16,14 @@ end
 
 stiefel_samples = zeros(nrs, d, N, num_samples);
 
-
-
-% N = 1
-X = rand(nrs,d);
-
-stief_rand_mat = X * inv(sqrtm(X' * X));
-
-
-
-stiefel_samples(:,:,:,1) = stief_rand_mat;
+for ii = 1:num_samples
+    X = rand(nrs,d,N);
+    for jj = 1:N
+        X_jj = X(:,:,jj);
+        stief_rand_mat = X_jj * inv(sqrtm(X_jj' * X_jj));
+        stiefel_samples(:,:,jj,ii) = stief_rand_mat;
+    end
+end
 
 
 
