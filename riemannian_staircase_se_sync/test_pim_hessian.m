@@ -147,9 +147,9 @@ for ii = 1:length(alphas)
     disp(check_is_on_stiefel(x_retr_ii));
     disp([matStack(x), matStack(x_retr_ii)])
     plot_vals(ii) = step2.cost(x_retr_ii);
-    % terms containing the gradient should be zero
+    %Note: gradient is zero
     plot_vals_taylor(ii) = step2.cost(x)+...
-        alphas(ii)^2/2*sum(stiefel_metric(x,v_pim_next,step2.rhess(x,v_pim_next),'euclidean'));
+        alphas(ii)^2/2*sum(stiefel_metric(x,v_pim_next,step2.rhess(x,v_pim_next),'canonical'));
 end
 
 plot(alphas, plot_vals,'b')
