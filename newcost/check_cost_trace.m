@@ -34,9 +34,14 @@ for e = 1:num_edges
     R_i = R_globalframe(:,:,ii);
     T_j = T_globalframe(:, jj);
     T_i = T_globalframe(:, ii);
-    cost_e = norm(Tijs_vec(:,e) - R_i'*T_j + R_i'*T_i);
+    cost_e = norm(R_i * Tijs_vec(:,e) - T_j + T_i);
     cost_1 = cost_1 + cost_e^2;
 end
+
+
+disp("cost_1");
+disp(cost_1);
+
 
 cost_2 = 0.0;
 for e = 1:num_edges
@@ -45,17 +50,14 @@ for e = 1:num_edges
     R_i = R_globalframe(:,:,ii);
     T_j = T_globalframe(:, jj);
     T_i = T_globalframe(:, ii);
-    cost_e = norm(R_i * Tijs_vec(:,e) - T_j + T_i);
-    cost_2 = cost_2 + cost_e^2;
+    T_ij = Tijs_vec(:,e);
+    P_ij = 2.*T_i * T_ij' - 2.*T_j * T_ij';
+    c = T_i * T_i' + T_j * T_j' - T_i * T_j' - T_j * T_i';
+    d = T_ij * T_ij';
+    cost_2 = cost_2 + trace(R_i' * P_ij + c + d);
 end
 
 
-disp("cost_1");
-disp(cost_1);
-
 disp("cost_2");
 disp(cost_2);
-
-
-
 
