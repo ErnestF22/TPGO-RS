@@ -33,15 +33,20 @@ P_noloops = make_p_noloops(R_globalframe, T_globalframe, Tijs_vec, edges);
 disp("[P; P_noloops]")
 disp([P; P_noloops])
 
+disp("max(abs(P(:) - P_noloops(:)))");
+disp(max(abs(P - P_noloops), [], "all"));
+
 % fixed rot cost term
 frct = compute_step1_fixed_cost_term(T_globalframe, Tijs_vec, edges);
 R_transp = matStack(multitransp(R_globalframe));
 
 
 cost_2 = trace(R_transp*P) + frct;
-
 disp("cost_2");
 disp(cost_2);
 
+cost_2_noloops = trace(R_transp*P) + frct;
+disp("cost_2_noloops");
+disp(cost_2_noloops);
 
 
