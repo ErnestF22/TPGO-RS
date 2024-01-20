@@ -30,6 +30,8 @@ Tijs_vec = 10 * rand(d, num_edges);
 P = make_p(R_globalframe, T_globalframe, Tijs_vec, edges);
 P_noloops = make_p_noloops(R_globalframe, T_globalframe, Tijs_vec, edges);
 
+disp("[P; P_noloops]")
+disp([P; P_noloops])
 
 % fixed rot cost term
 frct = compute_step1_fixed_cost_term(T_globalframe, Tijs_vec, edges);
