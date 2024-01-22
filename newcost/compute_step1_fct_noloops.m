@@ -5,7 +5,7 @@ function retval = compute_step1_fct_noloops(T_gf, Tijs, edges)
 % d_ij = T_ij * T_ij';
 % without using any for loops.
 
-% nrs = size(T_gf, 1);
+nrs = size(T_gf, 1);
 d = size(Tijs, 1);
 N = size(T_gf, 2);
 
@@ -21,7 +21,7 @@ F_cells = cellfun(@mtimes, Tijs_mat_cells, Tijs_mat_cells_T, 'Un',0);
 F = cellfun(@trace,F_cells,'Un',0); 
 
 
-T_gf_cells = mat2cell(T_gf, d, ones(1,N));
+T_gf_cells = mat2cell(T_gf, nrs, ones(1,N));
 E1 = repmat(T_gf_cells', 1, N);
 E1_T = cellfun(@transp, E1, 'Un', 0); % uniform output -> false
 E2 = repmat(T_gf_cells, N, 1);

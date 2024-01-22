@@ -6,8 +6,7 @@ resetRands(2);
 
 
 d = 3;
-% nrs = d;
-% % nrs_next = nrs + 1;
+nrs = d+1;
 % N = 5;
 
 
@@ -21,14 +20,15 @@ num_edges = testdata.NEdges;
 % R_globalframe = G2R(testdata.gitruth);
 % T_globalframe = G2T(testdata.gitruth);
 
-R_globalframe = randrot(d, N);
-T_globalframe = 10 * rand(d, N);
+% R_globalframe = randrot(d, N);
+R_globalframe = make_rand_stiefel_3d_array(nrs, d, N);
+T_globalframe = 10 * rand(nrs, N);
 Tijs_vec = 10 * rand(d, num_edges);
 
 %make P matrix with and without loops and check that the result is the same
 
-P = make_p(R_globalframe, T_globalframe, Tijs_vec, edges);
-P_noloops = make_p_noloops(R_globalframe, T_globalframe, Tijs_vec, edges);
+P = make_p(T_globalframe, Tijs_vec, edges);
+P_noloops = make_p_noloops(T_globalframe, Tijs_vec, edges);
 
 disp("[P; P_noloops]")
 disp([P; P_noloops])

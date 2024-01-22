@@ -1,7 +1,7 @@
 function test_rsom_curve_test()
 disp('Check that tangent is always in tangent space')
-problem=test_problem();
-[curve, Y0, R1, dR1, ddR1, R2, dR2, ddR2] = test_problem_curve(problem);
+problem=test_rsom();
+[curve, Y0, R1, dR1, ddR1, R2, dR2, ddR2] = test_rsom_curve(problem);
 
 % Y0 = eye3d(4,3,5);
 

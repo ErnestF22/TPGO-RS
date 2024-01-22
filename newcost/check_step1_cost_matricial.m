@@ -45,7 +45,7 @@ disp("cost_1");
 disp(cost_1);
 
 
-P = make_p(R_globalframe, T_globalframe, Tijs_vec, edges);
+P = make_p(T_globalframe, Tijs_vec, edges);
 % fixed rot cost term
 frct = compute_step1_fixed_cost_term(T_globalframe, Tijs_vec, edges);
 R_transp = matStack(multitransp(R_globalframe));
@@ -55,7 +55,7 @@ disp("cost_2");
 disp(cost_2);
 
 [P, frct] = compute_step1_p_fct( ...
-    R_globalframe, T_globalframe, Tijs_vec, edges);
+    T_globalframe, Tijs_vec, edges);
 
 cost_3 = trace(R_transp*P) + frct;
 

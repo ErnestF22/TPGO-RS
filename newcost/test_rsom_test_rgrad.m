@@ -1,6 +1,6 @@
 function test_rsom_test_rgrad()
-problem=test_problem();
-curve=test_problem_curve(problem);
+problem=test_rsom();
+curve=test_rsom_curve(problem);
 
 c=curve.c;
 dc=curve.dc;

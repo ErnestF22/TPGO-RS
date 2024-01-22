@@ -1,6 +1,6 @@
 function [curve, Y0, R1, dR1, ddR1, R2, dR2, ddR2] = ...
         test_rsom_curve(problem)
-% problem = test_problem(problem);
+% problem = test_rsom(problem);
 
 sz=problem.sz;
 % sz(3) = 1; %remove this later!

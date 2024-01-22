@@ -1,4 +1,4 @@
 function c=rsom_cost_rot_stiefel(x,problem)
-xStack=matStack(x);
-c=trace(xStack'*problem.P) + problem.fixed_cost_term;
+xCost=matStack(multitransp(x));
+c=trace(xCost*problem.P) + problem.frct;
 end

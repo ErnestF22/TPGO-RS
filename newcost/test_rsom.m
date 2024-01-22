@@ -2,25 +2,27 @@ function problem=test_rsom()
 
 testdata = testNetwork_som(3); %4 is the default option
 
-nrs = 3;
+nrs = 4;
 d = 3;
 N = testdata.NNodes;
 edges = (testdata.E);
-num_edges = testdata.NEdges;
+% num_edges = testdata.NEdges;
 
 sz=[nrs,d,N];
 
 Tijs = G2T(testdata.gijtruth);
-R_gf = G2R(testdata.gitruth);
+% R_gf = G2R(testdata.gitruth);
 T_gf = G2T(testdata.gitruth);
 
-[P, frct] = compute_step1_p_fct(R_gf, T_gf, Tijs, edges);
+T_gf_stief = cat_zero_row(T_gf);
+
+[P, frct] = compute_step1_p_fct(T_gf_stief, Tijs, edges);
 
 
-A = 0;
-B = 0;
+A = 0; %TODO
+B = 0; %TODO
 problem=struct("sz",sz, ...
-    'P',P, 'fixed_cost_term', frct, ...
+    'P',P, 'frct', frct, ...
     'A',A,'B',B);
 
 

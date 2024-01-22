@@ -16,7 +16,7 @@ for e = 1:num_edges
     T_ij = Tijs(:,e);
     c = T_i * T_i' + T_j * T_j' - T_i * T_j' - T_j * T_i';
     d = T_ij * T_ij';
-    retval = retval + trace(c + d);
+    retval = retval + trace(c) + trace(d);
 end
 
 end %file function
