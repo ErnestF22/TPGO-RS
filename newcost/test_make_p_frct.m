@@ -38,14 +38,19 @@ disp(max(abs(P - P_noloops), [], "all"));
 
 % fixed rot cost term
 frct = compute_step1_fixed_cost_term(T_globalframe, Tijs_vec, edges);
-R_transp = matStack(multitransp(R_globalframe));
+frct_noloops = compute_step1_fct_noloops(T_globalframe, Tijs_vec, edges);
 
+disp("[frct, frct_noloops]")
+disp([frct, frct_noloops])
+
+%Finally, check that costs are also the same
+R_transp = matStack(multitransp(R_globalframe));
 
 cost_2 = trace(R_transp*P) + frct;
 disp("cost_2");
 disp(cost_2);
 
-cost_2_noloops = trace(R_transp*P) + frct;
+cost_2_noloops = trace(R_transp*P_noloops) + frct_noloops;
 disp("cost_2_noloops");
 disp(cost_2_noloops);
 
