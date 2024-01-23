@@ -7,11 +7,11 @@ dc=curve.dc;
 ddc=curve.ddc;
 
 f=@(t) problem.cost(c(t));
-rgradf=@(t) problem.rgrad(c(t));
+rgradf=@(t) problem.grad(c(t));
 df=@(t) sum(stiefel_metric(c(t),rgradf(t),dc(t),'canonical'));
 
 %%%
-rhessf = @(t) problem.rhess(c(t),dc(t));
+rhessf = @(t) problem.hess(c(t),dc(t));
 ddf_1 = @(t) sum(stiefel_metric(c(t), rhessf(t), dc(t), 'canonical'));
 ddot_c = @(t) stiefel_tangentProj(c(t), ddc(t));
 ddf_2 = @(t) sum(stiefel_metric(c(t), rgradf(t), ddot_c(t), 'canonical'));

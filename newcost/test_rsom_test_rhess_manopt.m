@@ -11,8 +11,8 @@ max_icp_iterations = 10;
 num_edges_full = N*N;
 num_edges = testdata.NEdges;
 procrustes_mode = 'som';
-riem_grad_mode = 'auto'; %'auto' or 'manual'
-hessian_mode = 'auto'; 
+riem_grad_mode = 'manual'; %'auto' or 'manual'
+hessian_mode = 'manual'; 
 initguess_is_available = boolean(1);
 som_params = struct('N', N, 'd', d, 'd_aff', d_aff, ...
     'global_camera_id', global_camera_id, ...
@@ -44,12 +44,12 @@ problem.M = manifold;
 % Define the problem cost function and its Euclidean gradient.
 problem.cost  = @(x) rsom_cost_rot_stiefel(x, problem_struct);
 problem.egrad = @(x) rsom_egrad_rot_stiefel(x, problem_struct);
-problem.rgrad = @(x) rsom_rgrad_rot_stiefel(x, problem_struct);
+problem.grad = @(x) rsom_rgrad_rot_stiefel(x, problem_struct);
 figure(1)
 disp("NOW CHECKING GRADIENT:")
 checkgradient(problem); % Numerically check gradient consistency
 problem.ehess = @(x,u) rsom_ehess_rot_stiefel(x, u, problem_struct);
-problem.rhess = @(x,u) rsom_rhess_rot_stiefel(x, u, problem_struct);
+% problem.hess = @(x,u) rsom_rhess_rot_stiefel(x, u, problem_struct);
 figure(2)
 disp("NOW CHECKING HESSIAN:")
 checkhessian(problem) % Numerically check gradient consistency

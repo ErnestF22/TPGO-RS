@@ -44,9 +44,9 @@ step1.M = R_manopt_stiefel; %M = manifold
 
 step1.cost = @(x) som_cost_rot_stiefel(x, problem_struct);
 step1.egrad = @(x) som_egrad_rot_stiefel(x, problem_struct);
-step1.rgrad = @(x) som_rgrad_rot_stiefel(x, problem_struct);
+step1.grad = @(x) som_rgrad_rot_stiefel(x, problem_struct);
 step1.ehess = @(x,u) som_ehess_rot_stiefel(x,u, problem_struct);
-step1.rhess = @(x,u) som_rhess_rot_stiefel(x,u, problem_struct);
+step1.hess = @(x,u) som_rhess_rot_stiefel(x,u, problem_struct);
 %Run Manopt with rand init guess
 
 R_initguess = make_rand_stiefel_3d_array(nrs, d, N);
@@ -125,9 +125,9 @@ end
 step2.M = stiefelfactory(nrs_next,d,N);
 step2.cost = @(x) som_cost_rot_stiefel(x, problem_struct_next);
 step2.egrad = @(x) som_egrad_rot_stiefel(x, problem_struct_next);
-step2.rgrad = @(x) som_rgrad_rot_stiefel(x, problem_struct_next);
+step2.grad = @(x) som_rgrad_rot_stiefel(x, problem_struct_next);
 step2.ehess = @(x,u) som_ehess_rot_stiefel(x,u, problem_struct_next);
-step2.rhess = @(x,u) som_rhess_rot_stiefel(x,u, problem_struct_next);
+step2.hess = @(x,u) som_rhess_rot_stiefel(x,u, problem_struct_next);
 
 % alphas = -0.2:0.001:0.2;
 % plot_vals = zeros(size(alphas));
@@ -149,7 +149,7 @@ for ii = 1:length(alphas)
     plot_vals(ii) = step2.cost(x_retr_ii);
     %Note: gradient is zero
     plot_vals_taylor(ii) = step2.cost(x)+...
-        alphas(ii)^2/2*sum(stiefel_metric(x,v_pim_next,step2.rhess(x,v_pim_next),'canonical'));
+        alphas(ii)^2/2*sum(stiefel_metric(x,v_pim_next,step2.hess(x,v_pim_next),'canonical'));
 end
 
 plot(alphas, plot_vals,'b')

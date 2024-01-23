@@ -47,7 +47,7 @@ for ii = pos_start:length(alphas)
 
 
     plot_vals_taylor(ii) = initial_cost+...
-        alphas(ii)^2/2*sum(stiefel_metric(x,v,problem.rhess(x,v),'euclidean'));
+        alphas(ii)^2/2*sum(stiefel_metric(x,v,problem.hess(x,v),'euclidean'));
     if plot_vals_taylor(ii) < initial_cost
         found_lower = boolean(1);
         Y_out = candidate_val;
@@ -67,7 +67,7 @@ if ~found_lower
             disp("NO");
         end
         plot_vals_taylor(ii) = initial_cost+...
-            alphas(ii)^2/2*sum(stiefel_metric(x,v,problem.rhess(x,v),'euclidean'));
+            alphas(ii)^2/2*sum(stiefel_metric(x,v,problem.hess(x,v),'euclidean'));
         if plot_vals_taylor(ii) < initial_cost
             found_lower = boolean(1);
             Y_out = candidate_val;

@@ -61,10 +61,10 @@ problem=struct('sz',sz, ...
 
 problem.cost=@(x) cost(x,problem);
 problem.egrad=@(x) egrad(x,problem);
-problem.rgrad=@(x) rgrad(x,problem);
+problem.grad=@(x) rgrad(x,problem);
 problem.ehess=@(x,u) ehess(x,u,problem);
-problem.rhess=@(x,u) rhess(x,u,problem);
-problem.rhess_rconn=@(x,u) rhess_rconn(x,u,problem);
+problem.hess=@(x,u) rhess(x,u,problem);
+problem.hess_rconn=@(x,u) rhess_rconn(x,u,problem);
 problem.ahess_f=@(x,u) ahess_f(x,u,problem);
 problem.bhess_f=@(x,u) bhess_f(x,u,problem);
 

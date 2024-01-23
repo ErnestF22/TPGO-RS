@@ -12,9 +12,9 @@ problem_manopt.M = manif;
 
 problem_manopt.cost = @(x) som_cost_rot_stiefel(x, problem);
 problem_manopt.egrad = @(x) som_egrad_rot_stiefel(x, problem);
-problem_manopt.rgrad = @(x) som_rgrad_rot_stiefel(x, problem);
+problem_manopt.grad = @(x) som_rgrad_rot_stiefel(x, problem);
 problem_manopt.ehess = @(x,u) som_ehess_rot_stiefel(x,u, problem);
-problem_manopt.rhess = @(x,u) som_rhess_rot_stiefel(x,u, problem);
+problem_manopt.hess = @(x,u) som_rhess_rot_stiefel(x,u, problem);
 
 
 % R_initguess = eye3d(problem.sz(1),problem.sz(2),problem.sz(3));
@@ -22,10 +22,10 @@ R_initguess = make_rand_stiefel_3d_array(problem.sz(1),problem.sz(2),problem.sz(
 options.maxiter = 100;
 [R, R_cost, R_info, R_options] = trustregions(problem_manopt, R_initguess, options);
 
-disp("problem_manopt.rgrad(R)")
-disp(problem_manopt.rgrad(R))
-disp("max(problem_manopt.rgrad(R))");
-disp(max(problem_manopt.rgrad(R),[], 'all'));
+disp("problem_manopt.grad(R)")
+disp(problem_manopt.grad(R))
+disp("max(problem_manopt.grad(R))");
+disp(max(problem_manopt.grad(R),[], 'all'));
 L = problem.L;
 P = problem.P;
 [lambda_pim, v_pim] = pim_hessian(R, problem);

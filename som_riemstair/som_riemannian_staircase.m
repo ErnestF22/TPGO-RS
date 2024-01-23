@@ -78,7 +78,7 @@ for num_rows_stiefel = r0:d*N+1
     manopt_data.egrad = @(x) som_cost_egrad_stiefel(x, problem_struct);
     manopt_data.grad = @(x) som_cost_rgrad_stiefel(x, problem_struct);
     manopt_data.ehess = @(x,u) som_cost_ehess_stiefel(x, u, problem_struct);
-    manopt_data.rhess = @(x,u) som_cost_rhess_stiefel(x, u, problem_struct);
+    manopt_data.hess = @(x,u) som_cost_rhess_stiefel(x, u, problem_struct);
     %
     alpha = 5.0693e-07; %FIXME!
     [stepsize, Y02d] = linesearch_decrease(manopt_data, matStack(Y_plus), alpha * matStack(Y_dot), SDPLRval);

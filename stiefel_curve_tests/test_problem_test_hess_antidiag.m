@@ -6,7 +6,7 @@ c=curve.c;
 dc=curve.dc;
 
 f=@(t) problem.cost(c(t));
-rgradf=@(t) problem.rgrad(c(t));
+rgradf=@(t) problem.grad(c(t));
 
 
 % A

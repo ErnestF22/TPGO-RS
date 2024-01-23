@@ -7,11 +7,11 @@ dc=curve.dc;
 ddc=curve.ddc;
 
 f=@(t) problem.cost(c(t));
-rgradf=@(t) problem.rgrad(c(t));
+rgradf=@(t) problem.grad(c(t));
 df=@(t) sum(stiefel_metric([],rgradf(t),dc(t),'euclidean'));
 
 %%%
-rhessf = @(t) problem.rhess(c(t),dc(t));
+rhessf = @(t) problem.hess(c(t),dc(t));
 ddf_1 = @(t) stiefel_metric([], rhessf(t), dc(t), 'euclidean');
 ddf_2 = @(t) stiefel_metric([], rgradf(t), ddc(t), 'euclidean');
 ddf = @(t) sum(ddf_1(t) + ddf_2(t));

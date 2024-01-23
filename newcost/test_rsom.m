@@ -29,9 +29,9 @@ problem=struct("sz",sz, ...
 
 problem.cost=@(x) rsom_cost_rot_stiefel(x,problem);
 problem.egrad=@(x) rsom_egrad_rot_stiefel(x,problem);
-problem.rgrad=@(x) rsom_rgrad_rot_stiefel(x,problem);
+problem.grad=@(x) rsom_rgrad_rot_stiefel(x,problem);
 problem.ehess=@(x,u) rsom_ehess_rot_stiefel(x,u,problem);
-problem.rhess=@(x,u) rsom_rhess_rot_stiefel(x,u,problem);
+problem.hess=@(x,u) rsom_rhess_rot_stiefel(x,u,problem);
 
 
 end %file function

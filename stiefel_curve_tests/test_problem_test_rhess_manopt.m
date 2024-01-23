@@ -43,11 +43,11 @@ problem.M = manifold;
 % Define the problem cost function and its Euclidean gradient.
 problem.cost  = @(x) som_cost_rot_stiefel(x, problem_struct);
 problem.egrad = @(x) som_egrad_rot_stiefel(x, problem_struct);
-problem.rgrad = @(x) som_rgrad_rot_stiefel(x, problem_struct);
+problem.grad = @(x) som_rgrad_rot_stiefel(x, problem_struct);
 figure(1)
 checkgradient(problem); % Numerically check gradient consistency
 problem.ehess = @(x, u) som_ehess_rot_stiefel(x, u, problem_struct);
-problem.rhess = @(x,u) som_rhess_rot_stiefel(x, u, problem_struct);
+problem.hess = @(x,u) som_rhess_rot_stiefel(x, u, problem_struct);
 figure(2)
 checkhessian(problem) % Numerically check gradient consistency
 
