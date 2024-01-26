@@ -6,7 +6,7 @@ nrs = size(R_gf, 1);
 d = size(R_gf, 2);
 N = size(R_gf, 3);
 
-num_edges = size(edges, 1);
+% num_edges = size(edges, 1);
 
 adj_mat = make_adj_mat_from_edges(edges, N);
 M = num2cell(adj_mat); %mask
@@ -48,7 +48,7 @@ PR_12_cells = cellfun(@mtimes, B1_cells, Tijs_transp_mat_cells, 'Un', 0);
 PR_123_cells = cellfun(@mtimes, PR_12_cells, R_PR_cells, 'Un', 0);
 PR_123_cells_vec = cellfun(@vec, PR_123_cells, 'Un', 0);
 PR_vec = sum(reshape(cell2mat(PR_123_cells_vec(:)),nrs*N,[]), 2); %sum all
-PR = reshape(PR_vec, N, nrs);
+PR = 2 * reshape(PR_vec, N, nrs); % !! 2*
 
 
 %%

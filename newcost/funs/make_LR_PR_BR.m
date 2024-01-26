@@ -24,7 +24,7 @@ for ee = 1:num_edges
     %LR
     LR = LR + BIJ * BIJ';
     %PR
-    PR = PR + BIJ * Tij' * Ri';
+    PR = PR + 2 * BIJ * Tij' * Ri';
     %BR
     BR_const = BR_const + Tij * Tij';
 end
