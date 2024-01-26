@@ -3,16 +3,24 @@ function [L_T, P_T] = make_LT_PT(T_globalframe_nois, Tijs_vec, edges, params)
 %formulation of step 1. This version uses for-loops (generally less
 %efficient but easier to read)
 
-N = params.N;
-d = params.d;
-d_aff = params.d_aff;
-global_camera_id = params.global_camera_id;
-num_tests_per_sigma = params.num_tests_per_sigma;
-transf_end_thresh = params.transf_end_thresh;
-max_icp_iterations = params.max_icp_iterations;
-num_edges_full = params.num_edges_full;
-num_edges = params.num_edges;
-initguess_is_available = params.initguess_is_available;
+if ~exist('params', 'var') || isempty(params)
+    d = size(Tijs_vec, 1);
+    N = size(T_globalframe_nois, 2);
+    num_edges = size(edges, 1);
+else
+    N = params.N;
+    d = params.d;
+    d_aff = params.d_aff;
+    global_camera_id = params.global_camera_id;
+    num_tests_per_sigma = params.num_tests_per_sigma;
+    transf_end_thresh = params.transf_end_thresh;
+    max_icp_iterations = params.max_icp_iterations;
+    num_edges_full = params.num_edges_full;
+    num_edges = params.num_edges;
+    initguess_is_available = params.initguess_is_available;
+end   
+
+
 
 Tijs_mat = tijs_vec_2_tijs_mat(Tijs_vec, edges, N);
 

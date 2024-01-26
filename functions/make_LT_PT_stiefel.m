@@ -3,16 +3,28 @@ function [L_T_stiefel, P_T_stiefel] = make_LT_PT_stiefel(T_gf_stiefel, Tijs_vec,
 %formulation of step 1. This version uses for-loops (generally less
 %efficient but easier to read)
 
-N = params.N;
-d = params.d;
-d_aff = params.d_aff;
-global_camera_id = params.global_camera_id;
-num_tests_per_sigma = params.num_tests_per_sigma;
-transf_end_thresh = params.transf_end_thresh;
-max_icp_iterations = params.max_icp_iterations;
-num_edges_full = params.num_edges_full;
-num_edges = params.num_edges;
-initguess_is_available = params.initguess_is_available;
+
+if ~exist('params', 'var') || isempty(params)
+    d = size(Tijs_vec, 1);
+    N = size(T_gf_stiefel, 2);
+    num_edges = size(edges, 1);
+else
+    N = params.N;
+    d = params.d;
+    d_aff = params.d_aff;
+    global_camera_id = params.global_camera_id;
+    num_tests_per_sigma = params.num_tests_per_sigma;
+    transf_end_thresh = params.transf_end_thresh;
+    max_icp_iterations = params.max_icp_iterations;
+    num_edges_full = params.num_edges_full;
+    num_edges = params.num_edges;
+    initguess_is_available = params.initguess_is_available;
+end   
+
+if ~exist('d_stiefel', 'var') || isempty(d_stiefel)
+    d_stiefel = size(T_gf_stiefel, 1);
+end
+
 
 Tijs_mat = tijs_vec_2_tijs_mat(Tijs_vec, edges, N);
 

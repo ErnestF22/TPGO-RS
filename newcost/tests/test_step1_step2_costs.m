@@ -8,7 +8,6 @@ clc;
 
 resetRands(2);
 
-
 d = 3;
 nrs = d+1;
 N = 5;
@@ -40,11 +39,24 @@ cost_rot = trace(R_transp*P) + frct;
 disp("cost_rot");
 disp(cost_rot);
 
+% R_stacked = matStack(R_globalframe);
+% [LT, PT] = make_LT_PT_stiefel(T_globalframe, Tijs_vec, edges);
+% fct_old = compute_fixed_cost_term(Tijs_vec, d);
+% cost_rot_old = trace(R_stacked' *LT*R_stacked) + trace(R_stacked'*PT) + fct_old;
+% disp("cost_rot_old");
+% disp(cost_rot_old);
+
+
+
 % cost_rot_noloops = trace(R_transp*P_noloops) + frct_noloops;
 % disp("cost_rot_noloops");
 % disp(cost_rot_noloops);
 
-[A,b] = make_Aconst_b(R_globalframe, Tijs_vec, edges);
+[A_rsom,b_rsom] = make_Aconst_b(R_globalframe, Tijs_vec, edges);
+cost_transl = norm(vec(A_rsom .* T_globalframe) + b_rsom)^2;
+
+[A,b] = make_A_b_stiefel(R_globalframe, T_globalframe, Tijs_vec, edges);
+cost_transl = norm(vec(A_rsom .* T_globalframe) + b_rsom)^2;
 
 
 cost_1 = 0.0;
@@ -58,7 +70,6 @@ for e = 1:num_edges
     cost_1 = cost_1 + cost_e^2; %squared!
 end
 
-cost_transl = norm(vec(A .* T_globalframe) + b)^2;
 
 disp("[cost_1, cost_rot, cost_transl]")
 disp([cost_1, cost_rot, cost_transl])
