@@ -36,17 +36,15 @@ P = make_p(T_globalframe, Tijs_vec, edges);
 frct = compute_step1_fixed_cost_term(T_globalframe, Tijs_vec, edges);
 
 cost_rot = trace(R_transp*P) + frct;
-disp("cost_rot");
-disp(cost_rot);
+% disp("cost_rot");
+% disp(cost_rot);
 
-% R_stacked = matStack(R_globalframe);
-% [LT, PT] = make_LT_PT_stiefel(T_globalframe, Tijs_vec, edges);
-% fct_old = compute_fixed_cost_term(Tijs_vec, d);
-% cost_rot_old = trace(R_stacked' *LT*R_stacked) + trace(R_stacked'*PT) + fct_old;
+R_stacked = matStack(R_globalframe);
+[LT, PT] = make_LT_PT_stiefel(T_globalframe, Tijs_vec, edges);
+fct_old = compute_fixed_cost_term(Tijs_vec, d);
+cost_rot_old = trace(R_stacked' *LT*R_stacked) + trace(R_stacked'*PT) + fct_old;
 % disp("cost_rot_old");
 % disp(cost_rot_old);
-
-
 
 % cost_rot_noloops = trace(R_transp*P_noloops) + frct_noloops;
 % disp("cost_rot_noloops");
@@ -54,9 +52,13 @@ disp(cost_rot);
 
 [A_rsom,b_rsom] = make_Aconst_b(R_globalframe, Tijs_vec, edges);
 cost_transl = norm(vec(A_rsom .* T_globalframe) + b_rsom)^2;
+% disp("cost_transl");
+% disp(cost_transl);
 
 [A,b] = make_A_b_stiefel(R_globalframe, T_globalframe, Tijs_vec, edges);
-cost_transl = norm(vec(A_rsom .* T_globalframe) + b_rsom)^2;
+cost_transl_old = norm(vec(A_rsom .* T_globalframe) + b_rsom)^2;
+% disp("cost_transl");
+% disp(cost_transl);
 
 
 cost_1 = 0.0;
@@ -70,9 +72,17 @@ for e = 1:num_edges
     cost_1 = cost_1 + cost_e^2; %squared!
 end
 
+[LR,PR,BR] = make_LR_PR_BR(R_globalframe, Tijs_vec, edges);
+cost_prb = trace(T_globalframe * LR * T_globalframe') + ...
+    trace(-2 * T_globalframe * PR) + trace(BR);
 
-disp("[cost_1, cost_rot, cost_transl]")
-disp([cost_1, cost_rot, cost_transl])
+
+
+disp("[cost_1, cost_rot, cost_prb]")
+disp([cost_1, cost_rot, cost_prb])
+
+disp("[cost_rot_old, cost_transl_old, cost_transl]")
+disp([cost_rot_old, cost_transl_old, cost_transl])
 
 
 
