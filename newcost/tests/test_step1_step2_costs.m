@@ -10,10 +10,10 @@ resetRands(2);
 
 d = 3;
 nrs = 8;
-N = 100;
+N = 80;
 
 %graph random init
-e = 64;
+e = 29;
 G = graph(true(N), 'omitselfloops'); % Alternative without self-loops
 p = randperm(numedges(G), e);
 G = graph(G.Edges(p, :));
@@ -73,12 +73,12 @@ end
 
 [LR,PR,BR] = make_LR_PR_BR(R_globalframe, Tijs_vec, edges);
 cost_prb = trace(T_globalframe * LR * T_globalframe') + ...
-    trace(-2 * T_globalframe * PR) + trace(BR);
+    trace(2 * T_globalframe * PR) + trace(BR);
 
 [LR_noloops,PR_noloops,BR_noloops] = make_LR_PR_BR_noloops( ...
     R_globalframe, Tijs_vec, edges);
 cost_prb_noloops = trace(T_globalframe * LR_noloops * T_globalframe') + ...
-    trace(-2 * T_globalframe * PR_noloops) + trace(BR_noloops);
+    trace(2 * T_globalframe * PR_noloops) + trace(BR_noloops);
 
 
 

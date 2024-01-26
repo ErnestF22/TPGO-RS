@@ -46,8 +46,8 @@ R_PR_cells = mat2cell(R_PR, d*ones(N,1), nrs*ones(1,N));
 
 PR_12_cells = cellfun(@mtimes, B1_cells, Tijs_transp_mat_cells, 'Un', 0);
 PR_123_cells = cellfun(@mtimes, PR_12_cells, R_PR_cells, 'Un', 0);
-
-PR_vec = sum(reshape(cell2mat(PR_123_cells'),nrs*N,[]), 2); %sum all
+PR_123_cells_vec = cellfun(@vec, PR_123_cells, 'Un', 0);
+PR_vec = sum(reshape(cell2mat(PR_123_cells_vec(:)),nrs*N,[]), 2); %sum all
 PR = reshape(PR_vec, N, nrs);
 
 
@@ -58,7 +58,8 @@ PR = reshape(PR_vec, N, nrs);
 
 BR_const_ijs = cellfun(@mtimes, ...
     Tijs_mat_cells, Tijs_transp_mat_cells, 'Un', 0);
-BR_const_vec = sum(reshape(cell2mat(BR_const_ijs'),d*d,[]), 2); %sum all
+BR_const_ijs_vec = cellfun(@vec, BR_const_ijs, 'Un', 0);
+BR_const_vec = sum(reshape(cell2mat(BR_const_ijs_vec(:)),d*d,[]), 2); %sum all
 BR_const = reshape(BR_const_vec, d, d);
 
 
