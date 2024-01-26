@@ -9,11 +9,11 @@ clc;
 resetRands(2);
 
 d = 3;
-nrs = d+1;
-N = 5;
+nrs = 8;
+N = 100;
 
 %graph random init
-e = 7;
+e = 64;
 G = graph(true(N), 'omitselfloops'); % Alternative without self-loops
 p = randperm(numedges(G), e);
 G = graph(G.Edges(p, :));
@@ -21,14 +21,13 @@ edges = table2array(G.Edges);
 num_edges = e;
 
 %testdata random init
-% testdata = testNetwork_som(3); %4 is the default option
-% edges = (testdata.E);
-% num_edges = testdata.NEdges;
+testdata = testNetwork_som(3); %4 is the default option
+edges = (testdata.E);
+num_edges = testdata.NEdges;
 
 R_globalframe = make_rand_stiefel_3d_array(nrs, d, N);
 T_globalframe = 10 * rand(nrs, N);
-% Tijs_vec = 10 * rand(d, num_edges);
-Tijs_vec = zeros(d, num_edges);
+Tijs_vec = 10 * rand(d, num_edges);
 
 R_transp = matStack(multitransp(R_globalframe));
 
@@ -76,13 +75,18 @@ end
 cost_prb = trace(T_globalframe * LR * T_globalframe') + ...
     trace(-2 * T_globalframe * PR) + trace(BR);
 
+[LR_noloops,PR_noloops,BR_noloops] = make_LR_PR_BR_noloops( ...
+    R_globalframe, Tijs_vec, edges);
+cost_prb_noloops = trace(T_globalframe * LR_noloops * T_globalframe') + ...
+    trace(-2 * T_globalframe * PR_noloops) + trace(BR_noloops);
 
 
-disp("[cost_1, cost_rot, cost_prb]")
-disp([cost_1, cost_rot, cost_prb])
 
-disp("[cost_rot_old, cost_transl_old, cost_transl]")
-disp([cost_rot_old, cost_transl_old, cost_transl])
+disp("[cost_1, cost_rot, cost_prb, cost_prb_noloops]")
+disp([cost_1, cost_rot, cost_prb, cost_prb_noloops])
+
+% disp("[cost_rot_old, cost_transl_old, cost_transl]")
+% disp([cost_rot_old, cost_transl_old, cost_transl])
 
 
 
