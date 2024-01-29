@@ -32,7 +32,7 @@ problem_struct.sz = sz;
 T_gf = cat_zero_row(G2T(testdata.gi), nrs - d);
 Tijs_stiefel = G2T(testdata.gij);
 
-[P, frct] = compute_step1_p_fct(T_gf, Tijs_stiefel, edges);
+[P, frct] = make_step1_p_fct(T_gf, Tijs_stiefel, edges);
 problem_struct.P = P;
 problem_struct.frct = frct;
 

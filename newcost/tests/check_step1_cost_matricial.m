@@ -54,7 +54,7 @@ cost_2 = trace(R_transp*P) + frct;
 disp("cost_2");
 disp(cost_2);
 
-[P, frct] = compute_step1_p_fct( ...
+[P, frct] = make_step1_p_fct( ...
     T_globalframe, Tijs_vec, edges);
 
 cost_3 = trace(R_transp*P) + frct;

@@ -16,7 +16,7 @@ T_gf = G2T(testdata.gitruth);
 
 T_gf_stief = cat_zero_row(T_gf);
 
-[P, frct] = compute_step1_p_fct(T_gf_stief, Tijs, edges);
+[P, frct] = make_step1_p_fct(T_gf_stief, Tijs, edges);
 
 
 A = 0; %TODO
