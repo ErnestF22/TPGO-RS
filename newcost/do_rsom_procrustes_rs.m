@@ -55,7 +55,7 @@ exectime_procrustes = toc(procrustes_start_time);
 
 % 3c) execute with step 1 through Manopt with Riemannian Staircase
 manopt_rc_start_time = tic();
-transf_manopt_rc = rsom_rs(T_globalframe_nois, Tijs_vec_nois, edges, params, G2R(transf_initguess), G2T(transf_initguess));
+transf_manopt_rs = rsom_rs(T_globalframe_nois, Tijs_vec_nois, edges, params, G2R(transf_initguess), G2T(transf_initguess));
 % manopt_rc_end_time = tic();
 exectime_manopt_rs = toc(manopt_rc_start_time);
 
@@ -68,7 +68,7 @@ testdata.gi = transf_manopt;
 testdata.gi = matUnstack(transf_procrustes, 4);
 [rotation_error_procrustes,translation_error_procrustes] = testNetworkComputeErrors(testdata);
 
-testdata.gi = transf_manopt_rc;
+testdata.gi = transf_manopt_rs;
 [rotation_error_manopt_rs,translation_error_manopt_rs] = testNetworkComputeErrors(testdata);
 
 

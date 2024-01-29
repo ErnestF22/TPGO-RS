@@ -1,7 +1,9 @@
 function [R_out, R_cost, R_info, R_options] = rsom_step1( ...
-    T_gf, Tijs, edges, params)
+    T_gf, Tijs, edges, params, R_initguess)
 %DO_RSOM_MANOPT_STEP1 Run step 1 of the Manopt pipeline and return Manopt
 % optimization outputs.
+
+
 
 %problem size params
 nrs = size(T_gf, 1);
@@ -9,6 +11,10 @@ d = size(Tijs, 1);
 N = size(T_gf, 2);
 problem_step1.sz = [nrs, d, N];
 % num_edges = size(edges, 1);
+
+if nargin < 5
+    R_initguess = make_rand_stiefel_3d_array(nrs, d, N);
+end
 
 % Create the problem structure.
 manifold = stiefelfactory(nrs,d,N);
@@ -30,7 +36,11 @@ problem_step1.grad = @(x) rsom_rgrad_rot_stiefel(x,problem_step1);
 % checkhessian(problem);
  
 % Solve.
-[R_out, R_cost, R_info, R_options] = trustregions(problem_step1);
+if params.initguess_is_available
+    [R_out, R_cost, R_info, R_options] = trustregions(problem_step1, R_initguess);
+else
+    [R_out, R_cost, R_info, R_options] = trustregions(problem_step1);
+end
 
 
 end
