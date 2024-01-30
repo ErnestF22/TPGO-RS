@@ -37,7 +37,9 @@ problem_step1.grad = @(x) rsom_rgrad_rot_stiefel(x,problem_step1);
  
 % Solve.
 if params.initguess_is_available
-    [R_out, R_cost, R_info, R_options] = trustregions(problem_step1, R_initguess);
+%     R_initguess;
+    [R_out, R_cost, R_info, R_options] = trustregions(problem_step1, ...
+        R_initguess);
 else
     [R_out, R_cost, R_info, R_options] = trustregions(problem_step1);
 end
