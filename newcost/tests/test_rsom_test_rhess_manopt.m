@@ -49,9 +49,7 @@ figure(1)
 disp("NOW CHECKING GRADIENT:")
 checkgradient(problem); % Numerically check gradient consistency
 problem.ehess = @(x,u) rsom_ehess_rot_stiefel(x, u, problem_struct);
-% problem.hess = @(x,u) rsom_rhess_rot_stiefel(x, u, problem_struct);
-problem.hess = @(x,u) problem.M.ehess2rhess(x, problem.egrad, ...
-    problem.ehess, u);
+problem.hess = @(x,u) rsom_rhess_rot_stiefel(x, u, problem_struct);
 figure(2)
 disp("NOW CHECKING HESSIAN:")
 checkhessian(problem) % Numerically check gradient consistency

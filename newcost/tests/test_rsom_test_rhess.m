@@ -1,4 +1,4 @@
-function test_rsom_test_rhess()
+function test_rsom_test_rhess
 problem=test_rsom();
 curve=test_rsom_curve(problem);
 
