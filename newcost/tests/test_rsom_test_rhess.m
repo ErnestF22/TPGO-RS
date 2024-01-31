@@ -36,8 +36,8 @@ end
 %%
 %pseudo-geodesic test
 figure('Name','Riem. Hessian: cost along curve')
-% funCheckDer(df,ddf,linspace(-1,1))
-funCheckDifferential(rgradf, dc, rhessf, ddc)
+funCheckDer(df,ddf,linspace(-1,1))
+% funCheckDifferential(rgradf, dc, rhessf, ddc)
 
 
 
