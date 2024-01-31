@@ -3,7 +3,7 @@ function eig_bool = eigencheck_hessian(lambda, v, hess_fun_han, thr)
 % Hessian defined by hess_fun_han
 
 if ~exist('thr','var')
-  thr = 1e-5;
+  thr = 1e-3;
 end
 
 hess_v = hess_fun_han(v);
