@@ -74,7 +74,7 @@ while (norm(matStack(transf_prev) - matStack(transf_out))>=transf_end_thresh && 
         continue;
     end
 
-    if num_iterations>=max_icp_iterations
+    if num_iterations>=params.max_icp_iterations
         fprintf("Exiting ICP: reached max number of iterations\n");
         continue;
     end

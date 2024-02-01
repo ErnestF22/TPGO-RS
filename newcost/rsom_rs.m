@@ -30,12 +30,26 @@ R_gf_next = cat_zero_rows_3d_array(G2R(transf_cand));
 problem_struct_next=struct('sz',sz_next, ... %!!
     'P', P_next, 'frct', frct_next, ...
     'LR', LR_next, 'PR', PR_next, 'BR', BR_next);
+problem_struct_next.M = stiefelfactory(sz_next(1), sz_next(2), sz_next(3));
+problem_struct_next.cost  = @(x) rsom_cost_rot_stiefel(x,problem_struct_next);
+problem_struct_next.egrad = @(x) rsom_egrad_rot_stiefel(x,problem_struct_next);
+problem_struct_next.grad = @(x) rsom_rgrad_rot_stiefel(x,problem_struct_next);
+problem_struct_next.ehess = @(x,u) rsom_ehess_rot_stiefel(x,u,problem_struct_next);
+problem_struct_next.hess = @(x,u) rsom_rhess_rot_stiefel(x,u,problem_struct_next);
 
 
 for num_rows_stiefel = r0:d*N+1
-    R_cand = G2R(transf_cand);
-    Y0 = rsom_pim_hessian(R_cand, problem_struct_next, thr); %TODO: use this as initguess (starting point)
-    if max(abs(Y0 - cat_zero_rows_3d_array(R_cand, size(Y0,1) - size(R_cand, 1))), [], "all") < 1e-3
+    [Y0, lambda, v] = rsom_pim_hessian( ...
+        R_gf_next, problem_struct_next, thr); %TODO: use this as initguess (starting point)
+    disp("Y0");
+    disp(Y0);
+    if lambda < 0
+        disp("Found lambda < 0:")
+        disp(lambda);
+        disp("v");
+        disp(v);
+    end
+    if max(abs(Y0 - R_gf_next), [], "all") < 1e-3
         disp("Y0 == G2R(transf_cand)");
         break;
     end

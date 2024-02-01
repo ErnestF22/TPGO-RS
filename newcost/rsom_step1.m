@@ -28,8 +28,8 @@ problem_step1.frct = frct;
 problem_step1.cost  = @(x) rsom_cost_rot_stiefel(x,problem_step1);
 problem_step1.egrad = @(x) rsom_egrad_rot_stiefel(x,problem_step1);
 problem_step1.grad = @(x) rsom_rgrad_rot_stiefel(x,problem_step1);
-% problem.ehess = @(x,u) rsom_ehess_rot_stiefel(x,u,problem);
-% problem.hess = @(x,u) rsom_rhess_rot_stiefel(x,problem);
+problem_step1.ehess = @(x,u) rsom_ehess_rot_stiefel(x,u,problem_step1);
+problem_step1.hess = @(x,u) rsom_rhess_rot_stiefel(x,u,problem_step1);
  
 % Numerically check gradient and hessian consistency (optional).
 % checkgradient(problem);
