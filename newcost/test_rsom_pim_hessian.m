@@ -77,7 +77,7 @@ v_pim_prev = v_pim;
 disp("lambda_pim found after first iteration of P.I.M.")
 disp(lambda_pim)
 
-disp('Difference between lambda*v_max and H(v_max) should be in the order of the tolerance:')
+disp('Difference between lambda_pim*v_pim and H(v_pim) should be in the order of the tolerance:')
 eigencheck_hessian(lambda_pim, v_pim, rhess_fun_han);
 
 %%%%step2
@@ -88,39 +88,48 @@ if lambda_pim>0
     
     mu = 1.1 * lambda_pim;
 
-    fun_han_next = @(u) rsom_rhess_rot_stiefel(x,u,problem_struct_next) - ...
-        mu .* u;
+    rhess_shifted_fun_han = ...
+        @(u) rsom_rhess_rot_stiefel(x,u,problem_struct_next) - mu .* u;
             
     %run shifted power iteration
-    u_start_new = stiefel_randTangentNormVector(x);
-    [lambda_pim_next, v_pim_next] = pim_function(fun_han_next, u_start_new, stiefel_normalize_han, thresh);
+    u_start_second_iter = stiefel_randTangentNormVector(x);
+    [lambda_pim_after_shift, v_pim_after_shift] = pim_function( ...
+        rhess_shifted_fun_han, u_start_second_iter, stiefel_normalize_han, thresh);
     
-    disp('Difference between lambda*v_max and H(v_max) should be in the order of the tolerance:')
-    eigencheck_hessian(lambda_pim_next, v_pim_next, fun_han_next);
+    disp(['Difference between lambda_pim_after_shift*v_pim_after_shift ' ...
+        'and H_SH(v_pim_after_shift) should be in the order of the tolerance:'])
+    eigencheck_hessian(lambda_pim_after_shift, v_pim_after_shift, ...
+        rhess_shifted_fun_han);
 
-    disp('Checking Eigenvalue shift')
-    eigencheck_hessian(lambda_pim_next + mu, v_pim_next, rhess_fun_han);
+    disp('Checking Eigenvalue shift:')
+    disp(['difference between (lambda_pim_after_shift+mu)*v_pim_after_shift ' ...
+        'and H(v_pim_after_shift) should be in the order of the tolerance:'])
+    eigencheck_hessian(lambda_pim_after_shift + mu, v_pim_after_shift, ...
+        rhess_fun_han);
 end
 
 %%%
-disp('Checking if highest_norm_eigenval is an eigenval for initial function')
-disp('Difference between lambda_min*v_max and H(v_max) should be in the order of the tolerance:')
-hess_hne = rhess_fun_han(v_pim);
-highest_norm_eigenval = lambda_pim_next + mu;
-% disp(norm((highest_norm_eigenval)*v_pim(:) - hess_hne(:),'inf'))
-if ~eigencheck_hessian(highest_norm_eigenval, v_pim, rhess_fun_han)
-    % scale_factor
-    fac_1 = remove_quasi_zeros(highest_norm_eigenval*v_pim(:));
-    fac_2 = remove_quasi_zeros(hess_hne(:));
-    fac2_1 = fac_2 ./ fac_1;
-    fac2_1_nums = fac2_1(~isnan(fac2_1));
-    fac2_1_finite = fac2_1_nums(isfinite(fac2_1_nums));
-    scale_factor = mode(fac2_1_finite);
-
-    disp("Not even after scaling eigenval?")
-    eigencheck_hessian(scale_factor * highest_norm_eigenval, v_pim, rhess_fun_han);
-    highest_norm_eigenval = scale_factor * highest_norm_eigenval;
-end
+disp(['Checking if highest_norm_eigenval = lambda_pim_after_shift + mu' ...
+    'is an eigenval for initial function:'])
+disp(['difference between highest_norm_eigenval*v_pim and H(v_pim) ' ...
+    'should be in the order of the tolerance:'])
+highest_norm_eigenval = lambda_pim_after_shift + mu;
+eigencheck_hessian(highest_norm_eigenval, v_pim, rhess_fun_han);
+%%% scaling eigenvalue
+% if ~eigencheck_hessian(highest_norm_eigenval, v_pim, rhess_fun_han)
+%     % scale_factor
+%     fac_1 = remove_quasi_zeros(highest_norm_eigenval*v_pim(:));
+%     hess_hne = rhess_fun_han(v_pim);
+%     fac_2 = remove_quasi_zeros(hess_hne(:));
+%     fac2_1 = fac_2 ./ fac_1;
+%     fac2_1_nums = fac2_1(~isnan(fac2_1));
+%     fac2_1_finite = fac2_1_nums(isfinite(fac2_1_nums));
+%     scale_factor = mode(fac2_1_finite);
+% 
+%     disp("Not even after scaling eigenval?")
+%     eigencheck_hessian(scale_factor * highest_norm_eigenval, v_pim, rhess_fun_han);
+%     highest_norm_eigenval = scale_factor * highest_norm_eigenval;
+% end
 
 
 %Preparing linesearch
@@ -144,14 +153,14 @@ alphas = linspace(-0.01,0.01,501); %-0.2:0.01:0.2;
 plot_vals = zeros(size(alphas));
 plot_vals_taylor = zeros(size(alphas));
 for ii = 1:length(alphas)
-    x_retr_ii = step2.M.retr(x, v_pim_next, alphas(ii));
+    x_retr_ii = step2.M.retr(x, v_pim_after_shift, alphas(ii));
 %     disp("Is x_retr_ii on Stiefel? (Taylor)")
 %     disp(check_is_on_stiefel(x_retr_ii));
 %     disp([matStack(x), matStack(x_retr_ii)])
     plot_vals(ii) = step2.cost(x_retr_ii);
     %Note: gradient is zero
     plot_vals_taylor(ii) = step2.cost(x)+...
-        alphas(ii)^2/2*sum(stiefel_metric(x,v_pim_next,step2.hess(x,v_pim_next),'canonical'));
+        alphas(ii)^2/2*sum(stiefel_metric(x,v_pim_after_shift,step2.hess(x,v_pim_after_shift),'canonical'));
 end
 
 plot(alphas, plot_vals,'b')
@@ -166,7 +175,7 @@ SDPLRval = 10; %TODO: set this correctly
 
 disp("Now performing linesearch...");
 [stepsize, Y0] = linesearch_decrease(step2, ...
-    x, -alpha_linesearch.*v_pim, rsom_cost_rot_stiefel(x,problem_struct_next));
+    x, -v_pim_after_shift, rsom_cost_rot_stiefel(x,problem_struct_next));
 % hand-made linesearch
 % Y0 = linesearch_decrease_hessian(step2, ...
 %     x, -v_pim, rsom_cost_rot_stiefel(x,problem_struct_next));
