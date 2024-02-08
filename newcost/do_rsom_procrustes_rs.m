@@ -19,7 +19,7 @@ if ~exist('mu', 'var')
 end
 
 %parse used SoM params
-N = params.N;
+% N = params.N;
 
 %edges
 edges = (testdata.E);
@@ -32,9 +32,10 @@ Tijs_vec = G2T(testdata.gijtruth);
 T_globalframe = G2T(testdata.gitruth);
 
 %add noise to data
-Tijs_vec_nois = Tijs_vec + sigma.*randn(size(Tijs_vec)) + ...
+sigma_transl = sigma;
+Tijs_vec_nois = Tijs_vec + sigma_transl.*randn(size(Tijs_vec)) + ...
     mu * ones(size(Tijs_vec));
-T_globalframe_nois = T_globalframe + sigma.*randn(size(T_globalframe)) + ...
+T_globalframe_nois = T_globalframe + sigma_transl.*randn(size(T_globalframe)) + ...
     mu * ones(size(T_globalframe));
 
 % 3) run Manopt and then Procrustes
@@ -77,9 +78,7 @@ testdata.gi = matUnstack(transf_procrustes, 4);
 testdata.gi = transf_manopt_rs;
 %TODO: change this back to what it should be after correcting PIM, 
 %Stiefel -> SO(d) conversion
-rotation_error_manopt_rs = rotation_error_manopt;
-translation_error_manopt_rs = translation_error_manopt;
-% [rotation_error_manopt_rs,translation_error_manopt_rs] = testNetworkComputeErrors(testdata);
+[rotation_error_manopt_rs,translation_error_manopt_rs] = testNetworkComputeErrors(testdata);
 
 
 end %function

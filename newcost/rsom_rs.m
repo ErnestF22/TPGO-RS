@@ -2,27 +2,29 @@ function transf_out = rsom_rs(T_gf, Tijs, edges, params, transf_initguess)
 %RSOM_RS Rsom Manopt pipeline, with the addition of the Riemannian
 %Staircase ("RS")
 
-nrs = size(T_gf, 1);
+% nrs = size(T_gf, 1);
 d = size(Tijs, 1);
 N = size(T_gf, 2);
-sz = [d, d, N];
+% sz = [d, d, N];
 sz_next = [d+1, d, N];
 
 transf_cand = rsom_manopt(T_gf, Tijs, edges, params, transf_initguess);
 
-r0 = d;
+r0 = d+1;
 if ~exist('thresh','var')
-  thr=1e-10;
+  thr=1e-5;
 end
 
-[P, frct] = make_step1_p_fct(T_gf, Tijs, edges);
-[LR, PR, BR] = make_LR_PR_BR_noloops(G2R(transf_cand), Tijs, edges);
-problem_struct=struct('sz',sz, ... %!!
-    'P', P, 'frct', frct, ...
-    'LR', LR, 'PR', PR, 'BR', BR);
+% [P, frct] = make_step1_p_fct(T_gf, Tijs, edges);
+% [LR, PR, BR] = make_LR_PR_BR_noloops(G2R(transf_cand), Tijs, edges);
+% problem_struct=struct('sz',sz, ... %!!
+%     'P', P, 'frct', frct, ...
+%     'LR', LR, 'PR', PR, 'BR', BR);
+
+R = G2R(transf_cand);
 
 T_gf_next = cat_zero_row(T_gf);
-R_gf_next = cat_zero_rows_3d_array(G2R(transf_cand));
+R_gf_next = cat_zero_rows_3d_array(R);
 [P_next, frct_next] = make_step1_p_fct(T_gf_next, Tijs, edges);
 [LR_next, PR_next, BR_next] = make_LR_PR_BR_noloops( ...
     R_gf_next, Tijs, edges);
@@ -38,9 +40,9 @@ problem_struct_next.ehess = @(x,u) rsom_ehess_rot_stiefel(x,u,problem_struct_nex
 problem_struct_next.hess = @(x,u) rsom_rhess_rot_stiefel(x,u,problem_struct_next);
 
 
-for num_rows_stiefel = r0:d*N+1
+for staircase_step_idx = r0:d*N+1
     [Y0, lambda, v] = rsom_pim_hessian( ...
-        R_gf_next, problem_struct_next, thr); %TODO: use this as initguess (starting point)
+        R, problem_struct_next, thr);
     disp("Y0");
     disp(Y0);
     if lambda < 0
@@ -48,17 +50,30 @@ for num_rows_stiefel = r0:d*N+1
         disp(lambda);
         disp("v");
         disp(v);
-    end
-    if max(abs(Y0 - R_gf_next), [], "all") < 1e-3
-        disp("Y0 == G2R(transf_cand)");
+    else
+        disp("lambda_pim > 0: exiting RS")
         break;
     end
-    T_gf = cat_zero_rows_3d_array(T_gf);
-    transf_cand = rsom_manopt(T_gf, Tijs, edges, params, transf_initguess);
+    if max(abs(Y0 - R_gf_next), [], "all") < 1e-5
+        disp("Y0 == G2R(transf_cand)");
+        break;
+    else
+        T_gf_next = cat_zero_row(T_gf, r0-d);
+        transf_initguess_next = RT2G_stiefel(Y0, T_gf_next);
+        transf_cand = rsom_manopt( ...
+            T_gf_next, Tijs, edges, params, transf_initguess_next);
+    end
 end
 
-transf_out = transf_cand;
-
+if staircase_step_idx > d+1
+    %here there should be the reprojection on SO(d)^N
+    %for the moment, just extract the upper left dxd submatrices
+    transf_out = transf_cand(1:d, 1:d, :);
+    transf_out = cat_zero_rows_3d_array(transf_out); %affine (last row = 0)
+    transf_out(d+1, d+1, :) = ones(N,1); 
+else
+    transf_out = transf_cand;
+end
 
 end %file function
 

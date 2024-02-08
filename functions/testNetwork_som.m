@@ -23,7 +23,8 @@ function testnet = testNetwork_som(testNum)
     end
     
     N=5;
-    A=adjgallery(N,'banded',2); %uncomment this for non-complete graph
+%     A=adjgallery(N,'banded',3);
+    A=adjgallery(N,'banded',2);
 %     A=adjgallery(N,'full'); %uncomment this for complete graph
     [G,X]=testNetworkCreateAbsolutePoses(N);
     

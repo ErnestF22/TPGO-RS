@@ -9,11 +9,10 @@ if ~exist('thresh','var')
 end
 
 iterative_change = 1e+6;
-dim = size(x_start);
 x = x_start;
 iteration_num = 0;
 iterative_change = 1e+6;
-while (iteration_num < 3000) % && (abs(iterative_change) > thresh)
+while (iteration_num < 2000) % && (abs(iterative_change) > thresh)
     iteration_num = iteration_num + 1;
     x_prev = x;
     x = normalization_fun(x);

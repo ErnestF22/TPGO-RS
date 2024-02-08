@@ -93,6 +93,7 @@ if lambda_pim>0
             
     %run shifted power iteration
     u_start_second_iter = stiefel_randTangentNormVector(x);
+    u_start_second_iter = stiefel_normalize(x, u_start_second_iter); %!!
     [lambda_pim_after_shift, v_pim_after_shift] = pim_function( ...
         rhess_shifted_fun_han, u_start_second_iter, stiefel_normalize_han, thresh);
     
@@ -189,44 +190,44 @@ disp("Reiterating Manopt...");
 R_initguess_next = Y0;
 [R_next, R_cost, R_info, R_options] = trustregions(step2, R_initguess_next, options);
 
+% for full pose reprojection
 % [R_out, T_out] = lowRankLocalization_solution_extractProjection(matStack(multitransp(R_stiefel)) * reshape(T_stiefel, [], N));
+
 % [R_out, T_out] = lowRankLocalization_solution_extractProjection(matStack(multitransp(R_next)));
-problem_struct_round_solution = struct("d", d, "n", N);
-R_out = round_solution_se_sync(matStackH(R_next), problem_struct_round_solution);
+% problem_struct_round_solution = struct("d", d, "n", N);
+% R_out = round_solution_se_sync(matStackH(R_next), problem_struct_round_solution);
 
 
 %%% check cost progression
 
 disp("first RTR output (R) -> cost")
-c_R = trace(matStack(multitransp(R))*problem_struct.P) + ...
-    problem_struct.frct; 
+% c_R = trace(matStack(multitransp(R))*problem_struct.P) + ...
+%     problem_struct.frct; 
+c_R = rsom_cost_rot_stiefel(R, problem_struct);
 disp(c_R)
 
 disp("first RTR output padded (x) -> cost")
-c_x = trace(matStack(multitransp(x))*problem_struct_next.P) + ...
-    problem_struct_next.frct;  
+% c_x = trace(matStack(multitransp(x))*problem_struct_next.P) + ...
+%     problem_struct_next.frct;
+c_x = rsom_cost_rot_stiefel(x, problem_struct_next);
 disp(c_x)
 
 disp("second RTR input (Y0) -> cost")
-c_Y0 = trace( ...
-    matStack(multitransp(Y0))*problem_struct_next.P) + ...
-    problem_struct_next.frct;
+% c_Y0 = trace( ...
+%     matStack(multitransp(Y0))*problem_struct_next.P) + ...
+%     problem_struct_next.frct;
+c_Y0 = rsom_cost_rot_stiefel(Y0, problem_struct_next);
 disp(c_Y0)
 
 disp("second RTR output (R_next) -> cost")
-c_Rnext = trace( ...
-    matStack(multitransp(R_next))*problem_struct_next.P) + ...
-    problem_struct_next.frct;
+% c_Rnext = trace( ...
+%     matStack(multitransp(R_next))*problem_struct_next.P) + ...
+%     problem_struct_next.frct;
+c_Rnext = rsom_cost_rot_stiefel(R_next, problem_struct_next);
 disp(c_Rnext)
 
 disp("second RTR output projected onto SO(d)^N (R_out) -> cost")
-second_cost_input = matStack(multitransp(matUnstack(R_out')));
-c_sci = trace( ...
-    second_cost_input*problem_struct.P) + ...
-    problem_struct.frct;
+R_out = R_next(1:d, 1:d, 1:N);
+c_sci = rsom_cost_rot_stiefel(R_out, problem_struct);
 disp(c_sci)
-
-
-
-
 
