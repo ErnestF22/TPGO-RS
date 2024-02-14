@@ -11,19 +11,18 @@ edges = (testdata.E);
 sz=[nrs,d,N];
 
 Tijs = G2T(testdata.gijtruth);
-% R_gf = G2R(testdata.gitruth);
+R_gf = G2R(testdata.gitruth);
 T_gf = G2T(testdata.gitruth);
 
 T_gf_stief = cat_zero_row(T_gf);
 
 [P, frct] = make_step1_p_fct(T_gf_stief, Tijs, edges);
+[LR, PR, BR] = make_LR_PR_BR_noloops(R_gf, Tijs, edges);
 
 
-A = 0; %TODO
-B = 0; %TODO
 problem=struct("sz",sz, ...
-    'P',P, 'frct', frct, ...
-    'A',A,'B',B);
+    'P', P, 'frct', frct, ...
+    'PR', PR, 'LR', LR, 'BR', BR);
 
 
 
