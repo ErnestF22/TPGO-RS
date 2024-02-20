@@ -45,7 +45,7 @@ problem_data.sz = [nrs, d, N];
 % problem_struct = problem
 problem.cost = @(x) cost(x, problem_data);
 problem.grad = @(x) grad(x, problem_data);
-problem.hess = @(x, u) hess(x,u, problem_data);
+problem.hess = @(x, u) hess(x, u, problem_data);
 
 % For debugging, it's always nice to check the gradient a few times.
 disp("Checking gradient...");
@@ -116,13 +116,48 @@ function [h] = hess(X, Xdot, problem_data)
         make_step1_p_fct(T, Tijs, edges);
     [problem_structs.LR, problem_structs.PR, problem_structs.BR] = ...
         make_LR_PR_BR_noloops(R, Tijs, edges);
+ 
+    hrt = compute_hrt(X,Xdot,Tijs,edges);
+    htr = compute_htr(X,Xdot,Tijs,edges);
 
-    h.R = rsom_rhess_rot_stiefel(R, Rdot, problem_structs);
-    h.T = rsom_rhess_transl_stiefel(T, Tdot, problem_structs);
+    h.R = rsom_rhess_rot_stiefel(R, Rdot, problem_structs) + hrt;
+    h.T = rsom_rhess_transl_stiefel(T, Tdot, problem_structs) + htr;
 end %hess
 
+function hrt = compute_hrt(x,u,Tijs,edges)
+    W = zeros(size(x.R));
+    num_edges = size(edges, 1);
+    for e = 1:num_edges
+        ii = edges(e,1);
+        jj = edges(e,2); 
+        v_ti = u.T(:,ii);
+        v_tj = u.T(:,jj);
+        T_ij = Tijs(:, e);
+        w_ij = 2 * (v_ti - v_tj)*T_ij';
+        W(:,:,ii) = W(:,:,ii) + w_ij;
+    end
+    hrt = stiefel_tangentProj(x.R, W);
+end
 
-
-
+function htr = compute_htr(x,u,Tijs,edges)
+    htr = zeros(size(x.T));
+    N = size(x.R,3);
+    num_edges = size(edges, 1);
+    for e = 1:num_edges
+        ii = edges(e,1);
+        jj = edges(e,2); 
+        v_ri = u.R(:,:,ii);
+%         v_rj = u.R(:,:,jj);
+        %
+        BIJ = zeros(N,1);
+        BIJ(ii) = 1;
+        BIJ(jj) = -1;
+        %
+        T_ij = Tijs(:, e);
+        w_ij = 2 * BIJ * T_ij' * v_ri';
+        htr = htr + w_ij';
+        
+    end
+end
 
 
