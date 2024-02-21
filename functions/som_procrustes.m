@@ -20,6 +20,10 @@ rand_initguess = params.rand_initguess;
 
 Tijs_mat = tijs_vec_2_tijs_mat(Tijs_vec, edges, N);
 
+if ~initguess_is_available
+    T_globalframe_nois = 10 * rand(d,N);
+end
+
 if rand_initguess
     rot_prev = randrot(d,N);
     transl_prev = 10*rand(d*N,1); % needs to be vectorized
