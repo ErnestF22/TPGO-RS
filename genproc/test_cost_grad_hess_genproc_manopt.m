@@ -42,7 +42,7 @@ M = productmanifold(tuple);
 % Setup the problem structure with manifold M and cost+grad functions.
 problem.M = M;
 problem_data.sz = [nrs, d, N];
-% problem_struct = problem
+%
 problem.cost = @(x) cost_genproc(x, problem_data);
 problem.grad = @(x) grad_genproc(x, problem_data);
 problem.hess = @(x, u) hess_genproc(x, u, problem_data);
