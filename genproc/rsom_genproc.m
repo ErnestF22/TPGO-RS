@@ -36,7 +36,7 @@ R = X.R;
 
 
 for staircase_step_idx = r0:d*N+1
-    problem_struct_next.sz = [r0, d, N];
+    problem_struct_next.sz = [staircase_step_idx, d, N];
     problem_struct_next.Tijs = Tijs;
     problem_struct_next.edges = edges;
 
@@ -51,8 +51,8 @@ for staircase_step_idx = r0:d*N+1
     end
     
     % next optimization iteration
-    tuple_next.R = stiefelfactory(r0, d, N);
-    tuple_next.T = euclideanfactory(r0, N);
+    tuple_next.R = stiefelfactory(staircase_step_idx, d, N);
+    tuple_next.T = euclideanfactory(staircase_step_idx, N);
     M_next = productmanifold(tuple_next);
     problem_next.M = M_next;    
     problem_next.cost = @(x) cost_genproc(x, problem_data); %!! problem_data is the same
