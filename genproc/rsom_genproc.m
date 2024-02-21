@@ -71,7 +71,20 @@ for staircase_step_idx = r0:d*N+1
 end
 
 %TODO: Improve reprojection on SE(d)^N
-transf_out = RT2G(R(1:d, 1:d, 1:N), T(1:d, 1:N));
+
+% METHOD 1): Simply extract upper left submats
+% transf_out = RT2G(R(1:d, 1:d, 1:N), T(1:d, 1:N));
+
+% METHOD 2): SE-SYNC round solution (only for rotations!)
+% R_out = matUnstackH( ...
+%     round_solution_se_sync(matStackH(R), problem_struct_next));
+% T_out = T(1:d, 1:N); %what to do??
+% transf_out = RT2G(R_out, T_out);
+
+% METHOD 3): CODEMETA lowRankLocalization_solution_extractProjection
+[R_out, T_out] = lowRankLocalization_solution_extractProjection( ...
+    matStack(multitransp(R)) * T);
+transf_out = RT2G(R_out, T_out);
 
 end %file function
 
