@@ -15,25 +15,33 @@ num_edges_full = params.num_edges_full;
 num_edges = params.num_edges;
 procrustes_mode = params.procrustes_mode;
 initguess_is_available = params.initguess_is_available;
-
+rand_initguess = params.rand_initguess;
 
 
 Tijs_mat = tijs_vec_2_tijs_mat(Tijs_vec, edges, N);
 
-%initialize initial guesses (if gt available -> use it here)
-eye_so_dn = ones(d*N, d);
-for ii = 1:d:d*N
-    eye_so_dn(ii:ii+d-1, :) = eye(d);
+if rand_initguess
+    rot_prev = randrot(d,N);
+    transl_prev = 10*rand(d*N,1); % needs to be vectorized
+    transf_prev = make_transf(rot_prev, transl_prev);
+    
+    transf_curr = transf_prev; %just to avoid unused variable
+else
+    %initialize initial guesses (if gt available -> use it here)
+    eye_so_dn = ones(d*N, d);
+    for ii = 1:d:d*N
+        eye_so_dn(ii:ii+d-1, :) = eye(d);
+    end
+    eye_so_dn = matUnstack(eye_so_dn);
+    
+    transl_zero_n = zeros(d*N, 1);
+    
+    rot_prev =  eye_so_dn;
+    transl_prev = transl_zero_n;
+    transf_prev = make_transf(rot_prev, transl_prev);
+    
+    transf_curr = transf_prev; %just to avoid unused variable
 end
-eye_so_dn = matUnstack(eye_so_dn);
-
-transl_zero_n = zeros(d*N, 1);
-
-rot_prev =  eye_so_dn;
-transl_prev = transl_zero_n;
-transf_prev = make_transf(rot_prev, transl_prev);
-
-transf_curr = transf_prev; %just to avoid unused variable 
 
 if (procrustes_mode == "som")
     %Procrustes - step 1

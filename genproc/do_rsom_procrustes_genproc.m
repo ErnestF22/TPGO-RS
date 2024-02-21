@@ -48,6 +48,11 @@ vR_noise=rot_randTangentNormVector(R_truth);
 %R_initguess = G2R(rot_randn(testdata.gitruth, sigma_init, N));
 R_initguess=rot_exp(R_truth,sigma*pi/5*vR_noise);
 transl_initguess = T_globalframe + sigma.*randn(size(T_globalframe));
+if params.rand_initguess
+    %overwrite sigma-noisy initguess
+    R_initguess = randrot_manopt(params.d, params.N);
+    transl_initguess = 10 * rand(params.d, params.N);
+end
 transf_initguess = RT2G(R_initguess, transl_initguess);
 manopt_start_time = tic();
 transf_manopt = rsom_manopt(T_globalframe_nois, Tijs_vec_nois, edges, params, transf_initguess);

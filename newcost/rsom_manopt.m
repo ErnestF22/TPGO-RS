@@ -33,21 +33,17 @@ end
 disp("NOTE: in som_manopt() at least one iteration is done by default");
 %COORD DESC - step 1
 R_initguess = G2R(transf_initguess);
-R_initguess = cat_zero_rows_3d_array(R_initguess, nrs-d);
 [R, R_cost, R_info, R_options] = rsom_step1(T_gf_nois, Tijs_nois, edges, params, R_initguess);
 
 
 %COORD DESC - step 2
 transl_initguess = G2T(transf_initguess);
-transl_initguess = cat_zero_row(transl_initguess, nrs-d);
 [T, T_cost, T_info, T_options] = rsom_step2(R, Tijs_nois, edges, params, transl_initguess);
 
 
 transf_out = RT2G_stiefel(R, T);
 
 transf_end_thresh = params.transf_end_thresh;
-
-transf_prev = cat_zero_rows_3d_array(transf_prev, size(transf_out, 1) - size(transf_prev, 1));
 
 num_iterations = 1;
 if (norm(matStack(transf_prev) - matStack(transf_out))>=transf_end_thresh && num_iterations<params.max_icp_iterations)
@@ -65,7 +61,7 @@ while (norm(matStack(transf_prev) - matStack(transf_out))>=transf_end_thresh && 
     %COORD DESC - step 2
     [T, T_cost, T_info, T_options] = rsom_step2(R, Tijs_nois, edges, params, transl_prev);
 
-    transf_out = RT2G_stiefel(R, reshape(T, nrs, N));
+    transf_out = RT2G(R, reshape(T, d, N));
     num_iterations = num_iterations + 1;
 
     if norm(matStack(transf_prev) - matStack(transf_out))<transf_end_thresh
