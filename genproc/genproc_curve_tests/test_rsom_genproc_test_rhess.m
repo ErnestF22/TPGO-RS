@@ -40,4 +40,4 @@ funCheckDer(df,ddf,linspace(-1,1))
 % funCheckDifferential(rgradf, dc, rhessf, ddc)
 
 
-
+end %file function

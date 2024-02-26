@@ -9,3 +9,5 @@ f=@(t) problem.cost(c(t));
 egradf=@(t) problem.egrad(c(t));
 df=@(t) sum(stiefel_metric(c,egradf(t),dc(t)));
 funCheckDer(f,df)
+
+end %file function

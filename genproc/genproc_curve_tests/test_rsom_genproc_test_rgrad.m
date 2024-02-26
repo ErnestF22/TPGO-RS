@@ -10,3 +10,5 @@ gradf=@(t) problem.grad(c(t));
 df=@(t) sum(stiefel_metric(c,gradf(t),dc(t)));
 funCheckDer(f,df)
 
+
+end %file functions
