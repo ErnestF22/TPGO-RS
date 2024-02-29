@@ -29,11 +29,12 @@ eigencheck_hessian_genproc(lambda_pim, v_pim, rhess_fun_han);
 
 
 
-if lambda_pim.R>0 || lambda_pim.T>0
-    fprintf("lambda_pim R %g\n", lambda_pim.R);
-    fprintf("lambda_pim T %g\n", lambda_pim.T);
+if lambda_pim>0
+%     fprintf("lambda_pim R %g\n", lambda_pim.R);
+%     fprintf("lambda_pim T %g\n", lambda_pim.T);
+    fprintf("lambda_pim %g\n", lambda_pim);
     
-    lambda_pim = max(lambda_pim.R, lambda_pim.T);
+%     lambda_pim = max(lambda_pim.R, lambda_pim.T);
 
     mu = 1.1 * lambda_pim;
 
@@ -56,8 +57,7 @@ if lambda_pim.R>0 || lambda_pim.T>0
     disp('Checking Eigenvalue shift:')
     disp(['difference between (lambda_pim_after_shift+mu)*v_pim_after_shift ' ...
         'and H(v_pim_after_shift) should be in the order of the tolerance:'])
-    highest_norm_eigenval.R = lambda_pim_after_shift.R + mu;
-    highest_norm_eigenval.T = lambda_pim_after_shift.T + mu;
+    highest_norm_eigenval = lambda_pim_after_shift + mu;
     eigencheck_hessian_genproc(highest_norm_eigenval, v_pim_after_shift, ...
         rhess_fun_han);
 end
@@ -67,8 +67,8 @@ disp(['Checking if highest_norm_eigenval = lambda_pim_after_shift + mu' ...
     ' is an eigenval for initial function:'])
 disp(['difference between highest_norm_eigenval*v_pim and H(v_pim) ' ...
     'should be in the order of the tolerance:'])
-highest_norm_eigenval.R = lambda_pim_after_shift.R + mu; %in case if (lambda_pim.R>0 || lambda_pim.T>0) FALSE
-highest_norm_eigenval.T = lambda_pim_after_shift.T + mu;
+highest_norm_eigenval = lambda_pim_after_shift + mu; %in case if (lambda_pim>0) FALSE
+
 eigencheck_hessian_genproc(highest_norm_eigenval, v_pim, rhess_fun_han);
 %%% scaling eigenvalue
 % if ~eigencheck_hessian(highest_norm_eigenval, v_pim, rhess_fun_han)

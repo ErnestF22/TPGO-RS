@@ -45,7 +45,7 @@ for staircase_step_idx = r0:d*N+1
     disp("v") %just to remove unused variable warning
     disp(v)
 
-    if lambda.R > 0 && lambda.T > 0
+    if lambda > 0
         disp("R, T eigenvals > 0: exiting staircase")
         break;
     end

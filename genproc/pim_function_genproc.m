@@ -10,59 +10,37 @@ end
 
 %% R
 iterative_change = 1e+6;
-x = x_start;
+xR = x_start.R;
+xT = x_start.T;
+xfull = [matStackH(x_start.R), x_start.T];
 iteration_num = 0;
-while (iteration_num < 1200) % && (abs(iterative_change) > thresh)
-%     x_R = x.R(1:5);
+while (iteration_num < 2500) % && (abs(iterative_change) > thresh)
     iteration_num = iteration_num + 1;
-    x_prev = x;
-    x.R = normalization_fun(x.R);
-    x.T = normalization_fun(x.T);
+    x_prev_R = xR;
+    x_prev_T = xT;
+    xfull_prev = [matStackH(x_prev_R), x_prev_T];
+    norm_RT = norm(xfull);
+    x.R = xR/norm_RT;
+    x.T = xT/norm_RT;
     fx = f(x);
-    x.R = -fx.R;
-    x.T = -fx.T;
-    iterative_change = max(min(normalization_fun(x_prev.R - x.R), ...
-        normalization_fun(x_prev.R + x.R)),[],"all");
+    xR = -fx.R;
+    xT = -fx.T;
+    xfull = [matStackH(xR), xT];
+    iterative_change = max(normalization_fun(xfull_prev - xfull), [],"all");
 end
 
-x_max.R = normalization_fun(x.R);
-x_max.T = normalization_fun(x.T); %!! used in f(x_max)
+norm_RT_max = norm([matStackH(x.R), x.T]);
+x_max.R = x.R/norm_RT_max;
+x_max.T = x.T/norm_RT_max;
 f_x_max = f(x_max);
-lambda_max.R = sum(stiefel_metric([], (x_max.R), f_x_max.R)) / ...
-    sum(stiefel_metric([], x_max.R, x_max.R));
-lambda_max.T = sum(stiefel_metric([], (x_max.T), f_x_max.T)) / ...
-    sum(stiefel_metric([], x_max.T, x_max.T));
-
-% x_max_cand_R = x_max.R;
-% lambda_max_cand_R = lambda_max.R;
-% 
-% %% T
-% iterative_change = 1e+6;
-% x = x_start;
-% iteration_num = 0;
-% while (iteration_num < 200) % && (abs(iterative_change) > thresh)
-%     iteration_num = iteration_num + 1;
-%     x_prev = x;
-%     x.T = normalization_fun(x.T);
-%     fx = f(x);
-%     x.R = -fx.R;
-%     x.T = -fx.T;
-%     iterative_change = max(min(normalization_fun(x_prev.T - x.T), ...
-%         normalization_fun(x_prev.T + x.T)),[],"all");
-% end
-% 
-% x_max.R = normalization_fun(x.R); %!! used in f(x_max)
-% x_max.T = normalization_fun(x.T);
-% f_x_max = f(x_max);
-% lambda_max.T = sum(stiefel_metric([], (x_max.T), f_x_max.T)) / ...
+% lambda_max_R = sum(stiefel_metric([], (x_max.R), f_x_max.R)) / ...
+%     sum(stiefel_metric([], x_max.R, x_max.R));
+% lambda_max_T = sum(stiefel_metric([], (x_max.T), f_x_max.T)) / ...
 %     sum(stiefel_metric([], x_max.T, x_max.T));
-% 
-% %%
-% x_max.R = x_max_cand_R;
-% lambda_max.R = lambda_max_cand_R;
-% % x_max.T = normalization_fun(x);
-% % lambda_max.T = sum(stiefel_metric([], (x_max.T), f(x_max.T))) / ...
-% %     sum(stiefel_metric([], x_max, x_max));
+lambda_max = x_max.R(:)' * f_x_max.R(:) + x_max.T(:)' * f_x_max.T(:);
+full_xmax = [matStackH(x_max.R), x_max.T];
+lambda_max = lambda_max / ...
+    sum(stiefel_metric([], full_xmax(:), full_xmax(:))); %note: simple eucl. metric
 
 end %file function
 
