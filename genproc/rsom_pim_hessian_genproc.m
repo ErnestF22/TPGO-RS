@@ -63,13 +63,13 @@ if lambda_pim>0
 end
 
 %%%
-disp(['Checking if highest_norm_eigenval = lambda_pim_after_shift + mu' ...
-    ' is an eigenval for initial function:'])
-disp(['difference between highest_norm_eigenval*v_pim and H(v_pim) ' ...
-    'should be in the order of the tolerance:'])
+% disp(['Checking if highest_norm_eigenval = lambda_pim_after_shift + mu' ...
+%     ' is an eigenval for initial function:'])
+% disp(['difference between highest_norm_eigenval*v_pim and H(v_pim) ' ...
+%     'should be in the order of the tolerance:'])
 highest_norm_eigenval = lambda_pim_after_shift + mu; %in case if (lambda_pim>0) FALSE
 
-eigencheck_hessian_genproc(highest_norm_eigenval, v_pim, rhess_fun_han);
+% eigencheck_hessian_genproc(highest_norm_eigenval, v_pim, rhess_fun_han);
 %%% scaling eigenvalue
 % if ~eigencheck_hessian(highest_norm_eigenval, v_pim, rhess_fun_han)
 %     % scale_factor
@@ -137,7 +137,7 @@ disp("Now performing linesearch...");
 [~, Y0] = linesearch_decrease(step2, ...
     Xnext, v_pim_after_shift, cost_genproc(Xnext,problem_struct_next));
 
-lambda_pim_out = lambda_pim_after_shift;
+lambda_pim_out = highest_norm_eigenval;
 v_pim_out = v_pim_after_shift;
 
 

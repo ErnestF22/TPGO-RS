@@ -54,18 +54,18 @@ for staircase_step_idx = r0:d*N+1
         disp("lambda_pim > 0: exiting RS")
         break;
     end
-    if max(abs(Y0 - R_gf_next), [], "all") < 1e-5
-        disp("Y0 == G2R(transf_cand)");
-        break;
-    else
-        T_gf_next = cat_zero_row(T_gf, r0-d);
-        transf_initguess_next = RT2G_stiefel(Y0, T_gf_next);
-        transf_cand = rsom_manopt( ...
-            T_gf_next, Tijs, edges, params, transf_initguess_next);
-    end
+%     if max(abs(Y0 - R_gf_next), [], "all") < 1e-5
+%         disp("Y0 == G2R(transf_cand)");
+%         break;
+%     else
+    T_gf_next = cat_zero_row(T_gf, r0-d);
+    transf_initguess_next = RT2G_stiefel(Y0, T_gf_next);
+    transf_cand = rsom_manopt( ...
+        T_gf_next, Tijs, edges, params, transf_initguess_next);
+%     end
 end
 
-if staircase_step_idx > d+1
+if staircase_step_idx > d
     %here there should be the reprojection on SO(d)^N
     %for the moment, just extract the upper left dxd submatrices
     transf_out = transf_cand(1:d, 1:d, :);

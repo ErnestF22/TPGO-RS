@@ -33,7 +33,7 @@ X = trustregions(problem);
 T = X.T;
 R = X.R;
 
-
+cost_last = rsom_cost_base(X, problem_data);
 
 for staircase_step_idx = r0:d*N+1
     problem_struct_next.sz = [staircase_step_idx, d, N];
@@ -64,6 +64,12 @@ for staircase_step_idx = r0:d*N+1
     T = X.T;
     R = X.R;
 
+    disp("cost_last")
+    disp(cost_last)
+    cost_last = rsom_cost_base(X, problem_struct_next); 
+    disp("cost_new")
+    disp(cost_last)
+    
     if rank(matStackH(Y_star.R))<staircase_step_idx
         break;
     end
@@ -82,9 +88,13 @@ end
 % transf_out = RT2G(R_out, T_out);
 
 % METHOD 3): CODEMETA lowRankLocalization_solution_extractProjection
-[R_out, T_out] = lowRankLocalization_solution_extractProjection( ...
+if (size(R, 1) > d)
+    [R_out, T_out] = lowRankLocalization_solution_extractProjection( ...
     matStack(multitransp(R)) * T);
-transf_out = RT2G(R_out, T_out);
+    transf_out = RT2G(R_out, T_out);
+else
+    transf_out = RT2G(R, T);
+end
 
 end %file function
 
