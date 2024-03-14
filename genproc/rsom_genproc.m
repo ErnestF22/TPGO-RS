@@ -88,13 +88,23 @@ end
 % transf_out = RT2G(R_out, T_out);
 
 % METHOD 3): CODEMETA lowRankLocalization_solution_extractProjection
-if (size(R, 1) > d)
-    [R_out, T_out] = lowRankLocalization_solution_extractProjection( ...
-    matStack(multitransp(R)) * T);
-    transf_out = RT2G(R_out, T_out);
-else
-    transf_out = RT2G(R, T);
-end
+% if (size(R, 1) > d)
+%     [R_out, T_out] = lowRankLocalization_solution_extractProjection( ...
+%     matStack(multitransp(R)) * T);
+%     transf_out = RT2G(R_out, T_out);
+% else
+%     transf_out = RT2G(R, T);
+% end
+
+% METHOD 4): POC
+x = matStackH(R);
+[Q,~,~]=svd(x*x');
+disp('x=')
+disp(x)
+disp('Q''*x=')
+disp(Q'*x)
+
+transf_out = RT2G(matUnstackH(x), T(1:d, 1:N));
 
 end %file function
 
