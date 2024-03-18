@@ -44,7 +44,7 @@ T = [5.52989200497386	-3.23868362853368	-7.57164584572133	-0.347137118025300	6.4
 
 %%
 
-x = [matStackH(R), T];
+x = [matStackH(R)];
 [Q,~,~]=svd(x*x');
 disp('x=')
 disp(x)
@@ -54,7 +54,7 @@ disp(Q'*x)
 % transf_out = RT2G(matUnstackH(x), T(1:d, 1:N));
 
 %% by hand (Manopt)
-problem.M = stiefelfactory(nrs,nrs);
+problem.M = euclideanfactory(nrs,nrs);
 P_zeros = zeros(nrs-d, d);
 P = [P_zeros, eye(nrs-d)];
 
@@ -73,3 +73,13 @@ disp(Q_out * x)
 % Xtrue = matUnstackH(Q_out * x, d);
 % disp(multidet(Xtrue(1:d, 1:d, :)));
 
+%%%
+
+% Q_try = [
+%     0.0190    0.5766    0.8114   -0.0940
+%    -0.5966   -0.4085    0.3718    0.5822
+%     0.7827   -0.4486    0.3323    0.2751
+%     0.1762    0.5471   -0.3050    0.7593];
+% 
+% disp("Q_try * x")
+% disp(Q_try * x)
