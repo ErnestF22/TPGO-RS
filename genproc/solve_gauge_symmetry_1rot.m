@@ -48,7 +48,7 @@ problem = manoptAD(problem);
 %     0.0144   -0.0779   -0.0255    0.9965];
 
 
-[Q_out, Q_cost, ~, ~] = trustregions(problem);
+% [Q_out, Q_cost, ~, ~] = trustregions(problem);
 
 disp("Q_out")
 disp(Q_out)
@@ -59,4 +59,14 @@ disp(Q_out * x)
 % disp("multidet(matUnstackH(Q_out * x, d))");
 % Xtrue = matUnstackH(Q_out * x, d);
 % disp(multidet(Xtrue(1:d, 1:d, :)));
+
+%% POC
+
+x = R;
+Q_gauge = POCRotateToMinimizeLastEntries(x);
+disp('x=')
+disp(x)
+disp('Q_gauge*x=')
+disp(Q_gauge*x)
+
 

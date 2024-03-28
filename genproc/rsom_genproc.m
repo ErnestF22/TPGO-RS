@@ -97,14 +97,21 @@ end
 % end
 
 % METHOD 4): POC
-x = matStackH(R);
-[Q,~,~]=svd(x*x');
-disp('x=')
-disp(x)
-disp('Q''*x=')
-disp(Q'*x)
+x_rs = matStackH(R);
+if staircase_step_idx > d+1
+    Q = POCRotateToMinimizeLastEntries(x_rs);
+    disp('x_rs=')
+    disp(x_rs)
+    disp('R=')
+    disp(R)
+    disp('x=Q*x_rs=')
+    disp(Q*x_rs)
+    x = Q*x_rs;
+else
+    x = x_rs;
+end
 
-transf_out = RT2G(matUnstackH(x), T(1:d, 1:N));
+transf_out = RT2G(matUnstackH(x(1:d, :)), T(1:d, 1:N));
 
 end %file function
 

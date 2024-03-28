@@ -35,6 +35,7 @@ T_globalframe = G2T(testdata.gitruth);
 sigma_transl = sigma;
 Tijs_vec_nois = Tijs_vec + sigma_transl.*randn(size(Tijs_vec)) + ...
     mu * ones(size(Tijs_vec));
+
 T_globalframe_nois = T_globalframe + sigma_transl.*randn(size(T_globalframe)) + ...
     mu * ones(size(T_globalframe));
 
@@ -53,7 +54,7 @@ if params.rand_initguess
     R_initguess = randrot_manopt(params.d, params.N);
     transl_initguess = 10 * rand(params.d, params.N);
     %
-    T_globalframe_nois = 10 * rand(params.d, params.N);
+%     T_globalframe_nois = 10 * rand(params.d, params.N);
 end
 transf_initguess = RT2G(R_initguess, transl_initguess);
 manopt_start_time = tic();
