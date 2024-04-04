@@ -291,6 +291,47 @@ elseif(mode == "procrustes_manopt_sesyncriemstair")
         "DisplayName", "sesync\_riemstair mean exec time", 'markersize', 15)
     legend
     hold off
+elseif (mode == "rsom_procrustes_manopt_rs_genproc")
+    %manopt and procrustes together on the same graph (easier to compare)
+
+    figure("Name", "rot errors"); %figure 1
+    plot (sigmas, results.manopt_sep_rot_errs, 'r.', ...
+        "DisplayName", "manopt\_sep mean rot error", 'markersize', 15);
+    hold on
+    xlabel('sigma')
+    % ylabel('[°]')
+    plot (sigmas, results.procrustes_rot_errs, 'bs', ...
+        "DisplayName", "procrustes mean rot error", 'markersize', 15)
+    plot (sigmas, results.manopt_rs_rot_errs, 'g+', ...
+        "DisplayName", "manopt\_rs mean rot error", 'markersize', 15);
+    legend;
+    hold off
+    
+    figure("Name", "transl errors"); %figure 2
+    plot (sigmas, results.manopt_sep_transl_errs, 'r.', ...
+        "DisplayName", "manopt\_sep mean transl error", 'markersize', 10)
+    hold on
+    xlabel('sigma')
+    % ylabel('[m]')
+    plot (sigmas, results.procrustes_transl_errs, 'bs', ...
+        "DisplayName", "procrustes mean transl error", 'markersize', 10)
+    plot (sigmas, results.manopt_rs_transl_errs, 'g+', ...
+        "DisplayName", "manopt\_rs mean transl error", 'markersize', 10)
+    legend;
+    hold off
+    
+    figure("Name", "execution times"); %figure 3
+    plot (sigmas, results.manopt_sep_exec_times, 'r.', ...
+        "DisplayName", "manopt\_sep mean exec time", 'markersize', 15)
+    hold on
+    xlabel('sigma')
+    ylabel('[s]')
+    plot (sigmas, results.procrustes_exec_times, 'bs', ...
+        "DisplayName", "procrustes mean exec time", 'markersize', 10)
+    plot (sigmas, results.manopt_rs_exec_times, 'g+', ...
+        "DisplayName", "manopt\_rs mean exec time", 'markersize', 15)
+    legend
+    hold off
 else
     disp("Plot mode unknown!");
 end

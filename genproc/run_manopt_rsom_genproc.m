@@ -134,10 +134,10 @@ disp(procrustes_rot_errs);
 disp("procrustes_transl_errs");
 disp(procrustes_transl_errs);
 
-disp("manopt_rc_rot_errs");
+disp("manopt_rs_rot_errs");
 disp(manopt_rs_rot_errs);
 
-disp("manopt_rc_transl_errs");
+disp("manopt_rs_transl_errs");
 disp(manopt_rs_transl_errs);
 
 disp("manopt_sep_exec_times");
@@ -146,7 +146,7 @@ disp(manopt_sep_exec_times);
 disp("procrustes_exec_times");
 disp(procrustes_exec_times);
 
-disp("manopt_rc_exec_times");
+disp("manopt_rs_exec_times");
 disp(manopt_rs_exec_times);
 
 results = struct("manopt_sep_rot_errs", manopt_sep_rot_errs, ...
@@ -155,12 +155,12 @@ results = struct("manopt_sep_rot_errs", manopt_sep_rot_errs, ...
     "procrustes_rot_errs", procrustes_rot_errs, ...
     "procrustes_transl_errs", procrustes_transl_errs, ...
     "procrustes_exec_times", procrustes_exec_times, ...
-    "manopt_rc_rot_errs", manopt_rs_rot_errs, ...
-    "manopt_rc_transl_errs", manopt_rs_transl_errs, ...
-    "manopt_rc_exec_times", manopt_rs_exec_times);
+    "manopt_rs_rot_errs", manopt_rs_rot_errs, ...
+    "manopt_rs_transl_errs", manopt_rs_transl_errs, ...
+    "manopt_rs_exec_times", manopt_rs_exec_times);
 
 %plot results
-plot_results(sigmas, results, "procrustes_manopt_riemstaircase");
+plot_results(sigmas, results, "rsom_procrustes_manopt_rs_genproc");
 
 
 
