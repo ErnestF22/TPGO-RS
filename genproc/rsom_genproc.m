@@ -1,10 +1,12 @@
-function transf_out = rsom_genproc(T_gf, Tijs, edges, params, transf_initguess)
+function [transf_out, rs_recovery_success] = rsom_genproc(T_gf, Tijs, edges, params, transf_initguess)
 %RSOM_RS Rsom Manopt pipeline, with the addition of the Riemannian
 %Staircase ("RS")
 
 if ~exist('thresh','var')
   thr=1e-5;
 end
+
+rs_recovery_success = boolean(1);
 
 nrs = size(T_gf, 1);
 d = size(Tijs, 1);
@@ -127,12 +129,14 @@ if staircase_step_idx > d+1
     if max(abs(x(d+1:end, :)), [], "all") > 1e-5
         disp("max(abs(x(d+1:end, :)), [], ""all"") > 1e-5!!! " + ...
             "-> x on SE(d)^N recovery failed")
+        rs_recovery_success = boolean(0);
     end 
     x_out = matUnstackH(x(1:d, 1:N*d));
     T_diffs = x_rs(1:d, N*d+1:end);
     [T_out, booleans_T] = edge_diffs_2_T(T_diffs, edges, N);
     if min(booleans_T) < 1
         disp("min(booleans_T) < 1!!! -> T recovery failed")
+        rs_recovery_success = boolean(0);
     end 
 else
     x_out = R;

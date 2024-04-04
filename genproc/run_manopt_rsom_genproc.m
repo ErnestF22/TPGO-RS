@@ -21,7 +21,7 @@ riem_grad_mode = 'manual'; %'auto' or 'manual'
 hessian_mode = 'manual'; 
 initguess_is_available = boolean(0);
 rand_initguess = boolean(1);
-enable_manopt_icp = boolean(0);
+enable_manopt_icp = boolean(1);
 enable_procrustes = boolean(1);
 enable_manopt_rs = boolean(1);
 som_params = struct('N', N, 'd', d, 'd_aff', d_aff, ...
@@ -59,6 +59,7 @@ procrustes_exec_times = zeros(size(sigmas));
 manopt_rs_rot_errs = zeros(size(sigmas));
 manopt_rs_transl_errs = zeros(size(sigmas));
 manopt_rs_exec_times = zeros(size(sigmas));
+rs_success_bools = zeros(length(sigmas), num_tests_per_sigma);
 
 %when multple sigmas and mus, and multiple tests per each pair
 for ii = 1:size(sigmas,1)
@@ -82,7 +83,8 @@ for ii = 1:size(sigmas,1)
         [manopt_sep_rot_err, manopt_sep_transl_err, ...
             procrustes_rot_err, procrustes_transl_err, ...
             manopt_rs_rot_err, manopt_rs_transl_err, ...
-            manopt_sep_exec_time, procrustes_exec_time, manopt_rs_exec_time] = ...
+            manopt_sep_exec_time, procrustes_exec_time, manopt_rs_exec_time, ...
+            rs_success_bool] = ...
             do_rsom_procrustes_genproc(testdata, sigma, mu, som_params); % do_som();
         manopt_sep_rot_errs_per_sigma(:, jj) = manopt_sep_rot_err;
         manopt_sep_transl_errs_per_sigma(:, jj) = manopt_sep_transl_err;
@@ -93,6 +95,7 @@ for ii = 1:size(sigmas,1)
         manopt_genproc_rot_errs_per_sigma(:, jj) = manopt_rs_rot_err;
         manopt_genproc_transl_errs_per_sigma(:, jj) = manopt_rs_transl_err;
         manopt_genproc_exec_times_per_sigma(:, jj) = manopt_rs_exec_time;
+        rs_success_bools(ii,jj) = rs_success_bool;
     end
     
     manopt_sep_rot_errs(ii) = mean(manopt_sep_rot_errs_per_sigma,"all");

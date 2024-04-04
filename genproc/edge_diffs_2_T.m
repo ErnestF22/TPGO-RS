@@ -4,7 +4,7 @@ function [T, booleans_T] = edge_diffs_2_T(T_diffs, edges, N)
 %
 
 num_edges = size(edges, 1);
-booleans_T = boolean(0) * ones(N,1);
+booleans_T = boolean(0) * ones(N,1); % alg should stop when all these are 1
 booleans_T(1) = boolean(1); % node 1 chosen as reference
 d = size(T_diffs, 1);
 T = zeros(d, N);

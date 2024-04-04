@@ -1,7 +1,8 @@
 function [rotation_error_manopt,translation_error_manopt, ...
     rotation_error_procrustes,translation_error_procrustes, ...
     rotation_error_manopt_genproc,translation_error_manopt_genproc, ...
-    exectime_manopt,exectime_procrustes,exectime_manopt_genproc] = ...
+    exectime_manopt,exectime_procrustes,exectime_manopt_genproc, ...
+    rs_success_bool] = ...
         do_rsom_procrustes_genproc(testdata, sigma, mu, params)
 %DO_SOM_PROCRUSTES_MANOPT_RIEMANNIAN_STAIRCASE
 %Function that executes the Shape of Motion algorithms through
@@ -82,7 +83,7 @@ exectime_procrustes = toc(procrustes_start_time);
 % 3c) execute with step 1 through Manopt with Riemannian Staircase
 manopt_genproc_start_time = tic();
 if params.enable_manopt_rs
-    transf_manopt_rs = rsom_genproc(T_globalframe_nois, Tijs_vec_nois, edges, params, transf_initguess);
+    [transf_manopt_rs, rs_success_bool] = rsom_genproc(T_globalframe_nois, Tijs_vec_nois, edges, params, transf_initguess);
 else
     transf_manopt_rs = repmat(eye(d+1), 1, 1, N);
 end
@@ -100,7 +101,8 @@ testdata.gi = transf_procrustes;
 testdata.gi = transf_manopt_rs;
 %TODO: change this back to what it should be after correcting PIM, 
 %Stiefel -> SO(d) conversion
-[rotation_error_manopt_genproc,translation_error_manopt_genproc] = testNetworkComputeErrors(testdata);
+[rotation_error_manopt_genproc,translation_error_manopt_genproc] = ...
+    testNetworkComputeErrors(testdata);
 
 
 end %function
