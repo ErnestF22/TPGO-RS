@@ -18,12 +18,14 @@ if ~exist('mu', 'var')
     mu = 0.0;
 end
 
-%parse used SoM params
-% N = params.N;
+%% 0) parse used SoM params
+N = params.N;
+d = params.d;
 
 %edges
 edges = (testdata.E);
 
+%% 1) add noise to data
 %set gt 
 % transf_gt = testdata.gitruth;
 
@@ -31,7 +33,6 @@ edges = (testdata.E);
 Tijs_vec = G2T(testdata.gijtruth);
 T_globalframe = G2T(testdata.gitruth);
 
-%add noise to data
 sigma_transl = sigma;
 Tijs_vec_nois = Tijs_vec + sigma_transl.*randn(size(Tijs_vec)) + ...
     mu * ones(size(Tijs_vec));
@@ -39,10 +40,8 @@ Tijs_vec_nois = Tijs_vec + sigma_transl.*randn(size(Tijs_vec)) + ...
 T_globalframe_nois = T_globalframe + sigma_transl.*randn(size(T_globalframe)) + ...
     mu * ones(size(T_globalframe));
 
-% 3) run Manopt and then Procrustes
 
-% 3a) execute with step 1 through MANOPT
-%setup initguess
+%% 2) setup initguess
 % R_initguess = G2R(rot_randn(testdata.gitruth, 0.0, N)); % this does not add any noise
 R_truth=G2R(testdata.gitruth);
 vR_noise=rot_randTangentNormVector(R_truth);
@@ -57,30 +56,45 @@ if params.rand_initguess
 %     T_globalframe_nois = 10 * rand(params.d, params.N);
 end
 transf_initguess = RT2G(R_initguess, transl_initguess);
+
+%% 3) Run methods
+
+% 3a) execute with step 1 through MANOPT
 manopt_start_time = tic();
-transf_manopt = rsom_manopt(T_globalframe_nois, Tijs_vec_nois, edges, params, transf_initguess);
-% manopt_end_time = tic();
+if params.enable_manopt_icp
+    transf_manopt = rsom_manopt(T_globalframe_nois, Tijs_vec_nois, edges, params, transf_initguess);
+    % manopt_end_time = tic();
+else
+    transf_manopt = repmat(eye(d+1), 1, 1, N);
+end
 exectime_manopt = toc(manopt_start_time);
+
 
 % 3b) execute with step 1 through PROCRUSTES
 procrustes_start_time = tic();
-transf_procrustes = som_procrustes(T_globalframe_nois, Tijs_vec_nois, edges, params);
-% procrustes_end_time = tic();
+if params.enable_procrustes
+    transf_procrustes = som_procrustes(T_globalframe_nois, Tijs_vec_nois, edges, params);
+else
+    transf_procrustes = repmat(eye(d+1), 1, 1, N);
+end
 exectime_procrustes = toc(procrustes_start_time);
 
 % 3c) execute with step 1 through Manopt with Riemannian Staircase
 manopt_genproc_start_time = tic();
-transf_manopt_rs = rsom_genproc(T_globalframe_nois, Tijs_vec_nois, edges, params, transf_initguess);
-% manopt_genproc_end_time = tic();
+if params.enable_manopt_rs
+    transf_manopt_rs = rsom_genproc(T_globalframe_nois, Tijs_vec_nois, edges, params, transf_initguess);
+else
+    transf_manopt_rs = repmat(eye(d+1), 1, 1, N);
+end
 exectime_manopt_genproc = toc(manopt_genproc_start_time);
 
-%4) compare output results
+%% 4) Compare output results
 
 testdata.gi = transf_manopt;
 % [rotErr,translErr,scale_ratio,translErrNorm] = testNetworkComputeErrors(testdata)
 [rotation_error_manopt,translation_error_manopt] = testNetworkComputeErrors(testdata);
 
-testdata.gi = matUnstack(transf_procrustes, 4);
+testdata.gi = transf_procrustes;
 [rotation_error_procrustes,translation_error_procrustes] = testNetworkComputeErrors(testdata);
 
 testdata.gi = transf_manopt_rs;

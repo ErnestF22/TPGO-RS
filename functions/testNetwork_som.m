@@ -24,8 +24,8 @@ function testnet = testNetwork_som(testNum)
     
     N=5;
 %     A=adjgallery(N,'banded',3);
-    A=adjgallery(N,'banded',2);
-%     A=adjgallery(N,'full'); %uncomment this for complete graph
+%     A=adjgallery(N,'banded',2);
+    A=adjgallery(N,'full'); %uncomment this for complete graph
     [G,X]=testNetworkCreateAbsolutePoses(N);
     
     t_node=testNetworkCreateStruct(A,'Type',structType);

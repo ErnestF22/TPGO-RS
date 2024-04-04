@@ -96,8 +96,25 @@ end
 %     transf_out = RT2G(R, T);
 % end
 
-% METHOD 4): POC
-x_rs = matStackH(R);
+% METHOD 4 rots only): POC Rots only
+% x_rs = matStackH(R);
+% if staircase_step_idx > d+1
+%     Q = POCRotateToMinimizeLastEntries(x_rs);
+%     disp('x_rs=')
+%     disp(x_rs)
+%     disp('R=')
+%     disp(R)
+%     disp('x=Q*x_rs=')
+%     disp(Q*x_rs)
+%     x = Q*x_rs;
+% else
+%     x = x_rs;
+% end
+% transf_out = RT2G(matUnstackH(x(1:d, :)), T(1:d, 1:N));
+
+% METHOD 4): POC with edges differences
+T_edges = make_T_edges(T, edges);
+x_rs = [matStackH(R), T_edges];
 if staircase_step_idx > d+1
     Q = POCRotateToMinimizeLastEntries(x_rs);
     disp('x_rs=')
@@ -107,11 +124,21 @@ if staircase_step_idx > d+1
     disp('x=Q*x_rs=')
     disp(Q*x_rs)
     x = Q*x_rs;
+    if max(abs(x(d+1:end, :)), [], "all") > 1e-5
+        disp("max(abs(x(d+1:end, :)), [], ""all"") > 1e-5!!! " + ...
+            "-> x on SE(d)^N recovery failed")
+    end 
+    x_out = matUnstackH(x(1:d, 1:N*d));
+    T_diffs = x_rs(1:d, N*d+1:end);
+    [T_out, booleans_T] = edge_diffs_2_T(T_diffs, edges, N);
+    if min(booleans_T) < 1
+        disp("min(booleans_T) < 1!!! -> T recovery failed")
+    end 
 else
-    x = x_rs;
+    x_out = R;
+    T_out = T;
 end
-
-transf_out = RT2G(matUnstackH(x(1:d, :)), T(1:d, 1:N));
+transf_out = RT2G(x_out, T_out); %??
 
 end %file function
 

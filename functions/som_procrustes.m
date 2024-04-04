@@ -83,7 +83,7 @@ while (norm(transf_prev - transf_curr)>= transf_end_thresh && num_iterations<max
     transf_curr = make_transf(rot_curr,transl_curr);
 end
 
-transf_out = transf_curr;
+transf_out = matUnstack(transf_curr, 4);
 % disp(transf_curr);
 
 end %function

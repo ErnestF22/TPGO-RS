@@ -21,6 +21,9 @@ riem_grad_mode = 'manual'; %'auto' or 'manual'
 hessian_mode = 'manual'; 
 initguess_is_available = boolean(0);
 rand_initguess = boolean(1);
+enable_manopt_icp = boolean(0);
+enable_procrustes = boolean(1);
+enable_manopt_rs = boolean(1);
 som_params = struct('N', N, 'd', d, 'd_aff', d_aff, ...
     'global_camera_id', global_camera_id, ...
     'num_tests_per_sigma', num_tests_per_sigma, 'transf_end_thresh', transf_end_thresh, ...
@@ -29,7 +32,10 @@ som_params = struct('N', N, 'd', d, 'd_aff', d_aff, ...
     'riem_grad_mode', riem_grad_mode, ...
     'hessian_mode', hessian_mode, ...
     'initguess_is_available', initguess_is_available, ...
-    'rand_initguess', rand_initguess);
+    'rand_initguess', rand_initguess, ...
+    'enable_manopt_icp', enable_manopt_icp, ...
+    'enable_procrustes', enable_procrustes, ...
+    'enable_manopt_rs', enable_manopt_rs);
 
 % 0b) Noise PARAMS
 %NOTE: sigmas, mus can be seen as couples for each test
@@ -37,7 +43,7 @@ sigmas = readmatrix("../sigmas.txt"); %sigma = stdev, sigma.^2 = variance
 mus = readmatrix("../mus.txt"); %OBS. generally, mus can be d-dimensional; here, we just assume them as scalar (i.e. a d-dimensional vector with all coordinates equal)
 
 sigmas = sigmas(4);
-sigmas = 0.0;
+% sigmas = 0.0;
 mus = mus(2);
 
 %If reading from file does not work and want to try a single noise_params
@@ -50,9 +56,9 @@ manopt_sep_exec_times = zeros(size(sigmas));
 procrustes_rot_errs = zeros(size(sigmas));
 procrustes_transl_errs = zeros(size(sigmas));
 procrustes_exec_times = zeros(size(sigmas));
-manopt_rc_rot_errs = zeros(size(sigmas));
-manopt_rc_transl_errs = zeros(size(sigmas));
-manopt_rc_exec_times = zeros(size(sigmas));
+manopt_rs_rot_errs = zeros(size(sigmas));
+manopt_rs_transl_errs = zeros(size(sigmas));
+manopt_rs_exec_times = zeros(size(sigmas));
 
 %when multple sigmas and mus, and multiple tests per each pair
 for ii = 1:size(sigmas,1)
@@ -75,8 +81,8 @@ for ii = 1:size(sigmas,1)
         fprintf("ii %g jj %g\n", ii, jj);
         [manopt_sep_rot_err, manopt_sep_transl_err, ...
             procrustes_rot_err, procrustes_transl_err, ...
-            manopt_rc_rot_err, manopt_rc_transl_err, ...
-            manopt_sep_exec_time, procrustes_exec_time, manopt_rc_exec_time] = ...
+            manopt_rs_rot_err, manopt_rs_transl_err, ...
+            manopt_sep_exec_time, procrustes_exec_time, manopt_rs_exec_time] = ...
             do_rsom_procrustes_genproc(testdata, sigma, mu, som_params); % do_som();
         manopt_sep_rot_errs_per_sigma(:, jj) = manopt_sep_rot_err;
         manopt_sep_transl_errs_per_sigma(:, jj) = manopt_sep_transl_err;
@@ -84,9 +90,9 @@ for ii = 1:size(sigmas,1)
         procrustes_rot_errs_per_sigma(:, jj) = procrustes_rot_err;
         procrustes_transl_errs_per_sigma(:, jj) = procrustes_transl_err;
         procrustes_exec_times_per_sigma(:, jj) = procrustes_exec_time;
-        manopt_genproc_rot_errs_per_sigma(:, jj) = manopt_rc_rot_err;
-        manopt_genproc_transl_errs_per_sigma(:, jj) = manopt_rc_transl_err;
-        manopt_genproc_exec_times_per_sigma(:, jj) = manopt_rc_exec_time;
+        manopt_genproc_rot_errs_per_sigma(:, jj) = manopt_rs_rot_err;
+        manopt_genproc_transl_errs_per_sigma(:, jj) = manopt_rs_transl_err;
+        manopt_genproc_exec_times_per_sigma(:, jj) = manopt_rs_exec_time;
     end
     
     manopt_sep_rot_errs(ii) = mean(manopt_sep_rot_errs_per_sigma,"all");
@@ -95,9 +101,9 @@ for ii = 1:size(sigmas,1)
     procrustes_rot_errs(ii) = mean(procrustes_rot_errs_per_sigma,"all");
     procrustes_transl_errs(ii) = mean(procrustes_transl_errs_per_sigma,"all");
     procrustes_exec_times(ii) = mean(procrustes_exec_times_per_sigma);
-    manopt_rc_rot_errs(ii) = mean(manopt_genproc_rot_errs_per_sigma,"all");
-    manopt_rc_transl_errs(ii) = mean(manopt_genproc_transl_errs_per_sigma,"all");
-    manopt_rc_exec_times(ii) = mean(manopt_genproc_exec_times_per_sigma);
+    manopt_rs_rot_errs(ii) = mean(manopt_genproc_rot_errs_per_sigma,"all");
+    manopt_rs_transl_errs(ii) = mean(manopt_genproc_transl_errs_per_sigma,"all");
+    manopt_rs_exec_times(ii) = mean(manopt_genproc_exec_times_per_sigma);
 
 end    
 
@@ -126,10 +132,10 @@ disp("procrustes_transl_errs");
 disp(procrustes_transl_errs);
 
 disp("manopt_rc_rot_errs");
-disp(manopt_rc_rot_errs);
+disp(manopt_rs_rot_errs);
 
 disp("manopt_rc_transl_errs");
-disp(manopt_rc_transl_errs);
+disp(manopt_rs_transl_errs);
 
 disp("manopt_sep_exec_times");
 disp(manopt_sep_exec_times);
@@ -138,7 +144,7 @@ disp("procrustes_exec_times");
 disp(procrustes_exec_times);
 
 disp("manopt_rc_exec_times");
-disp(manopt_rc_exec_times);
+disp(manopt_rs_exec_times);
 
 results = struct("manopt_sep_rot_errs", manopt_sep_rot_errs, ...
     "manopt_sep_transl_errs", manopt_sep_transl_errs, ...
@@ -146,9 +152,9 @@ results = struct("manopt_sep_rot_errs", manopt_sep_rot_errs, ...
     "procrustes_rot_errs", procrustes_rot_errs, ...
     "procrustes_transl_errs", procrustes_transl_errs, ...
     "procrustes_exec_times", procrustes_exec_times, ...
-    "manopt_rc_rot_errs", manopt_rc_rot_errs, ...
-    "manopt_rc_transl_errs", manopt_rc_transl_errs, ...
-    "manopt_rc_exec_times", manopt_rc_exec_times);
+    "manopt_rc_rot_errs", manopt_rs_rot_errs, ...
+    "manopt_rc_transl_errs", manopt_rs_transl_errs, ...
+    "manopt_rc_exec_times", manopt_rs_exec_times);
 
 %plot results
 plot_results(sigmas, results, "procrustes_manopt_riemstaircase");
