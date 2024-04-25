@@ -136,8 +136,16 @@ function c_out = mycost_Qbnn(Qa, Rb, Ri, Ti, Ti_tilde)
     p = size(Qa, 1);
     Qb = eye(p);
     Qb(p-1:end, p-1:end) = Rb;
-    c = Qa' * Qb * Qa * Ri * Ti - Ti_tilde;
-    c_out = norm(c(:));
+    c = Qa' * Qb * Qa * Ri;
+    c_out = norm(c(end,:));
 end
+
+% function c_out = mycost_Qbnn(Qa, Rb, Ri, Ti, Ti_tilde)
+%     p = size(Qa, 1);
+%     Qb = eye(p);
+%     Qb(p-1:end, p-1:end) = Rb;
+%     c = Qa' * Qb * Qa * Ri * Ti - Ti_tilde;
+%     c_out = norm(c(:));
+% end
 
 
