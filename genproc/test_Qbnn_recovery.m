@@ -62,8 +62,10 @@ idx_i_j2 = find(ismember(edges, [i, j2], "rows"));
 T_i_j1_j2 = [Tijs(:,idx_i_j1), Tijs(:,idx_i_j2)];
 T_i_j1_j2_tilde = - [T(:,i) - T(:,j1), T(:,i) - T(:,j2)]; % !! -
 
-% [R_i * T_i_j1_j2 - T_i_j1_j2_tilde] == 0
-% [Qa * R_i * T_i_j1_j2 - Qa* T_i_j1_j2_tilde] == 0
+disp("max(abs(R_i * T_i_j1_j2 - T_i_j1_j2_tilde),[], ""all"")")
+disp(max(abs(R_i * T_i_j1_j2 - T_i_j1_j2_tilde),[], "all"))
+disp("max(abs(Qa * R_i * T_i_j1_j2 - Qa* T_i_j1_j2_tilde),[], ""all"")")
+disp(max(abs(Qa * R_i * T_i_j1_j2 - Qa* T_i_j1_j2_tilde),[], "all"))
 
 % Create the problem structure.
 manifold = stiefelfactory(p-2,p-2);
@@ -83,13 +85,17 @@ Qb = blkdiag(eye(edge_deg), Rb);
 disp("Qb")
 disp(Qb)
 
+disp("max(abs(Qb * Qa * R_i * T_i_j1_j2 - Qa* T_i_j1_j2_tilde),[], ""all"")")
+disp(max(abs(Qb * Qa * R_i * T_i_j1_j2 - Qa* T_i_j1_j2_tilde),[], "all"))
+
 % Qa' * Qb * Qa * R_i * T_i_j1_j2 - T_i_j1_j2_tilde == 0
+Qa_i = POCRotateToMinimizeLastEntries(x_R);
 disp("max(abs(Qa' * Qb * Qa * R_i * T_i_j1_j2 - T_i_j1_j2_tilde), [], ""all"")")
 disp(max(abs(Qa' * Qb * Qa * R_i * T_i_j1_j2 - T_i_j1_j2_tilde), [], "all"))
 
 %% check on all Rs
 
-step1 = x;
+step1 = x; % x = Qa*x_R
 disp("max(abs(step1(end, :)), [], ""all"")")
 disp(max(abs(step1(end, :)), [], "all"))
 
@@ -114,8 +120,18 @@ disp(Qb * Qa * x_R)
 disp("Qa' * Qb * Qa * x_R")
 disp(Qa' * Qb * Qa * x_R)
 
+%% actual Q1
+disp("actual Qs")
+Q1 = POCRotateToMinimizeLastEntries(R(:,:,1));
+disp("[Q1, Q1*R(:,:,1)]")
+disp([Q1, Q1*R(:,:,1)])
+
+Q5 = POCRotateToMinimizeLastEntries(R(:,:,5));
+disp("[Q5, Q5*R(:,:,5)]")
+disp([Q5, Q5*R(:,:,5)])
 
 %%
+
 function c_out = mycost_Qbnn(Qa, Rb, Ri, Ti, Ti_tilde)
     p = size(Qa, 1);
     Qb = eye(p);
@@ -123,6 +139,5 @@ function c_out = mycost_Qbnn(Qa, Rb, Ri, Ti, Ti_tilde)
     c = Qa' * Qb * Qa * Ri * Ti - Ti_tilde;
     c_out = norm(c(:));
 end
-
 
 
