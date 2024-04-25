@@ -21,8 +21,8 @@ riem_grad_mode = 'manual'; %'auto' or 'manual'
 hessian_mode = 'manual'; 
 initguess_is_available = boolean(0);
 rand_initguess = boolean(1);
-enable_manopt_icp = boolean(1);
-enable_procrustes = boolean(1);
+enable_manopt_icp = boolean(0);
+enable_procrustes = boolean(0);
 enable_manopt_rs = boolean(1);
 som_params = struct('N', N, 'd', d, 'd_aff', d_aff, ...
     'global_camera_id', global_camera_id, ...
@@ -42,8 +42,8 @@ som_params = struct('N', N, 'd', d, 'd_aff', d_aff, ...
 sigmas = readmatrix("../sigmas.txt"); %sigma = stdev, sigma.^2 = variance
 mus = readmatrix("../mus.txt"); %OBS. generally, mus can be d-dimensional; here, we just assume them as scalar (i.e. a d-dimensional vector with all coordinates equal)
 
-sigmas = sigmas(4);
-% sigmas = 0.0;
+% sigmas = sigmas(4);
+sigmas = 0.0;
 mus = mus(2);
 
 %If reading from file does not work and want to try a single noise_params
