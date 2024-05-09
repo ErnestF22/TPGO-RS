@@ -136,22 +136,34 @@ i1 = 1;
 i2 = 5;
 deg_i = 2;
 
+nodes_low_deg = [i1, i2];
+
 tuple.qc = stiefelfactory(p,p);
 tuple.qb = stiefelfactory(p-deg_i,p-deg_i);
 problem_qcqb.M = productmanifold(tuple);
-Ri = R(:,:,i1);
 
-% Define the problem cost function and its Euclidean gradient.
-problem_qcqb.cost = @(x) mycost_qcqb(x, Qa, Ri, T_i_j1_j2, T_i_j1_j2_tilde);
-problem_qcqb = manoptAD(problem_qcqb);
- 
-% Numerically check gradient consistency (optional).
-% checkgradient(problem_qcqb);
- 
-% Solve.
-[qcqb_out, xcost, info, options] = trustregions(problem_qcqb,[],options);
+for jj = nodes_low_deg
+    Ri = R(:,:,jj);
+    
+    % Define the problem cost function and its Euclidean gradient.
+    problem_qcqb.cost = @(x) mycost_qcqb(x, Qa, Ri, T_i_j1_j2, T_i_j1_j2_tilde);
+    problem_qcqb = manoptAD(problem_qcqb);
+     
+    % Numerically check gradient consistency (optional).
+    % checkgradient(problem_qcqb);
+     
+    % Solve.
+%     initguess_j.qc = make_rand_stiefel_3d_array(p,p,1);
+%     initguess_j.qb = make_rand_stiefel_3d_array(p-deg_i,p-deg_i,1);
+%     [qcqb_out_i, xcost, info, options] = ...
+%         trustregions(problem_qcqb,initguess_j,options);
+    [qcqb_out_i, xcost, info, options] = ...
+        trustregions(problem_qcqb,[],options);
 
-
+    Qcd_i = eye(p); %??
+    disp("qcqb_out_i.qc' * Qcd_i * Ri")
+    disp(qcqb_out_i.qc' * Qcd_i * Ri)
+end
 
 
 %% costs
