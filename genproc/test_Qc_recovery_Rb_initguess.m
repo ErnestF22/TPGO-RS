@@ -52,7 +52,7 @@ transf_out = RT2G(x_out, T_out); %??
 
 %trying with i=1
 %its edges are j1 = 2, j2 = 3
-edge_deg = 2;
+node_deg = 2;
 i = 1;
 j1 = 2;
 j2 = 3;
@@ -76,62 +76,62 @@ problem_Qbnn.cost  = @(x) mycost_Qbnn(Qa, x, R_i, T_i_j1_j2, T_i_j1_j2_tilde);
 problem_Qbnn = manoptAD(problem_Qbnn);
  
 % Numerically check gradient consistency (optional).
-checkgradient(problem_Qbnn);
+% checkgradient(problem_Qbnn);
  
 % Solve.
 options.maxiter = 100;
-[Rb, xcost, info, options] = trustregions(problem_Qbnn,[],options);
+% [Rb, xcost, info, options] = trustregions(problem_Qbnn,[],options);
 
-Qb = blkdiag(eye(edge_deg), Rb);
-disp("Qb")
-disp(Qb)
+% Qb = blkdiag(eye(node_deg), Rb);
+% disp("Qb")
+% disp(Qb)
+% 
+% disp("max(abs(Qb * Qa * R_i * T_i_j1_j2 - Qa* T_i_j1_j2_tilde),[], ""all"")")
+% disp(max(abs(Qb * Qa * R_i * T_i_j1_j2 - Qa* T_i_j1_j2_tilde),[], "all"))
 
-disp("max(abs(Qb * Qa * R_i * T_i_j1_j2 - Qa* T_i_j1_j2_tilde),[], ""all"")")
-disp(max(abs(Qb * Qa * R_i * T_i_j1_j2 - Qa* T_i_j1_j2_tilde),[], "all"))
-
-% Qa' * Qb * Qa * R_i * T_i_j1_j2 - T_i_j1_j2_tilde == 0
-Qa_i = POCRotateToMinimizeLastEntries(x_R);
-disp("max(abs(Qa' * Qb * Qa * R_i * T_i_j1_j2 - T_i_j1_j2_tilde), [], ""all"")")
-disp(max(abs(Qa' * Qb * Qa * R_i * T_i_j1_j2 - T_i_j1_j2_tilde), [], "all"))
+% % Qa' * Qb * Qa * R_i * T_i_j1_j2 - T_i_j1_j2_tilde == 0
+% Qa_i = POCRotateToMinimizeLastEntries(x_R);
+% disp("max(abs(Qa' * Qb * Qa * R_i * T_i_j1_j2 - T_i_j1_j2_tilde), [], ""all"")")
+% disp(max(abs(Qa' * Qb * Qa * R_i * T_i_j1_j2 - T_i_j1_j2_tilde), [], "all"))
 
 %% check on all Rs
 
-step1 = x; % x = Qa*x_R
-disp("max(abs(step1(end, :)), [], ""all"")")
-disp(max(abs(step1(end, :)), [], "all"))
-
-step2 = Qb * step1;
-disp("max(abs(step2(end, :)), [], ""all"")")
-disp(max(abs(step2(end, :)), [], "all"))
-
-disp("max(abs(step1-step2), [], ""all"")")
-disp(max(abs(step1-step2), [], "all"))
+% step1 = x; % x = Qa*x_R
+% disp("max(abs(step1(end, :)), [], ""all"")")
+% disp(max(abs(step1(end, :)), [], "all"))
+% 
+% step2 = Qb * step1;
+% disp("max(abs(step2(end, :)), [], ""all"")")
+% disp(max(abs(step2(end, :)), [], "all"))
+% 
+% disp("max(abs(step1-step2), [], ""all"")")
+% disp(max(abs(step1-step2), [], "all"))
 
 % step3 = Qa' * Qb * step2;
 % disp("max(abs(step3(end, :)), [], ""all"")")
 % disp(max(abs(step3(end, :)), [], "all"))
 
-x_R = matStackH(R);
-disp("Qa * x_R")
-disp(Qa * x_R)
+% x_R = matStackH(R);
+% disp("Qa * x_R")
+% disp(Qa * x_R)
+% 
+% disp("Qb * Qa * x_R")
+% disp(Qb * Qa * x_R)
+% 
+% disp("Qa' * Qb * Qa * x_R")
+% disp(Qa' * Qb * Qa * x_R)
 
-disp("Qb * Qa * x_R")
-disp(Qb * Qa * x_R)
-
-disp("Qa' * Qb * Qa * x_R")
-disp(Qa' * Qb * Qa * x_R)
-
-%% actual Q1
+%% actual Qa1
 disp("actual Qs")
-Q1 = POCRotateToMinimizeLastEntries(R(:,:,1));
-disp("[Q1, Q1*R(:,:,1)]")
-disp([Q1, Q1*R(:,:,1)])
+Qa1 = POCRotateToMinimizeLastEntries(R(:,:,1));
+disp("[Qa1, Qa1*R(:,:,1)]")
+disp([Qa1, Qa1*R(:,:,1)])
 
-Q5 = POCRotateToMinimizeLastEntries(R(:,:,5));
+Qa5 = POCRotateToMinimizeLastEntries(R(:,:,5));
 disp("[Q5, Q5*R(:,:,5)]")
-disp([Q5, Q5*R(:,:,5)])
+disp([Qa5, Qa5*R(:,:,5)])
 
-%% A+B
+%% more complex recovery method (Qa, Qb, Qcd, Qcdd, linsyst+procr initguess)
 i1 = 1;
 i2 = 5;
 deg_i = 2;
@@ -139,59 +139,47 @@ deg_i = 2;
 nodes_low_deg = [i1, i2];
 
 tuple.qc = stiefelfactory(p,p);
-tuple.qb = stiefelfactory(p-deg_i,p-deg_i);
-problem_qcqb.M = productmanifold(tuple);
+tuple.rb = stiefelfactory(p-deg_i,p-deg_i);
+problem_qcrb.M = productmanifold(tuple);
+
 
 for jj = nodes_low_deg
+    fprintf("Now running recovery procedure on node %g\n", jj);
     Ri = R(:,:,jj);
+    Qa_i = POCRotateToMinimizeLastEntries(Ri);
+
+    Rb_initguess = find_Rb_initguess(node_deg,p,d,Qa_i,R_i);
+    disp('Rb_initguess')
+    disp(Rb_initguess)
     
     % Define the problem cost function and its Euclidean gradient.
-    problem_qcqb.cost = @(x) mycost_qcqb(x, Qa, Ri, T_i_j1_j2, T_i_j1_j2_tilde);
-    problem_qcqb = manoptAD(problem_qcqb);
-     
+    problem_qcrb.cost = @(x) mycost_qcqb(x, Qa_i, Ri, T_i_j1_j2, T_i_j1_j2_tilde);
+    
     % Numerically check gradient consistency (optional).
     % checkgradient(problem_qcqb);
      
     % Solve providing initguess.
-%     initguess_j.qc = make_rand_stiefel_3d_array(p,p,1);
+    initguess_j.qc = make_rand_stiefel_3d_array(p,p,1);
 %     initguess_j.qb = make_rand_stiefel_3d_array(p-deg_i,p-deg_i,1);
-%     [qcqb_out_i, xcost, info, options] = ...
-%         trustregions(problem_qcqb,initguess_j,options);
+%     initguess_j.qb = blkdiag(eye(node_deg), Rb_initguess);
+    initguess_j.rb = Rb_initguess;
+
+    problem_qcrb = manoptAD(problem_qcrb);
+     
+    [qcqb_out_i, xcost, info, options] = ...
+        trustregions(problem_qcrb,initguess_j,options);
 
     % Solve WITHOUT initguess.
 %     [qcqb_out_i, xcost, info, options] = ...
 %         trustregions(problem_qcqb,[],options);
 
-%     Qcd_i = eye(p); %??
-%     disp("qcqb_out_i.qc' * Qcd_i * Ri")
-%     disp(qcqb_out_i.qc' * Qcd_i * Ri)
+    disp("qcqb_out_i.qc' * Qcd_i * Ri")
+    disp(qcqb_out_i.qc' * Qcd_i * Ri)
 end
 
-%% linsyst + procrustes initguess for Rb
-% Q_1 \in \real{(p-d)\times 2} as the first 2 columns of P Q_{a,i}'
-% Q_2 \in \real{(p-d)\times (p-2)}$ as the last $p-2$ columns of P Q_{a,i}'
-% R_1 \in \real{2\times 3} as the first 2 rows of Q_{a,i} \hat{Q}_{c,i}' \tilde{\tilde{R}}_i
-% R_2 \in\real{(p-2)\times 3} as the last $p-2$ rows of Q_{a,i} \hat{Q}_{c,i}' \tilde{\tilde{R}}_i
-
-P = [zeros(p-d,d), eye(p-d)];
-Qcd_i = eye(p);
-QQ = P * Qa_i';
-RR = Qa_i * Qcd_i' * R_i;
-Q1 = QQ(:, 1:2);
-Q2 = QQ(:, 3:end);
-R1 = RR(1:2,:);
-R2 = RR(3:end,:);
-
-A_ls = R2'; %ls = lin. syst.
-b_ls = - R1' * Q1';
-Ab_transp =  A_ls \ b_ls; %TODO1: fix dimensions here
-Ab = Ab_transp';
-
-%TODO 2: Procrustes to find Rb
 
 
-
-%% costs
+%% cost functions
 
 % function c_out = mycost_Qbnn(Qa, Rb, Ri, Ti, Ti_tilde)
 %     p = size(Qa, 1);
@@ -211,7 +199,7 @@ end
 
 function c_out = mycost_qcqb(x, Qa, Ri, Ti, Ti_tilde)
     Qcdd_i = x.qc;
-    Qb_i = x.qb;
+    rb_i = x.rb;
     p = size(Ri,1);
     d = size(Ri,2);
     % A
@@ -219,9 +207,9 @@ function c_out = mycost_qcqb(x, Qa, Ri, Ti, Ti_tilde)
     Qcd_i = eye(p);
     A = P * Qcdd_i' * Qcd_i * Ri;
     % B
-    Qb = eye(p);
-    Qb(p-1:end, p-1:end) = Qb_i;
-    B = Qcdd_i' - Qa' * Qb * Qa;
+    Qb_i = eye(p);
+    Qb_i(p-1:end, p-1:end) = rb_i;
+    B = Qcdd_i' - Qa' * Qb_i * Qa;
     % sum of norms
     c_out = norm(A(:)) + norm(B(:)); % ^2?
 end
