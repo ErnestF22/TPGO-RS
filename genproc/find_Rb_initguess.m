@@ -1,4 +1,4 @@
-function Rb = find_Rb_initguess(node_deg,p,d,Qa_i,R_i)
+function [Rb,Q1,Q2] = find_Rb_initguess(node_deg,p,d,Qa_i,R_i)
 %linsyst + procrustes initguess for Rb
 
 % Q_1 \in \real{(p-d)\times 2} as the first 2 columns of P Q_{a,i}'

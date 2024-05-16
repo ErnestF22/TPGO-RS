@@ -148,13 +148,16 @@ for jj = nodes_low_deg
     Ri = R(:,:,jj);
     Qa_i = POCRotateToMinimizeLastEntries(Ri);
 
-    Rb_initguess = find_Rb_initguess(node_deg,p,d,Qa_i,R_i);
+    [Rb_initguess, Qa_i_1, Qa_i_2] = find_Rb_initguess(node_deg,p,d,Qa_i,R_i);
     disp('Rb_initguess')
     disp(Rb_initguess)
     
     % Define the problem cost function and its Euclidean gradient.
-    problem_qcrb.cost = @(x) mycost_qcqb(x, Qa_i, Ri, T_i_j1_j2, T_i_j1_j2_tilde);
-    
+    problem_qcrb.cost = @(x) mycost_qcrb( ...
+        x, deg_i, Qa_i, Ri, T_i_j1_j2, T_i_j1_j2_tilde);
+    problem_qcrb.egrad = @(x) myegrad_qcrb( ...
+        x, node_deg, Qa_i, Qa_i_1, Qa_i_2, Ri, T_i_j1_j2, T_i_j1_j2_tilde);
+
     % Numerically check gradient consistency (optional).
     % checkgradient(problem_qcqb);
      
@@ -164,7 +167,7 @@ for jj = nodes_low_deg
 %     initguess_j.qb = blkdiag(eye(node_deg), Rb_initguess);
     initguess_j.rb = Rb_initguess;
 
-    problem_qcrb = manoptAD(problem_qcrb);
+%     problem_qcrb = manoptAD(problem_qcrb);
      
     [qcqb_out_i, xcost, info, options] = ...
         trustregions(problem_qcrb,initguess_j,options);
@@ -197,7 +200,7 @@ function c_out = mycost_Qbnn(Qa, Rb, Ri, Ti, Ti_tilde)
     c_out = norm(c(:));
 end
 
-function c_out = mycost_qcqb(x, Qa, Ri, Ti, Ti_tilde)
+function c_out = mycost_qcrb(x, node_deg, Qa, Ri, Ti, Ti_tilde)
     Qcdd_i = x.qc;
     rb_i = x.rb;
     p = size(Ri,1);
@@ -207,9 +210,29 @@ function c_out = mycost_qcqb(x, Qa, Ri, Ti, Ti_tilde)
     Qcd_i = eye(p);
     A = P * Qcdd_i' * Qcd_i * Ri;
     % B
-    Qb_i = eye(p);
-    Qb_i(p-1:end, p-1:end) = rb_i;
+%     Qb_i = eye(p);
+%     Qb_i(p-1:end, p-1:end) = rb_i;
+    Qb_i = blkdiag(eye(p-node_deg), rb_i); %node_deg = 2
     B = Qcdd_i' - Qa' * Qb_i * Qa;
     % sum of norms
-    c_out = norm(A(:)) + norm(B(:)); % ^2?
+    c_out = norm(A(:))^2 + norm(B(:))^2;
+end
+
+function grad_out = myegrad_qcrb(x, node_deg, Qa, Q1, Q2, Ri, Ti, Ti_tilde)
+    Qcdd_i = x.qc;
+    rb_i = x.rb;
+    p = size(Ri,1);
+    d = size(Ri,2);
+    % A
+    P = [zeros(p-d,d), eye(p-d)];
+    Qcd_i = eye(p);
+    A = P * Qcdd_i' * Qcd_i * Ri;
+    % B
+%     Qb_i = eye(p);
+%     Qb_i(p-1:end, p-1:end) = rb_i;
+    Qb_i = blkdiag(eye(p-node_deg), rb_i); %node_deg = 2
+    B = Qcdd_i' - Qa' * Qb_i * Qa;
+    % grad out (struct)
+    grad_out.qc = Qcd_i * Ri * A' * P + B;
+    grad_out.rb = - Q2 * Qb_i * Q2';
 end
