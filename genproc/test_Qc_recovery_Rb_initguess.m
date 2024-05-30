@@ -142,9 +142,6 @@ deg_i = 2;
 
 nodes_low_deg = [i1, i2];
 
-
-
-
 for jj = nodes_low_deg
     tuple.qc = stiefelfactory(p,p);
     tuple.rb = stiefelfactory(p-deg_i,p-deg_i);
@@ -167,7 +164,7 @@ for jj = nodes_low_deg
         x, deg_i, Qa_i, Qcd_i, Qa_i_1, Qa_i_2, Ri, T_i_j1_j2, T_i_j1_j2_tilde);
 
     % Numerically check gradient consistency (optional).
-    % checkgradient(problem_qcqb);
+    checkgradient(problem_qcrb);
 
     % Solve providing initguess.
     initguess_j.qc = make_rand_stiefel_3d_array(p,p,1);
@@ -208,40 +205,5 @@ c = Qa' * Qb * Qa * Ri * Ti - Ti_tilde;
 c_out = norm(c(:));
 end
 
-function c_out = mycost_qcrb(x, node_deg, Qa, Qcd_i, Ri, Ti, Ti_tilde)
-Qcdd_i = x.qc;
-rb_i = x.rb;
-p = size(Ri,1);
-d = size(Ri,2);
-% A
-P = [zeros(p-d,d), eye(p-d)];
-A = P * Qcdd_i' * Qcd_i * Ri;
-% B
-%     Qb_i = eye(p);
-%     Qb_i(p-1:end, p-1:end) = rb_i;
-Qb_i = blkdiag(eye(p-node_deg), rb_i); %node_deg = 2
-B = Qcdd_i' - Qa' * Qb_i * Qa;
-% sum of norms
-c_out = norm(A(:))^2 + norm(B(:))^2;
-end
 
-function grad_out = myegrad_qcrb(x, node_deg, ...
-    Qa, Qcd_i, Q1, Q2, Ri, Ti, Ti_tilde)
-Qcdd_i = x.qc;
-rb_i = x.rb;
-p = size(Ri,1);
-d = size(Ri,2);
-% A
-P = [zeros(p-d,d), eye(p-d)];
-Qcd_i = eye(p);
-A = P * Qcdd_i' * Qcd_i * Ri;
-% B
-%     Qb_i = eye(p);
-%     Qb_i(p-1:end, p-1:end) = rb_i;
-Qb_i = blkdiag(eye(p-node_deg), rb_i); %node_deg = 2
-B = Qcdd_i' - Qa' * Qb_i * Qa;
-% grad out (struct)
-grad_out.qc = Qcd_i * Ri * A' * P + B;
-%     grad_out.rb = - Q2 * B * Q2';
-grad_out.rb = - Q2 * B(3:4, 3:4) * Q2';
-end
+
