@@ -16,3 +16,4 @@ end
 
 function v=valStruct(Qc,Rb)
 v=struct('Qc',Qc,'Rb',Rb);
+end
