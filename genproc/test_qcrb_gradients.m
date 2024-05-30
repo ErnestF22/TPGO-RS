@@ -11,14 +11,26 @@ load('Qbnn_data/Tijs.mat', 'Tijs')
 
 node_deg = 2;
 
-R10=stiefel_randn(4,4,1);
-R20=stiefel_randn(2,2,1);
+qc0=make_rand_stiefel_3d_array(4,4,1);
+if det(qc0) < 0
+    qc0(:,1) = - qc0(:,1);
+end
+rb0=make_rand_stiefel_3d_array(2,2,1);
+if det(rb0) < 0
+    rb0(:,1) = - rb0(:,1);
+end
 
-[R1,dR1,~,~,~,ddR1]=rot_geodFun(R10, []);
-[R2,dR2,~,~,~,ddR2]=rot_geodFun(R20, []);
+disp("check_is_rotation(qc0)")
+disp(check_is_rotation(qc0))
+disp("check_is_rotation(rb0)")
+disp(check_is_rotation(rb0))
 
 
-node_deg = 2;
+% [Rt,dRt,~,~,~,ddRt]=qcrb_geodFun(R0);
+[qcRt, dqcRt, ~, ~, ~, ddqcRt] = rot_geodFun(qc0, []);
+[rbRt, drbRt, ~, ~, ~, ddrbRt] = rot_geodFun(rb0, []);
+
+
 i = 1;
 j1 = 2;
 j2 = 3;
@@ -39,14 +51,130 @@ Ri = [0.0864141652363848	0.0420429561776974	-0.993397284823312;
     -0.962094412651845	0.260563503917528	-0.0701748073529320;
     0.0343546966691522	-0.00647014480909629	0.0656208487016165];
 
-xf.qc = @(t) R1(t);
-xf.rb = @(t) R2(t);
-f=@(t) mycost_qcrb(xf(t), node_deg, Qa, Qcd_i, Ri, T_i_j1_j2, T_i_j1_j2_tilde);
-egradf=@(t) myegrad_qcrb(xf(t), deg_i, Qa_i, Qcd_i, Qa_i_1, Qa_i_2, Ri, T_i_j1_j2, T_i_j1_j2_tilde);
-df=@(t) sum(stiefel_metric(c,egradf(t),dc(t)));
+Qa_i_1 = [0.00282804903025583, 0.0399962827864656];
+Qa_i_2 = [0.0626139221207881, -0.997232067403872];
+
+% test qc
+f=@(t) mycost_qc(qcRt(t), rb0, node_deg, Qa, Qcd_i, Ri);
+egradf=@(t) myegrad_qc(qcRt(t), rb0, node_deg, ...
+    Qa, Qcd_i, Qa_i_1, Qa_i_2, Ri);
+df=@(t) stiefel_metric([],egradf(t),dqcRt(t));
+funCheckDer(f,df)
+
+% test rb
+f=@(t) mycost_rb(qc0, rbRt(t), node_deg, Qa, Qcd_i, Ri);
+egradf=@(t) myegrad_rb(qc0, rbRt(t), node_deg, ...
+    Qa, Qcd_i, Qa_i_1, Qa_i_2, Ri);
+df=@(t) stiefel_metric([],egradf(t),drbRt(t));
 funCheckDer(f,df)
 
 
 
 end %file function
 
+function bool_is_rot = check_is_rotation(A)
+    if (det(A) < 1-1e-6 || det(A) > 1+1e-6)
+        disp("check_is_rotation() -> determinant = 1 check failed")
+        fprintf("det = %g\n", det(A))
+        bool_is_rot = boolean(0);
+        return;
+    end
+    if max(abs(A * A' - A' * A)) > 1e-6
+        disp("check_is_rotation() -> A*A' == A'*A check failed")
+        bool_is_rot = boolean(0);
+        return;
+    end
+    if max(abs(A * A' - eye(size(A)))) > 1e-6
+        disp("check_is_rotation() -> A*A' == I check failed")
+        bool_is_rot = boolean(0);
+        return;
+    end
+    bool_is_rot = boolean(1);
+end
+
+
+function c_out = mycost_qc(x, Rb, node_deg, Qa, Qcd_i, Ri, Ti, Ti_tilde)
+Qcdd_i = x;
+rb_i = Rb;
+p = size(Ri,1);
+d = size(Ri,2);
+% A
+P = [zeros(p-d,d), eye(p-d)];
+A = P * Qcdd_i' * Qcd_i * Ri;
+% B
+%     Qb_i = eye(p);
+%     Qb_i(p-1:end, p-1:end) = rb_i;
+Qb_i = blkdiag(eye(p-node_deg), rb_i); %node_deg = 2
+B = Qcdd_i' - Qa' * Qb_i * Qa;
+
+% sum of norms
+c_out = norm(A(:))^2 + norm(B(:))^2;
+end
+
+
+function grad_out = myegrad_qc(x, Rb, node_deg, ...
+    Qa, Qcd_i, Qa_i_1, Qa_i_2, Ri)
+Qcdd_i = x;
+rb_i = Rb;
+p = size(Ri,1);
+d = size(Ri,2);
+% A
+P = [zeros(p-d,d), eye(p-d)];
+% Qcd_i = eye(p);
+A = P * Qcdd_i' * Qcd_i * Ri;
+% B
+%     Qb_i = eye(p);
+%     Qb_i(p-1:end, p-1:end) = rb_i;
+Qb_i = blkdiag(eye(p-node_deg), rb_i); %node_deg = 2
+B = Qcdd_i' - Qa' * Qb_i * Qa;
+% grad out (struct)
+% Qa1 = Qa(1:2, :);
+Qa2 = Qa(3:end, :);
+grad_out = 2 * Qcd_i * Ri * A' * P + B;
+%     grad_out.rb = - Q2 * B * Q2';
+% grad_out.rb = - 2 * Qa2 * B * Qa2';
+
+end 
+
+function c_out = mycost_rb(qc, x, node_deg, Qa, Qcd_i, Ri, Ti, Ti_tilde)
+Qcdd_i = qc;
+rb_i = x;
+p = size(Ri,1);
+d = size(Ri,2);
+% A
+P = [zeros(p-d,d), eye(p-d)];
+A = P * Qcdd_i' * Qcd_i * Ri;
+% B
+%     Qb_i = eye(p);
+%     Qb_i(p-1:end, p-1:end) = rb_i;
+Qb_i = blkdiag(eye(p-node_deg), rb_i); %node_deg = 2
+B = Qcdd_i' - Qa' * Qb_i * Qa;
+
+% sum of norms
+c_out = norm(A(:))^2 + norm(B(:))^2;
+end
+
+function grad_out = myegrad_rb(qc, x, node_deg, ...
+    Qa, Qcd_i, Qa_i_1, Qa_i_2, Ri, T_i_j1_j2, T_i_j1_j2_tilde)
+Qcdd_i = qc;
+rb_i = x;
+p = size(Ri,1);
+d = size(Ri,2);
+% A
+P = [zeros(p-d,d), eye(p-d)];
+% Qcd_i = eye(p);
+A = P * Qcdd_i' * Qcd_i * Ri;
+% B
+%     Qb_i = eye(p);
+%     Qb_i(p-1:end, p-1:end) = rb_i;
+Qb_i = blkdiag(eye(p-node_deg), rb_i); %node_deg = 2
+B = Qcdd_i' - Qa' * Qb_i * Qa;
+% grad out (struct)
+% Qa1 = Qa(1:2, :);
+Qa2 = Qa(3:end, :);
+% grad_out.qc = 2 * Qcd_i * Ri * A' * P + B;
+%     grad_out.rb = - Q2 * B * Q2';
+grad_out = - 2 * Qa2 * B * Qa2';
+
+
+end 

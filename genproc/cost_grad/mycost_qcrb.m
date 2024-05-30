@@ -17,8 +17,8 @@ B = Qcdd_i' - Qa' * Qb_i * Qa;
 % Qa2 = Qa(3:end, :);
 % B_v2 = Qcdd_i' - Qa1' * Qa1 - Qa2' * rb_i * Qa2;
 % % B == B_v2 ?
-% disp("max(B - B_v2, [], ""all"")")
-% disp(max(B - B_v2, [], "all"))
+% disp("max(abs(B - B_v2), [], ""all"")")
+% disp(max(abs(B - B_v2), [], "all"))
 
 
 
