@@ -17,6 +17,7 @@ R20=stiefel_randn(2,2,1);
 [R1,dR1,~,~,~,ddR1]=rot_geodFun(R10, []);
 [R2,dR2,~,~,~,ddR2]=rot_geodFun(R20, []);
 
+
 node_deg = 2;
 i = 1;
 j1 = 2;

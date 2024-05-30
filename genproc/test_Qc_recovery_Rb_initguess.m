@@ -163,8 +163,10 @@ for jj = nodes_low_deg
     problem_qcrb.egrad = @(x) myegrad_qcrb( ...
         x, deg_i, Qa_i, Qcd_i, Qa_i_1, Qa_i_2, Ri, T_i_j1_j2, T_i_j1_j2_tilde);
 
-    % Numerically check gradient consistency (optional).
-    checkgradient(problem_qcrb);
+    % Numerically check gradient consistency (optional)
+    x_chkgrad.qc = zeros(4,4);
+    x_chkgrad.rb = eye(2);
+    checkgradient(problem_qcrb, x_chkgrad);
 
     % Solve providing initguess.
     initguess_j.qc = make_rand_stiefel_3d_array(p,p,1);
