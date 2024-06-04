@@ -143,8 +143,10 @@ deg_i = 2;
 nodes_low_deg = [i1, i2];
 
 for jj = nodes_low_deg
-    tuple.qc = stiefelfactory(p,p);
-    tuple.rb = stiefelfactory(p-deg_i,p-deg_i);
+%     tuple.qc = stiefelfactory(p,p);
+%     tuple.rb = stiefelfactory(p-deg_i,p-deg_i);
+    tuple.qc = rotationsfactory(p);
+    tuple.rb = rotationsfactory(p-deg_i);
     problem_qcrb.M = productmanifold(tuple);
 
     fprintf("Now running recovery procedure on node %g\n", jj);
@@ -171,9 +173,18 @@ for jj = nodes_low_deg
 
     % Solve providing initguess.
     initguess_j.qc = make_rand_stiefel_3d_array(p,p,1);
-    %     initguess_j.qb = make_rand_stiefel_3d_array(p-deg_i,p-deg_i,1);
-    %     initguess_j.qb = blkdiag(eye(node_deg), Rb_initguess);
+    if det(initguess_j.qc) < 0
+        initguess_j.qc(:,1) = - initguess_j.qc(:,1);
+    end
     initguess_j.rb = Rb_initguess;
+    if det(initguess_j.rb) < 0
+        initguess_j.rb(:,1) = - initguess_j.rb(:,1);
+    end
+
+    disp('initguess_qc -> check_is_rotation()')
+    disp(check_is_rotation(initguess_j.qc))
+    disp('initguess_rb -> check_is_rotation()')
+    disp(check_is_rotation(initguess_j.rb))
 
     %     problem_qcrb = manoptAD(problem_qcrb);
 
@@ -184,15 +195,17 @@ for jj = nodes_low_deg
     %     [qcrb_out_i, xcost, info, options] = ...
     %         trustregions(problem_qcrb,[],options);
 
-    disp("qcrb_out_i.qc' * Qcd_i * Ri")
-    disp(qcrb_out_i.qc' * Qcd_i * Ri)
+    rot_i_recov = qcrb_out_i.qc' * Qcd_i * Ri;
+    disp("rot_i_recov")
+    disp(rot_i_recov)
+    rots_recovered(:,:,jj) = rot_i_recov;
 end
 
 %check if recovery was actually a success
 
-load('Qbnn_data/good_recovery_R1_R5.mat', 'R1')
-load('Qbnn_data/good_recovery_R1_R5.mat', 'R5')
-R_final_stiefel = [R1, Qb*Qa*matStackH(R_deg3), R5];
+load('Qbnn_data/rots_recovered.mat', 'rots_recovered')
+R_final_stiefel = [rots_recovered(:,:,1), ...
+    Qb*Qa*matStackH(R_deg3), rots_recovered(:,:,5)];
 R_final = matUnstackH(R_final_stiefel(1:3, :));
 % x_final = [R_final, T_edges];
 
@@ -202,9 +215,17 @@ load('Qbnn_data/testdata.mat', 'testdata')
 R_gt = G2R(testdata.gitruth);
 
 for ii = 1:N
+    %frm (full recovery method)
     fprintf("ii %g\n", ii);
     disp(R_final(:,:,ii) * inv(R_gt(:,:,ii)));
 end
+
+disp('check_is_rotation(R_final(:,:,1))')
+disp(check_is_rotation(R_final(:,:,1)))
+disp('check_is_rotation(R_final(:,:,5))')
+disp(check_is_rotation(R_final(:,:,5)))
+
+
 
 
 %% cost functions
