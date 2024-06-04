@@ -1,4 +1,5 @@
 function c_out = mycost_qcrb(x, node_deg, Qa, Qcd_i, Ri, Ti, Ti_tilde)
+%
 Qcdd_i = x.qc;
 rb_i = x.rb;
 p = size(Ri,1);
@@ -19,7 +20,6 @@ B = Qcdd_i - Qa' * Qb_i * Qa;
 % % B == B_v2 ?
 % disp("max(abs(B - B_v2), [], ""all"")")
 % disp(max(abs(B - B_v2), [], "all"))
-
 
 
 % sum of norms

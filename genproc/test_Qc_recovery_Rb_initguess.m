@@ -161,7 +161,7 @@ for jj = nodes_low_deg
     problem_qcrb.cost = @(x) mycost_qcrb( ...
         x, deg_i, Qa_i, Qcd_i, Ri, T_i_j1_j2, T_i_j1_j2_tilde);
     problem_qcrb.egrad = @(x) myegrad_qcrb( ...
-        x, deg_i, Qa_i, Qcd_i, Qa_i_1, Qa_i_2, Ri, T_i_j1_j2, T_i_j1_j2_tilde);
+        x, deg_i, Qa_i, Qcd_i, Ri, T_i_j1_j2, T_i_j1_j2_tilde);
 
     % Numerically check gradient consistency (optional)
 %     x_chkgrad.qc = eye(4);

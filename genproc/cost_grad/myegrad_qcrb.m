@@ -1,5 +1,5 @@
-function grad_out = myegrad_qcrb(x, node_deg, ...
-    Qa, Qcd_i, Qa_i_1, Qa_i_2, Ri, T_i_j1_j2, T_i_j1_j2_tilde)
+function grad_out = myegrad_qcrb(x, node_deg, Qa, Qcd_i, Ri, T_i_j1_j2, T_i_j1_j2_tilde)
+%
 Qcdd_i = x.qc;
 rb_i = x.rb;
 p = size(Ri,1);
