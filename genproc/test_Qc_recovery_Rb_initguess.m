@@ -84,19 +84,19 @@ problem_Qbnn = manoptAD(problem_Qbnn);
 
 % Solve.
 options.maxiter = 100;
-% [Rb, xcost, info, options] = trustregions(problem_Qbnn,[],options);
+[Rb, xcost, info, options] = trustregions(problem_Qbnn,[],options);
 
-% Qb = blkdiag(eye(node_deg), Rb);
-% disp("Qb")
-% disp(Qb)
-%
-% disp("max(abs(Qb * Qa * R_i * T_i_j1_j2 - Qa* T_i_j1_j2_tilde),[], ""all"")")
-% disp(max(abs(Qb * Qa * R_i * T_i_j1_j2 - Qa* T_i_j1_j2_tilde),[], "all"))
+Qb = blkdiag(eye(node_deg), Rb);
+disp("Qb")
+disp(Qb)
 
-% % Qa' * Qb * Qa * R_i * T_i_j1_j2 - T_i_j1_j2_tilde == 0
-% Qa_i = POCRotateToMinimizeLastEntries(x_R);
-% disp("max(abs(Qa' * Qb * Qa * R_i * T_i_j1_j2 - T_i_j1_j2_tilde), [], ""all"")")
-% disp(max(abs(Qa' * Qb * Qa * R_i * T_i_j1_j2 - T_i_j1_j2_tilde), [], "all"))
+disp("max(abs(Qb * Qa * R_i * T_i_j1_j2 - Qa* T_i_j1_j2_tilde),[], ""all"")")
+disp(max(abs(Qb * Qa * R_i * T_i_j1_j2 - Qa* T_i_j1_j2_tilde),[], "all"))
+
+% Qa' * Qb * Qa * R_i * T_i_j1_j2 - T_i_j1_j2_tilde == 0
+Qa_i = POCRotateToMinimizeLastEntries(x_R);
+disp("max(abs(Qa' * Qb * Qa * R_i * T_i_j1_j2 - T_i_j1_j2_tilde), [], ""all"")")
+disp(max(abs(Qa' * Qb * Qa * R_i * T_i_j1_j2 - T_i_j1_j2_tilde), [], "all"))
 
 %% check on all Rs
 
@@ -188,6 +188,23 @@ for jj = nodes_low_deg
     disp(qcrb_out_i.qc' * Qcd_i * Ri)
 end
 
+%check if recovery was actually a success
+
+load('Qbnn_data/good_recovery_R1_R5.mat', 'R1')
+load('Qbnn_data/good_recovery_R1_R5.mat', 'R5')
+R_final_stiefel = [R1, Qb*Qa*matStackH(R_deg3), R5];
+R_final = matUnstackH(R_final_stiefel(1:3, :));
+% x_final = [R_final, T_edges];
+
+R_rs = matUnstackH(x_rs(:, 1:3*N), 3);
+
+load('Qbnn_data/testdata.mat', 'testdata')
+R_gt = G2R(testdata.gitruth);
+
+for ii = 1:N
+    fprintf("ii %g\n", ii);
+    disp(R_final(:,:,ii) * inv(R_gt(:,:,ii)));
+end
 
 
 %% cost functions
