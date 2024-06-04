@@ -1,8 +1,8 @@
 function [st,dst,s0,ds0,vVec,ddst,dvVec]=qcrb_randGeodFun(A,varargin)
-    [Qct,dQct,Qc0,dQc0,vcVec,ddQct,dvcVec]=rot_randGeodFun(A.Qc,varargin);
-    [Rbt,dRbt,Rb0,dRb0,vbVec,ddRbt,dvbVec]=rot_randGeodFun(A.Rb,varargin);
-    st=funStruct(Qct,Rbt);
-    dst=funStruct(dQct,dRbt);
+    [Qct,dQct,Qc0,dQc0,vcVec,ddQct,dvcVec]=rot_geodFun(A.Qc,varargin);
+    [Rbt,dRbt,Rb0,dRb0,vbVec,ddRbt,dvbVec]=rot_geodFun(A.Rb,varargin);
+    st=funcStruct(Qct,Rbt);
+    dst=funcStruct(dQct,dRbt);
     s0=valStruct(Qc0,Rb0);
     ds0=valStruct(dQc0,dRb0);
     vVec=valStruct(vcVec,vbVec);

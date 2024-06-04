@@ -54,27 +54,6 @@ funCheckDer(f_rb,df_rb)
 end %file function
 
 %%
-function bool_is_rot = check_is_rotation(A)
-    if (det(A) < 1-1e-6 || det(A) > 1+1e-6)
-        disp("check_is_rotation() -> determinant = 1 check failed")
-        fprintf("det = %g\n", det(A))
-        bool_is_rot = boolean(0);
-        return;
-    end
-    if max(abs(A * A' - A' * A)) > 1e-6
-        disp("check_is_rotation() -> A*A' == A'*A check failed")
-        bool_is_rot = boolean(0);
-        return;
-    end
-    if max(abs(A * A' - eye(size(A)))) > 1e-6
-        disp("check_is_rotation() -> A*A' == I check failed")
-        bool_is_rot = boolean(0);
-        return;
-    end
-    bool_is_rot = boolean(1);
-end
-
-%%
 function c_out = mycost_qc(x, Rb, node_deg, Qa, Qcd_i, Ri)
 Qcdd_i = x;
 rb_i = Rb;
@@ -85,7 +64,7 @@ P = [zeros(p-d,d), eye(p-d)];
 A = P * Qcdd_i' * Qcd_i * Ri;
 % B
 Qb_i = blkdiag(eye(p-node_deg), rb_i); %node_deg = 2
-B = Qcdd_i' - Qa' * Qb_i * Qa;
+B = Qcdd_i - Qa' * Qb_i * Qa;
 % sum of norms
 c_out = 0.5 * (norm(A(:))^2 + norm(B(:))^2);
 end
@@ -101,7 +80,7 @@ P = [zeros(p-d,d), eye(p-d)];
 A = P * Qcdd_i' * Qcd_i * Ri;
 % B
 Qb_i = blkdiag(eye(p-node_deg), rb_i); %node_deg = 2
-B = Qcdd_i' - Qa' * Qb_i * Qa;
+B = Qcdd_i - Qa' * Qb_i * Qa;
 %
 grad_out = Qcd_i * Ri * A' * P + B;
 end 
@@ -117,7 +96,7 @@ P = [zeros(p-d,d), eye(p-d)];
 A = P * Qcdd_i' * Qcd_i * Ri;
 % B
 Qb_i = blkdiag(eye(p-node_deg), rb_i); %node_deg = 2
-B = Qcdd_i' - Qa' * Qb_i * Qa;
+B = Qcdd_i - Qa' * Qb_i * Qa;
 
 % sum of norms
 c_out = 0.5 * (norm(A(:))^2 + norm(B(:))^2);
@@ -129,7 +108,7 @@ rb_i = x;
 p = size(Ri,1);
 
 Qb_i = blkdiag(eye(p-node_deg), rb_i); %node_deg = 2
-B = Qcdd_i' - Qa' * Qb_i * Qa;
+B = Qcdd_i - Qa' * Qb_i * Qa;
 
 Qa2 = Qa(3:end, :);
 

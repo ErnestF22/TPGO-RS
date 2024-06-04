@@ -10,7 +10,7 @@ A = P * Qcdd_i' * Qcd_i * Ri;
 %     Qb_i = eye(p);
 %     Qb_i(p-1:end, p-1:end) = rb_i;
 Qb_i = blkdiag(eye(p-node_deg), rb_i); %node_deg = 2
-B = Qcdd_i' - Qa' * Qb_i * Qa;
+B = Qcdd_i - Qa' * Qb_i * Qa;
 
 % % B_v2
 % Qa1 = Qa(1:2, :);
@@ -23,5 +23,5 @@ B = Qcdd_i' - Qa' * Qb_i * Qa;
 
 
 % sum of norms
-c_out = norm(A(:))^2 + norm(B(:))^2;
+c_out = 0.5 * (norm(A(:))^2 + norm(B(:))^2);
 end

@@ -12,13 +12,13 @@ A = P * Qcdd_i' * Qcd_i * Ri;
 %     Qb_i = eye(p);
 %     Qb_i(p-1:end, p-1:end) = rb_i;
 Qb_i = blkdiag(eye(p-node_deg), rb_i); %node_deg = 2
-B = Qcdd_i' - Qa' * Qb_i * Qa;
+B = Qcdd_i - Qa' * Qb_i * Qa;
 % grad out (struct)
 % Qa1 = Qa(1:2, :);
 Qa2 = Qa(3:end, :);
-grad_out.qc = 2 * Qcd_i * Ri * A' * P + B;
+grad_out.qc = Qcd_i * Ri * A' * P + B;
 %     grad_out.rb = - Q2 * B * Q2';
-grad_out.rb = - 2 * Qa2 * B * Qa2';
+grad_out.rb = - Qa2 * B * Qa2';
 
 
 end %file function
