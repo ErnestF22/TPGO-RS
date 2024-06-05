@@ -15,8 +15,10 @@ title('graph')
 
 load('Qbnn_data/test_transl_recovery.mat')
 
+node_degrees = [2,2,4,3,3,4];
+
 % nrs = 4;
 sz = [nrs,d,N];
-Qc_recovery_Rb_initguess(sz, edges, R, T, Tijs);
+Qc_recovery_Rb_initguess(sz, edges, R, T, Tijs, node_degrees);
 
 end %file function
