@@ -13,6 +13,10 @@ title('graph')
 
 % d = 3;
 
-% load('Qbnn_data/test_transl_recovery.mat')
+load('Qbnn_data/test_transl_recovery.mat')
+
+% nrs = 4;
+sz = [nrs,d,N];
+Qc_recovery_Rb_initguess(sz, edges, R, T, Tijs);
 
 end %file function
