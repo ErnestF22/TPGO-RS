@@ -1,5 +1,5 @@
-function [R_real_out, T_real_out] = Qc_recovery_Rb_initguess( ...
-    sz, edges, R, T, Tijs)
+function [R_real_out, T_real_out, nodes_with_low_deg] = ...
+    Qc_recovery_Rb_initguess(sz, edges, R, T, Tijs, node_degrees)
 %QC_RECOVERY_RB_INITGUESS Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -11,7 +11,7 @@ p = nrs;
 %% standard recovery method
 T_edges = make_T_edges(T, edges);
 x_rs = [matStackH(R), T_edges];
-R_deg3 = matStackH(R(:,:,2:4));
+R_deg3 = matStackH(R(:,:,node_degrees == N-2));
 x_R = matStackH(R_deg3);
 
 Qa = POCRotateToMinimizeLastEntries(x_R);
@@ -44,48 +44,57 @@ end
 
 %trying with i=1
 %its edges are j1 = 2, j2 = 3
-node_deg = 2;
-i = 1;
-j1 = 2;
-j2 = 3;
-R_i = R(:,:,1);
-idx_i_j1 = find(ismember(edges, [i, j1], "rows"));
-idx_i_j2 = find(ismember(edges, [i, j2], "rows"));
-T_i_j1_j2 = [Tijs(:,idx_i_j1), Tijs(:,idx_i_j2)];
-T_i_j1_j2_tilde = - [T(:,i) - T(:,j1), T(:,i) - T(:,j2)]; % !! -
 
-disp("max(abs(R_i * T_i_j1_j2 - T_i_j1_j2_tilde),[], ""all"")")
-disp(max(abs(R_i * T_i_j1_j2 - T_i_j1_j2_tilde),[], "all"))
-disp("max(abs(Qa * R_i * T_i_j1_j2 - Qa* T_i_j1_j2_tilde),[], ""all"")")
-disp(max(abs(Qa * R_i * T_i_j1_j2 - Qa* T_i_j1_j2_tilde),[], "all"))
 
-% Create the problem structure.
-manifold = stiefelfactory(p-2,p-2);
-problem_Qbnn.M = manifold;
+low_deg = 2;
+nodes_with_low_deg = node_degrees==2;
 
-% Define the problem cost function and its Euclidean gradient.
-problem_Qbnn.cost  = @(x) mycost_Qbnn(Qa, x, R_i, T_i_j1_j2, T_i_j1_j2_tilde);
-problem_Qbnn = manoptAD(problem_Qbnn);
+Qas = zeros(p,p,N);
 
-% Numerically check gradient consistency (optional).
-% checkgradient(problem_Qbnn);
+for ii = 1:N
+    if ~nodes_with_low_deg(ii)
+        continue;
+    end
+    j1 = 2;
+    j2 = 3;
+    R_i = R(:,:,1);
+    idx_i_j1 = find(ismember(edges, [ii, j1], "rows"));
+    idx_i_j2 = find(ismember(edges, [ii, j2], "rows"));
+    T_i_j1_j2 = [Tijs(:,idx_i_j1), Tijs(:,idx_i_j2)];
+    T_i_j1_j2_tilde = - [T(:,ii) - T(:,j1), T(:,ii) - T(:,j2)]; % !! -
 
-% Solve.
-options.maxiter = 100;
-[Rb, xcost, info, options] = trustregions(problem_Qbnn,[],options);
+    disp("max(abs(R_i * T_i_j1_j2 - T_i_j1_j2_tilde),[], ""all"")")
+    disp(max(abs(R_i * T_i_j1_j2 - T_i_j1_j2_tilde),[], "all"))
+    disp("max(abs(Qa * R_i * T_i_j1_j2 - Qa* T_i_j1_j2_tilde),[], ""all"")")
+    disp(max(abs(Qa * R_i * T_i_j1_j2 - Qa* T_i_j1_j2_tilde),[], "all"))
 
-Qb = blkdiag(eye(node_deg), Rb);
-disp("Qb")
-disp(Qb)
+    % Create the problem structure.
+    manifold = stiefelfactory(p-2,p-2);
+    problem_Qbnn.M = manifold;
 
-disp("max(abs(Qb * Qa * R_i * T_i_j1_j2 - Qa* T_i_j1_j2_tilde),[], ""all"")")
-disp(max(abs(Qb * Qa * R_i * T_i_j1_j2 - Qa* T_i_j1_j2_tilde),[], "all"))
+    % Define the problem cost function and its Euclidean gradient.
+    problem_Qbnn.cost  = @(x) mycost_Qbnn(Qa, x, R_i, T_i_j1_j2, T_i_j1_j2_tilde);
+    problem_Qbnn = manoptAD(problem_Qbnn);
 
-% Qa' * Qb * Qa * R_i * T_i_j1_j2 - T_i_j1_j2_tilde == 0
-Qa_i = POCRotateToMinimizeLastEntries(x_R);
-disp("max(abs(Qa' * Qb * Qa * R_i * T_i_j1_j2 - T_i_j1_j2_tilde), [], ""all"")")
-disp(max(abs(Qa' * Qb * Qa * R_i * T_i_j1_j2 - T_i_j1_j2_tilde), [], "all"))
+    % Numerically check gradient consistency (optional).
+    % checkgradient(problem_Qbnn);
 
+    % Solve.
+    options.maxiter = 100;
+    [Rb, xcost, info, options] = trustregions(problem_Qbnn,[],options);
+
+    Qb = blkdiag(eye(low_deg), Rb);
+    disp("Qb")
+    disp(Qb)
+
+    disp("max(abs(Qb * Qa * R_i * T_i_j1_j2 - Qa* T_i_j1_j2_tilde),[], ""all"")")
+    disp(max(abs(Qb * Qa * R_i * T_i_j1_j2 - Qa* T_i_j1_j2_tilde),[], "all"))
+
+    Qa_i = POCRotateToMinimizeLastEntries(x_R);
+    Qas(:,:,ii) = Qa_i;
+    disp("max(abs(Qa' * Qb * Qa * R_i * T_i_j1_j2 - T_i_j1_j2_tilde), [], ""all"")")
+    disp(max(abs(Qa' * Qb * Qa * R_i * T_i_j1_j2 - T_i_j1_j2_tilde), [], "all"))
+end
 %% check on all Rs
 
 % step1 = x; % x = Qa*x_R
@@ -113,35 +122,36 @@ disp(max(abs(Qa' * Qb * Qa * R_i * T_i_j1_j2 - T_i_j1_j2_tilde), [], "all"))
 % disp("Qa' * Qb * Qa * x_R")
 % disp(Qa' * Qb * Qa * x_R)
 
-%% actual Qa1
-disp("actual Qs")
-Qa1 = POCRotateToMinimizeLastEntries(R(:,:,1));
-disp("[Qa1, Qa1*R(:,:,1)]")
-disp([Qa1, Qa1*R(:,:,1)])
+%% actual Qas
+disp("actual Qas")
+for ii = 1:N
+    if ~nodes_with_low_deg(ii)
+        continue;
+    end
 
-Qa5 = POCRotateToMinimizeLastEntries(R(:,:,5));
-disp("[Q5, Q5*R(:,:,5)]")
-disp([Qa5, Qa5*R(:,:,5)])
+    Qa_i = POCRotateToMinimizeLastEntries(R(:,:,ii));
+    fprintf("actual Qa_i for i = %g -> [Qa_i, Qa_i*R(:,:,ii)]\n", ii)
+    disp([Qa_i, Qa_i*R(:,:,ii)])
+end
 
 %% more complex recovery method (Qa, Qb, Qcd, Qcdd, linsyst+procr initguess)
-i1 = 1;
-i2 = 5;
-deg_i = 2;
 
-nodes_low_deg = [i1, i2];
-
-for jj = nodes_low_deg
-%     tuple.qc = stiefelfactory(p,p);
-%     tuple.rb = stiefelfactory(p-deg_i,p-deg_i);
+rots_recovered = zeros(p,d,N);
+for ii = 1:N
+    if ~nodes_with_low_deg(ii)
+        continue;
+    end
+    %     tuple.qc = stiefelfactory(p,p);
+    %     tuple.rb = stiefelfactory(p-low_deg,p-low_deg);
     tuple.qc = rotationsfactory(p);
-    tuple.rb = rotationsfactory(p-deg_i);
+    tuple.rb = rotationsfactory(p-low_deg);
     problem_qcrb.M = productmanifold(tuple);
 
-    fprintf("Now running recovery procedure on node %g\n", jj);
-    Ri = R(:,:,jj);
+    fprintf("Now running recovery procedure on node %g\n", ii);
+    Ri = R(:,:,ii);
     Qa_i = POCRotateToMinimizeLastEntries(Ri);
 
-    [Rb_initguess, Qa_i_1, Qa_i_2] = find_Rb_initguess(node_deg,p,d,Qa_i,R_i);
+    [Rb_initguess] = find_Rb_initguess(low_deg,p,d,Qa_i,R_i);
     disp('Rb_initguess')
     disp(Rb_initguess)
 
@@ -149,14 +159,14 @@ for jj = nodes_low_deg
 
     % Define the problem cost function and its Euclidean gradient.
     problem_qcrb.cost = @(x) mycost_qcrb( ...
-        x, deg_i, Qa_i, Qcd_i, Ri, T_i_j1_j2, T_i_j1_j2_tilde);
+        x, low_deg, Qa_i, Qcd_i, Ri, T_i_j1_j2, T_i_j1_j2_tilde);
     problem_qcrb.egrad = @(x) myegrad_qcrb( ...
-        x, deg_i, Qa_i, Qcd_i, Ri, T_i_j1_j2, T_i_j1_j2_tilde);
+        x, low_deg, Qa_i, Qcd_i, Ri, T_i_j1_j2, T_i_j1_j2_tilde);
 
     % Numerically check gradient consistency (optional)
-%     x_chkgrad.qc = eye(4);
-%     x_chkgrad.rb = make_rand_stiefel_3d_array(2,2,1);
-%     checkgradient(problem_qcrb, x_chkgrad);
+    %     x_chkgrad.qc = eye(4);
+    %     x_chkgrad.rb = make_rand_stiefel_3d_array(2,2,1);
+    %     checkgradient(problem_qcrb, x_chkgrad);
     checkgradient(problem_qcrb);
 
     % Solve providing initguess.
@@ -186,32 +196,21 @@ for jj = nodes_low_deg
     rot_i_recov = qcrb_out_i.qc' * Qcd_i * Ri;
     disp("rot_i_recov")
     disp(rot_i_recov)
-    rots_recovered(:,:,jj) = rot_i_recov;
+    rots_recovered(:,:,ii) = rot_i_recov;
 end
 
 %check if recovery was actually a success
-
-load('Qbnn_data/rots_recovered.mat', 'rots_recovered')
-R_final_stiefel = [rots_recovered(:,:,1), ...
-    Qb*Qa*matStackH(R_deg3), rots_recovered(:,:,5)];
-R_final = matUnstackH(R_final_stiefel(1:3, :));
-% x_final = [R_final, T_edges];
-
-R_rs = matUnstackH(x_rs(:, 1:3*N), 3);
-
-load('Qbnn_data/testdata.mat', 'testdata')
-R_gt = G2R(testdata.gitruth);
-
 for ii = 1:N
-    %frm (full recovery method)
-    fprintf("ii %g\n", ii);
-    disp(R_final(:,:,ii) * inv(R_gt(:,:,ii)));
+    if ~nodes_with_low_deg(ii)
+        continue;
+    end
+    fprintf('check_is_rotation(R_final(:,:,%g))\n',ii)
+    disp(check_is_rotation(rots_recovered(1:d,:,ii)))
 end
 
-disp('check_is_rotation(R_final(:,:,1))')
-disp(check_is_rotation(R_final(:,:,1)))
-disp('check_is_rotation(R_final(:,:,5))')
-disp(check_is_rotation(R_final(:,:,5)))
+
+R_real_out = rots_recovered;
+T_real_out = zeros(d,N); %TODO: Fix this!!
 
 end %file function
 

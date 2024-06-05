@@ -14,12 +14,21 @@ load('Qbnn_data/Qbnn_edges.mat', 'edges')
 % load('Qbnn_data/x_rs.mat', 'x_rs')
 
 load('Qbnn_data/Tijs.mat', 'Tijs')
-
+node_degrees = [2,3,3,3,2];
 nrs = 4;
 d = 3;
 N = 5;
 sz = [nrs,d,N];
-Qc_recovery_Rb_initguess(sz, edges, R, T, Tijs);
+[R_out, T_out, low_deg_nodes] = ...
+    Qc_recovery_Rb_initguess(sz, edges, R, T, Tijs, node_degrees);
 
+load('Qbnn_data/testdata.mat', 'testdata')
+R_gt = G2R(testdata.gitruth);
+
+for ii = 1:N
+    %frm (full recovery method)
+    fprintf("ii %g\n", ii);
+    disp(R_out(:,:,ii) * inv(R_gt(:,:,ii)));
+end
 
 
