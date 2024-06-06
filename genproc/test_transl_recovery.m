@@ -13,9 +13,29 @@ title('graph')
 
 % d = 3;
 
-load('Qbnn_data/test_transl_recovery.mat')
+load('Qbnn_data/test_transl_recovery.mat','R')
+load('Qbnn_data/test_transl_recovery.mat','T')
 
 node_degrees = [2,2,4,3,3,4];
+nodes_high_deg = node_degrees == 3 | node_degrees == 4;
+% nodes_low_deg = ~nodes_high_deg;
+
+R_stacked_high_deg = matStackH(R(:,:,nodes_high_deg));
+Qa_high_deg = POCRotateToMinimizeLastEntries(R_stacked_high_deg);
+R_stacked_high_deg_poc = Qa_high_deg * R_stacked_high_deg;
+
+disp('R_stacked_high_deg_poc')
+disp(R_stacked_high_deg_poc)
+
+
+T_edges = make_T_edges(T, edges);
+
+RT_stacked_high_deg = [matStackH(R(:,:,nodes_high_deg)) , T_edges];
+Qa_high_deg = POCRotateToMinimizeLastEntries(RT_stacked_high_deg);
+RT_stacked_high_deg_poc = Qa_high_deg * RT_stacked_high_deg;
+
+disp('RT_stacked_high_deg_poc')
+disp(RT_stacked_high_deg_poc)
 
 % nrs = 4;
 sz = [nrs,d,N];
