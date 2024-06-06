@@ -47,7 +47,7 @@ end
 
 
 low_deg = 2;
-nodes_with_low_deg = node_degrees==2;
+nodes_with_low_deg = node_degrees==low_deg;
 
 Qas = zeros(p,p,N);
 

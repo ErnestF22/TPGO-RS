@@ -37,8 +37,5 @@ RT_stacked_high_deg_poc = Qa_high_deg * RT_stacked_high_deg;
 disp('RT_stacked_high_deg_poc')
 disp(RT_stacked_high_deg_poc)
 
-% nrs = 4;
-sz = [nrs,d,N];
-Qc_recovery_Rb_initguess(sz, edges, R, T, Tijs, node_degrees);
 
 end %file function
