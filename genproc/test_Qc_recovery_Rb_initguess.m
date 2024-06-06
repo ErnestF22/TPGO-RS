@@ -21,23 +21,28 @@ nrs = size(R, 1);
 d = size(R, 2);
 N = size(R, 3);
 sz = [nrs,d,N];
-[R_out, T_out, low_deg_nodes] = ...
+[R_real_out, ~] = ...
     Qc_recovery_Rb_initguess(sz, edges, R, T, Tijs, node_degrees);
 
 load('Qbnn_data/testdata.mat', 'testdata')
 R_gt = G2R(testdata.gitruth);
 
+disp('Printing real rotations for nodes with degree == 2')
+nodes_low_deg = node_degrees == 2;
 for ii = 1:N
-    %frm (full recovery method)
-    fprintf("ii %g\n", ii);
-%     disp(R_out(:,:,ii) * inv(R_gt(:,:,ii))); %slower
-    disp(R_out(:,:,ii) / (R_gt(:,:,ii)));
+    if nodes_low_deg(ii)
+        %frm (full recovery method)
+        fprintf("ii %g\n", ii);
+    %     disp(R_out(:,:,ii) * inv(R_gt(:,:,ii))); %slower
+        disp(R_real_out(:,:,ii) / (R_gt(:,:,ii)));
+    end
 end
 
 
 %% case 2
 clc;
 clear;
+close all;
 
 
 N = 6;
@@ -81,13 +86,17 @@ disp(RT_stacked_high_deg_poc)
 
 nrs = size(R, 1);
 sz = [nrs,d,N];
-[R_real_out, T_real_out, nodes_with_low_deg] = ...
+[R_real_out, T_real_out] = ...
     Qc_recovery_Rb_initguess(sz, edges, R, T, Tijs, node_degrees);
 
+disp('Printing real rotations for nodes with degree == 2')
 R_gt = G2R(testdata.gitruth);
+nodes_low_deg = node_degrees == 2;
 for ii = 1:N
-    %frm (full recovery method)
-    fprintf("ii %g\n", ii);
-%     disp(R_out(:,:,ii) * inv(R_gt(:,:,ii))); %slower
-    disp(R_real_out(:,:,ii) / (R_gt(:,:,ii)));
+    if nodes_low_deg(ii)
+        %frm (full recovery method)
+        fprintf("ii %g\n", ii);
+    %     disp(R_out(:,:,ii) * inv(R_gt(:,:,ii))); %slower
+        disp(R_real_out(:,:,ii) / (R_gt(:,:,ii)));
+    end
 end
