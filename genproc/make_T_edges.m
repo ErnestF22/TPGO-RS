@@ -3,6 +3,7 @@ function T_edges = make_T_edges(T, edges)
 % for all (i,j) edge pairs of 'edges' input array
 %
 
+
 num_edges = size(edges, 1);
 nrs = size(T, 1);
 % N = size(T, 2);

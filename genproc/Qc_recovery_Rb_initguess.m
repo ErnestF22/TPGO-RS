@@ -170,14 +170,16 @@ for ii = 1:N
     checkgradient(problem_qcrb);
 
     % Solve providing initguess.
-    initguess_j.qc = make_rand_stiefel_3d_array(p,p,1);
-    if det(initguess_j.qc) < 0
-        initguess_j.qc(:,1) = - initguess_j.qc(:,1);
-    end
+%     initguess_j.qc = make_rand_stiefel_3d_array(p,p,1);
+    initguess_j.qc = POCRotateToMinimizeLastEntries(R(:,:,ii));
     initguess_j.rb = Rb_initguess;
-    if det(initguess_j.rb) < 0
-        initguess_j.rb(:,1) = - initguess_j.rb(:,1);
-    end
+%     if det(initguess_j.qc) < 0
+%         initguess_j.qc(:,1) = - initguess_j.qc(:,1);
+%     end
+%     
+%     if det(initguess_j.rb) < 0
+%         initguess_j.rb(:,1) = - initguess_j.rb(:,1);
+%     end
 
     disp('initguess_qc -> check_is_rotation()')
     disp(check_is_rotation(initguess_j.qc))
