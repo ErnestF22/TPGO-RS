@@ -2,8 +2,7 @@ function test_transl_recovery
 
 
 N = 6;
-edges = [1 2; 1 6; 2 1; 2 3; 3 2; 3 6; 3 4; 3 5; 4 3; 4 5; 4 6;
-    5 6; 5 3; 5 4; 6 3; 6 1; 6 5; 6 4];
+load('Qbnn_data/testdata.mat','edges')
 adj_mat = make_adj_mat_from_edges(edges, N);
 testdata = testNetwork_adj(3, adj_mat, 'banded', 3);
 G = graph(make_adj_mat_from_edges(testdata.E,N));
@@ -12,9 +11,11 @@ plot(G)
 title('graph')
 
 
-load('Qbnn_data/test_transl_recovery.mat','R')
-load('Qbnn_data/test_transl_recovery.mat','T')
-load('Qbnn_data/test_transl_recovery.mat','Tijs')
+load('Qbnn_data/testdata.mat','R')
+load('Qbnn_data/testdata.mat','T')
+load('Qbnn_data/testdata.mat','Tijs')
+
+
 
 d = size(R, 2);
 
@@ -43,14 +44,18 @@ RT_stacked_high_deg_poc = Qa_high_deg * RT_stacked_high_deg;
 disp('RT_stacked_high_deg_poc')
 disp(RT_stacked_high_deg_poc)
 
-
 disp("max(RT_stacked_high_deg_poc(d+1:end, :), [], ""all"")")
 disp(max(RT_stacked_high_deg_poc(d+1:end, :), [], "all"))
 
-% T1s = [RT_stacked_high_deg_poc(:, 15), RT_stacked_high_deg_poc(:, 28)];
-% T1s = [RT_stacked_high_deg_poc(:, 13), RT_stacked_high_deg_poc(:, 14)];
-% Qa_high_deg * R(:,:,1) * [Tijs(1:d, 3), Tijs(:,16)]
-% Qa_high_deg * R(:,:,1) * T1s(1:d, :)
+X.R = R;
+X.T = T;
+problem_data.nrs = 4;
+problem_data.Tijs = Tijs;
+problem_data.d = 3;
+problem_data.N = 6;
+problem_data.edges = edges;
+disp("rsom_cost_base(X, problem_data)")
+disp(rsom_cost_base(X, problem_data))
 
 %T12
 for e = 1:size(edges, 1)
