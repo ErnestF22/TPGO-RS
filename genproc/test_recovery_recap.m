@@ -58,27 +58,72 @@ iis = [1 2];
 for ii = iis
     disp("Running full recovery procedure on node:");
     disp(ii)
-    R_tilde = R_tilde_low_deg(:,:,ii);
+    Ri_tilde = R_tilde_low_deg(:,:,ii);
+
+    %% preliminary checks
+
+    %computing Tij12
+    Tij1j2 = zeros(d,low_deg);
+    num_js_found = 0;
+    for e = 1:size(edges)
+        e_i = edges(e,1);
+        %         e_j = edges(e,2);
+        if (e_i == ii)
+            num_js_found = num_js_found + 1;
+            Tij1j2(:,num_js_found) = Tijs(:,e);
+        end
+    end
+
+    %checking eq. (61)
+    check_61 = Ri_tilde * Tij1j2;
+    tail_check_61 = check_61(end,:); %TODO: make this smarter using tail()
+    disp("max(tail(check_61, p-d), [], ""all"")");
+    disp(max(tail_check_61, [], "all"));
+
+    %checking eq. (62)
+    check_62 = P_last * Ri_tilde * Tij1j2;
+    disp("max(check_62, [], ""all"")");
+    disp(max(check_62, [], "all"));
+
+    %% 3-step procedure
+
     % step 1
-    R_tilde_2 = R_tilde(size(R_tilde, 1) - p + 2 + 1:end, :);
+    Ri_tilde_2 = Ri_tilde(size(Ri_tilde, 1) - (p - 2) + 1:end, :);
+    disp('svd(Ri_tilde_2)')
+    disp(svd(Ri_tilde_2))
     % step 2
-    R_hat_b_i_last = orthCompleteBasis(R_tilde_2);
+    R_hat_b_i_last = orthCompleteBasis(Ri_tilde_2);
     % step 3
-    Rb = orthCompleteBasis(R_hat_b_i_last);
+    Rb_i = orthCompleteBasis(R_hat_b_i_last);
+
+    %% final checks
+    Qb_i = blkdiag(eye(p-node_deg), Rb_i); %node_deg = 2
+
+    %checking eq. (63)
+    check_63 = Qb_i * Ri_tilde * Tij1j2;
+    tail_check_63 = check_63(end,:); %TODO: make this smarter using tail()
+    disp("max(tail(check_63, p-d), [], ""all"")");
+    disp(max(tail_check_63, [], "all"));
+
+    %checking eq. (66)
+    check_66 = (Qx' * Ri_tilde) * Tij1j2;
+    tail_check_66 = check_66(end,:); %TODO: make this smarter using tail()
+    disp("max(tail(check_66, p-d), [], ""all"")");
+    disp(max(tail_check_66, [], "all"));
 
     %checking eq. (67)
-    check_67 = P_last * blkdiag(eye(p-d), R_hat_b_i_last) * R_tilde;
+    check_67 = P_last * blkdiag(eye(p-d), R_hat_b_i_last) * Ri_tilde;
     disp("max(check_67, [], ""all"")");
     disp(max(check_67, [], "all"));
 
     %checking eq. (68)
-%     check_68 = R_hat_b_i_last * R_tilde_2;
-%     disp("max(check_68, [], ""all"")");
-%     disp(max(check_68, [], "all"));
-    
-    
+    %     check_68 = R_hat_b_i_last * Ri_tilde_2;
+    %     disp("max(check_68, [], ""all"")");
+    %     disp(max(check_68, [], "all"));
+
+
     % "final test"
-    Ri_stief = blkdiag(eye(p-d), Rb) * R_tilde;
+    Ri_stief = blkdiag(eye(p-d), Rb_i) * Ri_tilde;
     disp("Ri_stief");
     disp(Ri_stief);
     for e = 1:size(edges)
@@ -93,7 +138,7 @@ for ii = iis
         end
     end
 
-    
+
 
 end
 
