@@ -39,8 +39,8 @@ R_tilde = multiprod(repmat(Qx, 1, 1, N), R);
 disp('RT_stacked_high_deg_poc')
 disp(RT_stacked_high_deg_poc)
 
-disp("max(RT_stacked_high_deg_poc(d+1:end, :), [], ""all"")")
-disp(max(RT_stacked_high_deg_poc(d+1:end, :), [], "all"))
+disp("max(tail_array(RT_stacked_high_deg_poc, p-d), [], ""all"")")
+disp(max(tail_array(RT_stacked_high_deg_poc, p-d), [], "all"))
 
 disp('matStackH(R_recovered)')
 disp(matStackH(R_tilde))
@@ -76,7 +76,7 @@ for ii = iis
 
     %checking eq. (61)
     check_61 = Ri_tilde * Tij1j2;
-    tail_check_61 = check_61(end,:); %TODO: make this smarter using tail()
+    tail_check_61 = tail_array(check_61,p-d); %TODO: make this smarter using tail()
     disp("max(tail(check_61, p-d), [], ""all"")");
     disp(max(tail_check_61, [], "all"));
 
@@ -101,13 +101,13 @@ for ii = iis
 
     %checking eq. (63)
     check_63 = Qb_i * Ri_tilde * Tij1j2;
-    tail_check_63 = check_63(end,:); %TODO: make this smarter using tail()
+    tail_check_63 = tail_array(check_63,p-d);
     disp("max(tail(check_63, p-d), [], ""all"")");
     disp(max(tail_check_63, [], "all"));
 
     %checking eq. (66)
     check_66 = (Qx' * Ri_tilde) * Tij1j2;
-    tail_check_66 = check_66(end,:); %TODO: make this smarter using tail()
+    tail_check_66 = tail_array(check_66,p-d);
     disp("max(tail(check_66, p-d), [], ""all"")");
     disp(max(tail_check_66, [], "all"));
 
