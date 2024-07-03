@@ -51,7 +51,7 @@ R_initguess=rot_exp(R_truth,sigma*pi/5*vR_noise);
 transl_initguess = T_globalframe + sigma.*randn(size(T_globalframe));
 if params.rand_initguess
     %overwrite sigma-noisy initguess
-    R_initguess = randrot_manopt(params.d, params.N);
+    R_initguess = randrot_som(params.d, params.N);
     transl_initguess = 10 * rand(params.d, params.N);
     %
 %     T_globalframe_nois = 10 * rand(params.d, params.N);

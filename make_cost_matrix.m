@@ -42,7 +42,7 @@ upper_triang_size_nodiag = 0.5 * n * (n-1);
 upper_triang_size = 0.5 * n * (n+1);
 
 
-Rnois_nosym = randrot_manopt(d, upper_triang_size_nodiag); %NOTE: NOT all of this will be transformed into rotation matrix
+Rnois_nosym = randrot_som(d, upper_triang_size_nodiag); %NOTE: NOT all of this will be transformed into rotation matrix
 Rnois = eye(d*n);
 ii=1;
 jj=2;

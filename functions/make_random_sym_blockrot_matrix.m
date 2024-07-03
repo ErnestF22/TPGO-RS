@@ -3,7 +3,7 @@ function R = make_random_sym_blockrot_matrix(d, N)
 %inverse of (j,i) block; rotations are in SO(d)
     
     upper_triang_size_nodiag = N*(N-1)/2;
-    R_nosym = randrot_manopt(d, upper_triang_size_nodiag); %NOTE: NOT all of this will be transformed into rotation matrix
+    R_nosym = randrot_som(d, upper_triang_size_nodiag); %NOTE: NOT all of this will be transformed into rotation matrix
     R = eye(d*N);
     i=1;
     j=2;
