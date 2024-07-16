@@ -18,15 +18,9 @@ title('graph')
 
 
 load('Qbnn_data/R_gt.mat','R_gt')
-% load('Qbnn_data/testdata.mat','T')
-load('Qbnn_data/testdata.mat','Tijs')
+load('Qbnn_data/testdata.mat', 'd')
+load('Qbnn_data/testdata.mat', 'Tijs')
 
-% nrs = size(R, 1);
-% p = nrs;
-
-R = R_gt;
-
-d = size(R, 2);
 
 % setup node degrees
 low_deg = 2;
@@ -171,11 +165,12 @@ Qx = POCRotateToMinimizeLastEntries(RT_stacked_high_deg);
 RT_stacked_high_deg_poc = Qx * RT_stacked_high_deg;
 disp("RT_stacked_high_deg_poc")
 disp(RT_stacked_high_deg_poc)
-
+disp("nodes low deg")
+disp(nodes_low_deg)
 col_ids = reshape(1:12, d, []);
 for ii = 1:4
     disp(ii)
-    A = RT_stacked_high_deg_poc(1:d, col_ids(:,ii)) * R_gt(:,:,ii+2)'; %works only in this particular case
+    A = R_gt(:,:,ii+2) * RT_stacked_high_deg_poc(1:d, col_ids(:,ii))'; %works only in this particular case
     disp(A);
 end
 
