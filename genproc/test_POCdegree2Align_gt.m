@@ -1,8 +1,8 @@
-function test_POCdegree2Align_som
+function test_POCdegree2Align_gt
 % From work with Ernesto
 % See equations (41)-(45) in our working document
-% flagRandomizeQx=true;
-% flagPerturbMeasurements=false;
+flagRandomizeQx=true;
+flagPerturbMeasurements=false;
 
 resetRands()
 
@@ -74,36 +74,36 @@ node_degrees = [2,2,4,3,3,4];
 nodes_high_deg = node_degrees == 3 | node_degrees == 4;
 nodes_low_deg = ~nodes_high_deg;
 
-% % R_stacked_high_deg = matStackH(R(:,:,nodes_high_deg));
-% % Qx = POCRotateToMinimizeLastEntries(R_stacked_high_deg);
-% % R_stacked_high_deg_poc = Qx * R_stacked_high_deg;
-% % R_high_deg_poc = matUnstackH(R_stacked_high_deg_poc, d);
-% %
-% % disp('R_stacked_high_deg_poc')
-% % disp(R_stacked_high_deg_poc)
-% 
-% % disp("max(R_stacked_high_deg_poc(d+1:end, :), [], ""all"")")
-% % disp(max(R_stacked_high_deg_poc(d+1:end, :), [], "all"))
-% 
-% 
-% 
-% T_edges = make_T_edges(T, edges);
-% 
-% RT_stacked_high_deg = [matStackH(R(:,:,nodes_high_deg)), T_edges];
-% Qx = POCRotateToMinimizeLastEntries(RT_stacked_high_deg);
-% RT_stacked_high_deg_poc = Qx * RT_stacked_high_deg;
-% 
-% % R_recovered = zeros(nrs,d,N);
-% % R_recovered(:,:,nodes_high_deg) = R_high_deg_poc;
-% % R_recovered(:,:,nodes_low_deg) = multiprod(repmat(Qx, 1, 1, sum(nodes_low_deg)), R(:,:,nodes_low_deg));
-% R_recovered = multiprod(repmat(Qx, 1, 1, N), R);
-% 
-% 
-% disp('RT_stacked_high_deg_poc')
-% disp(RT_stacked_high_deg_poc)
-% 
-% disp("max(RT_stacked_high_deg_poc(d+1:end, :), [], ""all"")")
-% disp(max(RT_stacked_high_deg_poc(d+1:end, :), [], "all"))
+% R_stacked_high_deg = matStackH(R(:,:,nodes_high_deg));
+% Qx = POCRotateToMinimizeLastEntries(R_stacked_high_deg);
+% R_stacked_high_deg_poc = Qx * R_stacked_high_deg;
+% R_high_deg_poc = matUnstackH(R_stacked_high_deg_poc, d);
+%
+% disp('R_stacked_high_deg_poc')
+% disp(R_stacked_high_deg_poc)
+
+% disp("max(R_stacked_high_deg_poc(d+1:end, :), [], ""all"")")
+% disp(max(R_stacked_high_deg_poc(d+1:end, :), [], "all"))
+
+
+
+T_edges = make_T_edges(T, edges);
+
+RT_stacked_high_deg = [matStackH(R(:,:,nodes_high_deg)), T_edges];
+Qx = POCRotateToMinimizeLastEntries(RT_stacked_high_deg);
+RT_stacked_high_deg_poc = Qx * RT_stacked_high_deg;
+
+% R_recovered = zeros(nrs,d,N);
+% R_recovered(:,:,nodes_high_deg) = R_high_deg_poc;
+% R_recovered(:,:,nodes_low_deg) = multiprod(repmat(Qx, 1, 1, sum(nodes_low_deg)), R(:,:,nodes_low_deg));
+R_recovered = multiprod(repmat(Qx, 1, 1, N), R);
+
+
+disp('RT_stacked_high_deg_poc')
+disp(RT_stacked_high_deg_poc)
+
+disp("max(RT_stacked_high_deg_poc(d+1:end, :), [], ""all"")")
+disp(max(RT_stacked_high_deg_poc(d+1:end, :), [], "all"))
 
 
 
@@ -119,12 +119,13 @@ disp(rsom_cost_base(X, problem_data))
 
 low_deg = 2;
 
-for deg_i = 1:length(node_degrees)
-    ii = node_degrees(deg_i);
+for deg = node_degrees
+    ii = deg;
     if ii == low_deg
-        fprintf("Running recoverRitilde() on node %g\n", deg_i);
-        R_i = R(:,:,deg_i);
-
+        fprintf("Running recoverRitilde() on node %g\n", ii);
+        R_i = R(:,:,ii);
+        
+        
         
         %computing Tij12
         Tij1j2 = zeros(d,low_deg);
@@ -138,6 +139,8 @@ for deg_i = 1:length(node_degrees)
             end
         end
         
+        Ritilde = [R_gt(:,:,ii);zeros(1,3)];
+        % Tijtilde=Ritilde*Tij1j2;
         
         % finding real Tijtilde
         Tijtilde = zeros(nrs, low_deg);
@@ -147,36 +150,28 @@ for deg_i = 1:length(node_degrees)
             if (e_i == ii)
                 e_j = edges(e,2);
                 num_js_found = num_js_found + 1;
-                Tijtilde(:,num_js_found) = T(:, e_j) - T(:, e_i);
+                Tijtilde(:,num_js_found) = T(:, e_j) - T(:, ii);
             end
         end
         
         
-%         Qx=align2d(Tijtilde);
-%         Ritilde2=Qx'*Qb*Qx*Ritilde;
+        Qx=align2d(Tijtilde);
         
         
-        [RitildeEst1,RitildeEst2]=recoverRitilde(R_i,Tijtilde);
+        Rb=randrot_som(2);
+        Qb=blkdiag(eye(2),Rb);        
+        % Check that Qx'*Qb*Qx leaves Tijtilde invariant
+        % And that the new Ritilde generated from the ambiguity
+        % still gives the same measurements.
+        Ritilde2=Qx'*Qb*Qx*Ritilde;
+        
+        [RitildeEst1,RitildeEst2]=recoverRitilde(Ritilde2,Tijtilde);
         disp('Again, one of the two residuals should be equal to zero')
         Ritilde = [R_gt(:,:,ii); zeros(1,3)];
         disp(norm(RitildeEst1-Ritilde,'fro'))
         disp(norm(RitildeEst2-Ritilde,'fro'))
 
     end
-end
-
-T_edges = make_T_edges(T, edges);
-RT_stacked_high_deg = [matStackH(R(:,:,nodes_high_deg)), T_edges];
-Qx = POCRotateToMinimizeLastEntries(RT_stacked_high_deg);
-RT_stacked_high_deg_poc = Qx * RT_stacked_high_deg;
-disp("RT_stacked_high_deg_poc")
-disp(RT_stacked_high_deg_poc)
-
-col_ids = reshape(1:12, d, []);
-for ii = 1:4
-    disp(ii)
-    A = RT_stacked_high_deg_poc(1:d, col_ids(:,ii)) * R_gt(:,:,ii+2)'; %works only in this particular case
-    disp(A);
 end
 
 
@@ -196,8 +191,8 @@ QxRitilde2Bot=Qx(3:4,:)*Ritilde2;
 [U,~,~]=svd(QxRitilde2Bot,'econ');
 c=U(:,2);
 
-QLastRight=Qx(3:4,4)';
+QLastRigh=Qx(3:4,4)';
 
-RbEst=procrustesRb(c,QLastRight');
+RbEst=procrustesRb(c,QLastRigh');
 RitildeEst1=Qx'*blkdiag(eye(2),-RbEst')*Qx*Ritilde2;
 RitildeEst2=Qx'*blkdiag(eye(2),RbEst')*Qx*Ritilde2;
