@@ -121,17 +121,6 @@ ii = 1;
 R_i = R(:,:,ii);
 low_deg = 2;
 
-% %computing Tij12
-% Tij1j2 = zeros(nrs,low_deg);
-% num_js_found = 0;
-% for e = 1:size(edges)
-%     e_i = edges(e,1);
-%     if (e_i == ii)
-%         e_j = edges(e,2);
-%         num_js_found = num_js_found + 1;
-%         Tij1j2(:,num_js_found) = T(:, ii) - T(:, e_j);
-%     end
-% end
 
 %computing Tij12
 Tij1j2 = zeros(d,low_deg);
@@ -146,7 +135,20 @@ for e = 1:size(edges)
 end
 
 Ritilde = [R_gt(:,:,ii);zeros(1,3)];
-Tijtilde=Ritilde*Tij1j2;
+% Tijtilde=Ritilde*Tij1j2;
+
+% finding real Tijtilde
+Tijtilde = zeros(nrs, low_deg);
+num_js_found = 0;
+for e = 1:size(edges)
+    e_i = edges(e,1);
+    if (e_i == ii)
+        e_j = edges(e,2);
+        num_js_found = num_js_found + 1;
+        Tijtilde(:,num_js_found) = T(:, e_j) - T(:, ii);
+    end
+end
+
 
 Qx=align2d(Tijtilde);
 
@@ -157,7 +159,7 @@ Qb=blkdiag(eye(2),Rb);
 % Check that Qx'*Qb*Qx leaves Tijtilde invariant
 % And that the new Ritilde generated from the ambiguity
 % still gives the same measurements.
-% Ritilde2 is a 
+% Ritilde2 is a
 Ritilde2=Qx'*Qb*Qx*Ritilde;
 
 [RitildeEst1,RitildeEst2]=recoverRitilde(Ritilde2,Tijtilde);
