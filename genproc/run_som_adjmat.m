@@ -46,11 +46,7 @@ som_params = struct('N', N, 'd', d, 'd_aff', d_aff, ...
     'enable_procrustes', enable_procrustes, ...
     'enable_manopt_rs', enable_manopt_rs);
 
-% Ground truth information
-R_gt = G2R(testdata.gi);
-T_gt = G2T(testdata.gi);
-save('Qbnn_data/R_gt.mat', "R_gt")
-save('Qbnn_data/T_gt.mat', "T_gt")
+
 
 % 0b) Noise PARAMS
 %NOTE: sigmas, mus can be seen as couples for each test

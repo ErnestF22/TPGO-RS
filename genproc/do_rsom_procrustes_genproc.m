@@ -33,6 +33,19 @@ edges = (testdata.E);
 %set data (no noise)
 Tijs_vec = G2T(testdata.gijtruth);
 T_globalframe = G2T(testdata.gitruth);
+R_globalframe = G2R(testdata.gitruth);
+X_gt.R = R_globalframe;
+X_gt.T = T_globalframe;
+problem_data_gt.Tijs = Tijs_vec;
+problem_data_gt.d = 3;
+problem_data_gt.N = 6;
+problem_data_gt.edges = edges;
+disp("rsom_cost_base GT")
+disp(rsom_cost_base(X_gt, problem_data_gt))
+save('poc2degree_data/R_gt.mat', "R_globalframe")
+save('poc2degree_data/T_gt.mat', "T_globalframe")
+save('poc2degree_data/problem_data_gt.mat', "problem_data_gt")
+
 
 sigma_transl = sigma;
 Tijs_vec_nois = Tijs_vec + sigma_transl.*randn(size(Tijs_vec)) + ...
