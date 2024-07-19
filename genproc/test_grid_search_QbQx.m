@@ -56,7 +56,7 @@ angles_rad = 0:1:360;
 rot_dist_best = 1e+6;
 R_gt_stiefel = [R_gt(:,:,2); zeros(1,3)];
 
-Qxs = randrot_manopt(4, 100000);
+Qxs = randrot_manopt(4, 1000);
 
 for a = angles_rad
     Rb = rot2d(pi*a/180.0);
@@ -64,17 +64,18 @@ for a = angles_rad
     for jj = 1:size(Qxs,3)
         Qx = Qxs(:,:,jj);
         Ri2_tilde_cand = Qx' * Qb * Qx * R_gt_stiefel;
-        rot_dist_i = norm(R-Ri2_tilde_cand,'fro');
+        rot_dist_i = norm(R(:,:,2)-Ri2_tilde_cand,'fro');
         if (rot_dist_i < rot_dist_best)
             rot_dist_best = rot_dist_i;
             Qb_best = Qb;
             Qx_best = Qx;
             disp("Found better approximation")
-            disp(norm(R-Ri2_tilde_cand,'fro'));
+            disp(norm(R(:,:,2)-Ri2_tilde_cand,'fro'));
         end
     end
 end
 
+pinv(R_gt_stiefel) * R(:,:,2)
 
 
 function m = rot2d(angle_rad)

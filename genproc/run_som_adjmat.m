@@ -1,6 +1,5 @@
 function run_som_adjmat
 
-
 % N = 6;
 % testnet = testNetwork_params(3, N, 'banded', 3); %mode can be 'banded' or 'full'
 % edges = testnet.E;
@@ -16,6 +15,10 @@ G = graph(make_adj_mat_from_edges(testdata.E,N));
 figure(1000)
 plot(G)
 title('graph')
+
+node_degrees = sum(testdata.A, 2);
+testdata.node_degrees = node_degrees;
+
 
 d = 3;
 d_aff = d+1;

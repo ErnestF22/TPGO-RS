@@ -78,6 +78,104 @@ for staircase_step_idx = r0:d*N+1
 
 end
 
+if staircase_step_idx > d+1
+
+    low_deg = 2;
+    nodes_high_deg = params.node_degrees > low_deg;
+    
+    T_edges = make_T_edges(T, edges);
+    
+    RT_stacked_high_deg = [matStackH(R(:,:,nodes_high_deg)), T_edges];
+    Qx = POCRotateToMinimizeLastEntries(RT_stacked_high_deg);
+    % RT_stacked_high_deg_poc = Qx * RT_stacked_high_deg;
+    
+    R_tilde = multiprod(repmat(Qx, 1, 1, sum(nodes_high_deg)), R(:,:,nodes_high_deg));
+    
+    R_out = zeros(d,d,N);
+    R_out(:,:,nodes_high_deg) = R_tilde(1:d,:,:);
+    
+    
+    % nodes_low_deg = ~nodes_high_deg;
+    for deg_i = 1:length(params.node_degrees)
+        ii = params.node_degrees(deg_i);
+        if ii == low_deg
+            fprintf("Running recoverRitilde() on node %g\n", deg_i);
+            R_i = R(:,:,deg_i);
+    
+            %computing Tij12
+            Tij1j2 = zeros(d,low_deg);
+            num_js_found = 0;
+            for e = 1:size(edges)
+                e_i = edges(e,1);
+                %         e_j = edges(e,2);
+                if (e_i == ii)
+                    num_js_found = num_js_found + 1;
+                    Tij1j2(:,num_js_found) = Tijs(:,e);
+                end
+            end
+    
+            % finding real Tijtilde
+            Tijtilde = zeros(staircase_step_idx-1, low_deg);
+            num_js_found = 0;
+            for e = 1:size(edges)
+                e_i = edges(e,1);
+                if (e_i == ii)
+                    e_j = edges(e,2);
+                    num_js_found = num_js_found + 1;
+                    Tijtilde(:,num_js_found) = T(:, e_j) - T(:, e_i);
+                end
+            end
+    
+            [RitildeEst1,RitildeEst2,Qx_i]=recoverRitilde(R_i,Tijtilde);
+    %         Qs_poc = [Qs_poc, Qx_i];
+    %         disp('Again, one of the two residuals should be equal to zero')
+    %         Ritilde = Qx_i' * [R_gt(:,:,ii); zeros(1,3)];
+    %         disp(norm(RitildeEst1-Ritilde,'fro'))
+    %         disp(norm(RitildeEst2-Ritilde,'fro'))
+            disp('')
+            % TODO: how to decide between RitildeEst1,RitildeEst2??
+            R_out(:,:,deg_i) = RitildeEst1(1:d,:);
+            x_out = R_out;
+            T_diffs = Qx * T_edges;
+            T_out = edge_diffs_2_T(T_diffs(1:d,:), edges, N);
+        end
+    end
+else
+    x_out = R;
+    T_out = T;
+end
+
+
+
+transf_out = RT2G(x_out, T_out); %??
+
+end %file function
+
+%%
+function Qx=align2d(v)
+Q=fliplr(orthComplement(v));
+Qx=flipud(orthCompleteBasis(Q)');
+end
+
+function RbEst=procrustesRb(c,q)
+[U,~,V]=svd(c*q');
+RbEst=U*diag([1 det(U*V')])*V';
+end
+
+function [RitildeEst1,RitildeEst2,Qx]=recoverRitilde(Ritilde2,Tijtilde)
+Qx=align2d(Tijtilde);
+QxRitilde2Bot=Qx(3:4,:)*Ritilde2;
+[U,~,~]=svd(QxRitilde2Bot,'econ');
+c=U(:,2);
+
+QLastRigh=Qx(3:4,4)';
+
+RbEst=procrustesRb(c,QLastRigh');
+RitildeEst1=Qx'*blkdiag(eye(2),-RbEst')*Qx*Ritilde2;
+RitildeEst2=Qx'*blkdiag(eye(2),RbEst')*Qx*Ritilde2;
+end
+
+%% old methods
 %TODO: Improve reprojection on SE(d)^N
 
 % METHOD 1): Simply extract upper left submats
@@ -115,34 +213,31 @@ end
 % transf_out = RT2G(matUnstackH(x(1:d, :)), T(1:d, 1:N));
 
 % METHOD 4): POC with edges differences
-T_edges = make_T_edges(T, edges);
-x_rs = [matStackH(R), T_edges];
-if staircase_step_idx > d+1
-    Q = POCRotateToMinimizeLastEntries(x_rs);
-    disp('x_rs=')
-    disp(x_rs)
-    disp('R=')
-    disp(R)
-    disp('x=Q*x_rs=')
-    disp(Q*x_rs)
-    x = Q*x_rs;
-    if max(abs(x(d+1:end, :)), [], "all") > 1e-5
-        disp("max(abs(x(d+1:end, :)), [], ""all"") > 1e-5!!! " + ...
-            "-> x on SE(d)^N recovery failed")
-        rs_recovery_success = boolean(0);
-    end 
-    x_out = matUnstackH(x(1:d, 1:N*d));
-    T_diffs = x_rs(1:d, N*d+1:end);
-    [T_out, booleans_T] = edge_diffs_2_T(T_diffs, edges, N);
-    if min(booleans_T) < 1
-        disp("min(booleans_T) < 1!!! -> T recovery failed")
-        rs_recovery_success = boolean(0);
-    end 
-else
-    x_out = R;
-    T_out = T;
-end
-transf_out = RT2G(x_out, T_out); %??
-
-end %file function
-
+% T_edges = make_T_edges(T, edges);
+% x_rs = [matStackH(R), T_edges];
+% if staircase_step_idx > d+1
+%     Q = POCRotateToMinimizeLastEntries(x_rs);
+%     disp('x_rs=')
+%     disp(x_rs)
+%     disp('R=')
+%     disp(R)
+%     disp('x=Q*x_rs=')
+%     disp(Q*x_rs)
+%     x = Q*x_rs;
+%     if max(abs(x(d+1:end, :)), [], "all") > 1e-5
+%         disp("max(abs(x(d+1:end, :)), [], ""all"") > 1e-5!!! " + ...
+%             "-> x on SE(d)^N recovery failed")
+%         rs_recovery_success = boolean(0);
+%     end 
+%     x_out = matUnstackH(x(1:d, 1:N*d));
+%     T_diffs = x_rs(1:d, N*d+1:end);
+%     [T_out, booleans_T] = edge_diffs_2_T(T_diffs, edges, N);
+%     if min(booleans_T) < 1
+%         disp("min(booleans_T) < 1!!! -> T recovery failed")
+%         rs_recovery_success = boolean(0);
+%     end 
+% else
+%     x_out = R;
+%     T_out = T;
+% end
+% transf_out = RT2G(x_out, T_out); %??
