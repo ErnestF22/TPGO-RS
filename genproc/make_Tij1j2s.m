@@ -13,7 +13,7 @@ for e = 1:size(edges,1)
     e_j = edges(e,2);
     if e_i == node_id
         Tij1j2(:,found) = Tijs(:,e);
-        Tij1j2_tilde(:,found) = T(:,e_j) - T(:,e_i); 
+        Tij1j2_tilde(1:d,found) = T(:,e_j) - T(:,e_i); 
         found = found + 1;
     end
 
@@ -34,5 +34,16 @@ disp([R_i * Tij1j2, Tij1j2_tilde]);
 
 disp("max(abs(R_i * Tij1j2 - Tij1j2_tilde), [], ""all"")");
 disp(max(abs(R_i * Tij1j2 - Tij1j2_tilde), [], "all"));
+
+R_gt = params.R_gt;
+R_i_gt_stief = [R_gt(:,:,node_id); zeros(1,d)];
+
+disp("[R_i_gt_stief * Tij1j2, Tij1j2_tilde]");
+disp([R_i_gt_stief * Tij1j2, Tij1j2_tilde]);
+
+disp("max(abs(R_i_gt_stief * Tij1j2 - Tij1j2_tilde), [], ""all"")");
+disp(max(abs(R_i_gt_stief * Tij1j2 - Tij1j2_tilde), [], "all"));
+
+
 
 end %file function

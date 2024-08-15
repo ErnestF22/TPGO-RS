@@ -31,9 +31,19 @@ problem.hess = @(x, u) hess_genproc(x, u, problem_data);
 % checkgradient(problem);
 % checkhessian(problem);
 
+%check that GT cost is 0
+X_gt.T = params.T_gt;
+X_gt.R = params.R_gt;
+cost_gt = rsom_cost_base(X_gt, problem_data);
+disp("cost_gt")
+disp(cost_gt)
+
+
 X = trustregions(problem);
 T = X.T;
 R = X.R;
+
+
 
 cost_last = rsom_cost_base(X, problem_data);
 
@@ -100,13 +110,15 @@ if staircase_step_idx > d+1
         node_deg = params.node_degrees(node_id);
         if node_deg == low_deg
             fprintf("Running recoverRitilde() on node %g\n", node_id);
-            R_i = R(:,:,node_id);
+            R_i_tilde2 = R(:,:,node_id);
             
             check_Rb_params.node_degrees = params.node_degrees;
             check_Rb_params.nrs = staircase_step_idx - 1;
             check_Rb_params.d = d;
+            check_Rb_params.R_gt = params.R_gt;
+            check_Rb_params.T_gt = params.T_gt;
 
-            [Tij1j2, Tij1j2_tilde] = make_Tij1j2s(node_id, R,T,Tijs,edges,check_Rb_params);
+            [Tij1j2, Tij1j2_tilde] = make_Tij1j2s(node_id, R,X_gt.T,Tijs,edges,check_Rb_params);
 
 %             %computing Tij12
 %             Tij1j2 = zeros(d,low_deg);
@@ -135,8 +147,13 @@ if staircase_step_idx > d+1
 %             check_Rb_params.nrs = staircase_step_idx - 1;
 %             check_Rb_params.node_deg = node_deg;
     
-            [RitildeEst1,RitildeEst2,Qx_i,Rb_i]=recoverRitilde(R_i,Tij1j2_tilde);
-            check_Rb_ambiguity(node_id, Qx_i, Rb_i, R_i, Tij1j2, Tij1j2_tilde, check_Rb_params);
+
+            cost_gt = rsom_cost_base(X_gt, problem_struct_next); 
+            disp("cost_gt")
+            disp(cost_gt)
+
+            [RitildeEst1,RitildeEst2,Qx_i,Rb_i]=recoverRitilde(R_i_tilde2,Tij1j2_tilde);
+            check_Rb_ambiguity(node_id, Qx_i, Rb_i, R_i_tilde2, Tij1j2, Tij1j2_tilde, check_Rb_params);
     %         Qs_poc = [Qs_poc, Qx_i];
     %         disp('Again, one of the two residuals should be equal to zero')
     %         Ritilde = Qx_i' * [R_gt(:,:,ii); zeros(1,3)];
