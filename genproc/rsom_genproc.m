@@ -96,41 +96,47 @@ if staircase_step_idx > d+1
     
     
     % nodes_low_deg = ~nodes_high_deg;
-    for deg_i = 1:length(params.node_degrees)
-        ii = params.node_degrees(deg_i);
-        if ii == low_deg
-            fprintf("Running recoverRitilde() on node %g\n", deg_i);
-            R_i = R(:,:,deg_i);
-    
-            %computing Tij12
-            Tij1j2 = zeros(d,low_deg);
-            num_js_found = 0;
-            for e = 1:size(edges)
-                e_i = edges(e,1);
-                %         e_j = edges(e,2);
-                if (e_i == ii)
-                    num_js_found = num_js_found + 1;
-                    Tij1j2(:,num_js_found) = Tijs(:,e);
-                end
-            end
-    
-            % finding real Tijtilde
-            Tij1j2_tilde = zeros(staircase_step_idx-1, low_deg);
-            num_js_found = 0;
-            for e = 1:size(edges)
-                e_i = edges(e,1);
-                if (e_i == ii)
-                    e_j = edges(e,2);
-                    num_js_found = num_js_found + 1;
-                    Tij1j2_tilde(:,num_js_found) = T(:, e_j) - T(:, e_i);
-                end
-            end
+    for node_id = 1:length(params.node_degrees)
+        node_deg = params.node_degrees(node_id);
+        if node_deg == low_deg
+            fprintf("Running recoverRitilde() on node %g\n", node_id);
+            R_i = R(:,:,node_id);
             
+            check_Rb_params.node_degrees = params.node_degrees;
             check_Rb_params.nrs = staircase_step_idx - 1;
-            check_Rb_params.node_deg = ii;
+            check_Rb_params.d = d;
+
+            [Tij1j2, Tij1j2_tilde] = make_Tij1j2s(node_id, R,T,Tijs,edges,check_Rb_params);
+
+%             %computing Tij12
+%             Tij1j2 = zeros(d,low_deg);
+%             num_js_found = 0;
+%             for e = 1:size(edges)
+%                 e_i = edges(e,1);
+%                 %         e_j = edges(e,2);
+%                 if (e_i == node_deg)
+%                     num_js_found = num_js_found + 1;
+%                     Tij1j2(:,num_js_found) = Tijs(:,e);
+%                 end
+%             end
+%     
+%             % finding real Tijtilde
+%             Tij1j2_tilde = zeros(staircase_step_idx-1, low_deg);
+%             num_js_found = 0;
+%             for e = 1:size(edges)
+%                 e_i = edges(e,1);
+%                 if (e_i == node_deg)
+%                     e_j = edges(e,2);
+%                     num_js_found = num_js_found + 1;
+%                     Tij1j2_tilde(:,num_js_found) = T(:, e_j) - T(:, e_i);
+%                 end
+%             end
+%             
+%             check_Rb_params.nrs = staircase_step_idx - 1;
+%             check_Rb_params.node_deg = node_deg;
     
             [RitildeEst1,RitildeEst2,Qx_i,Rb_i]=recoverRitilde(R_i,Tij1j2_tilde);
-            check_Rb_ambiguity(Qx_i, Rb_i, R_i, Tij1j2, Tij1j2_tilde, check_Rb_params);
+            check_Rb_ambiguity(node_id, Qx_i, Rb_i, R_i, Tij1j2, Tij1j2_tilde, check_Rb_params);
     %         Qs_poc = [Qs_poc, Qx_i];
     %         disp('Again, one of the two residuals should be equal to zero')
     %         Ritilde = Qx_i' * [R_gt(:,:,ii); zeros(1,3)];
@@ -138,20 +144,22 @@ if staircase_step_idx > d+1
     %         disp(norm(RitildeEst2-Ritilde,'fro'))
             disp('')
             % TODO: how to decide between RitildeEst1,RitildeEst2??
-            R_out(:,:,deg_i) = RitildeEst1(1:d,:);
-            x_out = R_out;
+            R_out(:,:,node_id) = RitildeEst1(1:d,:);
+%             R_out = R_out;
             T_diffs = Qx * T_edges;
             T_out = edge_diffs_2_T(T_diffs(1:d,:), edges, N);
         end
     end
 else
-    x_out = R;
+    R_out = R;
     T_out = T;
 end
 
+X_out.T = T_out;
+X_out.R = R_out;
+rsom_cost_base(X_out, problem_struct_next); 
 
-
-transf_out = RT2G(x_out, T_out); %??
+transf_out = RT2G(R_out, T_out); %??
 
 end %file function
 
