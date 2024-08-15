@@ -19,7 +19,6 @@ if ~exist('mu', 'var')
     mu = 0.0;
 end
 
-params.node_degrees = testdata.node_degrees;
 
 %% 0) parse used SoM params
 N = params.N;

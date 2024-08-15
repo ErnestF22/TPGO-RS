@@ -16,8 +16,7 @@ figure(1000)
 plot(G)
 title('graph')
 
-node_degrees = sum(testdata.A, 2);
-testdata.node_degrees = node_degrees;
+
 
 
 d = 3;
@@ -49,6 +48,8 @@ som_params = struct('N', N, 'd', d, 'd_aff', d_aff, ...
     'enable_procrustes', enable_procrustes, ...
     'enable_manopt_rs', enable_manopt_rs);
 
+node_degrees = sum(testdata.A, 2);
+som_params.node_degrees = node_degrees;
 
 
 % 0b) Noise PARAMS

@@ -80,7 +80,7 @@ end
 
 if staircase_step_idx > d+1
 
-    low_deg = 2;
+    low_deg = 2; %TODO: not necessarily in more complex graph cases
     nodes_high_deg = params.node_degrees > low_deg;
     
     T_edges = make_T_edges(T, edges);
@@ -115,18 +115,22 @@ if staircase_step_idx > d+1
             end
     
             % finding real Tijtilde
-            Tijtilde = zeros(staircase_step_idx-1, low_deg);
+            Tij1j2_tilde = zeros(staircase_step_idx-1, low_deg);
             num_js_found = 0;
             for e = 1:size(edges)
                 e_i = edges(e,1);
                 if (e_i == ii)
                     e_j = edges(e,2);
                     num_js_found = num_js_found + 1;
-                    Tijtilde(:,num_js_found) = T(:, e_j) - T(:, e_i);
+                    Tij1j2_tilde(:,num_js_found) = T(:, e_j) - T(:, e_i);
                 end
             end
+            
+            check_Rb_params.nrs = staircase_step_idx - 1;
+            check_Rb_params.node_deg = ii;
     
-            [RitildeEst1,RitildeEst2,Qx_i]=recoverRitilde(R_i,Tijtilde);
+            [RitildeEst1,RitildeEst2,Qx_i,Rb_i]=recoverRitilde(R_i,Tij1j2_tilde);
+            check_Rb_ambiguity(Qx_i, Rb_i, R_i, Tij1j2, Tij1j2_tilde, check_Rb_params);
     %         Qs_poc = [Qs_poc, Qx_i];
     %         disp('Again, one of the two residuals should be equal to zero')
     %         Ritilde = Qx_i' * [R_gt(:,:,ii); zeros(1,3)];
@@ -162,15 +166,15 @@ function RbEst=procrustesRb(c,q)
 RbEst=U*diag([1 det(U*V')])*V';
 end
 
-function [RitildeEst1,RitildeEst2,Qx]=recoverRitilde(Ritilde2,Tijtilde)
+function [RitildeEst1,RitildeEst2,Qx,RbEst]=recoverRitilde(Ritilde2,Tijtilde)
 Qx=align2d(Tijtilde);
 QxRitilde2Bot=Qx(3:4,:)*Ritilde2;
 [U,~,~]=svd(QxRitilde2Bot,'econ');
 c=U(:,2);
 
-QLastRigh=Qx(3:4,4)';
+QLastRight=Qx(3:4,4)';
 
-RbEst=procrustesRb(c,QLastRigh');
+RbEst=procrustesRb(c,QLastRight');
 RitildeEst1=Qx'*blkdiag(eye(2),-RbEst')*Qx*Ritilde2;
 RitildeEst2=Qx'*blkdiag(eye(2),RbEst')*Qx*Ritilde2;
 end

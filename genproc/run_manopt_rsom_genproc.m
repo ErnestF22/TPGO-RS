@@ -46,6 +46,9 @@ sigmas = sigmas(4);
 % sigmas = 0.0;
 mus = mus(2);
 
+node_degrees = sum(testdata.A, 2);
+som_params.node_degrees = node_degrees;
+
 %If reading from file does not work and want to try a single noise_params
 %struct, uncomment the following line
 % noise_params = struct('sigma', sigmas(1), 'mu', mus(1)); 
