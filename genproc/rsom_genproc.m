@@ -155,9 +155,12 @@ else
     T_out = T;
 end
 
+%checking that cost has not changed during "recovery"
 X_out.T = T_out;
 X_out.R = R_out;
-rsom_cost_base(X_out, problem_struct_next); 
+cost_out = rsom_cost_base(X_out, problem_struct_next); 
+disp("cost_out")
+disp(cost_out)
 
 transf_out = RT2G(R_out, T_out); %??
 
