@@ -15,8 +15,8 @@ disp("max(left_side - right_side, [], ""all"")")
 disp(max(abs(left_side - right_side), [], "all"))
 
 %checking (40)
-R_gt = params.R_gt;
-R_i_gt_stief = [R_gt(:,:,node_id); zeros(1,d)];
+% R_gt = params.R_gt;
+% R_i_gt_stief = [R_gt(:,:,node_id); zeros(1,d)];
 
 
 % %checking (64) GT

@@ -43,9 +43,9 @@ problem_data_gt.N = 6;
 problem_data_gt.edges = edges;
 disp("rsom_cost_base GT")
 disp(rsom_cost_base(X_gt, problem_data_gt))
-save('poc2degree_data/R_gt.mat', "R_globalframe")
-save('poc2degree_data/T_gt.mat', "T_globalframe")
-save('poc2degree_data/problem_data_gt.mat', "problem_data_gt")
+% save('poc2degree_data/R_gt.mat', "R_globalframe")
+% save('poc2degree_data/T_gt.mat', "T_globalframe")
+% save('poc2degree_data/problem_data_gt.mat', "problem_data_gt")
 
 
 sigma_transl = sigma;

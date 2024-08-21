@@ -1,11 +1,12 @@
 function [Tij1j2, Tij1j2_tilde] = make_Tij1j2s(node_id, R,T,Tijs,edges,params)
 
-nrs = params.nrs;
+num_rows_T = size(T,1);
+% nrs = params.nrs;
 d = params.d;
 node_deg = params.node_degrees(node_id); % usually low_deg
 
 Tij1j2 = zeros(d, node_deg);
-Tij1j2_tilde = zeros(nrs, node_deg);
+Tij1j2_tilde = zeros(num_rows_T, node_deg);
 
 found = 1;
 for e = 1:size(edges,1)
@@ -13,7 +14,7 @@ for e = 1:size(edges,1)
     e_j = edges(e,2);
     if e_i == node_id
         Tij1j2(:,found) = Tijs(:,e);
-        Tij1j2_tilde(1:d,found) = T(:,e_j) - T(:,e_i); 
+        Tij1j2_tilde(:,found) = T(:,e_j) - T(:,e_i); 
         found = found + 1;
     end
 
@@ -22,12 +23,8 @@ end
 
 %additional checks
 
-disp("Tij1j2 inside make_Tij1j2s()");
-disp(Tij1j2);
 
-disp("Tij1j2_tilde inside make_Tij1j2s()");
-disp(Tij1j2_tilde);
-
+%R_i * Tij1j2 == Tij1j2_tilde
 R_i = R(:,:,node_id);
 disp("[R_i * Tij1j2, Tij1j2_tilde] inside make_Tij1j2s()");
 disp([R_i * Tij1j2, Tij1j2_tilde]);
@@ -35,14 +32,15 @@ disp([R_i * Tij1j2, Tij1j2_tilde]);
 disp("max(abs(R_i * Tij1j2 - Tij1j2_tilde), [], ""all"")");
 disp(max(abs(R_i * Tij1j2 - Tij1j2_tilde), [], "all"));
 
-R_gt = params.R_gt;
-R_i_gt_stief = [R_gt(:,:,node_id); zeros(1,d)];
-
-disp("[R_i_gt_stief * Tij1j2, Tij1j2_tilde]");
-disp([R_i_gt_stief * Tij1j2, Tij1j2_tilde]);
-
-disp("max(abs(R_i_gt_stief * Tij1j2 - Tij1j2_tilde), [], ""all"")");
-disp(max(abs(R_i_gt_stief * Tij1j2 - Tij1j2_tilde), [], "all"));
+%R_i_gt * Tij1j2 == Tij1j2_tilde
+% R_gt = params.R_gt;
+% R_i_gt_stief = [R_gt(:,:,node_id); zeros(1,d)];
+% 
+% disp("[R_i_gt_stief * Tij1j2, Tij1j2_tilde]");
+% disp([R_i_gt_stief * Tij1j2, Tij1j2_tilde]);
+% 
+% disp("max(abs(R_i_gt_stief * Tij1j2 - Tij1j2_tilde), [], ""all"")");
+% disp(max(abs(R_i_gt_stief * Tij1j2 - Tij1j2_tilde), [], "all"));
 
 
 
