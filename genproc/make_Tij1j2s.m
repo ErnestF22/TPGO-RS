@@ -21,27 +21,6 @@ for e = 1:size(edges,1)
 end
 
 
-%additional checks
-
-
-%R_i * Tij1j2 == Tij1j2_tilde
-R_i = R(:,:,node_id);
-disp("[R_i * Tij1j2, Tij1j2_tilde] inside make_Tij1j2s()");
-disp([R_i * Tij1j2, Tij1j2_tilde]);
-
-disp("max(abs(R_i * Tij1j2 - Tij1j2_tilde), [], ""all"")");
-disp(max(abs(R_i * Tij1j2 - Tij1j2_tilde), [], "all"));
-
-%R_i_gt * Tij1j2 == Tij1j2_tilde
-% R_gt = params.R_gt;
-% R_i_gt_stief = [R_gt(:,:,node_id); zeros(1,d)];
-% 
-% disp("[R_i_gt_stief * Tij1j2, Tij1j2_tilde]");
-% disp([R_i_gt_stief * Tij1j2, Tij1j2_tilde]);
-% 
-% disp("max(abs(R_i_gt_stief * Tij1j2 - Tij1j2_tilde), [], ""all"")");
-% disp(max(abs(R_i_gt_stief * Tij1j2 - Tij1j2_tilde), [], "all"));
-
 
 
 end %file function

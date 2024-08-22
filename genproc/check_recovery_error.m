@@ -33,6 +33,26 @@ R_tilde = multiprod(repmat(Qx, 1, 1, sum(nodes_high_deg)), R_manopt_out(:,:,node
 R_recovered = zeros(d,d,N);
 R_recovered(:,:,nodes_high_deg) = R_tilde(1:d,:,:);
 
+%% check_Tij1j2_init on node 1
+
+node_id = 1;
+Ritilde2 = R_manopt_out(:,:,node_id);
+
+check_Rb_params.node_degrees = params.node_degrees;
+check_Rb_params.nrs = staircase_step_idx - 1;
+check_Rb_params.d = d;
+check_Rb_params.R_gt = params.R_gt;
+check_Rb_params.T_gt = params.T_gt;
+
+[Tij1j2, Tij1j2_tilde] = make_Tij1j2s(node_id, R_manopt_out, T_manopt_out, Tijs,edges,check_Rb_params);
+
+[~,~,~,RbEst]=recoverRitilde(Ritilde2,Tij1j2_tilde);
+Qb = blkdiag(eye(2),RbEst');
+
+check_Tij1j2_init(1, R_manopt_out, Tij1j2, Tij1j2_tilde, Qx, Qb);
+
+
+%% run only later
 
 % nodes_low_deg = ~nodes_high_deg;
 for node_id = 1:length(params.node_degrees)
