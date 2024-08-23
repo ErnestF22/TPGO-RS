@@ -25,13 +25,13 @@ nodes_high_deg = params.node_degrees > low_deg;
 [T_edges, T1_offset] = make_T_edges(T_manopt_out, edges);
 
 RT_stacked_high_deg = [matStackH(R_manopt_out(:,:,nodes_high_deg)), T_edges];
-Qx = POCRotateToMinimizeLastEntries(RT_stacked_high_deg);
-% RT_stacked_high_deg_poc = Qx * RT_stacked_high_deg;
+Qx_edges = POCRotateToMinimizeLastEntries(RT_stacked_high_deg);
+% RT_stacked_high_deg_poc = Qx_edges * RT_stacked_high_deg;
 
-R_tilde = multiprod(repmat(Qx, 1, 1, sum(nodes_high_deg)), R_manopt_out(:,:,nodes_high_deg));
+R_tilde2_edges = multiprod(repmat(Qx_edges, 1, 1, sum(nodes_high_deg)), R_manopt_out(:,:,nodes_high_deg));
 
 R_recovered = zeros(d,d,N);
-R_recovered(:,:,nodes_high_deg) = R_tilde(1:d,:,:);
+R_recovered(:,:,nodes_high_deg) = R_tilde2_edges(1:d,:,:);
 
 %% check_Tij1j2_init on node 1
 
@@ -44,12 +44,14 @@ check_Rb_params.d = d;
 check_Rb_params.R_gt = params.R_gt;
 check_Rb_params.T_gt = params.T_gt;
 
-[Tij1j2, Tij1j2_tilde] = make_Tij1j2s(node_id, R_manopt_out, T_manopt_out, Tijs,edges,check_Rb_params);
+[Tij1j2, Tij1j2_tilde] = make_Tij1j2s_edges(node_id, Qx_edges * T_edges, Tijs, edges,check_Rb_params);
 
 [~,~,~,RbEst]=recoverRitilde(Ritilde2,Tij1j2_tilde);
 Qb = blkdiag(eye(2),RbEst');
 
-check_Tij1j2_init(1, R_manopt_out, Tij1j2, Tij1j2_tilde, Qx, Qb);
+Qx=align2d(Tij1j2_tilde);
+check_Tij1j2_init(1, multiprod(Qx_edges, R_manopt_out), Tij1j2, Tij1j2_tilde, ...
+    Qx, Qb);
 
 
 %% run only later
@@ -67,9 +69,6 @@ for node_id = 1:length(params.node_degrees)
         check_Rb_params.R_gt = params.R_gt;
         check_Rb_params.T_gt = params.T_gt;
 
-        [Tij1j2, Tij1j2_tilde] = make_Tij1j2s(node_id, R_manopt_out, T_manopt_out, Tijs,edges,check_Rb_params);
-
-
         cost_gt = rsom_cost_base(X_gt, problem_struct_next); 
         disp("cost_gt")
         disp(cost_gt)
@@ -78,14 +77,19 @@ for node_id = 1:length(params.node_degrees)
         disp("cost_manopt_output")
         disp(cost_manopt_output)
 
-        [RitildeEst1,RitildeEst2,Qx_i,Rb_i]=recoverRitilde(R_i_tilde2,Tij1j2_tilde);
+        T_diffs_shifted = Qx_edges * T_edges; %this has last row to 0
+        [Tij1j2, Tij1j2_tilde] = make_Tij1j2s_edges(node_id, T_diffs_shifted, Tijs,edges,params);
+
+        [RitildeEst1,RitildeEst2,Qx,Rb_i] = ...
+            recoverRitilde(Qx_edges* R_i_tilde2,Tij1j2_tilde);
         disp('')
         % TODO: how to decide between RitildeEst1,RitildeEst2??
         R_recovered(:,:,node_id) = RitildeEst1(1:d,:);
-        T_diffs_shifted = Qx * T_edges; %this has last row to 0
+        
         disp("Checking make_T_edges <-> edge_diffs_2_T");
         
         T_recovered = edge_diffs_2_T(T_diffs_shifted(1:d,:), edges, N);
+        disp('')
     end
 end
 
@@ -112,15 +116,15 @@ function RbEst=procrustesRb(c,q)
 RbEst=U*diag([1 det(U*V')])*V';
 end
 
-function [RitildeEst1,RitildeEst2,Qx,RbEst]=recoverRitilde(Ritilde2,Tijtilde)
+function [RitildeEst1,RitildeEst2,Qx, RbEst]=recoverRitilde(Ritilde2,Tijtilde)
 Qx=align2d(Tijtilde);
 QxRitilde2Bot=Qx(3:4,:)*Ritilde2;
 [U,~,~]=svd(QxRitilde2Bot,'econ');
 c=U(:,2);
 
-QLastRight=Qx(3:4,4)';
+QLastRigh=Qx(3:4,4)';
 
-RbEst=procrustesRb(c,QLastRight');
-RitildeEst1=Qx*blkdiag(eye(2),-RbEst')*Qx'*Ritilde2;
-RitildeEst2=Qx*blkdiag(eye(2),RbEst')*Qx'*Ritilde2;
+RbEst=procrustesRb(c,QLastRigh');
+RitildeEst1=Qx'*blkdiag(eye(2),-RbEst')*Qx*Ritilde2;
+RitildeEst2=Qx'*blkdiag(eye(2),RbEst')*Qx*Ritilde2;
 end

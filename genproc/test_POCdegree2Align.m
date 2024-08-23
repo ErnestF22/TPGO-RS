@@ -155,6 +155,10 @@ disp('Again, one of the two residuals should be equal to zero')
 disp(norm(RitildeEst1-Ritilde,'fro'))
 disp(norm(RitildeEst2-Ritilde,'fro'))
 
+disp([Qx' * blkdiag(eye(2),-RbEst') * Qx * Ritilde2, Ritilde]) % =\bmat{*_{3\times 3}\\0_{(p-3)\times 3}}
+disp('')
+
+
 function Qx=align2d(v)
 Q=fliplr(orthComplement(v));
 Qx=flipud(orthCompleteBasis(Q)');
