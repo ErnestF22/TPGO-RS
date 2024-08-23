@@ -84,7 +84,11 @@ for node_id = 1:length(params.node_degrees)
             recoverRitilde(Qx_edges* R_i_tilde2,Tij1j2_tilde);
         disp('')
         % TODO: how to decide between RitildeEst1,RitildeEst2??
-        R_recovered(:,:,node_id) = RitildeEst1(1:d,:);
+        if (det(RitildeEst1(1:d,:)) > 0)
+            R_recovered(:,:,node_id) = RitildeEst1(1:d,:);
+        else
+            R_recovered(:,:,node_id) = RitildeEst2(1:d,:);
+        end
         
         disp("Checking make_T_edges <-> edge_diffs_2_T");
         
@@ -102,6 +106,18 @@ disp("cost_out")
 disp(cost_out)
 
 transf_out = RT2G(R_recovered, T_recovered); %??
+
+disp("[matStackH(X_gt.R); matStackH(R_recovered)]");
+disp([matStackH(X_gt.R); matStackH(R_recovered)]);
+
+R_global = R_recovered(:,:,1) * X_gt.R(:,:,1)'; %!!
+
+for ii = 1:N
+    R_gt_i = X_gt.R(:,:,ii);
+    R_recov_i = (R_recovered(:,:,ii)' * R_global)';
+    disp("R_gt_i, R_recov_i");
+    disp([R_gt_i, R_recov_i]);
+end
 
 end %file function
 
