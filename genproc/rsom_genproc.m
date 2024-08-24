@@ -1,4 +1,4 @@
-function [transf_out, rs_recovery_success] = rsom_genproc(T_gf, Tijs, edges, params, transf_initguess)
+function [transf_out, rs_recovery_success, cost_out] = rsom_genproc(T_gf, Tijs, edges, params, transf_initguess)
 %RSOM_RS Rsom Manopt pipeline, with the addition of the Riemannian
 %Staircase ("RS")
 
@@ -40,8 +40,8 @@ disp(cost_gt)
 
 
 X = trustregions(problem);
-T = X.T;
-R = X.R;
+T_manopt_out = X.T;
+R_manopt_out = X.R;
 
 
 
@@ -73,8 +73,8 @@ for staircase_step_idx = r0:d*N+1
 
     
     X = trustregions(problem_next, Y_star);
-    T = X.T;
-    R = X.R;
+    T_manopt_out = X.T;
+    R_manopt_out = X.R;
 
     disp("cost_last")
     disp(cost_last)
@@ -88,98 +88,122 @@ for staircase_step_idx = r0:d*N+1
 
 end
 
+X_manopt_out.R = R_manopt_out;
+X_manopt_out.T = T_manopt_out;
+
 if staircase_step_idx > d+1
 
     low_deg = 2; %TODO: not necessarily in more complex graph cases
     nodes_high_deg = params.node_degrees > low_deg;
     
-    T_edges = make_T_edges(T, edges);
+    [T_edges, ~] = make_T_edges(T_manopt_out, edges);
     
-    RT_stacked_high_deg = [matStackH(R(:,:,nodes_high_deg)), T_edges];
-    Qx = POCRotateToMinimizeLastEntries(RT_stacked_high_deg);
-    % RT_stacked_high_deg_poc = Qx * RT_stacked_high_deg;
+    RT_stacked_high_deg = [matStackH(R_manopt_out(:,:,nodes_high_deg)), T_edges];
+    Qx_edges = POCRotateToMinimizeLastEntries(RT_stacked_high_deg);
+    % RT_stacked_high_deg_poc = Qx_edges * RT_stacked_high_deg;
     
-    R_tilde = multiprod(repmat(Qx, 1, 1, sum(nodes_high_deg)), R(:,:,nodes_high_deg));
+    R_tilde2_edges = multiprod(repmat(Qx_edges, 1, 1, sum(nodes_high_deg)), R_manopt_out(:,:,nodes_high_deg));
     
-    R_out = zeros(d,d,N);
-    R_out(:,:,nodes_high_deg) = R_tilde(1:d,:,:);
-    
-    
-    % nodes_low_deg = ~nodes_high_deg;
+    R_recovered = zeros(d,d,N);
+    R_recovered(:,:,nodes_high_deg) = R_tilde2_edges(1:d,:,:);
     for node_id = 1:length(params.node_degrees)
         node_deg = params.node_degrees(node_id);
         if node_deg == low_deg
             fprintf("Running recoverRitilde() on node %g\n", node_id);
-            R_i_tilde2 = R(:,:,node_id);
+            R_i_tilde2 = R_manopt_out(:,:,node_id);
             
-            check_Rb_params.node_degrees = params.node_degrees;
-            check_Rb_params.nrs = staircase_step_idx - 1;
-            check_Rb_params.d = d;
-            check_Rb_params.R_gt = params.R_gt;
-            check_Rb_params.T_gt = params.T_gt;
-
-            [Tij1j2, Tij1j2_tilde] = make_Tij1j2s(node_id, R,X_gt.T,Tijs,edges,check_Rb_params);
-
-%             %computing Tij12
-%             Tij1j2 = zeros(d,low_deg);
-%             num_js_found = 0;
-%             for e = 1:size(edges)
-%                 e_i = edges(e,1);
-%                 %         e_j = edges(e,2);
-%                 if (e_i == node_deg)
-%                     num_js_found = num_js_found + 1;
-%                     Tij1j2(:,num_js_found) = Tijs(:,e);
-%                 end
-%             end
-%     
-%             % finding real Tijtilde
-%             Tij1j2_tilde = zeros(staircase_step_idx-1, low_deg);
-%             num_js_found = 0;
-%             for e = 1:size(edges)
-%                 e_i = edges(e,1);
-%                 if (e_i == node_deg)
-%                     e_j = edges(e,2);
-%                     num_js_found = num_js_found + 1;
-%                     Tij1j2_tilde(:,num_js_found) = T(:, e_j) - T(:, e_i);
-%                 end
-%             end
-%             
-%             check_Rb_params.nrs = staircase_step_idx - 1;
-%             check_Rb_params.node_deg = node_deg;
     
-
             cost_gt = rsom_cost_base(X_gt, problem_struct_next); 
             disp("cost_gt")
             disp(cost_gt)
-
-            [RitildeEst1,RitildeEst2,Qx_i,Rb_i]=recoverRitilde(R_i_tilde2,Tij1j2_tilde);
-            check_Rb_ambiguity(node_id, Qx_i, Rb_i, R_i_tilde2, Tij1j2, Tij1j2_tilde, check_Rb_params);
-    %         Qs_poc = [Qs_poc, Qx_i];
-    %         disp('Again, one of the two residuals should be equal to zero')
-    %         Ritilde = Qx_i' * [R_gt(:,:,ii); zeros(1,3)];
-    %         disp(norm(RitildeEst1-Ritilde,'fro'))
-    %         disp(norm(RitildeEst2-Ritilde,'fro'))
+    
+            cost_manopt_output = rsom_cost_base(X_manopt_out, problem_struct_next); 
+            disp("cost_manopt_output")
+            disp(cost_manopt_output)
+    
+            T_diffs_shifted = Qx_edges * T_edges; %this has last row to 0
+            [~, Tij1j2_tilde] = make_Tij1j2s_edges(node_id, T_diffs_shifted, Tijs,edges,params);
+    
+            [RitildeEst1,RitildeEst2,~,~] = ...
+                recoverRitilde(Qx_edges* R_i_tilde2,Tij1j2_tilde);
             disp('')
             % TODO: how to decide between RitildeEst1,RitildeEst2??
-            R_out(:,:,node_id) = RitildeEst1(1:d,:);
-%             R_out = R_out;
-            T_diffs = Qx * T_edges;
-            T_out = edge_diffs_2_T(T_diffs(1:d,:), edges, N);
+            det_RitildeEst1 = det(RitildeEst1(1:d,:));
+            det_RitildeEst2 = det(RitildeEst2(1:d,:));
+            if ( det_RitildeEst1 > 1 - 1e-5 && det_RitildeEst1 < 1 + 1e-5 )
+                R_recovered(:,:,node_id) = RitildeEst1(1:d,:);
+            elseif (det_RitildeEst2 > 1 - 1e-5 && det_RitildeEst2 < 1 + 1e-5)
+                R_recovered(:,:,node_id) = RitildeEst2(1:d,:);
+            else 
+                fprintf("ERROR in recovery: Ritilde DETERMINANTS ~= 1\n")
+                rs_recovery_success = boolean(0);
+            end
+            
+            
+            T_recovered = edge_diffs_2_T(T_diffs_shifted(1:d,:), edges, N);
+            disp('')
         end
     end
 else
-    R_out = R;
-    T_out = T;
+    % recovery is not actually performed but using the same variable names
+    % for simplicity
+    R_recovered = R_manopt_out;
+    T_recovered = T_manopt_out;
 end
 
 %checking that cost has not changed during "recovery"
-X_out.T = T_out;
-X_out.R = R_out;
-cost_out = rsom_cost_base(X_out, problem_struct_next); 
+X_recovered.T = T_recovered;
+X_recovered.R = R_recovered;
+cost_out = rsom_cost_base(X_recovered, problem_struct_next); 
 disp("cost_out")
 disp(cost_out)
 
-transf_out = RT2G(R_out, T_out); %??
+
+disp("[matStackH(X_gt.R); matStackH(R_recovered)]");
+disp([matStackH(X_gt.R); matStackH(R_recovered)]);
+
+R_global = R_recovered(:,:,1) * X_gt.R(:,:,1)'; %!!
+% code for making all rotations global at once
+R_recovered_global = multiprod(repmat(R_global', 1, 1, N), R_recovered);
+disp("[matStackH(X_gt.R); matStackH(R_recovered_global)]");
+disp([matStackH(X_gt.R); matStackH(R_recovered_global)]);
+
+T_global = R_global * T_recovered(:,1) - X_gt.T(:,1); %!!
+% code for making all translation global at once
+disp("[X_gt.T; T_recovered]");
+T_recovered_global = R_global' * T_recovered - T_global;
+disp([X_gt.T; T_recovered_global]);
+
+for ii = 1:N
+    R_gt_i = X_gt.R(:,:,ii);
+    R_recov_i_global = R_recovered_global(:,:,ii); %GLOBAL!
+    fprintf("ii %g\n", ii);
+    % rotations
+    disp("R_gt_i, R_recov_i");
+    disp([R_gt_i, R_recov_i_global]);
+    disp("is_equal_floats(R_gt_i, R_recov_i_global)")
+    disp(is_equal_floats(R_gt_i, R_recov_i_global))
+    if (~is_equal_floats(R_gt_i, R_recov_i_global))
+%         error("rot found NOT equal")
+        fprintf("ERROR in recovery: R_GLOBAL\n");
+        rs_recovery_success = boolean(0);
+    end
+    % translations
+    T_gt_i = X_gt.T(:,ii);
+    T_recov_i_global = T_recovered_global(:,ii);
+    disp("[X_gt.T, T_recovered]");
+    disp([T_gt_i, T_recov_i_global]);
+    disp("is_equal_floats(T_gt_i, T_recov_i_global)")
+    disp(is_equal_floats(T_gt_i, T_recov_i_global))
+    if (~is_equal_floats(T_gt_i, T_recov_i_global))
+%         error("transl found NOT equal")
+        fprintf("ERROR in recovery: T_GLOBAL\n");
+        rs_recovery_success = boolean(0);
+    end
+end
+
+fprintf("rs_recovery_success: %g\n", rs_recovery_success);
+transf_out = RT2G(R_recovered, T_recovered); %rsom_genproc() function output
 
 end %file function
 

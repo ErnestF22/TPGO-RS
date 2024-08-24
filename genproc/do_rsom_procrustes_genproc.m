@@ -99,7 +99,10 @@ manopt_genproc_start_time = tic();
 if params.enable_manopt_rs
     params.R_gt = G2R(testdata.gitruth);
     params.T_gt = G2T(testdata.gitruth);
-    [transf_manopt_rs, rs_success_bool] = rsom_genproc(T_globalframe_nois, Tijs_vec_nois, edges, params, transf_initguess);
+    [transf_manopt_rs, rs_success_bool, cost_manopt_rs] = ...
+        rsom_genproc(T_globalframe_nois, Tijs_vec_nois, edges, params, transf_initguess);
+    disp("cost_manopt_rs")
+    disp(cost_manopt_rs)
 else
     transf_manopt_rs = repmat(eye(d+1), 1, 1, N);
 end
