@@ -18,7 +18,7 @@ end
 
 % Test computation of Qx
 % It should align the last rows of Tijtilde to zero
-Qx=align2d(Tijtilde);
+Qx=align2d_EoF(Tijtilde);
 if flagRandomizeQx
     % randomly combine the last two rows of Qx
     Rx=randrot_som(2);
@@ -92,7 +92,7 @@ disp('c and Rb*QLastRigh'' should match up to a +/- sign')
 disp([c Rb*QLastRigh'])
 
 % Estimate Rb by Procrustes alignment (without translation)
-RbEst=procrustesRb(c,QLastRigh');
+RbEst=procrustesRb_EoF(c,QLastRigh');
 disp('Estimated and actual Rb should match up to a sign')
 disp([RbEst Rb])
 
@@ -104,27 +104,27 @@ disp(norm(RitildeEst1-Ritilde,'fro'))
 disp(norm(RitildeEst2-Ritilde,'fro'))
 
 % Repeat the check with the function that summarizes all the steps above
-[RitildeEst1,RitildeEst2]=recoverRitilde(Ritilde2,Tijtilde);
+[RitildeEst1,RitildeEst2]=recoverRitilde_EoF(Ritilde2,Tijtilde);
 disp('Again, one of the two residuals should be equal to zero')
 disp(norm(RitildeEst1-Ritilde,'fro'))
 disp(norm(RitildeEst2-Ritilde,'fro'))
 
-function Qx=align2d(v)
+function Qx=align2d_EoF(v)
 Q=fliplr(orthComplement(v));
 Qx=flipud(orthCompleteBasis(Q)');
 
-function RbEst=procrustesRb(c,q)
+function RbEst=procrustesRb_EoF(c,q)
 [U,~,V]=svd(c*q');
 RbEst=U*diag([1 det(U*V')])*V';
 
-function [RitildeEst1,RitildeEst2]=recoverRitilde(Ritilde2,Tijtilde)
-Qx=align2d(Tijtilde);
+function [RitildeEst1,RitildeEst2]=recoverRitilde_EoF(Ritilde2,Tijtilde)
+Qx=align2d_EoF(Tijtilde);
 QxRitilde2Bot=Qx(3:4,:)*Ritilde2;
 [U,~,~]=svd(QxRitilde2Bot,'econ');
 c=U(:,2);
 
 QLastRigh=Qx(3:4,4)';
 
-RbEst=procrustesRb(c,QLastRigh');
+RbEst=procrustesRb_EoF(c,QLastRigh');
 RitildeEst1=Qx'*blkdiag(eye(2),-RbEst')*Qx*Ritilde2;
 RitildeEst2=Qx'*blkdiag(eye(2),RbEst')*Qx*Ritilde2;
