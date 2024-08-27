@@ -97,8 +97,8 @@ exectime_procrustes = toc(procrustes_start_time);
 % 3c) execute with step 1 through Manopt with Riemannian Staircase
 manopt_genproc_start_time = tic();
 if params.enable_manopt_rs
-    params.R_gt = G2R(testdata.gitruth);
-    params.T_gt = G2T(testdata.gitruth);
+    params.R_gt = X_gt.R;
+    params.T_gt = X_gt.T;
     [transf_manopt_rs, rs_success_bool, cost_manopt_rs] = ...
         rsom_genproc(T_globalframe_nois, Tijs_vec_nois, edges, params, transf_initguess);
     disp("cost_manopt_rs")

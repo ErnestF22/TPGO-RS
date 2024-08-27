@@ -32,11 +32,12 @@ problem.hess = @(x, u) hess_genproc(x, u, problem_data);
 % checkhessian(problem);
 
 %check that GT cost is 0
+% !! only works when Tijs are gt
 X_gt.T = params.T_gt;
 X_gt.R = params.R_gt;
-cost_gt = rsom_cost_base(X_gt, problem_data);
-disp("cost_gt")
-disp(cost_gt)
+% cost_gt = rsom_cost_base(X_gt, problem_data);
+% disp("cost_gt")
+% disp(cost_gt)
 
 
 X = trustregions(problem);
