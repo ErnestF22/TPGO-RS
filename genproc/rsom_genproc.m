@@ -107,42 +107,57 @@ if staircase_step_idx > d+1
     
     R_recovered = zeros(d,d,N);
     R_recovered(:,:,nodes_high_deg) = R_tilde2_edges(1:d,:,:);
-    for node_id = 1:length(params.node_degrees)
-        node_deg = params.node_degrees(node_id);
-        if node_deg == low_deg
-            fprintf("Running recoverRitilde() on node %g\n", node_id);
-            R_i_tilde2 = R_manopt_out(:,:,node_id);
+    nodes_low_deg = ~nodes_high_deg;
+
+    if ~any(nodes_low_deg)
+        disp('No nodes low deg!')
+        T_diffs_shifted = Qx_edges * T_edges; %this has last row to 0
+        T_recovered = edge_diffs_2_T(T_diffs_shifted(1:d,:), edges, N);
+    else
+        for node_id = 1:length(params.node_degrees)
+            node_deg = params.node_degrees(node_id);
             
     
-            cost_gt = rsom_cost_base(X_gt, problem_struct_next); 
-            disp("cost_gt")
-            disp(cost_gt)
-    
-            cost_manopt_output = rsom_cost_base(X_manopt_out, problem_struct_next); 
-            disp("cost_manopt_output")
-            disp(cost_manopt_output)
-    
-            T_diffs_shifted = Qx_edges * T_edges; %this has last row to 0
-            [~, Tij1j2_tilde] = make_Tij1j2s_edges(node_id, T_diffs_shifted, Tijs,edges,params);
-    
-            [RitildeEst1,RitildeEst2,~,~] = ...
-                recoverRitilde(Qx_edges* R_i_tilde2,Tij1j2_tilde);
-            disp('')
-            % TODO: how to decide between RitildeEst1,RitildeEst2??
-            det_RitildeEst1 = det(RitildeEst1(1:d,:));
-            det_RitildeEst2 = det(RitildeEst2(1:d,:));
-            if ( det_RitildeEst1 > 1 - 1e-5 && det_RitildeEst1 < 1 + 1e-5 )
-                R_recovered(:,:,node_id) = RitildeEst1(1:d,:);
-            elseif (det_RitildeEst2 > 1 - 1e-5 && det_RitildeEst2 < 1 + 1e-5)
-                R_recovered(:,:,node_id) = RitildeEst2(1:d,:);
-            else 
-                fprintf("ERROR in recovery: Ritilde DETERMINANTS ~= 1\n")
-                rs_recovery_success = boolean(0);
+            if node_deg == low_deg
+                fprintf("Running recoverRitilde() on node %g\n", node_id);
+                R_i_tilde2 = R_manopt_out(:,:,node_id);
+                
+        
+                cost_gt = rsom_cost_base(X_gt, problem_struct_next); 
+                disp("cost_gt")
+                disp(cost_gt)
+        
+                cost_manopt_output = rsom_cost_base(X_manopt_out, problem_struct_next); 
+                disp("cost_manopt_output")
+                disp(cost_manopt_output)
+        
+                T_diffs_shifted = Qx_edges * T_edges; %this has last row to 0
+                [~, Tij1j2_tilde] = make_Tij1j2s_edges(node_id, T_diffs_shifted, Tijs,edges,params);
+        
+                [RitildeEst1,RitildeEst2,~,~] = ...
+                    recoverRitilde(Qx_edges* R_i_tilde2,Tij1j2_tilde);
+                disp('')
+                % TODO: how to decide between RitildeEst1,RitildeEst2??
+                det_RitildeEst1 = det(RitildeEst1(1:d,:));
+                det_RitildeEst2 = det(RitildeEst2(1:d,:));
+
+                use_positive_det = boolean(1);
+                if (sum(multidet(R_tilde2_edges(1:d,:,:))) < 0)
+                    use_positive_det = boolean(0);
+                end
+
+                if ( det_RitildeEst1 > 1 - 1e-5 && det_RitildeEst1 < 1 + 1e-5 && ~use_positive_det)
+                    R_recovered(:,:,node_id) = RitildeEst1(1:d,:);
+                elseif (det_RitildeEst2 > 1 - 1e-5 && det_RitildeEst2 < 1 + 1e-5 && use_positive_det)
+                    R_recovered(:,:,node_id) = RitildeEst2(1:d,:);
+                else 
+                    fprintf("ERROR in recovery: Ritilde DETERMINANTS ~= 1\n")
+                    rs_recovery_success = boolean(0);
+                end            
+                
+                T_recovered = edge_diffs_2_T(T_diffs_shifted(1:d,:), edges, N);
+                disp('')
             end
-            
-            
-            T_recovered = edge_diffs_2_T(T_diffs_shifted(1:d,:), edges, N);
-            disp('')
         end
     end
 else
@@ -205,6 +220,12 @@ end
 
 fprintf("rs_recovery_success: %g\n", rs_recovery_success);
 transf_out = RT2G(R_recovered, T_recovered); %rsom_genproc() function output
+
+disp('multidet(R_recovered)') 
+disp(multidet(R_recovered)) 
+
+disp('multidet(R_recovered_global)') 
+disp(multidet(R_recovered_global)) 
 
 end %file function
 

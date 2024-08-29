@@ -1,4 +1,7 @@
-function run_som_adjmat
+% function run_som_adjmat
+close all;
+clear;
+clc;
 
 % N = 6;
 % testnet = testNetwork_params(3, N, 'banded', 3); %mode can be 'banded' or 'full'
@@ -181,4 +184,4 @@ plot_results(sigmas, results, "rsom_procrustes_manopt_rs_genproc_high_visibility
 
 
 
-end %file function
+% end %file function
