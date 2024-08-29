@@ -1,4 +1,4 @@
-function [transf_out, rs_recovery_success, cost_out] = rsom_genproc(T_gf, Tijs, edges, params, transf_initguess)
+function [transf_out, rs_recovery_success, cost_out_global] = rsom_genproc(T_gf, Tijs, edges, params, transf_initguess)
 %RSOM_RS Rsom Manopt pipeline, with the addition of the Riemannian
 %Staircase ("RS")
 
@@ -227,7 +227,12 @@ for ii = 1:N
 end
 
 fprintf("rs_recovery_success: %g\n", rs_recovery_success);
-transf_out = RT2G(R_recovered, T_recovered); %rsom_genproc() function output
+X_recovered_global.R = R_recovered_global;
+X_recovered_global.T = T_recovered_global;
+cost_out_global = rsom_cost_base(X_recovered_global, problem_struct_next); 
+disp("cost_out_global")
+disp(cost_out_global)
+transf_out = RT2G(R_recovered_global, T_recovered_global); %rsom_genproc() function output
 
 disp('multidet(R_recovered)') 
 disp(multidet(R_recovered)) 
