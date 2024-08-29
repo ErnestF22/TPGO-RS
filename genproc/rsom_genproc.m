@@ -146,10 +146,18 @@ if staircase_step_idx > d+1
                     use_positive_det = boolean(0);
                 end
 
-                if ( det_RitildeEst1 > 1 - 1e-5 && det_RitildeEst1 < 1 + 1e-5 && ~use_positive_det)
-                    R_recovered(:,:,node_id) = RitildeEst1(1:d,:);
+                if (det_RitildeEst1 > 1 - 1e-5 && det_RitildeEst1 < 1 + 1e-5)
+                    if use_positive_det
+                        R_recovered(:,:,node_id) = RitildeEst1(1:d,:);
+                    else 
+                        R_recovered(:,:,node_id) = RitildeEst2(1:d,:);
+                    end
                 elseif (det_RitildeEst2 > 1 - 1e-5 && det_RitildeEst2 < 1 + 1e-5 && use_positive_det)
-                    R_recovered(:,:,node_id) = RitildeEst2(1:d,:);
+                    if use_positive_det
+                        R_recovered(:,:,node_id) = RitildeEst2(1:d,:);
+                    else
+                        R_recovered(:,:,node_id) = RitildeEst1(1:d,:);
+                    end
                 else 
                     fprintf("ERROR in recovery: Ritilde DETERMINANTS ~= 1\n")
                     rs_recovery_success = boolean(0);
