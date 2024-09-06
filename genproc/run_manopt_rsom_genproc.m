@@ -43,8 +43,8 @@ sigmas = readmatrix("../sigmas.txt"); %sigma = stdev, sigma.^2 = variance
 mus = readmatrix("../mus.txt"); %OBS. generally, mus can be d-dimensional; here, we just assume them as scalar (i.e. a d-dimensional vector with all coordinates equal)
 
 % sigmas = sigmas(4);
-sigmas = 0.0;
-mus = mus(2);
+% sigmas = 0.0;
+% mus = mus(2);
 
 node_degrees = sum(testdata.A, 2);
 som_params.node_degrees = node_degrees;
@@ -76,9 +76,9 @@ for ii = 1:size(sigmas,1)
     procrustes_rot_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
     procrustes_transl_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
     procrustes_exec_times_per_sigma = zeros(1, num_tests_per_sigma); %column-wise just to keep a similar notation to the error vectors
-    manopt_genproc_rot_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
-    manopt_genproc_transl_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
-    manopt_genproc_exec_times_per_sigma = zeros(1, num_tests_per_sigma); %column-wise just to keep a similar notation to the error vectors
+    manopt_rs_rot_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
+    manopt_rs_transl_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
+    manopt_rs_exec_times_per_sigma = zeros(1, num_tests_per_sigma); %column-wise just to keep a similar notation to the error vectors
     
 
     for jj = 1:num_tests_per_sigma
@@ -95,9 +95,9 @@ for ii = 1:size(sigmas,1)
         procrustes_rot_errs_per_sigma(:, jj) = procrustes_rot_err;
         procrustes_transl_errs_per_sigma(:, jj) = procrustes_transl_err;
         procrustes_exec_times_per_sigma(:, jj) = procrustes_exec_time;
-        manopt_genproc_rot_errs_per_sigma(:, jj) = manopt_rs_rot_err;
-        manopt_genproc_transl_errs_per_sigma(:, jj) = manopt_rs_transl_err;
-        manopt_genproc_exec_times_per_sigma(:, jj) = manopt_rs_exec_time;
+        manopt_rs_rot_errs_per_sigma(:, jj) = manopt_rs_rot_err;
+        manopt_rs_transl_errs_per_sigma(:, jj) = manopt_rs_transl_err;
+        manopt_rs_exec_times_per_sigma(:, jj) = manopt_rs_exec_time;
         rs_success_bools(ii,jj) = rs_success_bool;
     end
     
@@ -107,9 +107,9 @@ for ii = 1:size(sigmas,1)
     procrustes_rot_errs(ii) = mean(procrustes_rot_errs_per_sigma,"all");
     procrustes_transl_errs(ii) = mean(procrustes_transl_errs_per_sigma,"all");
     procrustes_exec_times(ii) = mean(procrustes_exec_times_per_sigma);
-    manopt_rs_rot_errs(ii) = mean(manopt_genproc_rot_errs_per_sigma,"all");
-    manopt_rs_transl_errs(ii) = mean(manopt_genproc_transl_errs_per_sigma,"all");
-    manopt_rs_exec_times(ii) = mean(manopt_genproc_exec_times_per_sigma);
+    manopt_rs_rot_errs(ii) = mean(manopt_rs_rot_errs_per_sigma,"all");
+    manopt_rs_transl_errs(ii) = mean(manopt_rs_transl_errs_per_sigma,"all");
+    manopt_rs_exec_times(ii) = mean(manopt_rs_exec_times_per_sigma);
 
 end    
 
