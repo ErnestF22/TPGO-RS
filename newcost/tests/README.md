@@ -5,7 +5,7 @@ Check whether the new cost formulation is equivalent to the prior
 - check\_step1\_cost\_matricial.m\
 Check whether the P, frct step1 cost terms are built correctly 
 
-- check\_step1\_cost\_matricial.m\
+- check\_step1\_cost\_trace.m\
 Check whether the norm-to-trace property has been applied correctly
 
 - test\_make\_p\_frct.m\

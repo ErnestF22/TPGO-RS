@@ -94,6 +94,10 @@ X_manopt_out.T = T_manopt_out;
 
 if staircase_step_idx > d+1
 
+    if staircase_step_idx > d+2
+        save("rs_going_further.mat", "staircase_step_idx");
+    end
+
     low_deg = 2; %TODO: not necessarily in more complex graph cases
     nodes_high_deg = params.node_degrees > low_deg;
     

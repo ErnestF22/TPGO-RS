@@ -166,6 +166,6 @@ results = struct("manopt_sep_rot_errs", manopt_sep_rot_errs, ...
 plot_results(sigmas, results, "rsom_procrustes_manopt_rs_genproc_high_visibility");
 
 
-
+save(string(datetime("now")))
 
 
