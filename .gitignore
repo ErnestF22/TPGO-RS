@@ -35,3 +35,8 @@ octave-workspace
 
 #Manopt old version inside codemeta
 codemeta_utils/math/RiemannianGeometry/manopt/
+
+#test output files
+genproc/exec_times.jpg
+genproc/rot_errors.jpg
+genproc/transl_errors.jpg
