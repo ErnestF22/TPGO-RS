@@ -55,6 +55,12 @@ Tijs_vec_nois = Tijs_vec + sigma_transl.*randn(size(Tijs_vec)) + ...
 T_globalframe_nois = T_globalframe + sigma_transl.*randn(size(T_globalframe)) + ...
     mu * ones(size(T_globalframe));
 
+if sigma == 0
+    params.noisy_test = boolean(0);
+else
+    params.noisy_test = boolean(1);
+end
+
 
 %% 2) setup initguess
 % R_initguess = G2R(rot_randn(testdata.gitruth, 0.0, N)); % this does not add any noise

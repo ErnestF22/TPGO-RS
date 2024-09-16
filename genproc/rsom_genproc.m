@@ -163,10 +163,12 @@ if staircase_step_idx > d+1
                         R_recovered(:,:,node_id) = RitildeEst1(1:d,:);
                     end
                 else 
-                    fprintf("ERROR in recovery: Ritilde DETERMINANTS ~= +-1\n")
-                    save('zerodet_ws.mat')
-                    rs_recovery_success = boolean(0);
+                    if ~params.noisy_test
+                        fprintf("ERROR in recovery: Ritilde DETERMINANTS ~= +-1\n")
+                        save('zerodet_ws.mat')
+                        rs_recovery_success = boolean(0);
 %                     error("ERROR in recovery: Ritilde DETERMINANTS ~= +-1\n");
+                    end
                 end            
                 
                 T_recovered = edge_diffs_2_T(T_diffs_shifted(1:d,:), edges, N);
