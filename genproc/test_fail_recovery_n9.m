@@ -1,6 +1,6 @@
 function test_fail_recovery_n9
 
-load("bad_case_no_noise.mat");
+load("bad_recovery_data/bad_case_no_noise.mat");
 
 
 rs_recovery_success = boolean(1);
@@ -182,7 +182,7 @@ end
 
 %%
 clear;
-load("bad_case_no_noise.mat");
+load("bad_recovery_data/bad_case_no_noise.mat");
 
 
 %checking that cost has not changed during "recovery"
