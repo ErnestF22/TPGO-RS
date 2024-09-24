@@ -134,7 +134,24 @@ disp(cost_check);
 
 
 
+low_deg = 3; %TODO: not necessarily in more complex graph cases
+nodes_high_deg = params.node_degrees > low_deg;
 
+[T_edges, ~] = make_T_edges(T_manopt_out, edges);
+    
+RT_stacked_high_deg = [matStackH(R_manopt_out(:,:,nodes_high_deg)), T_edges];
+Qx_edges = POCRotateToMinimizeLastEntries(RT_stacked_high_deg);
+% RT_stacked_high_deg_poc = Qx_edges * RT_stacked_high_deg;
+
+R_tilde2_edges = multiprod(repmat(Qx_edges, 1, 1, sum(nodes_high_deg)), R_manopt_out(:,:,nodes_high_deg));
+
+R_recovered = zeros(d,d,N);
+R_recovered(:,:,nodes_high_deg) = R_tilde2_edges(1:d,:,:);
+% nodes_low_deg = ~nodes_high_deg;
+
+T_diffs_shifted = Qx_edges * T_edges; %this has last row to 0
+[~, Tij1j2_tilde] = make_Tij1j2s_edges(node_id, T_diffs_shifted, Tijs,edges,params);
+        
 
 
 end %file function

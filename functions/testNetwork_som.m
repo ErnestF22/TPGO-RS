@@ -22,8 +22,8 @@ function testnet = testNetwork_som(testNum)
             structType='single';
     end
     
-    N=9;
-%     A=adjgallery(N,'banded',3);
+    N=10;
+    % A=adjgallery(N,'banded',3);
     A=adjgallery(N,'banded',2); % 14 edges usual
 %     A=adjgallery(N,'full'); %uncomment this for complete graph
     [G,X]=testNetworkCreateAbsolutePoses(N);
