@@ -43,7 +43,7 @@ sigmas = readmatrix("../sigmas.txt"); %sigma = stdev, sigma.^2 = variance
 mus = readmatrix("../mus.txt"); %OBS. generally, mus can be d-dimensional; here, we just assume them as scalar (i.e. a d-dimensional vector with all coordinates equal)
 
 % sigmas = sigmas(4);
-% sigmas = 0.0;
+sigmas = 0.0;
 % mus = mus(2);
 
 node_degrees = sum(testdata.A, 2);
@@ -99,6 +99,8 @@ for ii = 1:size(sigmas,1)
         manopt_rs_transl_errs_per_sigma(:, jj) = manopt_rs_transl_err;
         manopt_rs_exec_times_per_sigma(:, jj) = manopt_rs_exec_time;
         rs_success_bools(ii,jj) = rs_success_bool;
+        disp("manopt_rs_exec_time")
+        disp(manopt_rs_exec_time)
     end
     
     manopt_sep_rot_errs(ii) = mean(manopt_sep_rot_errs_per_sigma,"all");

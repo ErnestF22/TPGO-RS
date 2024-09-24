@@ -1,10 +1,7 @@
-function [transf_out, rs_recovery_success, cost_out_global] = rsom_genproc(T_gf, Tijs, edges, params, transf_initguess)
-%RSOM_RS Rsom Manopt pipeline, with the addition of the Riemannian
-%Staircase ("RS")
+function test_fail_recovery_n9
 
-if ~exist('thresh','var')
-  thr=1e-5;
-end
+load("bad_case_no_noise.mat");
+
 
 rs_recovery_success = boolean(1);
 
@@ -183,6 +180,11 @@ else
     T_recovered = T_manopt_out;
 end
 
+%%
+clear;
+load("bad_case_no_noise.mat");
+
+
 %checking that cost has not changed during "recovery"
 X_recovered.T = T_recovered;
 X_recovered.R = R_recovered;
@@ -191,14 +193,14 @@ disp("cost_out")
 disp(cost_out)
 
 
-disp("[matStackH(X_gt.R); matStackH(R_recovered)]");
-disp([matStackH(X_gt.R); matStackH(R_recovered)]);
+% disp("[matStackH(X_gt.R); matStackH(R_recovered)]");
+% disp([matStackH(X_gt.R); matStackH(R_recovered)]);
 
 R_global = R_recovered(:,:,1) * X_gt.R(:,:,1)'; %!!
 % code for making all rotations global at once
 R_recovered_global = multiprod(repmat(R_global', 1, 1, N), R_recovered);
-disp("[matStackH(X_gt.R); matStackH(R_recovered_global)]");
-disp([matStackH(X_gt.R); matStackH(R_recovered_global)]);
+% disp("[matStackH(X_gt.R); matStackH(R_recovered_global)]");
+% disp([matStackH(X_gt.R); matStackH(R_recovered_global)]);
 
 T_global = R_global * T_recovered(:,1) - X_gt.T(:,1); %!!
 % code for making all translation global at once
@@ -248,5 +250,5 @@ disp(multidet(R_recovered))
 disp('multidet(R_recovered_global)') 
 disp(multidet(R_recovered_global)) 
 
-end %file function
 
+end %file function
