@@ -3,22 +3,34 @@ close all;
 clear;
 clc;
 
-% N = 6;
-% testnet = testNetwork_params(3, N, 'banded', 3); %mode can be 'banded' or 'full'
-% edges = testnet.E;
-% adj_mat = make_adj_mat_from_edges(edges, N);
-%graph came out too dense!
 
-N = 6;
-edges = [1 2; 1 6; 2 1; 2 3; 3 2; 3 6; 3 4; 3 5; 4 3; 4 5; 4 6;
-    5 6; 5 3; 5 4; 6 3; 6 1; 6 5; 6 4];
-adj_mat = make_adj_mat_from_edges(edges, N);
+% N = 6;
+% edges = [1 2; 1 6; 2 1; 2 3; 3 2; 3 6; 3 4; 3 5; 4 3; 4 5; 4 6;
+%     5 6; 5 3; 5 4; 6 3; 6 1; 6 5; 6 4];
+% adj_mat = make_adj_mat_from_edges(edges, N);
+% testdata = testNetwork_adj(3, adj_mat, 'banded', 3);
+% G = graph(make_adj_mat_from_edges(testdata.E,N));
+% figure(1000)
+% plot(G)
+% title('graph')
+
+N = 9;
+adj_mat = [0     1     1     1     0     0     0     0     0     0
+     1     0     1     1     0     0     0     0     0     0
+     1     1     0     1     1     0     0     0     0     0
+     1     1     1     0     1     1     0     0     0     0
+     0     0     1     1     0     1     1     0     0     0
+     0     0     0     1     1     0     1     1     0     0
+     0     0     0     0     1     1     0     1     1     1
+     0     0     0     0     0     1     1     0     1     1
+     0     0     0     0     0     0     1     1     0     1
+     0     0     0     0     0     0     1     1     1     0];
 testdata = testNetwork_adj(3, adj_mat, 'banded', 3);
 G = graph(make_adj_mat_from_edges(testdata.E,N));
 figure(1000)
 plot(G)
 title('graph')
-
+edges = testdata.E;
 
 
 
