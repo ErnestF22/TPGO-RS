@@ -1,4 +1,4 @@
-function testnet = testNetwork_params(testNum,num_nodes,mode,max_node_deg)
+function testnet = testNetwork_params(testNum,num_nodes,mode,min_node_deg)
     randn('state',0)
     rand('state',0)
     close all
@@ -29,7 +29,7 @@ function testnet = testNetwork_params(testNum,num_nodes,mode,max_node_deg)
     if (strcmp(mode, 'full'))
         A = adjgallery(N, mode);
     elseif (strcmp(mode, 'banded'))
-        A = adjgallery(N, mode, max_node_deg);
+        A = adjgallery(N, mode, min_node_deg);
     else
         error('Unknown testNetwork mode');
     end

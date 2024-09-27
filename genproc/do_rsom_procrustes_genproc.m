@@ -110,6 +110,7 @@ if params.enable_manopt_rs
     disp("cost_manopt_rs")
     disp(cost_manopt_rs)
 else
+    rs_success_bool = boolean(0);
     transf_manopt_rs = repmat(eye(d+1), 1, 1, N);
 end
 exectime_manopt_genproc = toc(manopt_genproc_start_time);
