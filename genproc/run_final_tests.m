@@ -17,71 +17,71 @@ testdata = testNetwork_params(3, N, 'banded', mindeg);
 testdata.mindeg = mindeg;
 testdatas = [testdatas, testdata];
 
-% N = 6;
-% mindeg = 2;
-% testdata = testNetwork_params(3, N, 'banded', mindeg);
-% testdata.mindeg = mindeg;
-% testdatas = [testdatas, testdata];
-% 
-% N = 6;
-% mindeg = 3;
-% testdata = testNetwork_params(3, N, 'banded', mindeg);
-% testdata.mindeg = mindeg;
-% testdatas = [testdatas, testdata];
-% 
-% N = 7;
-% mindeg = 2;
-% testdata = testNetwork_params(3, N, 'banded', mindeg);
-% testdata.mindeg = mindeg;
-% testdatas = [testdatas, testdata];
-% 
-% N = 7;
-% mindeg = 3;
-% testdata = testNetwork_params(3, N, 'banded', mindeg);
-% testdata.mindeg = mindeg;
-% testdatas = [testdatas, testdata];
-% 
-% N = 8;
-% mindeg = 2;
-% testdata = testNetwork_params(3, N, 'banded', mindeg);
-% testdata.mindeg = mindeg;
-% testdatas = [testdatas, testdata];
-% 
-% N = 8;
-% mindeg = 3;
-% testdata = testNetwork_params(3, N, 'banded', mindeg);
-% testdata.mindeg = mindeg;
-% testdatas = [testdatas, testdata];
-% 
-% N = 9;
-% mindeg = 2;
-% testdata = testNetwork_params(3, N, 'banded', mindeg);
-% testdata.mindeg = mindeg;
-% testdatas = [testdatas, testdata];
-% 
-% N = 9;
-% mindeg = 3;
-% testdata = testNetwork_params(3, N, 'banded', mindeg);
-% testdata.mindeg = mindeg;
-% testdatas = [testdatas, testdata];
-% 
-% % N = 10;
-% % mindeg = 2;
-% % testdata = testNetwork_params(3, N, 'banded', mindeg);
-% % testdata.mindeg = mindeg;
-% % testdatas = [testdatas, testdata];
-% 
+N = 6;
+mindeg = 2;
+testdata = testNetwork_params(3, N, 'banded', mindeg);
+testdata.mindeg = mindeg;
+testdatas = [testdatas, testdata];
+
+N = 6;
+mindeg = 3;
+testdata = testNetwork_params(3, N, 'banded', mindeg);
+testdata.mindeg = mindeg;
+testdatas = [testdatas, testdata];
+
+N = 7;
+mindeg = 2;
+testdata = testNetwork_params(3, N, 'banded', mindeg);
+testdata.mindeg = mindeg;
+testdatas = [testdatas, testdata];
+
+N = 7;
+mindeg = 3;
+testdata = testNetwork_params(3, N, 'banded', mindeg);
+testdata.mindeg = mindeg;
+testdatas = [testdatas, testdata];
+
+N = 8;
+mindeg = 2;
+testdata = testNetwork_params(3, N, 'banded', mindeg);
+testdata.mindeg = mindeg;
+testdatas = [testdatas, testdata];
+
+N = 8;
+mindeg = 3;
+testdata = testNetwork_params(3, N, 'banded', mindeg);
+testdata.mindeg = mindeg;
+testdatas = [testdatas, testdata];
+
+N = 9;
+mindeg = 2;
+testdata = testNetwork_params(3, N, 'banded', mindeg);
+testdata.mindeg = mindeg;
+testdatas = [testdatas, testdata];
+
+N = 9;
+mindeg = 3;
+testdata = testNetwork_params(3, N, 'banded', mindeg);
+testdata.mindeg = mindeg;
+testdatas = [testdatas, testdata];
+
 % N = 10;
-% mindeg = 3;
+% mindeg = 2;
 % testdata = testNetwork_params(3, N, 'banded', mindeg);
 % testdata.mindeg = mindeg;
 % testdatas = [testdatas, testdata];
-% 
-% N = 25;
-% mindeg = 3;
-% testdata = testNetwork_params(3, N, 'banded', mindeg);
-% testdata.mindeg = mindeg;
-% testdatas = [testdatas, testdata];
+
+N = 10;
+mindeg = 3;
+testdata = testNetwork_params(3, N, 'banded', mindeg);
+testdata.mindeg = mindeg;
+testdatas = [testdatas, testdata];
+
+N = 25;
+mindeg = 3;
+testdata = testNetwork_params(3, N, 'banded', mindeg);
+testdata.mindeg = mindeg;
+testdatas = [testdatas, testdata];
 
 
 for tdata = testdatas
@@ -98,7 +98,7 @@ for tdata = testdatas
     num_edges = tdata.NEdges;
     procrustes_mode = 'som';
     riem_grad_mode = 'manual'; %'auto' or 'manual'
-    hessian_mode = 'manual'; 
+    hessian_mode = 'manual';
     initguess_is_available = boolean(0);
     rand_initguess = boolean(1);
     enable_manopt_icp = boolean(1);
@@ -116,23 +116,23 @@ for tdata = testdatas
         'enable_manopt_icp', enable_manopt_icp, ...
         'enable_procrustes', enable_procrustes, ...
         'enable_manopt_rs', enable_manopt_rs);
-    
+
     % 0b) Noise PARAMS
     %NOTE: sigmas, mus can be seen as couples for each test
     sigmas = readmatrix("../sigmas.txt"); %sigma = stdev, sigma.^2 = variance
     mus = readmatrix("../mus.txt"); %OBS. generally, mus can be d-dimensional; here, we just assume them as scalar (i.e. a d-dimensional vector with all coordinates equal)
-    
+
     % sigmas = sigmas(4);
     % sigmas = 0.0;
     % mus = mus(2);
-    
+
     node_degrees = sum(tdata.A, 2);
     som_params.node_degrees = node_degrees;
-    
+
     %If reading from file does not work and want to try a single noise_params
     %struct, uncomment the following line
-    % noise_params = struct('sigma', sigmas(1), 'mu', mus(1)); 
-    
+    % noise_params = struct('sigma', sigmas(1), 'mu', mus(1));
+
     manopt_sep_rot_errs = zeros(size(sigmas));
     manopt_sep_transl_errs = zeros(size(sigmas));
     manopt_sep_exec_times = zeros(size(sigmas));
@@ -143,13 +143,13 @@ for tdata = testdatas
     manopt_rs_transl_errs = zeros(size(sigmas));
     manopt_rs_exec_times = zeros(size(sigmas));
     rs_success_bools = zeros(length(sigmas), num_tests_per_sigma);
-    
+
     %when multple sigmas and mus, and multiple tests per each pair
     for ii = 1:size(sigmas,1)
-        noise_params = struct('sigma', sigmas(ii), 'mu', mus(ii)); 
+        noise_params = struct('sigma', sigmas(ii), 'mu', mus(ii));
         sigma = noise_params.sigma;
         mu = noise_params.mu;
-    
+
         manopt_sep_rot_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
         manopt_sep_transl_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
         manopt_sep_exec_times_per_sigma = zeros(1, num_tests_per_sigma); %column-wise just to keep a similar notation to the error vectors
@@ -159,10 +159,10 @@ for tdata = testdatas
         manopt_rs_rot_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
         manopt_rs_transl_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
         manopt_rs_exec_times_per_sigma = zeros(1, num_tests_per_sigma); %column-wise just to keep a similar notation to the error vectors
-        
-    
+
+
         for jj = 1:num_tests_per_sigma
-%           rs_success_bool   = false; % if rs is not executed
+            %           rs_success_bool   = false; % if rs is not executed
             fprintf("ii %g jj %g\n", ii, jj);
             [manopt_sep_rot_err, manopt_sep_transl_err, ...
                 procrustes_rot_err, procrustes_transl_err, ...
@@ -183,7 +183,7 @@ for tdata = testdatas
             disp("manopt_rs_exec_time")
             disp(manopt_rs_exec_time)
         end
-        
+
         manopt_sep_rot_errs(ii) = mean(manopt_sep_rot_errs_per_sigma,"all");
         manopt_sep_transl_errs(ii) = mean(manopt_sep_transl_errs_per_sigma,"all");
         manopt_sep_exec_times(ii) = mean(manopt_sep_exec_times_per_sigma);
@@ -193,9 +193,9 @@ for tdata = testdatas
         manopt_rs_rot_errs(ii) = mean(manopt_rs_rot_errs_per_sigma,"all");
         manopt_rs_transl_errs(ii) = mean(manopt_rs_transl_errs_per_sigma,"all");
         manopt_rs_exec_times(ii) = mean(manopt_rs_exec_times_per_sigma);
-    
-    end    
-    
+
+    end
+
     % 4b)
     disp("sigmas");
     disp(sigmas);
@@ -203,38 +203,38 @@ for tdata = testdatas
     disp(mus);
     disp("num_tests_per_sigma");
     disp(num_tests_per_sigma);
-    
-    % plot 
+
+    % plot
     % on x sigmas
-    % on y the mean errors and the mean execution times (across all iterations) 
-    
+    % on y the mean errors and the mean execution times (across all iterations)
+
     disp("manopt_sep_rot_errs");
     disp(manopt_sep_rot_errs);
-    
+
     disp("manopt_sep_transl_errs");
     disp(manopt_sep_transl_errs);
-    
+
     disp("procrustes_rot_errs");
     disp(procrustes_rot_errs);
-    
+
     disp("procrustes_transl_errs");
     disp(procrustes_transl_errs);
-    
+
     disp("manopt_rs_rot_errs");
     disp(manopt_rs_rot_errs);
-    
+
     disp("manopt_rs_transl_errs");
     disp(manopt_rs_transl_errs);
-    
+
     disp("manopt_sep_exec_times");
     disp(manopt_sep_exec_times);
-    
+
     disp("procrustes_exec_times");
     disp(procrustes_exec_times);
-    
+
     disp("manopt_rs_exec_times");
     disp(manopt_rs_exec_times);
-    
+
     results = struct("manopt_sep_rot_errs", manopt_sep_rot_errs, ...
         "manopt_sep_transl_errs", manopt_sep_transl_errs, ...
         "manopt_sep_exec_times", manopt_sep_exec_times, ...
@@ -244,10 +244,10 @@ for tdata = testdatas
         "manopt_rs_rot_errs", manopt_rs_rot_errs, ...
         "manopt_rs_transl_errs", manopt_rs_transl_errs, ...
         "manopt_rs_exec_times", manopt_rs_exec_times);
-    
+
     %plot results
-%     plot_results(sigmas, results, "rsom_procrustes_manopt_rs_genproc");
-    
+    %     plot_results(sigmas, results, "rsom_procrustes_manopt_rs_genproc");
+
     %manopt and procrustes together on the same graph (easier to compare)
 
     test_str = strcat("_comparison_n", string(tdata.NNodes), ...
@@ -268,7 +268,7 @@ for tdata = testdatas
     rot_fig_name = convertStringsToChars(strcat("rot_errors", test_str));
     savefigure(rot_fig_name,'epsc',[3 4])
     hold off
-    
+
     figure("Name", "transl errors"); %figure 2
     plot (sigmas, results.manopt_sep_transl_errs, 'r.', ...
         "DisplayName", "manopt\_sep mean transl error", 'markersize', 10)
@@ -283,7 +283,7 @@ for tdata = testdatas
     transl_fig_name = convertStringsToChars(strcat('transl_errors', test_str));
     savefigure(transl_fig_name,'epsc',[3 4])
     hold off
-    
+
     figure("Name", "execution times"); %figure 3
     plot (sigmas, results.manopt_sep_exec_times, 'r.', ...
         "DisplayName", "manopt\_sep mean exec time", 'markersize', 15)
@@ -298,7 +298,7 @@ for tdata = testdatas
     exectimes_fig_name = convertStringsToChars(strcat('exec_times', test_str));
     savefigure(exectimes_fig_name,'epsc',[3 4])
     hold off
-    
+
     save(test_str)
 end
 
