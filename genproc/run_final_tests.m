@@ -103,7 +103,7 @@ for tdata = testdatas
     rand_initguess = boolean(1);
     enable_manopt_icp = boolean(1);
     enable_procrustes = boolean(1);
-    enable_manopt_rs = boolean(0);
+    enable_manopt_rs = boolean(1);
     som_params = struct('N', N, 'd', d, 'd_aff', d_aff, ...
         'global_camera_id', global_camera_id, ...
         'num_tests_per_sigma', num_tests_per_sigma, 'transf_end_thresh', transf_end_thresh, ...
@@ -250,20 +250,20 @@ for tdata = testdatas
 
     %manopt and procrustes together on the same graph (easier to compare)
 
-    test_str = strcat("_comparison_n", string(tdata.NNodes), ...
+    test_str = strcat("_n", string(tdata.NNodes), ...
         "_", ...
         "mindeg", string(tdata.mindeg));
 
     figure("Name", "rot errors"); %figure 1
     plot (sigmas, results.manopt_sep_rot_errs, 'r.', ...
-        "DisplayName", "manopt\_sep mean rot error", 'markersize', 15);
+        "DisplayName", "SOM-ICP mean rot error", 'markersize', 15);
     hold on
     xlabel('sigma')
     % ylabel('[°]')
     plot (sigmas, results.procrustes_rot_errs, 'bs', ...
-        "DisplayName", "procrustes mean rot error", 'markersize', 15)
+        "DisplayName", "SOM-PROCRUSTES mean rot error", 'markersize', 15)
     plot (sigmas, results.manopt_rs_rot_errs, 'g+', ...
-        "DisplayName", "manopt\_rs mean rot error", 'markersize', 15);
+        "DisplayName", "SOM-RS mean rot error", 'markersize', 15);
     legend;
     rot_fig_name = convertStringsToChars(strcat("rot_errors", test_str));
     savefigure(rot_fig_name,'epsc',[3 4])
@@ -271,14 +271,14 @@ for tdata = testdatas
 
     figure("Name", "transl errors"); %figure 2
     plot (sigmas, results.manopt_sep_transl_errs, 'r.', ...
-        "DisplayName", "manopt\_sep mean transl error", 'markersize', 10)
+        "DisplayName", "SOM-ICP mean transl error", 'markersize', 10)
     hold on
     xlabel('sigma')
     % ylabel('[m]')
     plot (sigmas, results.procrustes_transl_errs, 'bs', ...
-        "DisplayName", "procrustes mean transl error", 'markersize', 10)
+        "DisplayName", "SOM-PROCRUSTES mean transl error", 'markersize', 10)
     plot (sigmas, results.manopt_rs_transl_errs, 'g+', ...
-        "DisplayName", "manopt\_rs mean transl error", 'markersize', 10)
+        "DisplayName", "SOM-RS mean transl error", 'markersize', 10)
     legend;
     transl_fig_name = convertStringsToChars(strcat('transl_errors', test_str));
     savefigure(transl_fig_name,'epsc',[3 4])
@@ -286,14 +286,14 @@ for tdata = testdatas
 
     figure("Name", "execution times"); %figure 3
     plot (sigmas, results.manopt_sep_exec_times, 'r.', ...
-        "DisplayName", "manopt\_sep mean exec time", 'markersize', 15)
+        "DisplayName", "SOM-ICP mean exec time", 'markersize', 15)
     hold on
     xlabel('sigma')
     ylabel('[s]')
     plot (sigmas, results.procrustes_exec_times, 'bs', ...
-        "DisplayName", "procrustes mean exec time", 'markersize', 10)
+        "DisplayName", "SOM-PROCRUSTES mean exec time", 'markersize', 10)
     plot (sigmas, results.manopt_rs_exec_times, 'g+', ...
-        "DisplayName", "manopt\_rs mean exec time", 'markersize', 15)
+        "DisplayName", "SOM-RS mean exec time", 'markersize', 15)
     legend
     exectimes_fig_name = convertStringsToChars(strcat('exec_times', test_str));
     savefigure(exectimes_fig_name,'epsc',[3 4])
