@@ -2,7 +2,7 @@ function remake_plots
 
 close all;
 
-ws_filename = "_n9_mindeg2.mat";
+ws_filename = "_n9_mindeg3.mat";
 
 load(ws_filename, "results");
 load(ws_filename, "sigmas");
@@ -28,14 +28,14 @@ close all;
 
 figure("Name", "rot errors"); %figure 1
 plot (sigmas, results.manopt_sep_rot_errs, 'Red.', ...
-    "DisplayName", "SOM-ICP", 'markersize', 15);
+    "DisplayName", "TPGO-ICP", 'markersize', 15);
 hold on
 xlabel('sigma')
 ylabel('mean rotation error')
 plot (sigmas, results.procrustes_rot_errs, 'Blues', ...
-    "DisplayName", "SOM-PROCR", 'markersize', 10)
+    "DisplayName", "TPGO-PROCR", 'markersize', 10)
 plot (sigmas, results.manopt_rs_rot_errs, 'Green+', ...
-    "DisplayName", "SOM-RS", 'markersize', 15);
+    "DisplayName", "TPGO-RS", 'markersize', 15);
 % legend('Location','eastoutside');
 lgd = legend;
 fontsize(lgd,6,'points')
@@ -45,14 +45,14 @@ hold off
 
 figure("Name", "transl errors"); %figure 2
 plot (sigmas, results.manopt_sep_transl_errs, 'Red.', ...
-    "DisplayName", "SOM-ICP", 'markersize', 15)
+    "DisplayName", "TPGO-ICP", 'markersize', 15)
 hold on
 xlabel('sigma')
 ylabel('mean translation error')
 plot (sigmas, results.procrustes_transl_errs, 'Blues', ...
-    "DisplayName", "SOM-PROCR", 'markersize', 10)
+    "DisplayName", "TPGO-PROCR", 'markersize', 10)
 plot (sigmas, results.manopt_rs_transl_errs, 'Green+', ...
-    "DisplayName", "SOM-RS", 'markersize', 15)
+    "DisplayName", "TPGO-RS", 'markersize', 15)
 lgd = legend;
 fontsize(lgd,6,'points')
 transl_fig_name = convertStringsToChars(strcat('transl_errors', test_str));
@@ -61,14 +61,14 @@ hold off
 
 figure("Name", "execution times"); %figure 3
 plot (sigmas, results.manopt_sep_exec_times, 'Red.', ...
-    "DisplayName", "SOM-ICP mean exec time", 'markersize', 15)
+    "DisplayName", "TPGO-ICP mean exec time", 'markersize', 15)
 hold on
 xlabel('sigma')
 ylabel('[s]')
 plot (sigmas, results.procrustes_exec_times, 'Blues', ...
-    "DisplayName", "SOM-PROCR mean exec time", 'markersize', 10)
+    "DisplayName", "TPGO-PROCR mean exec time", 'markersize', 10)
 plot (sigmas, results.manopt_rs_exec_times, 'Green+', ...
-    "DisplayName", "SOM-RS mean exec time", 'markersize', 15)
+    "DisplayName", "TPGO-RS mean exec time", 'markersize', 15)
 lgd = legend;
 fontsize(lgd,6,'points')
 exectimes_fig_name = convertStringsToChars(strcat('exec_times', test_str));
@@ -137,22 +137,22 @@ for s = 1:length(sigmas)
 
     figure("Name", strcat("Rotation error progression for sigma = ", string(sigma), ""));
     plot (ns, y_rot_icp_mindeg3(s,:), 'o', 'Color',[1 0 0], ...
-        "DisplayName", "SOM-ICP mindeg 3", 'markersize', 11);
+        "DisplayName", "TPGO-ICP mindeg 3", 'markersize', 11);
     hold on
     xlabel('n')
     ylabel('mean rotation error')
-    title_text = strcat("sigma ", string(sigma));
+    title_text = strcat("sigma = ", string(sigma));
     title(title_text)
     plot (ns, y_rot_icp_mindeg2(s,:), 'o', 'Color',[.6 0 0], ...
-        "DisplayName", "SOM-ICP mindeg 2", 'markersize', 11);
+        "DisplayName", "TPGO-ICP mindeg 2", 'markersize', 11);
     plot (ns, y_rot_procrustes_mindeg3(s,:), 's', 'Color',[0 1 0], ...
-        "DisplayName", "SOM-PROCR mindeg 3", 'markersize', 11)
+        "DisplayName", "TPGO-PROCR mindeg 3", 'markersize', 11)
     plot (ns, y_rot_procrustes_mindeg2(s,:), 's', 'Color',[0 0.6 0], ...
-        "DisplayName", "SOM-PROCR mindeg 2", 'markersize', 11)
+        "DisplayName", "TPGO-PROCR mindeg 2", 'markersize', 11)
     plot (ns, y_rot_rs_mindeg3(s,:), '^', 'Color',[0 0 1], ...
-        "DisplayName", "SOM-RS mindeg 3", 'markersize', 11);
+        "DisplayName", "TPGO-RS mindeg 3", 'markersize', 11);
     plot (ns, y_rot_rs_mindeg2(s,:), '^', 'Color',[0 0 0.6], ...
-        "DisplayName", "SOM-RS mindeg 2", 'markersize', 11);
+        "DisplayName", "TPGO-RS mindeg 2", 'markersize', 11);
     lgd = legend;
     fontsize(lgd,6,'points')
     rot_fig_name = convertStringsToChars(strcat("rot_err_progression_sigma", string(sigma)));
@@ -162,22 +162,22 @@ for s = 1:length(sigmas)
     
     figure("Name", strcat("Translation error progression for sigma = ", string(sigma), ""));
     plot (ns, y_transl_icp_mindeg3(s,:), 'o', 'Color',[1 0 0], ...
-        "DisplayName", "SOM-ICP mindeg 3", 'markersize', 11)
+        "DisplayName", "TPGO-ICP mindeg 3", 'markersize', 11)
     hold on
     xlabel('n')
     ylabel('mean translation error')
-    title_text = strcat("sigma ", string(sigma));
+    title_text = strcat("sigma = ", string(sigma));
     title(title_text)
     plot (ns, y_transl_icp_mindeg2(s,:), 'o', 'Color',[.6 0 0], ...
-        "DisplayName", "SOM-ICP mindeg 2", 'markersize', 11);
+        "DisplayName", "TPGO-ICP mindeg 2", 'markersize', 11);
     plot (ns, y_transl_procrustes_mindeg3(s,:), 's', 'Color',[0 1 0], ...
-        "DisplayName", "SOM-PROCR mindeg 3", 'markersize', 11)
+        "DisplayName", "TPGO-PROCR mindeg 3", 'markersize', 11)
     plot (ns, y_transl_procrustes_mindeg2(s,:), 's', 'Color',[0 0.6 0], ...
-        "DisplayName", "SOM-PROCR mindeg 2", 'markersize', 11)
+        "DisplayName", "TPGO-PROCR mindeg 2", 'markersize', 11)
     plot (ns, y_transl_rs_mindeg3(s,:), '^', 'Color', [0 0 1], ...
-        "DisplayName", "SOM-RS mindeg 3", 'markersize', 11);
+        "DisplayName", "TPGO-RS mindeg 3", 'markersize', 11);
     plot (ns, y_transl_rs_mindeg2(s,:), '^', 'Color',[0 0 0.6], ...
-        "DisplayName", "SOM-RS mindeg 2", 'markersize', 11);
+        "DisplayName", "TPGO-RS mindeg 2", 'markersize', 11);
     lgd = legend;
     fontsize(lgd,6,'points')
     transl_fig_name = convertStringsToChars(strcat("transl_err_progression_sigma", string(sigma)));
