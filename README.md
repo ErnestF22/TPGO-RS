@@ -102,6 +102,9 @@ Procrustes product manifold
 Power iteration method for a generalized Procrustes Hessian 
 that involves both a .R and a .T component
 
+- run\_final\_tests.m\
+Script that runs the most relevant tests
+
 - solve\_gauge\_symmetry\_1rot.m\
 Script containing the pipeline able to solve the "high"-degree recovery -> example running on a single rotation
 
