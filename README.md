@@ -1,5 +1,4 @@
-# som
-TPGO-RS
+# TPGO-RS
 Translation-Only Pose Graph Optimization through a Riemannian Staircase
 
 MATLAB Code for Shape of Motion project.
