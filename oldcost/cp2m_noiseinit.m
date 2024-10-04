@@ -38,7 +38,7 @@ som_params = struct('N', N, 'd', d, 'd_aff', d_aff, ...
 sigma_noise = 0.5;
 sigmas_init = readmatrix("sigmas.txt"); %sigma = stdev, sigma.^2 = variance
 % sigmas_init = sigmas_init(2);
-mus = readmatrix("mus.txt"); %OBS. generally, mus can be d-dimensional; here, we just assume them as scalar (i.e. a d-dimensional vector with all coordinates equal)
+mus = readmatrix("../data/mus.txt"); %OBS. generally, mus can be d-dimensional; here, we just assume them as scalar (i.e. a d-dimensional vector with all coordinates equal)
 
 %If reading from file does not work and want to try a single noise_params
 %struct, uncomment the following line

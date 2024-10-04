@@ -32,7 +32,7 @@ som_params = struct('N', N, 'd', d, 'd_aff', d_aff, ...
 % 0b) SOM PARAMS
 %NOTE: sigmas, mus can be seen as couples for each test
 sigmas = readmatrix("sigmas.txt"); %sigma = stdev, sigma.^2 = variance
-mus = readmatrix("mus.txt"); %OBS. generally, mus can be d-dimensional; here, we just assume them as scalar (i.e. a d-dimensional vector with all coordinates equal)
+mus = readmatrix("../../data/mus.txt"); %OBS. generally, mus can be d-dimensional; here, we just assume them as scalar (i.e. a d-dimensional vector with all coordinates equal)
 
 %TOUSE: when multple sigmas and mus, and multiple tests per each pair
 % for ii = 1:size(sigmas,1)

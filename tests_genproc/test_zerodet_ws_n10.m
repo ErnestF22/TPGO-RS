@@ -1,6 +1,6 @@
 function test_zerodet_ws_n10
 
-load('bad_recovery_data/zerodet_ws_n10.mat')
+load('../data/bad_recovery_data/zerodet_ws_n10.mat')
 
 % GT sanity check
 cost_gt = rsom_cost_base(X_gt, problem_struct_next);

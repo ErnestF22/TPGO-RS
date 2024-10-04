@@ -162,7 +162,7 @@ if staircase_step_idx > d+1
                 else 
                     if ~params.noisy_test
                         fprintf("ERROR in recovery: Ritilde DETERMINANTS ~= +-1\n")
-                        save('zerodet_ws.mat')
+                        save('data/zerodet_ws.mat')
                         rs_recovery_success = boolean(0);
 %                     error("ERROR in recovery: Ritilde DETERMINANTS ~= +-1\n");
                     end
