@@ -34,9 +34,12 @@ octave-workspace
 .MATLABDriveTag
 
 #Manopt old version inside codemeta
-codemeta_utils/math/RiemannianGeometry/manopt/
+#matlab/codemeta_utils/math/RiemannianGeometry/manopt/
 
 #test output files
-genproc/exec_times.jpg
-genproc/rot_errors.jpg
-genproc/transl_errors.jpg
+#matlab/genproc/exec_times.jpg
+#matlab/genproc/rot_errors.jpg
+#matlab/genproc/transl_errors.jpg
+
+# C++ Build Folder
+build/
