@@ -1,3 +1,0 @@
-function m=essential_metric(Q,v1,v2)
-m=rot_metric(Q(1:3,:),v1(1:3,:),v2(1:3,:))...
-    +rot_metric(Q(4:6,:),v1(4:6,:),v2(4:6,:));

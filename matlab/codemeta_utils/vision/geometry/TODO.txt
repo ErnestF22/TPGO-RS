@@ -1,1 +1,0 @@
-Consolidate all projection and triangulation routines (format of data, type of Jacobians)
