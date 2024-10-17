@@ -1,0 +1,2 @@
+[submodule "module"]
+	update = merge

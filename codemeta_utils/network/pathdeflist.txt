@@ -1,0 +1,10 @@
+utilities/grTheory
+localization/rotationLocalization
+utilities
+bearingNetwork
+bearingNetwork/bnFranchi
+bearingCluster
+bearingLocalization
+localization/anisotropic
+localization/utilities
+localization/testNetworkUtilities

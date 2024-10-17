@@ -1,0 +1,3 @@
+function [c,gradc]=rotLocRiemannianCost(E,R,RRel,funs,varargin)
+[c,gradc]=rotLocBaseCost(E,R,RRel,...
+    @(E,R,RRel) rotLocRiemannianCostPair(E,R,RRel,funs),varargin{:});
