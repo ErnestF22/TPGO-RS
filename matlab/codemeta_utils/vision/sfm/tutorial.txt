@@ -1,0 +1,94 @@
+# Tutorial: How to Use the SfM Suite
+
+## Basic design philosophy 
+Solving a Structure from Motion (SfM) problem requires a pipeline of multiple steps into succession. There are two orthogonal issues at play here.
+
+The first is implementing each step of the pipeline (e.g., extracting features from all the images). Given some input data (e.g., images), we want to transform it in some other result (e.g., features). It is usually quite clear what is the minimum set of inputs/outputs required, but each step could be performed differently (e.g., we could use either SIFT or SURF features). This kind of tasks is handled by the group of functions sfmraw_*. They take as input and give as output raw data (e.g., image arrays or coordinates arrays). The idea is that each function sfmraw_* could be taken separately from the other, and it encapsulates one task and only that task.
+
+The second issue is in data managing. If we just used functions handling raw data, we would quickly end up with a large number of variables, and the programmer has to remember how they fit together. The situation becomes even worse if we have multiple sets of similar variables, for instance due to the fact that we want to compare two different ways to perform the same step of the pipeline. For this reason, each step of the pipeline is wrapped into a function sfm_*. These operate on data structure (see below) which collects and records the result of each step of the pipeline. This also makes it easy to implement steps that rely on outputs at different previous points in the pipeline (e.g., augmenting feature matches using the essential matrix).
+
+## The data structure
+All the entire set of functions revolves around the use of a data structure, usually referred to as data. This structure will contain all the information about the SfM problem at hand. It will be initialized with just a list of image files, and then it will be passed through all the functions of the SfM pipeline. The result of each step in the pipeline will use/add fields in the structure.
+
+## The tutorial
+
+### Initialization
+First, initialize the structure using the images from a directory. To speed up the feature extraction, we rescale the images 0.5.
+
+    data=sfm_initDataFromDir('~/Documents/JHU/vision/datasets/localization/castle_dense','resizeFactor',0.5)
+
+### Feature extraction
+Now we extract features
+
+    data=sfm_featureExtract(data,'showStats')
+
+### Calibration and feature normalization
+Note that we now have the field data.feature. This is a struct array, and each sub-field contains the feature descriptor, location, etc. We now add a calibration. We use the simple one obtained from the image size. We then normalize the feature location using this calibration.
+
+    data=sfm_addCalibration(data)
+    data=sfm_featureNormalize(data)
+
+### Pairwise matching
+This adds the field data.calibration and the subfields data.feature().locationNormalized. Now we extract the matches with:
+
+     data=sfm_matchExtract(data,'showStats')
+
+The information about the matches is contained in data.match. Each data.match() is a structure containing the index of the original images in a [2 x 1] array (subfield idxMatch) and a [2 x NMatches] array of indexes of the features matched.
+
+We can examine the match between the first pairs using
+
+   sfm_displayMatch(data,'matchList',[1])
+
+### Estimation of pairwise poses using essential matrices
+We compute the essential matrix for each pair of images that matched. We use 50 RANSAC iterations. This will add the field matchEssentialEstimated which contain the estimated essential matrix for each match.
+
+   data=sfm_essentialEstimate(data,'showStats','NIter',50)
+
+Now we go back to the matches, and use the estimated essential matrices to detect outliers and remove matches with less than 20 inliers. The new match field will be called matchFiltered.
+
+    data=sfm_matchFilterWithEssential(data,'memberNameEssential','matchEssentialEstimated','thresholdFeaturesNumber',20,'showStats')
+
+We can again examine the match between the first pair (now, no outliers should be present)
+
+   sfm_displayMatch(data,'matchList',1,'member','matchFiltered')
+
+Finally, we can obtain the relative poses from the essential matrices. These are stored in data.matchPose.
+
+   data=sfm_essentialPose(data)
+
+### TODO: estimation of absolute poses
+
+### Adding ground truth poses for some datasets
+For the datasets from the CVLab, we can load and add the ground truth absolute poses as follows.
+First we load the poses as 4x4 matrices
+    G=cvlabLoadCameras('~/Documents/JHU/vision/datasets/localization/castle_dense')
+
+Then we add it to the dataset in the field poseTruth
+data=sfm_poseAdd(data,G)
+
+We can also add the ground truth relative poses (to which we can compare the estimated ones from the essential matrix). These are stored in the field matchPoseTruth
+
+data=sfm_matchPoseTruth(data,'member','matchFiltered')
+
+### Triangulating the 3-D structure
+First, we add the projection matrices from the calibration and the absolute poses.
+    data=sfm_addProjection(data);
+
+Next, for each feature in every image, we collect what other images it has been matched with
+    data=sfm_addFeatureMatchMembership(data);
+
+Then, we initialize the field "structure" with the info about the membership of each 3-D points
+    data=sfm_structureExtractMembership(data);
+
+We can now triangulate the position of the 3-D points by looking up and using the 2-D locations of the features and camera poses for each 3-D point
+    data=sfm_structureTriangulate(data,'displayStats');
+
+And then filter them by thresholding the reprojection error
+    data=sfm_structureFilterWithTriangulation(data);
+
+The following will add the list of indeces in the structure back to the features, in the subfield features().structureFilteredMembership
+    data=sfm_addFeatureStructureMembership(data);
+    
+A=sfm_getMatchAdjMatrix(data)
+
+data=sfm_essentialPose(data)

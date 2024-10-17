@@ -1,0 +1,9 @@
+EuclideanGeometry
+RiemannianGeometry
+graph
+householderRotation
+optimization
+quaternions
+statistics
+statistics/gaussian
+utilities

@@ -1,0 +1,10 @@
+.
+figures
+functionManipulation
+getSequence
+htmlOutput
+parallelJobDivider
+structs
+system
+visualization
+depPackage

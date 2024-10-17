@@ -1,0 +1,3 @@
+[submodule "latex/preamble"]
+	path = latex/preamble
+	url = git@bitbucket.org:tronroberto/latexpreamble.git
