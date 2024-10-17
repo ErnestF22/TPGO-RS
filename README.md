@@ -1,1 +1,4 @@
-C++ Project for TPGO-RS
+# TPGO-RS
+Translation-Only Pose Graph Optimization through a Riemannian Staircase
+
+C++ version
