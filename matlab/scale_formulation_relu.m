@@ -1,12 +1,4 @@
-
-%UNTITLED Summary of this function goes here
-%   Detailed explanation goes here
-
-clear;
-close all;
-clc;
-
-resetRands(2);
+function scale_formulation_relu
 
 d = 3;
 nrs = 4;
@@ -20,12 +12,14 @@ G = graph(G.Edges(p, :));
 edges = table2array(G.Edges);
 
 
-lambdas = 10 * rand(num_edges, 1);
+lambdas = 2 * ones(num_edges, 1);
 Tijs_vec = 10 * rand(d, num_edges);
 
 R_globalframe = make_rand_stiefel_3d_array(nrs, d, N);
 T_globalframe = 10 * rand(nrs, N);
 
+
+rho = 10 * rand(1,1);
 
 cost_lambda = 0.0;
 for ee = 1:num_edges
@@ -39,11 +33,13 @@ for ee = 1:num_edges
     a = T_i - T_j;
     b = R_i * tij_e;
     cost_lambda_ee = trace(a' * a + 2 * lambda_e * (a' * b) + lambda_e^2 * (b' * b)); 
-    cost_lambda = cost_lambda + cost_lambda_ee;
+    cost_relu_ee = relu_som(lambda_e - 1);
+    cost_lambda = cost_lambda + cost_lambda_ee + rho * cost_relu_ee;
 end
 
+
+
 cost_base = 0.0;
-frct_c = 0.0;
 for ee = 1:num_edges
     ii = edges(ee,1);
     jj = edges(ee,2); 
@@ -53,11 +49,8 @@ for ee = 1:num_edges
     lambda_e = lambdas(ee);
     tij_e = Tijs_vec(:, ee);
     cost_e = norm(R_i * lambda_e * tij_e - T_j + T_i);
-    cost_base = cost_base + cost_e^2; %squared!
-
-    T_ij = Tijs_vec(:,ee);
-    frct_c_e = T_i * T_i' + T_j * T_j' - T_i * T_j' - T_j * T_i';
-    frct_c = frct_c + trace(frct_c_e);
+    cost_relu_ee = relu_som(lambda_e - 1);
+    cost_base = cost_base + cost_e^2 + cost_relu_ee; %squared!
 end
 
 disp("cost_base")
@@ -67,3 +60,6 @@ disp("cost_lambda")
 disp(cost_lambda)
 
 
+
+
+end %file function
