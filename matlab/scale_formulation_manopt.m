@@ -115,19 +115,19 @@ function [h] = ssom_ehess_genproc(X, Xdot, problem_data)
     htr = compute_htr(X,Xdot,tijs_scaled,edges);
     
     % h_lambda_lambda = zeros(1,1); %TODO1
-    h_lambda_lambda = ssom_rhess_lambda_lambda(X, Xdot, problem_data_lambdas);
+    h_lambda_lambda = ssom_ehess_lambda_lambda(X, Xdot, problem_data_lambdas);
 
     % h_r_lambda = zeros(size(hrt)); %TODO 2
-    h_r_lambda = ssom_ehess_r_lambda(X,Xdot, problem_data_lambdas);
+    h_r_lambda = ssom_ehess_r_lambda(X, Xdot, problem_data_lambdas);
 
     % h_t_lambda = zeros(size(htr)); %TODO 3
-    h_t_lambda = ssom_ehess_t_lambda(X,Xdot, problem_data_lambdas);
+    h_t_lambda = ssom_ehess_t_lambda(X, Xdot, problem_data_lambdas);
 
     % h_lambda_r = zeros(size(h_lambda_lambda)); %TODO 4
-    h_lambda_r = ssom_ehess_lambda_r(X,Xdot, problem_data_lambdas);
+    h_lambda_r = ssom_ehess_lambda_r(X, Xdot, problem_data_lambdas);
     
     % h_lambda_t = zeros(size(h_lambda_lambda)); %TODO 5
-    h_lambda_t = ssom_ehess_lambda_t(X,Xdot, problem_data_lambdas);
+    h_lambda_t = ssom_ehess_lambda_t(X, Xdot, problem_data_lambdas);
 
     h.R = rsom_ehess_rot_stiefel(R, Rdot, problem_data_R) + hrt + h_r_lambda;
     h.T = rsom_ehess_transl_stiefel(T, Tdot, problem_data_T) + htr + h_t_lambda;
@@ -135,7 +135,7 @@ function [h] = ssom_ehess_genproc(X, Xdot, problem_data)
 end %hess
 
 %% 1
-function h = ssom_rhess_lambda_lambda(X, Xdot, problem_data)
+function h = ssom_ehess_lambda_lambda(X, Xdot, problem_data)
     % h_lambda_lambda = zeros(1,1)
 
     lambdas = X.lambda;
@@ -154,11 +154,11 @@ function h = ssom_rhess_lambda_lambda(X, Xdot, problem_data)
         tij_e = Tijs_vec(:, ee);
         % T_i = problem_data.T(:, ii);
         % T_j = problem_data.T(:, jj);
-        R_i = problem_data.R(:, :, ii);
+        R_i = X.R(:, :, ii);
         % a = T_i - T_j;
         b = R_i * tij_e;
         base_part = 2*(b' * b);        
-        h(ee) = base_part * lambdas_dot(ee);
+        h(ee) = base_part * lambdas_dot(ee); % check this
     end
     
 end
@@ -260,8 +260,7 @@ function h = ssom_ehess_lambda_t(X, Xdot, problem_data)
     % nrs = problem_data.sz(1);
     % % d = problem_data.sz(2);
     % N = problem_data.sz(3);
-    % h = zeros(nrs, N);
-
+    
     h = 0.0;
     
     num_edges = size(edges, 1);
