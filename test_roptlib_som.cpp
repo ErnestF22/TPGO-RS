@@ -9,7 +9,11 @@
 #include <filesystem>
 #include <boost/lexical_cast.hpp>
 
+#include "thirdparty/roptlib/manifolds_Euclidean.h"
+#include "thirdparty/roptlib/manifolds_MultiManifolds.h"
+
 #include "thirdparty/roptlib/problems_SampleSom.h"
+
 #include "thirdparty/roptlib/solvers_RTRNewton.h"
 
 using namespace ROPTLIB;
@@ -19,7 +23,7 @@ void testSomSample(std::vector<double> &rshSrc, std::vector<double> &rshDst, int
     integer d = 3;
     // manifold
     // Rotations manif(d);
-    Stiefel manif(d,d);
+    Stiefel manif(d, d);
     // Obtain an initial iterate
     Vector startX = manif.RandominManifold();
     startX.ObtainWriteEntireData();
@@ -99,6 +103,16 @@ void testSomSample(std::vector<double> &rshSrc, std::vector<double> &rshDst, int
 
 int main(int argc, char **argv)
 {
+    // An example of using this constructor to generate St(2,3)^2 \times Euc(2,2,3):
+
+    integer n = 3, p = 2, m = 2;
+    integer numoftypes = 2;
+    integer numofmani1 = 2; // num of Stiefel manifolds
+    integer numofmani2 = 1;
+    Stiefel mani1(n, p);
+    Euclidean mani2(m,p,n);
+    ProductManifold ProdMani(numoftypes, &mani1, numofmani1, &mani2, numofmani2);
+
     std::vector<double> coeffsSrc, coeffsDst;
     int somLmax;
     testSomSample(coeffsSrc, coeffsDst, somLmax);
