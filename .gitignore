@@ -43,3 +43,5 @@ octave-workspace
 
 # C++ Build Folder
 build/
+
+.vscode/

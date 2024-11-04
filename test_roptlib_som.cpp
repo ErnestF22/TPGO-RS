@@ -1,0 +1,106 @@
+
+#include <iostream>
+#include <fstream>
+
+#include <eigen3/Eigen/Dense>
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/Geometry>
+
+#include <filesystem>
+#include <boost/lexical_cast.hpp>
+
+#include "thirdparty/roptlib/problems_SampleSom.h"
+#include "thirdparty/roptlib/solvers_RTRNewton.h"
+
+using namespace ROPTLIB;
+
+void testSomSample(std::vector<double> &rshSrc, std::vector<double> &rshDst, int somLmax)
+{
+    integer d = 3;
+    // manifold
+    // Rotations manif(d);
+    Stiefel manif(d,d);
+    // Obtain an initial iterate
+    Vector startX = manif.RandominManifold();
+    startX.ObtainWriteEntireData();
+    // R_initguess_stiefel
+    // // rotx(60)
+    // realdp *startXWriteArray = startX.ObtainWriteEntireData(); //!! assignment in col-major order
+    // startXWriteArray[0] = 1;
+    // startXWriteArray[1] = 0;
+    // startXWriteArray[2] = 0;
+    // startXWriteArray[3] = 0;
+    // startXWriteArray[4] = 0.5;
+    // startXWriteArray[5] = 0.866025403784439;
+    // startXWriteArray[6] = 0;
+    // startXWriteArray[7] = -0.866025403784439;
+    // startXWriteArray[8] = 0.5;
+    // startX.Print("startX");
+    // //rotx(65)
+    realdp *startXWriteArray = startX.ObtainWriteEntireData(); //!! assignment in col-major order
+    startXWriteArray[0] = 1;
+    startXWriteArray[3] = 0;
+    startXWriteArray[6] = 0;
+    startXWriteArray[1] = 0;
+    startXWriteArray[4] = 1;
+    startXWriteArray[7] = 0;
+    startXWriteArray[2] = 0;
+    startXWriteArray[5] = 0;
+    startXWriteArray[8] = 1;
+
+    // startXWriteArray[0] = 0.984489045287494;
+    // startXWriteArray[1] = 0.175180074041903;
+    // startXWriteArray[2] = -0.00965719253155387;
+    // startXWriteArray[3] = -0.168366666411450;
+    // startXWriteArray[4] = 0.927853513799599;
+    // startXWriteArray[5] = -0.332776986240385;
+    // startXWriteArray[6] = -0.0493354370651904;
+    // startXWriteArray[7] = 0.329241246790877;
+    // startXWriteArray[8] = 0.942956105055360;
+    startX.Print("startX");
+
+    // Set the domain of the problem to be the product of Stiefel manifolds
+    SampleSomProblem Prob(rshSrc, rshDst, somLmax);
+    Prob.SetDomain(&manif);
+
+    // % Numerically check gradient consistency (optional).
+    // checkgradient(problem);
+    manif.CheckParams();
+    Prob.SetUseGrad(true);
+    Prob.SetUseHess(false);
+    // Prob.SetNumGradHess(true);
+    // Prob.CheckGradHessian(ProdX);
+
+    // output the parameters of the manifold of domain
+    ROPTLIB::RTRNewton *RTRNewtonSolver = new RTRNewton(&Prob, &startX); // USE INITGUESS HERE!
+    RTRNewtonSolver->Verbose = ITERRESULT;
+    RTRNewtonSolver->Max_Iteration = 500;
+    RTRNewtonSolver->Max_Inner_Iter = 500;
+    RTRNewtonSolver->CheckParams();
+    // PARAMSMAP solverParams = {std::pair<std::string, double>("Max_Inner_Iter", 10)};
+    // RTRNewtonSolver->SetParams(solverParams);
+
+    // % Solve.
+    // [x, xcost, info, options] = trustregions(problem);
+
+    RTRNewtonSolver->Run();
+    Prob.CheckGradHessian(RTRNewtonSolver->GetXopt());
+
+    std::cout << "Prob.GetUseGrad() " << Prob.GetUseGrad() << std::endl;
+    std::cout << "Prob.GetUseHess() " << Prob.GetUseHess() << std::endl;
+    std::cout << "Prob.GetNumGradHess() " << Prob.GetNumGradHess() << std::endl;
+
+    // Outputs
+    RTRNewtonSolver->GetXopt().Print("Xopt");
+    std::cout << "xcost " << RTRNewtonSolver->Getfinalfun() << std::endl; // x cost
+
+    delete RTRNewtonSolver;
+}
+
+int main(int argc, char **argv)
+{
+    std::vector<double> coeffsSrc, coeffsDst;
+    int somLmax;
+    testSomSample(coeffsSrc, coeffsDst, somLmax);
+    return 0;
+}
