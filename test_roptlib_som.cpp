@@ -18,7 +18,7 @@
 
 using namespace ROPTLIB;
 
-void testSomSample(std::vector<double> &rshSrc, std::vector<double> &rshDst, int somLmax)
+void testSomSample(SomSize somSz, Eigen::MatrixXf& Tijs, Eigen::MatrixXi& edges)
 {
     integer d = 3;
     // manifold
@@ -27,31 +27,7 @@ void testSomSample(std::vector<double> &rshSrc, std::vector<double> &rshDst, int
     // Obtain an initial iterate
     Vector startX = manif.RandominManifold();
     startX.ObtainWriteEntireData();
-    // R_initguess_stiefel
-    // // rotx(60)
-    // realdp *startXWriteArray = startX.ObtainWriteEntireData(); //!! assignment in col-major order
-    // startXWriteArray[0] = 1;
-    // startXWriteArray[1] = 0;
-    // startXWriteArray[2] = 0;
-    // startXWriteArray[3] = 0;
-    // startXWriteArray[4] = 0.5;
-    // startXWriteArray[5] = 0.866025403784439;
-    // startXWriteArray[6] = 0;
-    // startXWriteArray[7] = -0.866025403784439;
-    // startXWriteArray[8] = 0.5;
-    // startX.Print("startX");
-    // //rotx(65)
     realdp *startXWriteArray = startX.ObtainWriteEntireData(); //!! assignment in col-major order
-    startXWriteArray[0] = 1;
-    startXWriteArray[3] = 0;
-    startXWriteArray[6] = 0;
-    startXWriteArray[1] = 0;
-    startXWriteArray[4] = 1;
-    startXWriteArray[7] = 0;
-    startXWriteArray[2] = 0;
-    startXWriteArray[5] = 0;
-    startXWriteArray[8] = 1;
-
     // startXWriteArray[0] = 0.984489045287494;
     // startXWriteArray[1] = 0.175180074041903;
     // startXWriteArray[2] = -0.00965719253155387;
@@ -64,7 +40,7 @@ void testSomSample(std::vector<double> &rshSrc, std::vector<double> &rshDst, int
     startX.Print("startX");
 
     // Set the domain of the problem to be the product of Stiefel manifolds
-    SampleSomProblem Prob(rshSrc, rshDst, somLmax);
+    SampleSomProblem Prob(somSz, Tijs, edges);
     Prob.SetDomain(&manif);
 
     // % Numerically check gradient consistency (optional).
@@ -110,11 +86,13 @@ int main(int argc, char **argv)
     integer numofmani1 = 2; // num of Stiefel manifolds
     integer numofmani2 = 1;
     Stiefel mani1(n, p);
-    Euclidean mani2(m,p,n);
+    Euclidean mani2(m, p, n);
     ProductManifold ProdMani(numoftypes, &mani1, numofmani1, &mani2, numofmani2);
 
-    std::vector<double> coeffsSrc, coeffsDst;
-    int somLmax;
-    testSomSample(coeffsSrc, coeffsDst, somLmax);
+    SomSize somSz;
+    Eigen::MatrixXf Tijs;
+    Eigen::MatrixXi edges;
+
+    testSomSample(somSz, Tijs, edges);
     return 0;
 }

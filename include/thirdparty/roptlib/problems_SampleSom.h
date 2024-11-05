@@ -15,13 +15,28 @@
 #include "problems_Problem.h"
 #include "others_def.h"
 
+struct SomSize
+{
+    int p_;
+    int d_;
+    int n_;
+
+    SomSize() : p_(1), d_(1), n_(1) {}
+
+    SomSize(int p, int d, int n) : p_(p), d_(d), n_(n)
+    {
+    }
+};
+
 namespace ROPTLIB
 {
 
     class SampleSomProblem : public Problem
     {
     public:
-        SampleSomProblem(std::vector<double> &rshSrc, std::vector<double> &rshDst, int arsLmax);
+        SampleSomProblem();
+
+        SampleSomProblem(SomSize somSz, Eigen::MatrixXf &Tijs, Eigen::MatrixXi &edges);
 
         virtual ~SampleSomProblem();
         virtual realdp f(const Variable &x) const;
@@ -42,9 +57,10 @@ namespace ROPTLIB
                            Eigen::Matrix3d &Hessian) const;
 
         // private:
-        std::vector<double> rshSrc_;
-        std::vector<double> rshDst_;
-        int lmax_;
+        SomSize sz_;
+        Eigen::MatrixXf Tijs_;
+        Eigen::MatrixXi edges_;
+        int e_; // num edges
     };
 
 } // end of namespace
