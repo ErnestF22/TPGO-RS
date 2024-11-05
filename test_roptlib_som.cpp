@@ -18,44 +18,44 @@
 
 using namespace ROPTLIB;
 
-void testSomSample(SomSize somSz, Eigen::MatrixXf& Tijs, Eigen::MatrixXi& edges)
+void testSomSample(SomSize somSz, Eigen::MatrixXd &Tijs, Eigen::MatrixXi &edges)
 {
-    integer d = 3;
+    ROFL_VAR3(somSz.p_, somSz.d_, somSz.n_);
+
     // manifold
-    // Rotations manif(d);
-    Stiefel manif(d, d);
+    // An example of using ProductManifold() constructor to generate St(d,p)^n \times Euc(p,n):
+    integer numoftypes = 2; // 2 i.e. (3D) Stiefel + Euclidean
+    integer numofmani1 = somSz.n_; // num of Stiefel manifolds
+    integer numofmani2 = 1;
+    Stiefel mani1(somSz.p_, somSz.d_);
+    Euclidean mani2(somSz.p_, somSz.n_);
+    ProductManifold ProdMani(numoftypes, &mani1, numofmani1, &mani2, numofmani2);
+    
+
     // Obtain an initial iterate
-    Vector startX = manif.RandominManifold();
+    Vector startX = ProdMani.RandominManifold();
     startX.ObtainWriteEntireData();
     realdp *startXWriteArray = startX.ObtainWriteEntireData(); //!! assignment in col-major order
-    // startXWriteArray[0] = 0.984489045287494;
-    // startXWriteArray[1] = 0.175180074041903;
-    // startXWriteArray[2] = -0.00965719253155387;
-    // startXWriteArray[3] = -0.168366666411450;
-    // startXWriteArray[4] = 0.927853513799599;
-    // startXWriteArray[5] = -0.332776986240385;
-    // startXWriteArray[6] = -0.0493354370651904;
-    // startXWriteArray[7] = 0.329241246790877;
-    // startXWriteArray[8] = 0.942956105055360;
+    // startXWriteArray[0] = ...;
     startX.Print("startX");
 
     // Set the domain of the problem to be the product of Stiefel manifolds
     SampleSomProblem Prob(somSz, Tijs, edges);
-    Prob.SetDomain(&manif);
+    Prob.SetDomain(&ProdMani);
 
-    // % Numerically check gradient consistency (optional).
-    // checkgradient(problem);
-    manif.CheckParams();
-    Prob.SetUseGrad(true);
-    Prob.SetUseHess(false);
-    // Prob.SetNumGradHess(true);
+    // Numerically check gradient consistency (optional).
+    // ProdMani.CheckParams();
+    
+    Prob.SetUseGrad(false);
+    // Prob.SetUseHess(false);
+    Prob.SetNumGradHess(true);
     // Prob.CheckGradHessian(ProdX);
 
     // output the parameters of the manifold of domain
     ROPTLIB::RTRNewton *RTRNewtonSolver = new RTRNewton(&Prob, &startX); // USE INITGUESS HERE!
     RTRNewtonSolver->Verbose = ITERRESULT;
-    RTRNewtonSolver->Max_Iteration = 500;
-    RTRNewtonSolver->Max_Inner_Iter = 500;
+    // RTRNewtonSolver->Max_Iteration = 500;
+    // RTRNewtonSolver->Max_Inner_Iter = 500;
     RTRNewtonSolver->CheckParams();
     // PARAMSMAP solverParams = {std::pair<std::string, double>("Max_Inner_Iter", 10)};
     // RTRNewtonSolver->SetParams(solverParams);
@@ -64,7 +64,7 @@ void testSomSample(SomSize somSz, Eigen::MatrixXf& Tijs, Eigen::MatrixXi& edges)
     // [x, xcost, info, options] = trustregions(problem);
 
     RTRNewtonSolver->Run();
-    Prob.CheckGradHessian(RTRNewtonSolver->GetXopt());
+    // Prob.CheckGradHessian(RTRNewtonSolver->GetXopt());
 
     std::cout << "Prob.GetUseGrad() " << Prob.GetUseGrad() << std::endl;
     std::cout << "Prob.GetUseHess() " << Prob.GetUseHess() << std::endl;
@@ -79,19 +79,30 @@ void testSomSample(SomSize somSz, Eigen::MatrixXf& Tijs, Eigen::MatrixXi& edges)
 
 int main(int argc, char **argv)
 {
-    // An example of using this constructor to generate St(2,3)^2 \times Euc(2,2,3):
-
-    integer n = 3, p = 2, m = 2;
-    integer numoftypes = 2;
-    integer numofmani1 = 2; // num of Stiefel manifolds
-    integer numofmani2 = 1;
-    Stiefel mani1(n, p);
-    Euclidean mani2(m, p, n);
-    ProductManifold ProdMani(numoftypes, &mani1, numofmani1, &mani2, numofmani2);
-
-    SomSize somSz;
-    Eigen::MatrixXf Tijs;
-    Eigen::MatrixXi edges;
+    int p = 4;
+    int d = 3;
+    int n = 5;
+    SomSize somSz(p, d, n);
+    int numEdges = 14;
+    Eigen::MatrixXd Tijs(d, numEdges);
+    Tijs << -7.02929319733264, -4.70228201833979, 7.60845213036123, -7.49784261659683, -4.70228201833979, 4.70228201833979, 7.13990271109704, -7.31887266384694, -4.70228201833979, 4.70228201833978, 7.31887266384693, -7.13990271109703, 4.70228201833979, 7.49784261659683,
+        3.06146745892072, 0, -0.946045472532388, -0.946045472532388, 8.88178419700125e-16, 0, -2.47677920199275, -2.47677920199275, 0, -8.88178419700125e-16, 2.47677920199275, 2.47677920199275, 0, 0.946045472532388,
+        5.71604418959064, 14.4721359549996, 5.71604418959065, 5.37562311002300, 14.4721359549996, 14.4721359549996, 5.37562311002299, 5.92643598725038, 14.4721359549996, 14.4721359549996, 5.92643598725039, 5.37562311002299, 14.4721359549996, 5.37562311002299;
+    Eigen::MatrixXi edges(numEdges, 2);
+    edges << 2, 1,
+        3, 1,
+        1, 2,
+        3, 2,
+        4, 2,
+        1, 3,
+        2, 3,
+        4, 3,
+        5, 3,
+        2, 4,
+        3, 4,
+        5, 4,
+        3, 5,
+        4, 5;
 
     testSomSample(somSz, Tijs, edges);
     return 0;

@@ -36,31 +36,35 @@ namespace ROPTLIB
     public:
         SampleSomProblem();
 
-        SampleSomProblem(SomSize somSz, Eigen::MatrixXf &Tijs, Eigen::MatrixXi &edges);
+        SampleSomProblem(SomSize somSz, Eigen::MatrixXd &Tijs, Eigen::MatrixXi &edges);
 
         virtual ~SampleSomProblem();
         virtual realdp f(const Variable &x) const;
-        virtual Vector &EucGrad(const Variable &x, Vector *result) const;
+        // virtual Vector &EucGrad(const Variable &x, Vector *result) const;
         // virtual Vector &EucHessianEta(const Variable &x, const Vector &etax, Vector *result) const;
 
-        void RoptToEig(Vector x, Eigen::Matrix3d &xEigen) const;
+        // void RoptToEig(Vector x, Eigen::MatrixXf &xEigen) const;
 
-        void rsh_corr_grad(const Eigen::Vector3d &ea,
-                           double &corr,
-                           Eigen::Vector3d &grad,
-                           Eigen::Matrix3d &Hessian,
-                           std::vector<Eigen::MatrixXd> &Mf) const;
+        void RoptToEig(Vector x, Eigen::MatrixXd &xEigen) const;
 
-        void rsh_corr_grad(const Eigen::Vector3d &ea,
-                           double &corr,
-                           Eigen::Vector3d &grad,
-                           Eigen::Matrix3d &Hessian) const;
+        void getRi(const Variable &x, Eigen::MatrixXd &rOut, int i) const;
+
+        void getRi(const Eigen::MatrixXd &xEig, Eigen::MatrixXd &rOut, int i) const;
+
+        void getTi(const Variable &x, Eigen::MatrixXd &rOut, int i) const;
+
+        void getTi(const Eigen::MatrixXd &xEig, Eigen::MatrixXd &tOut, int i) const;
+
+        int getRotSz() const;
+
+        int getTranslSz() const;
 
         // private:
         SomSize sz_;
-        Eigen::MatrixXf Tijs_;
+        Eigen::MatrixXd Tijs_;
         Eigen::MatrixXi edges_;
-        int e_; // num edges
+        int numEdges_; // num edges
+        int fullSz_;
     };
 
 } // end of namespace
