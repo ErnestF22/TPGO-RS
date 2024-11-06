@@ -47,13 +47,28 @@ namespace ROPTLIB
 
         void RoptToEig(Vector x, Eigen::MatrixXd &xEigen) const;
 
+        void vstack(const std::vector<Eigen::MatrixXd> &in, Eigen::MatrixXd &out) const;
+
+        void hstack(const std::vector<Eigen::MatrixXd> &in, Eigen::MatrixXd &out) const;
+
+        /**
+         * Unstack a vertically stacked "3D" array
+         */
+        void unStackV(const Eigen::MatrixXd &in, std::vector<Eigen::MatrixXd> &out, int rowsOut = 3) const;
+
+        void unStackH(const Eigen::MatrixXd &in, std::vector<Eigen::MatrixXd> &out, int colsOut = 3) const;
+
         void getRi(const Variable &x, Eigen::MatrixXd &rOut, int i) const;
 
         void getRi(const Eigen::MatrixXd &xEig, Eigen::MatrixXd &rOut, int i) const;
 
+        void getRotations(const Eigen::MatrixXd &xEig, std::vector<Eigen::MatrixXd> &rOut) const;
+
         void getTi(const Variable &x, Eigen::MatrixXd &rOut, int i) const;
 
         void getTi(const Eigen::MatrixXd &xEig, Eigen::MatrixXd &tOut, int i) const;
+
+        void getTranslations(const Eigen::MatrixXd &xEig, Eigen::MatrixXd &tOut) const;
 
         int getRotSz() const;
 

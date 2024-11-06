@@ -57,7 +57,7 @@ void testSomSample(SomSize somSz, Eigen::MatrixXd &Tijs, Eigen::MatrixXi &edges)
     // RTRNewtonSolver->Max_Iteration = 500;
     // RTRNewtonSolver->Max_Inner_Iter = 500;
     RTRNewtonSolver->CheckParams();
-    // PARAMSMAP solverParams = {std::pair<std::string, double>("Max_Inner_Iter", 10)};
+    // auto solverParams = {std::pair<std::string, double>("Max_Inner_Iter", 10)};
     // RTRNewtonSolver->SetParams(solverParams);
 
     // % Solve.

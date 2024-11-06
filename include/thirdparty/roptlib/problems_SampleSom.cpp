@@ -65,7 +65,6 @@ namespace ROPTLIB
     //     Eigen::Matrix3d G(Gvec.data());
     //     G.resize(3, 3);
     //     G.transposeInPlace();
-        
 
     //     // back to Roptlib
     //     Vector Groptlib = Rotations(3).RandominManifold();
@@ -91,6 +90,12 @@ namespace ROPTLIB
     //     return *result;
     // };
 
+    // Vector &SampleSomProblem::EucHessianEta(const Variable &x, const Vector &etax, Vector *result) const
+    // {
+    //     //TODO: implement
+    //     return *result;
+    // };
+
     // void SampleSomProblem::RoptToEig(Vector x, Eigen::MatrixXf &xEigen) const
     // {
     //     Vector xT = x.GetTranspose(); // Eigen ADV init is row-major!!
@@ -111,6 +116,63 @@ namespace ROPTLIB
         const realdp *xArr = xT.ObtainWriteEntireData();
         for (int i = 0; i < totSz; ++i)
             xEigen(i) = xArr[i];
+    }
+
+    void SampleSomProblem::vstack(const std::vector<Eigen::MatrixXd> &in, Eigen::MatrixXd &out) const
+    {
+        // out has same number of columns, whereas number of rows is the product of the size of the other 2 dimensions
+
+        int rowJump = sz_.p_; // TODO: generalize later
+        for (int i = 0; i < in.size(); ++i)
+        {
+            out.block(rowJump * i, 0, rowJump, sz_.d_) = in[i];
+        }
+    }
+
+    void SampleSomProblem::hstack(const std::vector<Eigen::MatrixXd> &in, Eigen::MatrixXd &out) const
+    {
+        // out has same number of columns, whereas number of rows is the product of the size of the other 2 dimensions
+
+        int colJump = sz_.d_; // TODO: generalize later
+        for (int i = 0; i < in.size(); ++i)
+        {
+            out.block(0, colJump * i, sz_.p_, colJump) = in[i];
+        }
+    }
+
+    void SampleSomProblem::unStackV(const Eigen::MatrixXd &in, std::vector<Eigen::MatrixXd> &out, int rowsOut) const
+    {
+        int n = (int) in.rows() / rowsOut;
+
+        int fixedSz = sz_.d_;// size that does not change in the 3D->2D transition (here, number of columns)
+
+        ROFL_ASSERT(n * rowsOut == in.rows());
+
+        out.clear();
+        out.resize(n, Eigen::MatrixXd::Zero(rowsOut, in.cols()));
+
+        for (int i = 0; i < n; ++i)
+        {
+            out[i] = in.block(rowsOut * i, 0, rowsOut, fixedSz);
+        }
+    }
+
+    void SampleSomProblem::unStackH(const Eigen::MatrixXd &in, std::vector<Eigen::MatrixXd> &out, int colsOut) const
+    {
+        int n = (int) in.rows() / colsOut;
+
+        int fixedSz = sz_.p_;// size that does not change in the 3D->2D transition (here, number of rows)
+
+        ROFL_ASSERT(n * colsOut == in.cols());
+
+        out.clear();
+        out.resize(n, Eigen::MatrixXd::Zero(in.rows(), colsOut));
+
+        for (int i = 0; i < n; ++i)
+        {
+               out[i] = in.block(0, colsOut * i, fixedSz, colsOut);
+
+        }
     }
 
     void SampleSomProblem::getRi(const Variable &x, Eigen::MatrixXd &rOut, int i) const
@@ -144,6 +206,24 @@ namespace ROPTLIB
         rOut = rOutVec.reshaped(sz_.p_, sz_.d_);
     }
 
+    void SampleSomProblem::getRotations(const Eigen::MatrixXd &xEig, std::vector<Eigen::MatrixXd> &rOut) const
+    {
+        // rOut already needs to have fixed size by here
+        int rotSz = getRotSz(); // as a vector
+
+        // int endId = (i+1) * rotSz;
+
+        rOut.clear();
+
+        for (int i = 0; i < sz_.n_; ++i)
+        {
+            int startId = i * rotSz;
+            Eigen::MatrixXd Ri(sz_.p_, sz_.d_);
+            getRi(xEig, Ri, i); // TODO: this can probably be optimized better
+            rOut.push_back(Ri);
+        }
+    }
+
     void SampleSomProblem::getTi(const Variable &x, Eigen::MatrixXd &tOut, int i) const
     {
         Eigen::MatrixXd xEigen(fullSz_, 1);
@@ -161,7 +241,6 @@ namespace ROPTLIB
         tOut = xEigen.block(startId, 0, translSz, 1);
     }
 
-
     void SampleSomProblem::getTi(const Eigen::MatrixXd &xEig, Eigen::MatrixXd &tOut, int i) const
     {
         // rOut already needs to have fixed size by here
@@ -176,6 +255,22 @@ namespace ROPTLIB
         tOut = xEig.block(startId, 0, translSz, 1);
     }
 
+    void SampleSomProblem::getTranslations(const Eigen::MatrixXd &xEig, Eigen::MatrixXd &tOut) const
+    {
+        // rOut already needs to have fixed size by here
+        int rotSz = getRotSz(); // as a vector
+
+        // int endId = (i+1) * rotSz;
+
+        for (int i = 0; i < sz_.n_; ++i)
+        {
+            int startId = i * rotSz;
+            Eigen::MatrixXd Ti(sz_.p_, 1);
+            getTi(xEig, Ti, i); // TODO: this can probably be optimized better
+            tOut.col(i) = Ti;
+        }
+    }
+
     int SampleSomProblem::getRotSz() const
     {
         return sz_.d_ * sz_.p_;
@@ -185,11 +280,5 @@ namespace ROPTLIB
     {
         return sz_.p_;
     }
-
-    // Vector &SampleSomProblem::EucHessianEta(const Variable &x, const Vector &etax, Vector *result) const
-    // {
-    //     //TODO: implement
-    //     return *result;
-    // };
 
 }
