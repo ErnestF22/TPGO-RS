@@ -39,8 +39,23 @@ namespace ROPTLIB
         SampleSomProblem(SomSize somSz, Eigen::MatrixXd &Tijs, Eigen::MatrixXi &edges);
 
         virtual ~SampleSomProblem();
+
         virtual realdp f(const Variable &x) const;
-        // virtual Vector &EucGrad(const Variable &x, Vector *result) const;
+
+        virtual Vector &EucGrad(const Variable &x, Vector *result) const;
+
+        virtual Vector &RieGrad(const Variable &x, Vector *result) const;
+
+        virtual Vector &Grad(const Variable &x, Vector *result) const;
+
+        void egradR(const Eigen::MatrixXd &P, std::vector<Eigen::MatrixXd> &egR) const;
+
+        void rgradR(const std::vector<Eigen::MatrixXd> &R, const Eigen::MatrixXd &P, std::vector<Eigen::MatrixXd> &rgR) const;
+
+        void egradT(const Eigen::MatrixXd &T, const Eigen::MatrixXd &Lr, const Eigen::MatrixXd &Pr, Eigen::MatrixXd &egT) const;
+
+        void rgradT(const Eigen::MatrixXd &T, const Eigen::MatrixXd &Lr, const Eigen::MatrixXd &Pr, Eigen::MatrixXd &egT) const;
+
         // virtual Vector &EucHessianEta(const Variable &x, const Vector &etax, Vector *result) const;
 
         // void RoptToEig(Vector x, Eigen::MatrixXf &xEigen) const;
@@ -70,9 +85,44 @@ namespace ROPTLIB
 
         void getTranslations(const Eigen::MatrixXd &xEig, Eigen::MatrixXd &tOut) const;
 
+        void makePfrct(const Eigen::MatrixXd &T, Eigen::MatrixXd &P, double &frct) const;
+
+        void makeLrPrBr(const std::vector<Eigen::MatrixXd> &R, Eigen::MatrixXd &Lr, Eigen::MatrixXd &Pr, Eigen::MatrixXd &Br) const;
+
         int getRotSz() const;
 
         int getTranslSz() const;
+
+        void stiefelTangentProj(const std::vector<Eigen::MatrixXd> &Y, const std::vector<Eigen::MatrixXd> &Hin, std::vector<Eigen::MatrixXd> &Hout) const
+        {
+            ROFL_ASSERT(Y.size() == sz_.n_);
+
+            Eigen::MatrixXd tmp = Y[0].transpose() * Hin[0];
+            Hout.clear();
+            Hout.resize(sz_.n_, Eigen::MatrixXd::Zero(tmp.rows(), tmp.cols()));
+
+            for (int i = 0; i < sz_.n_; ++i)
+            {
+                stiefelTangentProj(Y[i], Hin[i], Hout[i]);
+            }
+        }
+
+        void stiefelTangentProj(const Eigen::MatrixXd &Y, const Eigen::MatrixXd &Hin, Eigen::MatrixXd &Hout) const
+        {
+            Eigen::MatrixXd tmp = Y.transpose() * Hin;
+
+            ROFL_ASSERT(tmp.rows() == tmp.cols()); // kind of useless as the check is performed also in extractSymmetricPart()
+
+            Eigen::MatrixXd sympart(Eigen::MatrixXd::Zero(tmp.rows(), tmp.cols()));
+            extractSymmetricPart(Y.transpose() * Hin, sympart);
+            Hout = Hin - Y * sympart;
+        }
+
+        void extractSymmetricPart(const Eigen::MatrixXd &in, Eigen::MatrixXd &out) const
+        {
+            ROFL_ASSERT(in.rows() == in.cols());
+            out = 0.5 * (in + in.transpose());
+        }
 
         // private:
         SomSize sz_;

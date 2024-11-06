@@ -28,15 +28,13 @@ void testSomSample(SomSize somSz, Eigen::MatrixXd &Tijs, Eigen::MatrixXi &edges)
     integer numofmani1 = somSz.n_; // num of Stiefel manifolds
     integer numofmani2 = 1;
     Stiefel mani1(somSz.p_, somSz.d_);
+    mani1.ChooseParamsSet1();
     Euclidean mani2(somSz.p_, somSz.n_);
     ProductManifold ProdMani(numoftypes, &mani1, numofmani1, &mani2, numofmani2);
     
 
     // Obtain an initial iterate
     Vector startX = ProdMani.RandominManifold();
-    startX.ObtainWriteEntireData();
-    realdp *startXWriteArray = startX.ObtainWriteEntireData(); //!! assignment in col-major order
-    // startXWriteArray[0] = ...;
     startX.Print("startX");
 
     // Set the domain of the problem to be the product of Stiefel manifolds
@@ -46,9 +44,9 @@ void testSomSample(SomSize somSz, Eigen::MatrixXd &Tijs, Eigen::MatrixXi &edges)
     // Numerically check gradient consistency (optional).
     // ProdMani.CheckParams();
     
-    Prob.SetUseGrad(false);
-    // Prob.SetUseHess(false);
-    Prob.SetNumGradHess(true);
+    Prob.SetUseGrad(true);
+    Prob.SetUseHess(false);
+    // Prob.SetNumGradHess(true);
     // Prob.CheckGradHessian(ProdX);
 
     // output the parameters of the manifold of domain
@@ -56,9 +54,10 @@ void testSomSample(SomSize somSz, Eigen::MatrixXd &Tijs, Eigen::MatrixXi &edges)
     RTRNewtonSolver->Verbose = ITERRESULT;
     // RTRNewtonSolver->Max_Iteration = 500;
     // RTRNewtonSolver->Max_Inner_Iter = 500;
-    RTRNewtonSolver->CheckParams();
-    // auto solverParams = {std::pair<std::string, double>("Max_Inner_Iter", 10)};
+    // ROPTLIB::PARAMSMAP solverParams = {std::pair<std::string, double>("Max_Inner_Iter", 10)};
     // RTRNewtonSolver->SetParams(solverParams);
+    RTRNewtonSolver->CheckParams();
+    
 
     // % Solve.
     // [x, xcost, info, options] = trustregions(problem);
