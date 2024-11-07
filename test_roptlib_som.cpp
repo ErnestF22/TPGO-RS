@@ -45,9 +45,9 @@ void testSomSample(SomSize somSz, MatD &Tijs, Eigen::MatrixXi &edges)
     // ProdMani.CheckParams();
     
     Prob.SetUseGrad(true);
-    Prob.SetUseHess(false);
-    // Prob.SetNumGradHess(true);
-    // Prob.CheckGradHessian(ProdX);
+    Prob.SetUseHess(true);
+    Prob.SetNumGradHess(true);
+    Prob.CheckGradHessian(startX);
 
     // output the parameters of the manifold of domain
     ROPTLIB::RTRNewton *RTRNewtonSolver = new RTRNewton(&Prob, &startX); // USE INITGUESS HERE!

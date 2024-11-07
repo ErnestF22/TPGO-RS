@@ -48,6 +48,12 @@ namespace ROPTLIB
         ROFL_VAR1(cost);
         // ROFL_ASSERT(!std::isnan(corr));
 
+        // Vector *resultEgrad;    
+        // *resultEgrad = Domain->RandominManifold();
+        // EucGrad(x, resultEgrad);
+        // x.AddToFields("EGrad", *resultEgrad); //x should have been const?? maybe only its reference
+
+
         return cost; // checked -> the - here should be OK
     };
 
@@ -59,7 +65,10 @@ namespace ROPTLIB
         // result->GetElement(2) = x.Field("B3x3D3");
         // Domain->ScalarTimesVector(x, 2, *result, result);
 
-        result->Print("Euc Grad results: printing it before anything happens result");
+        // result->Print("Euc Grad result: printing it before NewMemoryOnWrite()");
+        *result = Domain->RandominManifold();
+        result->NewMemoryOnWrite();
+        result->Print("Euc Grad result: printing it after NewMemoryOnWrite()");
 
         MatD xEig(fullSz_, 1);
         RoptToEig(x, xEig);
@@ -155,6 +164,8 @@ namespace ROPTLIB
 
         // ROFL_ASSERT(0);
 
+        x.AddToFields("EGrad", *result); //x should have been const?? maybe only its reference
+
         return *result;
     };
 
@@ -166,7 +177,7 @@ namespace ROPTLIB
         // result->GetElement(2) = x.Field("B3x3D3");
         // Domain->ScalarTimesVector(x, 2, *result, result);
 
-        result->Print("printing it before anything happens result");
+        result->Print("RieGrad: printing result at start of function (should be empty)");
 
         MatD xEig(fullSz_, 1);
         RoptToEig(x, xEig);
@@ -428,22 +439,16 @@ namespace ROPTLIB
         egradT(T, Lr, Pr, egT);
     }
 
-    // Vector &SampleSomProblem::EucHessianEta(const Variable &x, const Vector &etax, Vector *result) const
-    // {
-    //     //TODO: implement
-    //     return *result;
-    // };
+    Vector &SampleSomProblem::HessianEta(const Variable &x, const Vector &etax, Vector *result) const
+    {
+        // TODO: implement
 
-    // void SampleSomProblem::RoptToEig(Vector x, Eigen::MatrixXf &xEigen) const
-    // {
-    //     Vector xT = x.GetTranspose(); // Eigen ADV init is row-major!!
+        result->NewMemoryOnWrite();
 
-    //     int totSz = xEigen.rows();
+        result->Print("EucHessianEta: printing it just after NewMemoryOnWrite()");
 
-    //     const realdp *xArr = xT.ObtainWriteEntireData();
-    //     for (int i = 0; i < totSz; ++i)
-    //         xEigen(i) = xArr[i];
-    // }
+        return *result;
+    };
 
     void SampleSomProblem::RoptToEig(Vector x, MatD &xEigen) const
     {
@@ -709,4 +714,4 @@ namespace ROPTLIB
         out = 0.5 * (in + in.transpose());
     }
 
-} //end of namespace ROPTLIB
+} // end of namespace ROPTLIB

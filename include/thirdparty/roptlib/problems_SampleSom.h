@@ -93,9 +93,10 @@ namespace ROPTLIB
          */
         void rgradT(const MatD &T, const MatD &Lr, const MatD &Pr, MatD &egT) const;
 
-        // virtual Vector &EucHessianEta(const Variable &x, const Vector &etax, Vector *result) const;
-
-        // void RoptToEig(Vector x, Eigen::MatrixXf &xEigen) const;
+        /**
+         * Euclidean Hessian action i.e., *result = H(x)[etax]
+         */
+        virtual Vector &HessianEta(const Variable &x, const Vector &etax, Vector *result) const;
 
         /**
          * Convert ROPTLIB Vector into Eigen equivalent
