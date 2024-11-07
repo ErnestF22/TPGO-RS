@@ -4,7 +4,7 @@ namespace ROPTLIB
 {
     SampleSomProblem::SampleSomProblem() {}
 
-    SampleSomProblem::SampleSomProblem(SomSize somSz, Eigen::MatrixXd &Tijs, Eigen::MatrixXi &edges)
+    SampleSomProblem::SampleSomProblem(SomSize somSz, MatD &Tijs, Eigen::MatrixXi &edges)
     {
         sz_ = somSz;
         Tijs_ = Tijs;
@@ -17,7 +17,7 @@ namespace ROPTLIB
 
     realdp SampleSomProblem::f(const Variable &x) const
     {
-        Eigen::MatrixXd xEigen(fullSz_, 1);
+        MatD xEigen(fullSz_, 1);
         RoptToEig(x, xEigen);
         // ROFL_VAR1(x);
 
@@ -25,9 +25,9 @@ namespace ROPTLIB
 
         for (int e = 0; e < numEdges_; ++e)
         {
-            Eigen::MatrixXd Ri(sz_.p_, sz_.d_);
-            Eigen::MatrixXd Ti(sz_.p_, 1);
-            Eigen::MatrixXd Tj(sz_.p_, 1);
+            MatD Ri(sz_.p_, sz_.d_);
+            MatD Ti(sz_.p_, 1);
+            MatD Tj(sz_.p_, 1);
 
             Eigen::VectorXd tij(sz_.d_);
             tij = Tijs_.col(e);
@@ -59,35 +59,35 @@ namespace ROPTLIB
         // result->GetElement(2) = x.Field("B3x3D3");
         // Domain->ScalarTimesVector(x, 2, *result, result);
 
-        // result->Print("printing it before anything happens result");
+        result->Print("Euc Grad results: printing it before anything happens result");
 
-        Eigen::MatrixXd xEig(fullSz_, 1);
+        MatD xEig(fullSz_, 1);
         RoptToEig(x, xEig);
 
-        std::vector<Eigen::MatrixXd> R(sz_.n_, Eigen::MatrixXd::Zero(sz_.p_, sz_.d_));
+        VecMatD R(sz_.n_, MatD::Zero(sz_.p_, sz_.d_));
         getRotations(xEig, R);
 
-        Eigen::MatrixXd T(Eigen::MatrixXd::Zero(sz_.p_, sz_.n_));
+        MatD T(MatD::Zero(sz_.p_, sz_.n_));
         getTranslations(xEig, T);
 
         // P = zeros(nrs, d*N);
-        Eigen::MatrixXd P(Eigen::MatrixXd::Zero(sz_.p_, sz_.d_ * sz_.n_));
+        MatD P(MatD::Zero(sz_.p_, sz_.d_ * sz_.n_));
         double frct = 0.0;
 
         // LR = zeros(N,N);
         // PR = zeros(N,nrs);
         // BR_const = zeros(d,d);
-        Eigen::MatrixXd Lr(Eigen::MatrixXd::Zero(sz_.n_, sz_.n_));
-        Eigen::MatrixXd Pr(Eigen::MatrixXd::Zero(sz_.n_, sz_.p_));
-        Eigen::MatrixXd Br(Eigen::MatrixXd::Zero(sz_.d_, sz_.d_));
+        MatD Lr(MatD::Zero(sz_.n_, sz_.n_));
+        MatD Pr(MatD::Zero(sz_.n_, sz_.p_));
+        MatD Br(MatD::Zero(sz_.d_, sz_.d_));
 
         makePfrct(T, P, frct);
         makeLrPrBr(R, Lr, Pr, Br);
 
-        std::vector<Eigen::MatrixXd> egR(sz_.n_, Eigen::MatrixXd::Zero(sz_.p_, sz_.d_));
+        VecMatD egR(sz_.n_, MatD::Zero(sz_.p_, sz_.d_));
         egradR(P, egR);
 
-        Eigen::MatrixXd egT(Eigen::MatrixXd::Zero(sz_.p_, sz_.n_));
+        MatD egT(MatD::Zero(sz_.p_, sz_.n_));
         egradT(T, Lr, Pr, egT);
 
         // result->NewMemoryOnWrite();
@@ -168,33 +168,33 @@ namespace ROPTLIB
 
         result->Print("printing it before anything happens result");
 
-        Eigen::MatrixXd xEig(fullSz_, 1);
+        MatD xEig(fullSz_, 1);
         RoptToEig(x, xEig);
 
-        std::vector<Eigen::MatrixXd> R(sz_.n_, Eigen::MatrixXd::Zero(sz_.p_, sz_.d_));
+        VecMatD R(sz_.n_, MatD::Zero(sz_.p_, sz_.d_));
         getRotations(xEig, R);
 
-        Eigen::MatrixXd T(Eigen::MatrixXd::Zero(sz_.p_, sz_.n_));
+        MatD T(MatD::Zero(sz_.p_, sz_.n_));
         getTranslations(xEig, T);
 
         // P = zeros(nrs, d*N);
-        Eigen::MatrixXd P(Eigen::MatrixXd::Zero(sz_.p_, sz_.d_ * sz_.n_));
+        MatD P(MatD::Zero(sz_.p_, sz_.d_ * sz_.n_));
         double frct = 0.0;
 
         // LR = zeros(N,N);
         // PR = zeros(N,nrs);
         // BR_const = zeros(d,d);
-        Eigen::MatrixXd Lr(Eigen::MatrixXd::Zero(sz_.n_, sz_.n_));
-        Eigen::MatrixXd Pr(Eigen::MatrixXd::Zero(sz_.n_, sz_.p_));
-        Eigen::MatrixXd Br(Eigen::MatrixXd::Zero(sz_.d_, sz_.d_));
+        MatD Lr(MatD::Zero(sz_.n_, sz_.n_));
+        MatD Pr(MatD::Zero(sz_.n_, sz_.p_));
+        MatD Br(MatD::Zero(sz_.d_, sz_.d_));
 
         makePfrct(T, P, frct);
         makeLrPrBr(R, Lr, Pr, Br);
 
-        std::vector<Eigen::MatrixXd> rgR(sz_.n_, Eigen::MatrixXd::Zero(sz_.p_, sz_.d_));
+        VecMatD rgR(sz_.n_, MatD::Zero(sz_.p_, sz_.d_));
         rgradR(R, P, rgR);
 
-        Eigen::MatrixXd rgT(Eigen::MatrixXd::Zero(sz_.p_, sz_.n_));
+        MatD rgT(MatD::Zero(sz_.p_, sz_.n_));
         rgradT(T, Lr, Pr, rgT);
 
         // result->NewMemoryOnWrite();
@@ -265,165 +265,165 @@ namespace ROPTLIB
         return *result;
     };
 
-    Vector &SampleSomProblem::Grad(const Variable &x, Vector *result) const
-    {
-        // result->NewMemoryOnWrite();
-        // result->GetElement(0) = x.Field("B1x1D1");
-        // result->GetElement(1) = x.Field("B2x2D2");
-        // result->GetElement(2) = x.Field("B3x3D3");
-        // Domain->ScalarTimesVector(x, 2, *result, result);
+    // Vector &SampleSomProblem::Grad(const Variable &x, Vector *result) const
+    // {
+    //     // result->NewMemoryOnWrite();
+    //     // result->GetElement(0) = x.Field("B1x1D1");
+    //     // result->GetElement(1) = x.Field("B2x2D2");
+    //     // result->GetElement(2) = x.Field("B3x3D3");
+    //     // Domain->ScalarTimesVector(x, 2, *result, result);
 
-        result->Print("printing it before anything happens result");
+    //     result->Print("Grad: printing it before anything happens result");
 
-        Eigen::MatrixXd xEig(fullSz_, 1);
-        RoptToEig(x, xEig);
+    //     MatD xEig(fullSz_, 1);
+    //     RoptToEig(x, xEig);
 
-        std::vector<Eigen::MatrixXd> R(sz_.n_, Eigen::MatrixXd::Zero(sz_.p_, sz_.d_));
-        getRotations(xEig, R);
+    //     VecMatD R(sz_.n_, MatD::Zero(sz_.p_, sz_.d_));
+    //     getRotations(xEig, R);
 
-        Eigen::MatrixXd T(Eigen::MatrixXd::Zero(sz_.p_, sz_.n_));
-        getTranslations(xEig, T);
+    //     MatD T(MatD::Zero(sz_.p_, sz_.n_));
+    //     getTranslations(xEig, T);
 
-        // P = zeros(nrs, d*N);
-        Eigen::MatrixXd P(Eigen::MatrixXd::Zero(sz_.p_, sz_.d_ * sz_.n_));
-        double frct = 0.0;
+    //     // P = zeros(nrs, d*N);
+    //     MatD P(MatD::Zero(sz_.p_, sz_.d_ * sz_.n_));
+    //     double frct = 0.0;
 
-        // LR = zeros(N,N);
-        // PR = zeros(N,nrs);
-        // BR_const = zeros(d,d);
-        Eigen::MatrixXd Lr(Eigen::MatrixXd::Zero(sz_.n_, sz_.n_));
-        Eigen::MatrixXd Pr(Eigen::MatrixXd::Zero(sz_.n_, sz_.p_));
-        Eigen::MatrixXd Br(Eigen::MatrixXd::Zero(sz_.d_, sz_.d_));
+    //     // LR = zeros(N,N);
+    //     // PR = zeros(N,nrs);
+    //     // BR_const = zeros(d,d);
+    //     MatD Lr(MatD::Zero(sz_.n_, sz_.n_));
+    //     MatD Pr(MatD::Zero(sz_.n_, sz_.p_));
+    //     MatD Br(MatD::Zero(sz_.d_, sz_.d_));
 
-        makePfrct(T, P, frct);
-        makeLrPrBr(R, Lr, Pr, Br);
+    //     makePfrct(T, P, frct);
+    //     makeLrPrBr(R, Lr, Pr, Br);
 
-        std::vector<Eigen::MatrixXd> egR(sz_.n_, Eigen::MatrixXd::Zero(sz_.p_, sz_.d_));
-        egradR(P, egR);
+    //     VecMatD egR(sz_.n_, MatD::Zero(sz_.p_, sz_.d_));
+    //     egradR(P, egR);
 
-        Eigen::MatrixXd rgT(Eigen::MatrixXd::Zero(sz_.p_, sz_.n_));
-        rgradT(T, Lr, Pr, rgT);
+    //     MatD rgT(MatD::Zero(sz_.p_, sz_.n_));
+    //     rgradT(T, Lr, Pr, rgT);
 
-        // result->NewMemoryOnWrite();
-        // result = Domain->RandomInManifold();
+    //     // result->NewMemoryOnWrite();
+    //     // result = Domain->RandomInManifold();
 
-        int rotSz = getRotSz();
-        int translSz = getTranslSz();
-        int gElemIdx = 0;
+    //     int rotSz = getRotSz();
+    //     int translSz = getTranslSz();
+    //     int gElemIdx = 0;
 
-        // fill result with computed gradient values : R
-        for (int i = 0; i < sz_.n_; ++i)
-        {
-            // ROFL_VAR1(gElemIdx);
-            // ROFL_VAR2("\n", egR[gElemIdx]);
-            result->GetElement(gElemIdx).SetToZeros(); // Ri
-            // result->GetElement(gElemIdx).Print("Ri before assignment");
+    //     // fill result with computed gradient values : R
+    //     for (int i = 0; i < sz_.n_; ++i)
+    //     {
+    //         // ROFL_VAR1(gElemIdx);
+    //         // ROFL_VAR2("\n", egR[gElemIdx]);
+    //         result->GetElement(gElemIdx).SetToZeros(); // Ri
+    //         // result->GetElement(gElemIdx).Print("Ri before assignment");
 
-            Vector egRiVec(sz_.p_, sz_.d_);
-            // egRiVec.Initialize();
-            realdp *GroptlibWriteArray = egRiVec.ObtainWriteEntireData();
-            for (int j = 0; j < rotSz; ++j)
-            {
-                // ROFL_VAR2(i, j);
-                // egRiVec.Print("egRiVec before assignment");
+    //         Vector egRiVec(sz_.p_, sz_.d_);
+    //         // egRiVec.Initialize();
+    //         realdp *GroptlibWriteArray = egRiVec.ObtainWriteEntireData();
+    //         for (int j = 0; j < rotSz; ++j)
+    //         {
+    //             // ROFL_VAR2(i, j);
+    //             // egRiVec.Print("egRiVec before assignment");
 
-                // ROFL_VAR1(egRiVec.GetElement(j, 0));
+    //             // ROFL_VAR1(egRiVec.GetElement(j, 0));
 
-                GroptlibWriteArray[j] = egR[i].reshaped(sz_.d_ * sz_.p_, 1)(j);
+    //             GroptlibWriteArray[j] = egR[i].reshaped(sz_.d_ * sz_.p_, 1)(j);
 
-                // ROFL_VAR1("");
-                // egRiVec.Print("egRiVec after assignment");
-            }
+    //             // ROFL_VAR1("");
+    //             // egRiVec.Print("egRiVec after assignment");
+    //         }
 
-            { // eucgrad2rgrad scope!!
+    //         { // eucgrad2rgrad scope!!
 
-                class TmpProblem : public Problem
-                {
-                public:
-                    TmpProblem(int p, int d) : p_(p), d_(d) {};
+    //             class TmpProblem : public Problem
+    //             {
+    //             public:
+    //                 TmpProblem(int p, int d) : p_(p), d_(d) {};
 
-                    virtual ~TmpProblem() {};
+    //                 virtual ~TmpProblem() {};
 
-                    virtual realdp f(const Variable &x) const { return 0;};
+    //                 virtual realdp f(const Variable &x) const { return 0; };
 
-                    virtual Vector &Grad(const Variable &x, Vector *result) const {return *result;};
+    //                 virtual Vector &Grad(const Variable &x, Vector *result) const { return *result; };
 
-                private:
-                    int d_;
-                    int p_;
-                };
+    //             private:
+    //                 int d_;
+    //                 int p_;
+    //             };
 
-                Vector rgRiVec(6, 1, 1);
+    //             Vector rgRiVec(6, 1, 1);
 
-                Stiefel maniSt(sz_.p_, sz_.d_);
-                maniSt.ChooseParamsSet1();
+    //             Stiefel maniSt(sz_.p_, sz_.d_);
+    //             maniSt.ChooseParamsSet1();
 
-                // Set the domain of the problem to be the product of Stiefel manifolds
-                TmpProblem Prob(sz_.p_, sz_.d_);
-                Prob.SetDomain(&maniSt);
-                Domain->EucGradToGrad(x.GetElement(gElemIdx), egRiVec, &Prob, &rgRiVec);
-                rgRiVec.CopyTo(result->GetElement(gElemIdx));
-                rgRiVec.Print("scope rgRiVec");
-                result->GetElement(gElemIdx).Print("scope result");
-            }
+    //             // Set the domain of the problem to be the product of Stiefel manifolds
+    //             TmpProblem Prob(sz_.p_, sz_.d_);
+    //             Prob.SetDomain(&maniSt);
+    //             Domain->EucGradToGrad(x.GetElement(gElemIdx), egRiVec, &Prob, &rgRiVec);
+    //             rgRiVec.CopyTo(result->GetElement(gElemIdx));
+    //             rgRiVec.Print("scope rgRiVec");
+    //             result->GetElement(gElemIdx).Print("scope result");
+    //         }
 
-            // result->GetElement(gElemIdx).Print("grad Ri after assignment");
-            gElemIdx++;
-        }
+    //         // result->GetElement(gElemIdx).Print("grad Ri after assignment");
+    //         gElemIdx++;
+    //     }
 
-        // fill result with computed gradient values : T
+    //     // fill result with computed gradient values : T
 
-        Vector rgTiVec(sz_.p_, sz_.n_);
-        realdp *GroptlibWriteArray = rgTiVec.ObtainWriteEntireData();
-        for (int j = 0; j < sz_.p_ * sz_.n_; ++j)
-        {
-            // rgTiVec.Print("rgTiVec before assignment");
+    //     Vector rgTiVec(sz_.p_, sz_.n_);
+    //     realdp *GroptlibWriteArray = rgTiVec.ObtainWriteEntireData();
+    //     for (int j = 0; j < sz_.p_ * sz_.n_; ++j)
+    //     {
+    //         // rgTiVec.Print("rgTiVec before assignment");
 
-            // ROFL_VAR1(rgRiVec.GetElement(j, 0));
+    //         // ROFL_VAR1(rgRiVec.GetElement(j, 0));
 
-            GroptlibWriteArray[j] = rgT.reshaped(sz_.n_ * sz_.p_, 1)(j);
+    //         GroptlibWriteArray[j] = rgT.reshaped(sz_.n_ * sz_.p_, 1)(j);
 
-            // ROFL_VAR1("");
-            // rgTiVec.Print("rgTiVec after assignment");
-        }
-        rgTiVec.CopyTo(result->GetElement(gElemIdx));
-        result->GetElement(gElemIdx).Print("grad Ti after assignment");
+    //         // ROFL_VAR1("");
+    //         // rgTiVec.Print("rgTiVec after assignment");
+    //     }
+    //     rgTiVec.CopyTo(result->GetElement(gElemIdx));
+    //     result->GetElement(gElemIdx).Print("grad Ti after assignment");
 
-        // ROFL_VAR2("\n", rgT);
-        // ROFL_VAR1(gElemIdx);
-        // result->GetElement(gElemIdx).Print();
+    //     // ROFL_VAR2("\n", rgT);
+    //     // ROFL_VAR1(gElemIdx);
+    //     // result->GetElement(gElemIdx).Print();
 
-        // result->NewMemoryOnWrite();
-        // result->SetToZeros();
-        // *result = Groptlib;
+    //     // result->NewMemoryOnWrite();
+    //     // result->SetToZeros();
+    //     // *result = Groptlib;
 
-        result->Print("printing final result");
+    //     result->Print("printing final result");
 
-        // ROFL_ASSERT(0);
+    //     // ROFL_ASSERT(0);
 
-        return *result;
-    };
+    //     return *result;
+    // };
 
-    void SampleSomProblem::egradR(const Eigen::MatrixXd &P, std::vector<Eigen::MatrixXd> &egR) const
+    void SampleSomProblem::egradR(const MatD &P, VecMatD &egR) const
     {
         unStackH(P, egR, sz_.d_);
     }
 
-    void SampleSomProblem::rgradR(const std::vector<Eigen::MatrixXd> &R, const Eigen::MatrixXd &P, std::vector<Eigen::MatrixXd> &rgR) const
+    void SampleSomProblem::rgradR(const VecMatD &R, const MatD &P, VecMatD &rgR) const
     {
-        std::vector<Eigen::MatrixXd> egR;
+        VecMatD egR;
         egradR(P, egR);
 
         stiefelTangentProj(R, egR, rgR);
     }
 
-    void SampleSomProblem::egradT(const Eigen::MatrixXd &T, const Eigen::MatrixXd &Lr, const Eigen::MatrixXd &Pr, Eigen::MatrixXd &egT) const
+    void SampleSomProblem::egradT(const MatD &T, const MatD &Lr, const MatD &Pr, MatD &egT) const
     {
         // ROFL_VAR7(egT, T.rows(), T.cols(), Lr.rows(), Lr.cols(), Pr.rows(), Pr.cols());
         egT = T * (Lr + Lr.transpose()) + Pr.transpose();
     }
 
-    void SampleSomProblem::rgradT(const Eigen::MatrixXd &T, const Eigen::MatrixXd &Lr, const Eigen::MatrixXd &Pr, Eigen::MatrixXd &egT) const
+    void SampleSomProblem::rgradT(const MatD &T, const MatD &Lr, const MatD &Pr, MatD &egT) const
     {
         egradT(T, Lr, Pr, egT);
     }
@@ -445,7 +445,7 @@ namespace ROPTLIB
     //         xEigen(i) = xArr[i];
     // }
 
-    void SampleSomProblem::RoptToEig(Vector x, Eigen::MatrixXd &xEigen) const
+    void SampleSomProblem::RoptToEig(Vector x, MatD &xEigen) const
     {
         Vector xT = x.GetTranspose(); // Eigen ADV init is row-major!!
 
@@ -456,7 +456,7 @@ namespace ROPTLIB
             xEigen(i) = xArr[i];
     }
 
-    void SampleSomProblem::vstack(const std::vector<Eigen::MatrixXd> &in, Eigen::MatrixXd &out) const
+    void SampleSomProblem::vstack(const VecMatD &in, MatD &out) const
     {
         // out has same number of columns, whereas number of rows is the product of the size of the other 2 dimensions
 
@@ -467,7 +467,7 @@ namespace ROPTLIB
         }
     }
 
-    void SampleSomProblem::hstack(const std::vector<Eigen::MatrixXd> &in, Eigen::MatrixXd &out) const
+    void SampleSomProblem::hstack(const VecMatD &in, MatD &out) const
     {
         // out has same number of columns, whereas number of rows is the product of the size of the other 2 dimensions
 
@@ -478,7 +478,7 @@ namespace ROPTLIB
         }
     }
 
-    void SampleSomProblem::unStackV(const Eigen::MatrixXd &in, std::vector<Eigen::MatrixXd> &out, int rowsOut) const
+    void SampleSomProblem::unStackV(const MatD &in, VecMatD &out, int rowsOut) const
     {
         int n = (int)in.rows() / rowsOut;
 
@@ -488,7 +488,7 @@ namespace ROPTLIB
         ROFL_ASSERT(n * rowsOut == in.rows());
 
         out.clear();
-        out.resize(n, Eigen::MatrixXd::Zero(rowsOut, in.cols()));
+        out.resize(n, MatD::Zero(rowsOut, in.cols()));
 
         for (int i = 0; i < n; ++i)
         {
@@ -496,7 +496,7 @@ namespace ROPTLIB
         }
     }
 
-    void SampleSomProblem::unStackH(const Eigen::MatrixXd &in, std::vector<Eigen::MatrixXd> &out, int colsOut) const
+    void SampleSomProblem::unStackH(const MatD &in, VecMatD &out, int colsOut) const
     {
         int n = (int)in.cols() / colsOut;
 
@@ -505,7 +505,7 @@ namespace ROPTLIB
         ROFL_ASSERT(n * colsOut == in.cols());
 
         out.clear();
-        out.resize(n, Eigen::MatrixXd::Zero(in.rows(), colsOut));
+        out.resize(n, MatD::Zero(in.rows(), colsOut));
 
         for (int i = 0; i < n; ++i)
         {
@@ -513,9 +513,9 @@ namespace ROPTLIB
         }
     }
 
-    void SampleSomProblem::getRi(const Variable &x, Eigen::MatrixXd &rOut, int i) const
+    void SampleSomProblem::getRi(const Variable &x, MatD &rOut, int i) const
     {
-        Eigen::MatrixXd xEigen(fullSz_, 1);
+        MatD xEigen(fullSz_, 1);
         RoptToEig(x, xEigen);
 
         // rOut already needs to have fixed size by here
@@ -524,13 +524,13 @@ namespace ROPTLIB
         int startId = i * rotSz;
         // int endId = (i+1) * rotSz;
 
-        Eigen::MatrixXd rOutVec(rotSz, 1);
+        MatD rOutVec(rotSz, 1);
         rOutVec = xEigen.block(startId, 0, rotSz, 1);
 
         rOut = rOutVec.reshaped(sz_.p_, sz_.d_);
     }
 
-    void SampleSomProblem::getRi(const Eigen::MatrixXd &xEig, Eigen::MatrixXd &rOut, int i) const
+    void SampleSomProblem::getRi(const MatD &xEig, MatD &rOut, int i) const
     {
         // rOut already needs to have fixed size by here
         int rotSz = getRotSz(); // as a vector
@@ -538,13 +538,13 @@ namespace ROPTLIB
         int startId = i * rotSz;
         // int endId = (i+1) * rotSz;
 
-        Eigen::MatrixXd rOutVec(rotSz, 1);
+        MatD rOutVec(rotSz, 1);
         rOutVec = xEig.block(startId, 0, rotSz, 1);
 
         rOut = rOutVec.reshaped(sz_.p_, sz_.d_);
     }
 
-    void SampleSomProblem::getRotations(const Eigen::MatrixXd &xEig, std::vector<Eigen::MatrixXd> &rOut) const
+    void SampleSomProblem::getRotations(const MatD &xEig, VecMatD &rOut) const
     {
         // rOut already needs to have fixed size by here
         int rotSz = getRotSz(); // as a vector
@@ -556,15 +556,15 @@ namespace ROPTLIB
         for (int i = 0; i < sz_.n_; ++i)
         {
             int startId = i * rotSz;
-            Eigen::MatrixXd Ri(sz_.p_, sz_.d_);
+            MatD Ri(sz_.p_, sz_.d_);
             getRi(xEig, Ri, i); // TODO: this can probably be optimized better
             rOut.push_back(Ri);
         }
     }
 
-    void SampleSomProblem::getTi(const Variable &x, Eigen::MatrixXd &tOut, int i) const
+    void SampleSomProblem::getTi(const Variable &x, MatD &tOut, int i) const
     {
-        Eigen::MatrixXd xEigen(fullSz_, 1);
+        MatD xEigen(fullSz_, 1);
         RoptToEig(x, xEigen);
 
         // rOut already needs to have fixed size by here
@@ -579,7 +579,7 @@ namespace ROPTLIB
         tOut = xEigen.block(startId, 0, translSz, 1);
     }
 
-    void SampleSomProblem::getTi(const Eigen::MatrixXd &xEig, Eigen::MatrixXd &tOut, int i) const
+    void SampleSomProblem::getTi(const MatD &xEig, MatD &tOut, int i) const
     {
         // rOut already needs to have fixed size by here
         int rotSz = getRotSz();
@@ -593,7 +593,7 @@ namespace ROPTLIB
         tOut = xEig.block(startId, 0, translSz, 1);
     }
 
-    void SampleSomProblem::getTranslations(const Eigen::MatrixXd &xEig, Eigen::MatrixXd &tOut) const
+    void SampleSomProblem::getTranslations(const MatD &xEig, MatD &tOut) const
     {
         // rOut already needs to have fixed size by here
         int rotSz = getRotSz(); // as a vector
@@ -603,13 +603,13 @@ namespace ROPTLIB
         for (int i = 0; i < sz_.n_; ++i)
         {
             int startId = i * rotSz;
-            Eigen::MatrixXd Ti(sz_.p_, 1);
+            MatD Ti(sz_.p_, 1);
             getTi(xEig, Ti, i); // TODO: this can probably be optimized better
             tOut.col(i) = Ti;
         }
     }
 
-    void SampleSomProblem::makePfrct(const Eigen::MatrixXd &T, Eigen::MatrixXd &P, double &frct) const
+    void SampleSomProblem::makePfrct(const MatD &T, MatD &P, double &frct) const
     {
         // P = zeros(nrs, d*N);
 
@@ -623,8 +623,8 @@ namespace ROPTLIB
             int ii = edges_(e, 0) - 1;
             int jj = edges_(e, 1) - 1;
 
-            Eigen::MatrixXd T_j = T.col(jj);
-            Eigen::MatrixXd T_i = T.col(ii);
+            MatD T_j = T.col(jj);
+            MatD T_i = T.col(ii);
             auto tij = Tijs_.col(e);
             auto Pe = 2 * (T_i * tij.transpose() - T_j * tij.transpose());
             P.block(0, ii * sz_.d_, sz_.p_, sz_.d_) += Pe;
@@ -635,7 +635,7 @@ namespace ROPTLIB
         }
     }
 
-    void SampleSomProblem::makeLrPrBr(const std::vector<Eigen::MatrixXd> &R, Eigen::MatrixXd &Lr, Eigen::MatrixXd &Pr, Eigen::MatrixXd &Br) const
+    void SampleSomProblem::makeLrPrBr(const VecMatD &R, MatD &Lr, MatD &Pr, MatD &Br) const
     {
         // LR = zeros(N,N);
         // PR = zeros(N,nrs);
@@ -653,7 +653,7 @@ namespace ROPTLIB
             int jj = edges_(e, 1) - 1;
             auto Ri = R[ii];
 
-            Eigen::MatrixXd bij(Eigen::MatrixXd::Zero(sz_.n_, 1));
+            MatD bij(MatD::Zero(sz_.n_, 1));
 
             bij(ii) = 1;
             bij(jj) = -1;
@@ -678,4 +678,35 @@ namespace ROPTLIB
         return sz_.p_;
     }
 
-}
+    void SampleSomProblem::stiefelTangentProj(const VecMatD &Y, const VecMatD &Hin, VecMatD &Hout) const
+    {
+        ROFL_ASSERT(Y.size() == sz_.n_);
+
+        MatD tmp = Y[0].transpose() * Hin[0];
+        Hout.clear();
+        Hout.resize(sz_.n_, MatD::Zero(tmp.rows(), tmp.cols()));
+
+        for (int i = 0; i < sz_.n_; ++i)
+        {
+            stiefelTangentProj(Y[i], Hin[i], Hout[i]);
+        }
+    }
+
+    void SampleSomProblem::stiefelTangentProj(const MatD &Y, const MatD &Hin, MatD &Hout) const
+    {
+        MatD tmp = Y.transpose() * Hin;
+
+        ROFL_ASSERT(tmp.rows() == tmp.cols()); // kind of useless as the check is performed also in extractSymmetricPart()
+
+        MatD sympart(MatD::Zero(tmp.rows(), tmp.cols()));
+        extractSymmetricPart(Y.transpose() * Hin, sympart);
+        Hout = Hin - Y * sympart;
+    }
+
+    void SampleSomProblem::extractSymmetricPart(const MatD &in, MatD &out) const
+    {
+        ROFL_ASSERT(in.rows() == in.cols());
+        out = 0.5 * (in + in.transpose());
+    }
+
+} //end of namespace ROPTLIB
