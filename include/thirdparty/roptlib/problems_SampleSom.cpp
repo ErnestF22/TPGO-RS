@@ -48,126 +48,125 @@ namespace ROPTLIB
         ROFL_VAR1(cost);
         // ROFL_ASSERT(!std::isnan(corr));
 
-        // Vector *resultEgrad;    
+        // Vector *resultEgrad;
         // *resultEgrad = Domain->RandominManifold();
         // EucGrad(x, resultEgrad);
         // x.AddToFields("EGrad", *resultEgrad); //x should have been const?? maybe only its reference
 
-
         return cost; // checked -> the - here should be OK
     };
 
-    Vector &SampleSomProblem::EucGrad(const Variable &x, Vector *result) const
-    {
-        // result->NewMemoryOnWrite();
-        // result->GetElement(0) = x.Field("B1x1D1");
-        // result->GetElement(1) = x.Field("B2x2D2");
-        // result->GetElement(2) = x.Field("B3x3D3");
-        // Domain->ScalarTimesVector(x, 2, *result, result);
+    // Vector &SampleSomProblem::EucGrad(const Variable &x, Vector *result) const
+    // {
+    //     // result->NewMemoryOnWrite();
+    //     // result->GetElement(0) = x.Field("B1x1D1");
+    //     // result->GetElement(1) = x.Field("B2x2D2");
+    //     // result->GetElement(2) = x.Field("B3x3D3");
+    //     // Domain->ScalarTimesVector(x, 2, *result, result);
 
-        // result->Print("Euc Grad result: printing it before NewMemoryOnWrite()");
-        *result = Domain->RandominManifold();
-        result->NewMemoryOnWrite();
-        result->Print("Euc Grad result: printing it after NewMemoryOnWrite()");
+    //     // result->Print("Euc Grad result: printing it before NewMemoryOnWrite()");
+    //     *result = Domain->RandominManifold();
+    //     result->NewMemoryOnWrite();
+    //     result->Print("Euc Grad result: printing it after NewMemoryOnWrite()");
 
-        MatD xEig(fullSz_, 1);
-        RoptToEig(x, xEig);
+    //     MatD xEig(fullSz_, 1);
+    //     RoptToEig(x, xEig);
 
-        VecMatD R(sz_.n_, MatD::Zero(sz_.p_, sz_.d_));
-        getRotations(xEig, R);
+    //     VecMatD R(sz_.n_, MatD::Zero(sz_.p_, sz_.d_));
+    //     getRotations(xEig, R);
 
-        MatD T(MatD::Zero(sz_.p_, sz_.n_));
-        getTranslations(xEig, T);
+    //     MatD T(MatD::Zero(sz_.p_, sz_.n_));
+    //     getTranslations(xEig, T);
 
-        // P = zeros(nrs, d*N);
-        MatD P(MatD::Zero(sz_.p_, sz_.d_ * sz_.n_));
-        double frct = 0.0;
+    //     // P = zeros(nrs, d*N);
+    //     MatD P(MatD::Zero(sz_.p_, sz_.d_ * sz_.n_));
+    //     double frct = 0.0;
 
-        // LR = zeros(N,N);
-        // PR = zeros(N,nrs);
-        // BR_const = zeros(d,d);
-        MatD Lr(MatD::Zero(sz_.n_, sz_.n_));
-        MatD Pr(MatD::Zero(sz_.n_, sz_.p_));
-        MatD Br(MatD::Zero(sz_.d_, sz_.d_));
+    //     // LR = zeros(N,N);
+    //     // PR = zeros(N,nrs);
+    //     // BR_const = zeros(d,d);
+    //     MatD Lr(MatD::Zero(sz_.n_, sz_.n_));
+    //     MatD Pr(MatD::Zero(sz_.n_, sz_.p_));
+    //     MatD Br(MatD::Zero(sz_.d_, sz_.d_));
 
-        makePfrct(T, P, frct);
-        makeLrPrBr(R, Lr, Pr, Br);
+    //     makePfrct(T, P, frct);
+    //     makeLrPrBr(R, Lr, Pr, Br);
 
-        VecMatD egR(sz_.n_, MatD::Zero(sz_.p_, sz_.d_));
-        egradR(P, egR);
+    //     VecMatD egR(sz_.n_, MatD::Zero(sz_.p_, sz_.d_));
+    //     egradR(P, egR);
 
-        MatD egT(MatD::Zero(sz_.p_, sz_.n_));
-        egradT(T, Lr, Pr, egT);
+    //     MatD egT(MatD::Zero(sz_.p_, sz_.n_));
+    //     egradT(T, Lr, Pr, egT);
 
-        // result->NewMemoryOnWrite();
-        // result = Domain->RandomInManifold();
+    //     // result->NewMemoryOnWrite();
+    //     // result = Domain->RandomInManifold();
 
-        int rotSz = getRotSz();
-        int translSz = getTranslSz();
-        int gElemIdx = 0;
+    //     int rotSz = getRotSz();
+    //     int translSz = getTranslSz();
+    //     int gElemIdx = 0;
 
-        // fill result with computed gradient values : R
-        for (int i = 0; i < sz_.n_; ++i)
-        {
-            // ROFL_VAR1(gElemIdx);
-            // ROFL_VAR2("\n", egR[gElemIdx]);
-            result->GetElement(gElemIdx).SetToZeros(); // Ri
-            // result->GetElement(gElemIdx).Print("Ri before assignment");
+    //     // fill result with computed gradient values : R
+    //     for (int i = 0; i < sz_.n_; ++i)
+    //     {
+    //         // ROFL_VAR1(gElemIdx);
+    //         // ROFL_VAR2("\n", egR[gElemIdx]);
+    //         result->GetElement(gElemIdx).SetToZeros(); // Ri
+    //         // result->GetElement(gElemIdx).Print("Ri before assignment");
 
-            Vector egRiVec(sz_.p_, sz_.d_);
-            // egRiVec.Initialize();
-            realdp *GroptlibWriteArray = egRiVec.ObtainWriteEntireData();
-            for (int j = 0; j < rotSz; ++j)
-            {
-                // ROFL_VAR2(i, j);
-                // egRiVec.Print("egRiVec before assignment");
+    //         Vector egRiVec(sz_.p_, sz_.d_);
+    //         // egRiVec.Initialize();
+    //         realdp *GroptlibWriteArray = egRiVec.ObtainWriteEntireData();
+    //         for (int j = 0; j < rotSz; ++j)
+    //         {
+    //             // ROFL_VAR2(i, j);
+    //             // egRiVec.Print("egRiVec before assignment");
 
-                // ROFL_VAR1(egRiVec.GetElement(j, 0));
+    //             // ROFL_VAR1(egRiVec.GetElement(j, 0));
 
-                GroptlibWriteArray[j] = egR[i].reshaped(sz_.d_ * sz_.p_, 1)(j);
+    //             GroptlibWriteArray[j] = egR[i].reshaped(sz_.d_ * sz_.p_, 1)(j);
 
-                // ROFL_VAR1("");
-                // egRiVec.Print("egRiVec after assignment");
-            }
-            egRiVec.CopyTo(result->GetElement(gElemIdx));
-            // result->GetElement(gElemIdx).Print("grad Ri after assignment");
-            gElemIdx++;
-        }
+    //             // ROFL_VAR1("");
+    //             // egRiVec.Print("egRiVec after assignment");
+    //         }
+    //         egRiVec.CopyTo(result->GetElement(gElemIdx));
+    //         // result->GetElement(gElemIdx).Print("grad Ri after assignment");
+    //         gElemIdx++;
+    //     }
 
-        // fill result with computed gradient values : T
+    //     // fill result with computed gradient values : T
 
-        Vector egTiVec(sz_.p_, sz_.n_);
-        realdp *GroptlibWriteArray = egTiVec.ObtainWriteEntireData();
-        for (int j = 0; j < sz_.p_ * sz_.n_; ++j)
-        {
-            // egTiVec.Print("egTiVec before assignment");
+    //     Vector egTiVec(sz_.p_, sz_.n_);
+    //     realdp *GroptlibWriteArray = egTiVec.ObtainWriteEntireData();
+    //     for (int j = 0; j < sz_.p_ * sz_.n_; ++j)
+    //     {
+    //         // egTiVec.Print("egTiVec before assignment");
 
-            // ROFL_VAR1(egRiVec.GetElement(j, 0));
+    //         // ROFL_VAR1(egRiVec.GetElement(j, 0));
 
-            GroptlibWriteArray[j] = egT.reshaped(sz_.n_ * sz_.p_, 1)(j);
+    //         GroptlibWriteArray[j] = egT.reshaped(sz_.n_ * sz_.p_, 1)(j);
 
-            // ROFL_VAR1("");
-            // egTiVec.Print("egTiVec after assignment");
-        }
-        egTiVec.CopyTo(result->GetElement(gElemIdx));
-        // result->GetElement(gElemIdx).Print("Eucl. grad Ti after assignment");
+    //         // ROFL_VAR1("");
+    //         // egTiVec.Print("egTiVec after assignment");
+    //     }
+    //     egTiVec.CopyTo(result->GetElement(gElemIdx));
+    //     // result->GetElement(gElemIdx).Print("Eucl. grad Ti after assignment");
 
-        // ROFL_VAR2("\n", egT);
-        // ROFL_VAR1(gElemIdx);
-        // result->GetElement(gElemIdx).Print();
+    //     // ROFL_VAR2("\n", egT);
+    //     // ROFL_VAR1(gElemIdx);
+    //     // result->GetElement(gElemIdx).Print();
 
-        // result->NewMemoryOnWrite();
-        // result->SetToZeros();
-        // *result = Groptlib;
+    //     // result->NewMemoryOnWrite();
+    //     // result->SetToZeros();
+    //     // *result = Groptlib;
 
-        result->Print("printing final result");
+    //     result->Print("printing final result");
 
-        // ROFL_ASSERT(0);
+    //     // ROFL_ASSERT(0);
 
-        x.AddToFields("EGrad", *result); //x should have been const?? maybe only its reference
+    //     x.AddToFields("EGrad", *result); // x should have been const?? maybe only its reference
 
-        return *result;
-    };
+    //     return *result;
+    // };
 
     Vector &SampleSomProblem::RieGrad(const Variable &x, Vector *result) const
     {
@@ -439,13 +438,27 @@ namespace ROPTLIB
         egradT(T, Lr, Pr, egT);
     }
 
+    // Vector &SampleSomProblem::EucHessianEta(const Variable &x, const Vector &etax, Vector *result) const
+    // {
+    //     // TODO: implement
+
+    //     result->NewMemoryOnWrite();
+
+    //     // h.R = rsom_rhess_rot_stiefel(R, Rdot, problem_structs) + hrt;
+    //     // h.T = rsom_rhess_transl_stiefel(T, Tdot, problem_structs) + htr;
+
+    //     result->Print("EucHessianEta: printing it just after NewMemoryOnWrite()");
+
+    //     return *result;
+    // };
+
     Vector &SampleSomProblem::HessianEta(const Variable &x, const Vector &etax, Vector *result) const
     {
         // TODO: implement
 
         result->NewMemoryOnWrite();
 
-        result->Print("EucHessianEta: printing it just after NewMemoryOnWrite()");
+        result->Print("HessianEta: printing it just after NewMemoryOnWrite()");
 
         return *result;
     };

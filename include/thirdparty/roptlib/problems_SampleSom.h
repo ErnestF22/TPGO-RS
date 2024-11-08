@@ -61,7 +61,7 @@ namespace ROPTLIB
         /**
          * Computation of Euclidean Gradient of cost function
          */
-        virtual Vector &EucGrad(const Variable &x, Vector *result) const;
+        // virtual Vector &EucGrad(const Variable &x, Vector *result) const;
 
         /**
          * Riemannian Gradient (backup: not used, as ROPTLIB wants Grad() directly)
@@ -95,6 +95,11 @@ namespace ROPTLIB
 
         /**
          * Euclidean Hessian action i.e., *result = H(x)[etax]
+         */
+        // virtual Vector &EucHessianEta(const Variable &x, const Vector &etax, Vector *result) const;
+
+        /**
+         * Hessian action i.e., *result = H(x)[etax]
          */
         virtual Vector &HessianEta(const Variable &x, const Vector &etax, Vector *result) const;
 

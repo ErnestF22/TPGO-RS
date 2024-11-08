@@ -24,30 +24,52 @@ void testSomSample(SomSize somSz, MatD &Tijs, Eigen::MatrixXi &edges)
 
     // manifold
     // An example of using ProductManifold() constructor to generate St(d,p)^n \times Euc(p,n):
-    integer numoftypes = 2; // 2 i.e. (3D) Stiefel + Euclidean
+    integer numoftypes = 2;        // 2 i.e. (3D) Stiefel + Euclidean
     integer numofmani1 = somSz.n_; // num of Stiefel manifolds
     integer numofmani2 = 1;
     Stiefel mani1(somSz.p_, somSz.d_);
-    mani1.ChooseParamsSet1();
+    mani1.ChooseParamsSet2();
     Euclidean mani2(somSz.p_, somSz.n_);
     ProductManifold ProdMani(numoftypes, &mani1, numofmani1, &mani2, numofmani2);
-    
 
     // Obtain an initial iterate
     Vector startX = ProdMani.RandominManifold();
+
+    {//intr vs extr scope
+        Vector x = startX.GetElement(0);   // TODO: change later
+        Vector egf(6,1,1); // TODO: change later
+        // egf.Initialization(6,1,1);
+        Stiefel maniSt(somSz.p_, somSz.d_);
+        maniSt.ChooseParamsSet1();
+        Vector result(6,1,1);
+
+
+        result = maniSt.ObtainIntr(x, egf, &result);
+
+        // Vector tmp(somSz.d_, somSz.d_); tmp.AlphaABaddBetaThis(1, egf, GLOBAL::T, x, GLOBAL::N, 0);
+        // result.AlphaABaddBetaThis(-1, x, GLOBAL::N, tmp, GLOBAL::N, 1); /*egf - x * (egf.GetTranspose() * x)*/
+        result.Print("Minimum notation debugging 1");
+    }
+
     startX.Print("startX");
 
+    // ProdMani.SetIsIntrApproach(false);
+    
     // Set the domain of the problem to be the product of Stiefel manifolds
     SampleSomProblem Prob(somSz, Tijs, edges);
     Prob.SetDomain(&ProdMani);
 
+
     // Numerically check gradient consistency (optional).
     // ProdMani.CheckParams();
-    
+
     Prob.SetUseGrad(true);
-    Prob.SetUseHess(true);
+    Prob.SetUseHess(false);
     Prob.SetNumGradHess(true);
-    Prob.CheckGradHessian(startX);
+    // Prob.CheckGradHessian(startX);
+
+    
+
 
     // output the parameters of the manifold of domain
     ROPTLIB::RTRNewton *RTRNewtonSolver = new RTRNewton(&Prob, &startX); // USE INITGUESS HERE!
@@ -57,13 +79,12 @@ void testSomSample(SomSize somSz, MatD &Tijs, Eigen::MatrixXi &edges)
     // ROPTLIB::PARAMSMAP solverParams = {std::pair<std::string, double>("Max_Inner_Iter", 10)};
     // RTRNewtonSolver->SetParams(solverParams);
     RTRNewtonSolver->CheckParams();
-    
 
     // % Solve.
     // [x, xcost, info, options] = trustregions(problem);
 
     RTRNewtonSolver->Run();
-    // Prob.CheckGradHessian(RTRNewtonSolver->GetXopt());
+    Prob.CheckGradHessian(RTRNewtonSolver->GetXopt());
 
     std::cout << "Prob.GetUseGrad() " << Prob.GetUseGrad() << std::endl;
     std::cout << "Prob.GetUseHess() " << Prob.GetUseHess() << std::endl;
