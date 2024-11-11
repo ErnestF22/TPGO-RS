@@ -452,13 +452,126 @@ namespace ROPTLIB
     //     return *result;
     // };
 
-    Vector &SampleSomProblem::HessianEta(const Variable &x, const Vector &etax, Vector *result) const
+    Vector &SampleSomProblem::RieHessianEta(const Variable &x, const Vector &etax, Vector *result) const
     {
         // TODO: implement
 
         result->NewMemoryOnWrite();
 
-        result->Print("HessianEta: printing it just after NewMemoryOnWrite()");
+        result->Print("RieHessianEta: printing it just after NewMemoryOnWrite()");
+
+        MatD xEig(fullSz_, 1);
+        RoptToEig(x, xEig);
+
+        MatD xEtaEig(fullSz_, 1);
+        RoptToEig(etax, xEtaEig);
+
+        VecMatD R(sz_.n_, MatD::Zero(sz_.p_, sz_.d_));
+        getRotations(xEig, R);
+
+        VecMatD uR(sz_.n_, MatD::Zero(sz_.p_, sz_.d_));
+        getRotations(xEtaEig, uR);
+
+        MatD T(MatD::Zero(sz_.p_, sz_.n_));
+        getTranslations(xEig, T);
+
+        MatD uT(MatD::Zero(sz_.p_, sz_.n_));
+        getTranslations(xEtaEig, uT);
+
+        // P = zeros(nrs, d*N);
+        MatD P(MatD::Zero(sz_.p_, sz_.d_ * sz_.n_));
+        double frct = 0.0;
+
+        // LR = zeros(N,N);
+        // PR = zeros(N,nrs);
+        // BR_const = zeros(d,d);
+        MatD Lr(MatD::Zero(sz_.n_, sz_.n_));
+        MatD Pr(MatD::Zero(sz_.n_, sz_.p_));
+        MatD Br(MatD::Zero(sz_.d_, sz_.d_));
+
+        makePfrct(T, P, frct);
+        makeLrPrBr(R, Lr, Pr, Br);
+
+        VecMatD rgR(sz_.n_, MatD::Zero(sz_.p_, sz_.d_));
+        rgradR(R, P, rgR);
+
+        MatD rgT(MatD::Zero(sz_.p_, sz_.n_));
+        rgradT(T, Lr, Pr, rgT);
+
+        // result->NewMemoryOnWrite();
+        // result = Domain->RandomInManifold();
+
+        int rotSz = getRotSz();
+        int translSz = getTranslSz();
+
+        // compute Hrr, Htt
+        VecMatD hrr(sz_.n_, MatD::Zero(sz_.p_, sz_.d_));
+        // computeHrr(R, uT, hrt);
+        MatD htt(MatD::Zero(sz_.p_, sz_.n_));
+        // computeHtt(uR, htr);
+
+        // h.R = rsom_rhess_rot_stiefel(R, Rdot, problem_structs) + hrt;
+        // h.T = rsom_rhess_transl_stiefel(T, Tdot, problem_structs) + htr;
+        VecMatD hrt(sz_.n_, MatD::Zero(sz_.p_, sz_.d_));
+        computeHrt(R, uT, hrt);
+        MatD htr(MatD::Zero(sz_.p_, sz_.n_));
+        computeHtr(uR, htr);
+
+        // TODO: use less memory
+        VecMatD rhR(sz_.n_, MatD::Zero(sz_.p_, sz_.d_));
+        MatD rhT(MatD::Zero(sz_.p_, sz_.n_));
+        // sum diag component with antidiag one
+        std::transform(hrr.begin(), hrr.end(), hrt.begin(), rhR.begin(), std::plus<MatD>());
+        rhT = htt + htr;
+
+        int gElemIdx = 0;
+        // fill result with computed gradient values : R
+        for (int i = 0; i < sz_.n_; ++i)
+        {
+            // ROFL_VAR1(gElemIdx);
+            // ROFL_VAR2("\n", rhR[gElemIdx]);
+            // result->GetElement(gElemIdx).SetToIdentity(); // Ri
+            // result->GetElement(gElemIdx).Print("Ri before assignment");
+
+            Vector rhRiVec(sz_.p_, sz_.d_);
+            // rhRiVec.Initialize();
+            realdp *GroptlibWriteArray = rhRiVec.ObtainWriteEntireData();
+            for (int j = 0; j < rotSz; ++j)
+            {
+                // ROFL_VAR2(i, j);
+                // rhRiVec.Print("rhRiVec before assignment");
+
+                // ROFL_VAR1(rhRiVec.GetElement(j, 0));
+
+                GroptlibWriteArray[j] = rhR[i].reshaped(sz_.d_ * sz_.p_, 1)(j);
+
+                // ROFL_VAR1("");
+                // rhRiVec.Print("rhRiVec after assignment");
+            }
+            rhRiVec.CopyTo(result->GetElement(gElemIdx));
+            // result->GetElement(gElemIdx).Print("Riem. grad Ri after assignment");
+            gElemIdx++;
+        }
+
+        // fill result with computed gradient values : T
+
+        Vector rhTiVec(sz_.p_, sz_.n_);
+        realdp *GroptlibWriteArray = rhTiVec.ObtainWriteEntireData();
+        for (int j = 0; j < sz_.p_ * sz_.n_; ++j)
+        {
+            // rhTiVec.Print("rhTiVec before assignment");
+
+            // ROFL_VAR1(rhRiVec.GetElement(j, 0));
+
+            GroptlibWriteArray[j] = rhT.reshaped(sz_.n_ * sz_.p_, 1)(j);
+
+            // ROFL_VAR1("");
+            // rhTiVec.Print("rhTiVec after assignment");
+        }
+        rhTiVec.CopyTo(result->GetElement(gElemIdx));
+        result->GetElement(gElemIdx).Print("grad Ti after assignment");
+
+        result->Print("RieHessianEta: printing just before end of function");
 
         return *result;
     };
@@ -683,6 +796,89 @@ namespace ROPTLIB
             Pr += 2 * bij * tij.transpose() * Ri.transpose();
 
             Br += tij * tij.transpose();
+        }
+    }
+
+    void SampleSomProblem::computeHrr(const VecMatD &xR, const VecMatD &uR, const MatD &P, VecMatD &hRR) const
+    {
+        // compute egR-Eig
+
+        VecMatD egR(sz_.n_, MatD::Zero(sz_.p_, sz_.d_));
+        egradR(P, egR);
+
+        VecMatD term_1(sz_.n_, MatD::Zero(sz_.p_, sz_.d_));
+        VecMatD term_2(sz_.n_, MatD::Zero(sz_.p_, sz_.d_));
+        VecMatD DGf(sz_.n_, MatD::Zero(sz_.p_, sz_.d_));
+
+        // TODO: improve efficiency of this
+        //  Original code was:
+        //  G = rsom_egrad_rot_stiefel(x, problem);
+        //  term_1 = multiprod(u, 0.5*multiprod(multitransp(x), G) + 0.5*multiprod(multitransp(G), x));
+        //  term_2 = multiprod(x, 0.5*multiprod(multitransp(u), G) + 0.5*multiprod(multitransp(G), u));
+        //  DGf = - term_1 - term_2;
+        //  h = stiefel_tangentProj(x, DGf);
+
+        for (int i = 0; i < sz_.n_; ++i)
+        {
+            term_1[i] = (uR[i] * 0.5 * (xR[i].transpose() * egR[i]) + 0.5 * (egR[i].transpose() * xR[i]));
+            term_2[i] = (xR[i] * 0.5 * (uR[i].transpose() * egR[i]) + 0.5 * (egR[i].transpose() * uR[i]));
+            DGf[i] = -term_1[i] - term_2[i];
+        }
+
+        std::for_each(hRR.begin(), hRR.end(), [](MatD &x) { //^^^ take argument by reference
+            x.setZero();
+        });
+        stiefelTangentProj(xR, DGf, hRR);
+    }
+
+    void SampleSomProblem::computeHtt(const MatD &uT, const MatD &LR, MatD &hTT) const
+    {
+        hTT = uT * (LR.transpose() + LR);
+    }
+
+    void SampleSomProblem::computeHrt(const VecMatD &xR, const MatD uT, VecMatD &hrt) const
+    {
+        VecMatD W(sz_.n_, MatD::Zero(sz_.p_, sz_.d_));
+
+        for (int e = 0; e < numEdges_; ++e)
+        {
+            int ii = edges_(e, 0) - 1;
+            int jj = edges_(e, 1) - 1;
+            MatD uTi(MatD::Zero(sz_.p_, 1));
+            uTi = uT.col(ii);
+            MatD uTj(MatD::Zero(sz_.p_, 1));
+            uTj = uT.col(jj);
+
+            MatD tij = Tijs_.col(e);
+            auto wij = 2 * (uTi - uTj) * tij.transpose();
+            W[ii] += wij;
+        }
+
+        std::for_each(hrt.begin(), hrt.end(), [](MatD &x) { //^^^ take argument by reference
+            x.setZero();
+        });
+
+        stiefelTangentProj(xR, W, hrt);
+    }
+
+    void SampleSomProblem::computeHtr(const VecMatD &uR, MatD &htr) const
+    {
+        htr.setZero();
+
+        for (int e = 0; e < numEdges_; ++e)
+        {
+            int ii = edges_(e, 0) - 1;
+            int jj = edges_(e, 1) - 1;
+            auto uRi = uR[ii];
+            // uRj = uR[jj];
+
+            MatD bij(MatD::Zero(sz_.n_, 1));
+            bij(ii, 0) = 1;
+            bij(jj, 0) = -1;
+
+            auto T_ij = Tijs_.col(e);
+            auto w_ij = 2 * bij * T_ij.transpose() * uRi.transpose();
+            htr = htr + w_ij.transpose();
         }
     }
 

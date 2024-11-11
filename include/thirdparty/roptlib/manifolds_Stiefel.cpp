@@ -125,16 +125,16 @@ namespace ROPTLIB
 
     Vector &Stiefel::ExtrProjection(const Variable &x, const Vector &etax, Vector *result) const
     {
-        x.Print("Extr Projection x");
-        result->Print("Extr Projection beginning: *result");
+        // x.Print("Extr Projection x");
+        // result->Print("Extr Projection beginning: *result");
 
         Vector tmp(p, p);
         tmp.AlphaABaddBetaThis(1, x, GLOBAL::T, etax, GLOBAL::N, 0); /*tmp = x.GetTranspose() * etax*/
         tmp = (tmp + tmp.GetTranspose()) / 2;
         *result = etax;
-        etax.Print("Extr Projection etax");
+        // etax.Print("Extr Projection etax");
         result->AlphaABaddBetaThis(-1, x, GLOBAL::N, tmp, GLOBAL::N, 1);
-        result->Print("Extr Projection end: *result");
+        // result->Print("Extr Projection end: *result");
 
         return *result;
     };

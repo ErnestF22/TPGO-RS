@@ -101,7 +101,7 @@ namespace ROPTLIB
         /**
          * Hessian action i.e., *result = H(x)[etax]
          */
-        virtual Vector &HessianEta(const Variable &x, const Vector &etax, Vector *result) const;
+        virtual Vector &RieHessianEta(const Variable &x, const Vector &etax, Vector *result) const;
 
         /**
          * Convert ROPTLIB Vector into Eigen equivalent
@@ -168,6 +168,14 @@ namespace ROPTLIB
          * Computes matrices used in translation estimation cost
          */
         void makeLrPrBr(const VecMatD &R, MatD &Lr, MatD &Pr, MatD &Br) const;
+
+        void computeHrr(const VecMatD &xR, const VecMatD &uR, const MatD &P, VecMatD &hRR) const;
+
+        void computeHtt(const MatD &uT, const MatD &LR, MatD &hTT) const;
+
+        void computeHrt(const VecMatD &xR, const MatD uT, VecMatD &hrt) const;
+
+        void computeHtr(const VecMatD &uR, MatD &htr) const;
 
         /**
          * Return p * d (size of a sigle Stiefel-rotation)
