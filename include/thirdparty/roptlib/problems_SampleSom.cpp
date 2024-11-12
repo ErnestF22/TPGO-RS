@@ -178,7 +178,7 @@ namespace ROPTLIB
         // result->GetElement(2) = x.Field("B3x3D3");
         // Domain->ScalarTimesVector(x, 2, *result, result);
 
-        result->Print("RieGrad: printing result at start of function (should be empty)");
+        // result->Print("RieGrad: printing result at start of function (should be empty)");
 
         MatD xEig(fullSz_, 1);
         RoptToEig(x, xEig);
@@ -201,15 +201,19 @@ namespace ROPTLIB
         MatD Br(MatD::Zero(sz_.d_, sz_.d_));
 
         makePfrct(T, P, frct);
+        // ROFL_VAR2(P, frct);
         makeLrPrBr(R, Lr, Pr, Br);
+        // ROFL_VAR3(Lr, Pr, Br);
 
         VecMatD rgR(sz_.n_, MatD::Zero(sz_.p_, sz_.d_));
-        ROFL_VAR3(xEig.rows(), R.size(), T.size());
-        ROFL_VAR3(R.size(), P.size(), rgR.size());
+        // ROFL_VAR3(xEig.rows(), R.size(), T.size());
+        // ROFL_VAR3(R.size(), P.size(), rgR.size());
         rgradR(R, P, rgR);
+        // ROFL_VAR5(rgR[0],rgR[1],rgR[2],rgR[3],rgR[4]);
 
         MatD rgT(MatD::Zero(sz_.p_, sz_.n_));
         rgradT(T, Lr, Pr, rgT);
+        // ROFL_VAR1(rgT);
 
         // result->NewMemoryOnWrite();
         // result = Domain->RandomInManifold();
@@ -262,7 +266,7 @@ namespace ROPTLIB
             // rgTiVec.Print("rgTiVec after assignment");
         }
         rgTiVec.CopyTo(result->GetElement(gElemIdx));
-        result->GetElement(gElemIdx).Print("grad Ti after assignment");
+        // result->GetElement(gElemIdx).Print("grad Ti after assignment");
 
         // ROFL_VAR2("\n", rgT);
         // ROFL_VAR1(gElemIdx);
@@ -462,7 +466,10 @@ namespace ROPTLIB
 
         result->NewMemoryOnWrite();
 
-        result->Print("RieHessianEta: printing it just after NewMemoryOnWrite()");
+        // result->Print("RieHessianEta: printing it just after NewMemoryOnWrite()");
+
+        x.Print("x inside RieHessianEta");
+        etax.Print("etax inside RieHessianEta");
 
         MatD xEig(fullSz_, 1);
         RoptToEig(x, xEig);
@@ -482,6 +489,9 @@ namespace ROPTLIB
         MatD uT(MatD::Zero(sz_.p_, sz_.n_));
         getTranslations(xEtaEig, uT);
 
+        ROFL_VAR2(R[0], uR[0]);
+        ROFL_VAR2(T, uT);
+
         // P = zeros(nrs, d*N);
         MatD P(MatD::Zero(sz_.p_, sz_.d_ * sz_.n_));
         double frct = 0.0;
@@ -494,7 +504,9 @@ namespace ROPTLIB
         MatD Br(MatD::Zero(sz_.d_, sz_.d_));
 
         makePfrct(T, P, frct);
+        ROFL_VAR2(P, frct);
         makeLrPrBr(R, Lr, Pr, Br);
+        ROFL_VAR3(Lr, Pr, Br);
 
         VecMatD rgR(sz_.n_, MatD::Zero(sz_.p_, sz_.d_));
         rgradR(R, P, rgR);
@@ -510,9 +522,9 @@ namespace ROPTLIB
 
         // compute Hrr, Htt
         VecMatD hrr(sz_.n_, MatD::Zero(sz_.p_, sz_.d_));
-        // computeHrr(R, uT, hrt);
+        computeHrr(R, uR, P, hrr);
         MatD htt(MatD::Zero(sz_.p_, sz_.n_));
-        // computeHtt(uR, htr);
+        computeHtt(uT, Lr, htt);
 
         // h.R = rsom_rhess_rot_stiefel(R, Rdot, problem_structs) + hrt;
         // h.T = rsom_rhess_transl_stiefel(T, Tdot, problem_structs) + htr;
@@ -521,12 +533,21 @@ namespace ROPTLIB
         MatD htr(MatD::Zero(sz_.p_, sz_.n_));
         computeHtr(uR, htr);
 
+        ROFL_VAR2(hrr[0], hrt[0]);
+        ROFL_VAR2(hrr[1], hrt[1]);
+        ROFL_VAR2(hrr[2], hrt[2]);
+        ROFL_VAR2(hrr[3], hrt[3]);
+        ROFL_VAR2(hrr[4], hrt[4]);
+        ROFL_VAR2(htr, htt);
+
         // TODO: use less memory
         VecMatD rhR(sz_.n_, MatD::Zero(sz_.p_, sz_.d_));
         MatD rhT(MatD::Zero(sz_.p_, sz_.n_));
         // sum diag component with antidiag one
         std::transform(hrr.begin(), hrr.end(), hrt.begin(), rhR.begin(), std::plus<MatD>());
+        ROFL_VAR5(rhR[0], rhR[1], rhR[2], rhR[3], rhR[4]);
         rhT = htt + htr;
+        ROFL_VAR1(rhT);
 
         int gElemIdx = 0;
         // fill result with computed gradient values : R
@@ -573,7 +594,7 @@ namespace ROPTLIB
             // rhTiVec.Print("rhTiVec after assignment");
         }
         rhTiVec.CopyTo(result->GetElement(gElemIdx));
-        result->GetElement(gElemIdx).Print("grad Ti after assignment");
+        result->GetElement(gElemIdx).Print("RieHess T after assignment");
 
         result->Print("RieHessianEta: printing just before end of function");
 
@@ -763,12 +784,12 @@ namespace ROPTLIB
 
             MatD T_j = T.col(jj);
             MatD T_i = T.col(ii);
-            auto tij = Tijs_.col(e);
-            auto Pe = 2 * (T_i * tij.transpose() - T_j * tij.transpose());
+            MatD tij = Tijs_.col(e);
+            MatD Pe = 2 * (T_i * tij.transpose() - T_j * tij.transpose());
             P.block(0, ii * sz_.d_, sz_.p_, sz_.d_) += Pe;
 
-            auto c = T_i * T_i.transpose() + T_j * T_j.transpose() - T_i * T_j.transpose() - T_j * T_i.transpose();
-            auto d = tij * tij.transpose();
+            MatD c = T_i * T_i.transpose() + T_j * T_j.transpose() - T_i * T_j.transpose() - T_j * T_i.transpose();
+            MatD d = tij * tij.transpose();
             frct += c.trace() + d.trace();
         }
     }
@@ -789,14 +810,14 @@ namespace ROPTLIB
         {
             int ii = edges_(e, 0) - 1;
             int jj = edges_(e, 1) - 1;
-            auto Ri = R[ii];
+            MatD Ri = R[ii];
 
             MatD bij(MatD::Zero(sz_.n_, 1));
 
             bij(ii) = 1;
             bij(jj) = -1;
 
-            auto tij = Tijs_.col(e);
+            MatD tij = Tijs_.col(e);
 
             Lr += bij * bij.transpose();
 
@@ -808,10 +829,9 @@ namespace ROPTLIB
 
     void SampleSomProblem::computeHrr(const VecMatD &xR, const VecMatD &uR, const MatD &P, VecMatD &hRR) const
     {
-        // compute egR-Eig
-
         VecMatD egR(sz_.n_, MatD::Zero(sz_.p_, sz_.d_));
         egradR(P, egR);
+        ROFL_VAR2(P, egR[0]);
 
         VecMatD term_1(sz_.n_, MatD::Zero(sz_.p_, sz_.d_));
         VecMatD term_2(sz_.n_, MatD::Zero(sz_.p_, sz_.d_));
@@ -827,8 +847,8 @@ namespace ROPTLIB
 
         for (int i = 0; i < sz_.n_; ++i)
         {
-            term_1[i] = (uR[i] * 0.5 * (xR[i].transpose() * egR[i]) + 0.5 * (egR[i].transpose() * xR[i]));
-            term_2[i] = (xR[i] * 0.5 * (uR[i].transpose() * egR[i]) + 0.5 * (egR[i].transpose() * uR[i]));
+            term_1[i] = uR[i] * (0.5 * (xR[i].transpose() * egR[i]) + 0.5 * (egR[i].transpose() * xR[i]));
+            term_2[i] = xR[i] * (0.5 * (uR[i].transpose() * egR[i]) + 0.5 * (egR[i].transpose() * uR[i]));
             DGf[i] = -term_1[i] - term_2[i];
         }
 
@@ -857,7 +877,7 @@ namespace ROPTLIB
             uTj = uT.col(jj);
 
             MatD tij = Tijs_.col(e);
-            auto wij = 2 * (uTi - uTj) * tij.transpose();
+            MatD wij = 2 * (uTi - uTj) * tij.transpose();
             W[ii] += wij;
         }
 
@@ -876,16 +896,17 @@ namespace ROPTLIB
         {
             int ii = edges_(e, 0) - 1;
             int jj = edges_(e, 1) - 1;
-            auto uRi = uR[ii];
+            MatD uRi = uR[ii];
             // uRj = uR[jj];
 
             MatD bij(MatD::Zero(sz_.n_, 1));
             bij(ii, 0) = 1;
             bij(jj, 0) = -1;
 
-            auto T_ij = Tijs_.col(e);
-            auto w_ij = 2 * bij * T_ij.transpose() * uRi.transpose();
-            htr = htr + w_ij.transpose();
+            MatD tij = Tijs_.col(e);
+            MatD wij = 2 * bij * tij.transpose() * uRi.transpose();
+            htr += wij.transpose();
+            // ROFL_VAR5(bij.transpose(), tij.transpose(), uRi, wij, htr);
         }
     }
 

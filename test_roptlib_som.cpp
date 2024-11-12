@@ -42,7 +42,7 @@ void deserializeRow(const std::string &row, double &pt)
     // ROFL_VAR1(pt.transpose());
 }
 
-void readCsvInitguess(std::string fname, Vector &csvsc)
+void readCsvInitguess(std::string fname, Vector &csvVec)
 {
     std::fstream fout;
     fout.open(fname, std::ios::in);
@@ -55,13 +55,13 @@ void readCsvInitguess(std::string fname, Vector &csvsc)
         
 
     std::string line;
-    // getline(fout, csvsc.header, '\n');
-    // ROFL_VAR1(csvsc.header);
-    csvsc.ObtainWriteEntireData();
+    // getline(fout, csvVec.header, '\n');
+    // ROFL_VAR1(csvVec.header);
+    csvVec.ObtainWriteEntireData();
 
     /////
     // Vector rgTiVec(sz_.p_, sz_.n_);
-    realdp *GroptlibWriteArray = csvsc.ObtainWriteEntireData();
+    realdp *GroptlibWriteArray = csvVec.ObtainWriteEntireData();
 
     /////
 
@@ -77,11 +77,11 @@ void readCsvInitguess(std::string fname, Vector &csvsc)
         j++;
         // ROFL_VAR1(line);
 
-        // csvsc.pts.push_back(pt);
+        // csvVec.pts.push_back(pt);
     }
 
     // rgTiVec.CopyTo(result->GetElement(gElemIdx));
-    csvsc.Print("csv read result");
+    // csvVec.Print("csv read result");
 
     fout.close();
 }
@@ -122,6 +122,10 @@ void testSomSample(SomSize somSz, MatD &Tijs, Eigen::MatrixXi &edges)
     readCsvInitguess("../data/X_initguess.csv", startX);
     startX.Print("startX");
 
+    Vector etaStartX = ProdMani.RandominManifold();
+    readCsvInitguess("../data/etaX_initguess.csv", etaStartX);
+    etaStartX.Print("etaStartX");
+
     // ProdMani.SetIsIntrApproach(false);
 
     // Set the domain of the problem to be the product of Stiefel manifolds
@@ -136,7 +140,19 @@ void testSomSample(SomSize somSz, MatD &Tijs, Eigen::MatrixXi &edges)
     // Prob.SetNumGradHess(true);
     // Prob.CheckGradHessian(startX);
 
-    ROFL_VAR1(Prob.f(startX));
+    // cost f
+    // realdp costStart = Prob.f(startX);
+    // ROFL_VAR1(costStart);
+    // grad
+    // Vector gradStart = ProdMani.RandominManifold();
+    // gradStart = Prob.RieGrad(startX, &gradStart);
+    // gradStart.Print("grad Start");
+    // hess
+    Vector hessStart = ProdMani.RandominManifold();
+    hessStart = Prob.RieHessianEta(startX, etaStartX, &hessStart);
+    hessStart.Print("hess Start");
+    
+
 
     // output the parameters of the manifold of domain
     ROPTLIB::RTRNewton *RTRNewtonSolver = new RTRNewton(&Prob, &startX); // USE INITGUESS HERE!
