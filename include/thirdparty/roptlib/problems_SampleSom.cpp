@@ -25,11 +25,11 @@ namespace ROPTLIB
 
         for (int e = 0; e < numEdges_; ++e)
         {
-            MatD Ri(sz_.p_, sz_.d_);
-            MatD Ti(sz_.p_, 1);
-            MatD Tj(sz_.p_, 1);
+            MatD Ri(MatD::Zero(sz_.p_, sz_.d_));
+            MatD Ti(MatD::Zero(sz_.p_, 1));
+            MatD Tj(MatD::Zero(sz_.p_, 1));
 
-            Eigen::VectorXd tij(sz_.d_);
+            VecD tij(VecD::Zero(sz_.d_));
             tij = Tijs_.col(e);
 
             int i = edges_(e, 0) - 1; // !! -1
@@ -38,11 +38,13 @@ namespace ROPTLIB
             getTi(xEigen, Ti, i);
             getTi(xEigen, Tj, j);
 
-            // ROFL_VAR4(Ri, tij.transpose(), Ti.transpose(), Tj.transpose());
+            ROFL_VAR3(i, j, e);
+            ROFL_VAR4(Ri, tij.transpose(), Ti.transpose(), Tj.transpose());
 
-            double cost_e = (Ri * tij - Tj + Ti).squaredNorm();
+            double costE = (Ri * tij - Tj + Ti).norm(); // TODO: use squaredNorm() here directly
+            ROFL_VAR1(costE);
 
-            cost += cost_e;
+            cost += costE * costE;
         }
 
         ROFL_VAR1(cost);
@@ -202,6 +204,8 @@ namespace ROPTLIB
         makeLrPrBr(R, Lr, Pr, Br);
 
         VecMatD rgR(sz_.n_, MatD::Zero(sz_.p_, sz_.d_));
+        ROFL_VAR3(xEig.rows(), R.size(), T.size());
+        ROFL_VAR3(R.size(), P.size(), rgR.size());
         rgradR(R, P, rgR);
 
         MatD rgT(MatD::Zero(sz_.p_, sz_.n_));
@@ -212,8 +216,8 @@ namespace ROPTLIB
 
         int rotSz = getRotSz();
         int translSz = getTranslSz();
-        int gElemIdx = 0;
 
+        int gElemIdx = 0;
         // fill result with computed gradient values : R
         for (int i = 0; i < sz_.n_; ++i)
         {
@@ -655,7 +659,7 @@ namespace ROPTLIB
         int startId = i * rotSz;
         // int endId = (i+1) * rotSz;
 
-        MatD rOutVec(rotSz, 1);
+        MatD rOutVec(MatD::Zero(rotSz, 1));
         rOutVec = xEigen.block(startId, 0, rotSz, 1);
 
         rOut = rOutVec.reshaped(sz_.p_, sz_.d_);
@@ -669,7 +673,7 @@ namespace ROPTLIB
         int startId = i * rotSz;
         // int endId = (i+1) * rotSz;
 
-        MatD rOutVec(rotSz, 1);
+        MatD rOutVec(MatD::Zero(rotSz, 1));
         rOutVec = xEig.block(startId, 0, rotSz, 1);
 
         rOut = rOutVec.reshaped(sz_.p_, sz_.d_);
@@ -682,14 +686,16 @@ namespace ROPTLIB
 
         // int endId = (i+1) * rotSz;
 
-        rOut.clear();
+        std::for_each(rOut.begin(), rOut.end(), [](MatD &x) { //^^^ take argument by reference: LAMBDA FUNCTION
+            x.setZero();
+        });
 
         for (int i = 0; i < sz_.n_; ++i)
         {
             int startId = i * rotSz;
-            MatD Ri(sz_.p_, sz_.d_);
+            MatD Ri(MatD::Zero(sz_.p_, sz_.d_));
             getRi(xEig, Ri, i); // TODO: this can probably be optimized better
-            rOut.push_back(Ri);
+            rOut[i] = Ri;
         }
     }
 
@@ -707,6 +713,7 @@ namespace ROPTLIB
 
         // ROFL_VAR1(startId);
 
+        tOut.setZero(); // TODO: remove later
         tOut = xEigen.block(startId, 0, translSz, 1);
     }
 
@@ -720,7 +727,7 @@ namespace ROPTLIB
         // int endId = (i+1) * rotSz;
 
         // ROFL_VAR1(startId);
-
+        tOut.setZero(); // TODO: remove later
         tOut = xEig.block(startId, 0, translSz, 1);
     }
 
@@ -894,7 +901,7 @@ namespace ROPTLIB
 
     void SampleSomProblem::stiefelTangentProj(const VecMatD &Y, const VecMatD &Hin, VecMatD &Hout) const
     {
-        ROFL_ASSERT(Y.size() == sz_.n_);
+        ROFL_ASSERT_VAR1(Y.size() == sz_.n_, Y.size());
 
         MatD tmp = Y[0].transpose() * Hin[0];
         Hout.clear();

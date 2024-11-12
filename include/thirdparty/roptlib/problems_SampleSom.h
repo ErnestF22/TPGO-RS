@@ -30,6 +30,7 @@ struct SomSize
 
 using MatD = Eigen::MatrixXd;
 using VecMatD = std::vector<MatD>;
+using VecD = Eigen::VectorXd;
 
 namespace ROPTLIB
 {

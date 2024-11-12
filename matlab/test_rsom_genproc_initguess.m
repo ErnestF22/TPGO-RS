@@ -6,38 +6,26 @@ nrs = 4;
 d = 3;
 N = 5;
 
+mindeg = 3;
+testdata = testNetwork_params(3, N, 'banded', mindeg);
+testdata.mindeg = mindeg;
 
-
-num_edges = 8;
-G = graph(true(N), 'omitselfloops'); % Alternative without self-loops
-p = randperm(numedges(G), num_edges);
-G = graph(G.Edges(p, :));
-edges = table2array(G.Edges);
-
-
-Tijs = 10 * rand(d, num_edges);
-problem_data.Tijs = Tijs;
-problem_data.edges = edges;
-
-
-
-
-problem_data.Tijs = Tijs;
-problem_data.edges = edges;
-
-
+problem_data.Tijs = G2T(testdata.gijtruth);
+problem_data.edges = testdata.E;
 
 
 tuple.R = stiefelfactory(nrs, d, N);
 tuple.T = euclideanfactory(nrs, N);
 M = productmanifold(tuple);
 
+
+
 % Setup the problem structure with manifold M and cost+grad functions.
 problem.M = M;
 problem_data.sz = [nrs, d, N];
 problem.cost = @(x) cost_genproc(x, problem_data);
-problem.egrad = @(x) egrad_genproc(x, problem_data);
-problem.ehess = @(x, u) ehess_genproc(x, u, problem_data);
+problem.grad = @(x) grad_genproc(x, problem_data);
+problem.hess = @(x, u) hess_genproc(x, u, problem_data);
 
 
 figure(1)
@@ -87,6 +75,10 @@ T_start = [...
 X_start.R = R_start;
 X_start.T = T_start;
 
+cost_start = rsom_cost_base(X_start, problem_data);
+disp("cost_start")
+disp(cost_start)
+
 [X_out, cost_out, ~, ~] = trustregions(problem, X_start);
 
 T_out = X_out.T;
@@ -100,3 +92,43 @@ disp(T_out)
 
 disp("cost_out")
 disp(cost_out)
+
+%%
+R_test = zeros(nrs, d, N);
+R_test(:,:,1) = ...
+[6.7355201489e-01	-3.6984188973e-01	-2.7647931245e-01;	
+1.3367419683e-01	4.0166490570e-01	7.7339005580e-01;
+7.0340165321e-01	4.6043939326e-01	-3.0857804811e-02;	
+1.8353475584e-01	-6.9991274118e-01	5.6962690181e-01];	
+R_test(:,:,2) = ...
+[2.8967411102e-02	2.9363383301e-01	-8.3207672942e-01;
+9.4815498113e-01	2.9385545419e-01	1.1442034820e-01;	
+1.0446058904e-01	-2.3715399921e-01	-5.3423325564e-01;	
+2.9874906894e-01	-8.7817203600e-01	-9.5661532706e-02];
+R_test(:,:,3) = ...
+[-8.4493290887e-01	2.1668945839e-01	-2.0945688133e-01;	
+2.9405009935e-01	6.2431658977e-01	-7.1875457125e-01;	
+-4.0754151634e-01	-3.0659716824e-01	-3.4005682530e-01;	
+1.8311971776e-01	-6.8503478071e-01	-5.6910547067e-01];
+R_test(:,:,4) = ...
+[-5.1926080041e-01	3.1640672781e-01	6.5443963445e-01;
+-6.9976733717e-01	2.9178659747e-01	-6.4830717031e-01;	
+-3.8572166543e-01	-2.8113447195e-01	3.7545185786e-01;	
+-3.0317106029e-01	-8.5773584093e-01	-1.0218845439e-01];	
+R_test(:,:,5) = ...
+[5.6748241389e-01	2.4141223409e-01	6.6461089977e-01;	
+-6.6158314475e-01	6.1989529140e-01	4.0800462999e-01;	
+1.1775226031e-01	-3.4859110397e-01	5.1676849676e-01;	
+-4.7582124553e-01	-6.6025313567e-01	3.5323489998e-01];
+T_test = ...
+[2.7717742449e+00	6.7904323228e+00	1.8149550250e+00	-5.1013084648e+00	-5.1773443765e+00;	
+-7.4968012582e+00	-2.3940247401e+00	4.2795836065e+00	3.7088131529e+00	-4.7406018759e+00;	
+-6.5106627028e-01	3.9249566932e+00	2.3716264784e+00	-3.3492090021e+00	-4.4886600419e+00;	
+-4.5426767454e+00	7.7892216580e-01	4.5571506688e+00	8.2817047928e-01	-2.8125780432e+00];
+
+X_test.R = R_test;
+X_test.T = T_test;
+
+cost_test = rsom_cost_base(X_test, problem_data);
+disp("cost_test")
+disp(cost_test)
