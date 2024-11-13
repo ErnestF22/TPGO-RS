@@ -1,4 +1,4 @@
-function problem=test_problem()
+function problem=test_check_ssom()
 
 num_rows_stiefel = 4;
 d = 3;
