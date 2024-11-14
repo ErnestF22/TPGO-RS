@@ -1,6 +1,6 @@
-function test_check_ssom_test_rhess()
-problem=test_problem();
-curve=test_problem_curve(problem);
+function test_check_ssom_test_ehess_T_lambda()
+problem=test_check_ssom();
+curve=test_check_ssom_curve(problem);
 
 c=curve.c;
 dc=curve.dc;
@@ -11,7 +11,7 @@ rgradf=@(t) problem.grad(c(t));
 df=@(t) sum(stiefel_metric([],rgradf(t),dc(t),'euclidean'));
 
 %%%
-rhessf = @(t) problem.hess(c(t),dc(t));
+rhessf = @(t) problem.ssom_ehess_t_lambda(c(t),dc(t));
 ddf_1 = @(t) stiefel_metric([], rhessf(t), dc(t), 'euclidean');
 ddf_2 = @(t) stiefel_metric([], rgradf(t), ddc(t), 'euclidean');
 ddf = @(t) sum(ddf_1(t) + ddf_2(t));

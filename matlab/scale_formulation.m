@@ -46,7 +46,11 @@ cost_norms = ssom_cost_norms(X, problem_data);
 
 cost_trace = ssom_cost(X, problem_data);
 
-cost_lambda = ssom_cost_lambda(X, problem_data);
+[aL, bL, cL] = makeABClambda(X, problem_data);
+problem_data.aL = aL;
+problem_data.bL = bL;
+problem_data.cL = cL;
+cost_lambda = ssom_cost_lambda(X.lambda, problem_data);
 
 disp("cost_norms")
 disp(cost_norms)

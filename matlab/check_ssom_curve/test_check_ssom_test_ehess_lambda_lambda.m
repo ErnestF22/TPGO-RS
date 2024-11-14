@@ -1,17 +1,29 @@
-function test_check_ssom_test_ehess()
-problem=test_problem();
-curve=test_problem_curve(problem);
+function test_check_ssom_test_ehess_lambda_lambda()
+problem=test_check_ssom();
+curve=test_check_ssom_curve(problem);
 
 c=curve.c;
 dc=curve.dc;
 ddc=curve.ddc;
 
-f=@(t) problem.cost(c(t));
-egradf=@(t) problem.egrad(c(t));
-df=@(t) sum(stiefel_metric([],egradf(t),dc(t),'euclidean'));
+% sz=problem.sz;
+% sz(3) = 1; %remove this later!
+R10=rand(8,1,1);
+vR10=rand(8,1,1);
+
+[R1,dR1,~,~,ddR1]=real_geodFun(R10, vR10);
+curve.c=@(t) R1(t);
+curve.dc=@(t) dR1(t);
+% funCheckDer(multitrace(curve.c), multitrace(curve.dc))
+curve.ddc=@(t) ddR1(t);
+
+f=@(t) problem.cost(curve.c(t));
+egradf=@(t) problem.egrad_lambda(curve.c(t));
+df=@(t) sum(stiefel_metric(curve.c,egradf(t),curve.dc(t)));
+funCheckDer(f,df)
 
 %%%
-ehessf = @(t) problem.ehess(c(t),dc(t));
+ehessf = @(t) problem.ssom_ehess_lambda_lambda(c(t),dc(t));
 ddf_1 = @(t) stiefel_metric([], ehessf(t), dc(t), 'euclidean');
 ddf_2 = @(t) stiefel_metric([], egradf(t), ddc(t), 'euclidean');
 ddf = @(t) sum(ddf_1(t) + ddf_2(t));    
