@@ -46,11 +46,15 @@ cost_norms = ssom_cost_norms(X, problem_data);
 
 cost_trace = ssom_cost(X, problem_data);
 
+cost_lambda = ssom_cost_lambda(X, problem_data);
 
 disp("cost_norms")
 disp(cost_norms)
 
 disp("cost_trace")
 disp(cost_trace)
+
+disp("cost_lambda")
+disp(cost_lambda)
 
 
