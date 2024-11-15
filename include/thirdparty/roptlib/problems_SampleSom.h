@@ -100,6 +100,12 @@ namespace ROPTLIB
         // virtual Vector &EucHessianEta(const Variable &x, const Vector &etax, Vector *result) const;
 
         /**
+         * Hessian (Genproc) with Eigen I/O;
+         * called internally by RieHessianEta()
+         */
+        void hessGenprocEigen(const VecMatD &xR, const VecMatD &uR, const MatD &xT, const MatD &uT, VecMatD &rhR, MatD &rhT) const;
+
+        /**
          * Hessian action i.e., *result = H(x)[etax]
          */
         virtual Vector &RieHessianEta(const Variable &x, const Vector &etax, Vector *result) const;
@@ -233,7 +239,74 @@ namespace ROPTLIB
          */
         int fullSz_;
 
-        void rsomPimHessianGenproc(double thresh) const
+        bool eigencheckHessianGenproc(const double& lambda, const Eigen::MatrixXd& v, 
+                                    const VecMatD& xR, const VecMatD& uR,
+                                    const MatD& xT, const MatD& uT, double thr = 1e-3) const {
+            // if ~exist('thr','var')
+            //     thr = 1e-3;
+            // end
+
+            // hess_v = [matStackH(hess_fun_han(v).R), hess_fun_han(v).T];
+            // v_full = [matStackH(v.R), v.T];
+            // diff = norm((lambda)*v_full(:) - hess_v(:),'inf');
+
+            VecMatD rhR(sz_.n_, MatD::Zero(xR[0].rows(), xR[0].cols()));
+            MatD rhT(MatD::Zero(xT.rows(), xT.cols()));
+            hessGenprocEigen(xR, uR, xT, uT, rhR, rhT);
+
+            // if diff < thr
+            //     fprintf("%g is a GENPROC eigenvalue\n", lambda);
+            //     eig_bool = boolean(1);
+            // else
+            //     fprintf("%g is NOT a GENPROC eigenvalue: diff %g > thr\n", ...
+            //         lambda, diff);
+            //     eig_bool = boolean(0);
+            // end
+
+            return true;
+        }
+
+        void catZeroRow(const MatD &mIn, MatD &mOut) const
+        {
+            ROFL_ASSERT(mOut.rows() == mIn.rows() + 1);
+            ROFL_ASSERT(mOut.cols() == mIn.cols());
+
+            mOut.setZero();
+            mOut.block(0, 0, mIn.rows(), mIn.cols()) = mIn;
+        }
+
+        void catZeroRow3dArray(const VecMatD &mIn, VecMatD &mOut) const
+        {
+            ROFL_ASSERT(mIn.size() == mOut.size())
+
+            int n = mIn.size();
+            for (int i = 0; i < n; ++i)
+            {
+                catZeroRow(mIn[i], mOut[i]);
+            }
+        }
+
+        void normalizeEucl(const MatD &mIn, MatD &mOut) const
+        {
+            mOut = mIn;
+            int normF = mIn.norm(); // TODO: maybe use .normalized() directly?
+
+            mOut /= normF;
+        }
+
+        void normalizeEucl(const VecMatD &mIn, VecMatD &mOut) const
+        {
+            ROFL_ASSERT(mIn.size() == mOut.size())
+            std::for_each(mOut.begin(), mOut.end(), [](MatD &x) { //^^^ take argument by reference: LAMBDA FUNCTION
+                x.setZero();
+            });
+
+            int n = mIn.size();
+            for (int i=0; i<n; ++i)
+                normalizeEucl(mIn[i], mOut[i]);
+        }
+
+        void rsomPimHessianGenproc(double thresh, const VecMatD &R, const MatD &T) const
         {
             // [Y_star, lambda, v] = rsom_pim_hessian_genproc( ...
             //     X, problem_struct_next, thr);
@@ -253,31 +326,38 @@ namespace ROPTLIB
             // Xnext.R = Rnext;
             // Xnext.T = Tnext;
             // rhess_fun_han = @(u) hess_genproc(Xnext,u,problem_struct_next);
+            VecMatD Rnext(sz_.n_, MatD::Zero(sz_.p_ + 1, sz_.d_));
+            catZeroRow3dArray(R, Rnext);
+            MatD Tnext(MatD::Zero(sz_.p_ + 1, sz_.d_));
+            catZeroRow(T, Tnext);
+
+            VecMatD rhR(sz_.n_, MatD::Zero(sz_.p_ + 1, sz_.d_));
+            MatD rhT(MatD::Zero(sz_.p_ + 1, sz_.d_));
 
             // stiefel_normalize_han = @(x) x./ (norm(x(:))); //Note: this is basically eucl_normalize_han
+            // hessGenprocEigen(Rnext, uRnext, Tnext, uTnext, rhR, rhT);
 
             // u_start.R = stiefel_randTangentNormVector(Rnext);
             // u_start.R = stiefel_normalize(Rnext, u_start.R);
             // u_start.T = rand(size(Tnext));
             // u_start.T = stiefel_normalize_han(u_start.T);
+
             // [lambda_pim, v_pim] = pim_function_genproc(rhess_fun_han, u_start, stiefel_normalize_han, thresh);
             // disp('Difference between lambda*v_max and H(v_max) should be in the order of the tolerance:')
             // eigencheck_hessian_genproc(lambda_pim, v_pim, rhess_fun_han);
-
-
 
             // if lambda_pim>0
             // // %     fprintf("lambda_pim R %g\n", lambda_pim.R);
             // // %     fprintf("lambda_pim T %g\n", lambda_pim.T);
             //     fprintf("lambda_pim %g\n", lambda_pim);
-                
+
             // // %     lambda_pim = max(lambda_pim.R, lambda_pim.T);
 
             //     mu = 1.1 * lambda_pim;
 
             //     rhess_shifted_fun_han = ...
             //         @(u) hess_genproc_shifted(Xnext,u,mu,problem_struct_next);
-                        
+
             //     // %run shifted power iteration
             //     u_start_second_iter.R = stiefel_randTangentNormVector(Rnext);
             //     u_start_second_iter.R = stiefel_normalize(Rnext, u_start_second_iter.R);
@@ -285,16 +365,13 @@ namespace ROPTLIB
             //     u_start_second_iter.T = stiefel_normalize_han(u_start.T);
             //     [lambda_pim_after_shift, v_pim_after_shift] = pim_function_genproc( ...
             //         rhess_shifted_fun_han, u_start_second_iter, stiefel_normalize_han, thresh);
-                
+
             //     disp(['Difference between lambda_pim_after_shift*v_pim_after_shift ' ...
             //         'and H_SH(v_pim_after_shift) should be in the order of the tolerance:'])
             //     eigencheck_hessian_genproc(lambda_pim_after_shift, v_pim_after_shift, ...
             //         rhess_shifted_fun_han);
 
-
             //     highest_norm_eigenval = lambda_pim_after_shift + mu;
-
-
 
             // // %Preparing linesearch
             // nrs_next = problem_struct_next.sz(1);
@@ -309,11 +386,9 @@ namespace ROPTLIB
             // step2.grad = @(x) grad_genproc(x, problem_struct_next);
             // step2.hess = @(x, u) hess_genproc(x, u, problem_struct_next);
 
-
-
             // // % alpha = min(lambdas_moved) + lambdas_max;
             // // % alpha_linesearch = 10; // %TODO: set this correctly
-            // // % SDPLRval = 10; // %TODO: set this correctly 
+            // // % SDPLRval = 10; // %TODO: set this correctly
 
             // disp("Now performing linesearch...");
             // // %Note: first output param of linesearch() would be "stepsize"
@@ -322,8 +397,6 @@ namespace ROPTLIB
 
             // lambda_pim_out = highest_norm_eigenval;
             // v_pim_out = v_pim_after_shift;
-
-
         }
     };
 
