@@ -239,20 +239,78 @@ namespace ROPTLIB
          */
         int fullSz_;
 
-        bool eigencheckHessianGenproc(const double& lambda, const Eigen::MatrixXd& v, 
-                                    const VecMatD& xR, const VecMatD& uR,
-                                    const MatD& xT, const MatD& uT, double thr = 1e-3) const {
+        bool eigencheckHessianGenproc(const double &lambda, const Eigen::MatrixXd &v,
+                                      const VecMatD &xR, const VecMatD &uR,
+                                      const MatD &xT, const MatD &uT, double thr = 1e-3) const
+        {
             // if ~exist('thr','var')
             //     thr = 1e-3;
             // end
 
-            // hess_v = [matStackH(hess_fun_han(v).R), hess_fun_han(v).T];
-            // v_full = [matStackH(v.R), v.T];
-            // diff = norm((lambda)*v_full(:) - hess_v(:),'inf');
+            // hessV = [matStackH(hess_fun_han(v).R), hess_fun_han(v).T];
 
+            // OBS. TODO: These vectorizations can probably be done faster as elements order is not really important
             VecMatD rhR(sz_.n_, MatD::Zero(xR[0].rows(), xR[0].cols()));
             MatD rhT(MatD::Zero(xT.rows(), xT.cols()));
             hessGenprocEigen(xR, uR, xT, uT, rhR, rhT);
+
+            int fullRotsSz = sz_.n_ * sz_.p_ * sz_.d_; // TODO: class function for this
+            MatD rhRvec(MatD::Zero(fullRotsSz, 1));
+            int fullIdx = 0;
+            for (int i = 0; i < sz_.n_; ++i)
+            {
+                for (int j = 0; j < sz_.d_; ++j)
+                {
+                    for (int k = 0; k < sz_.p_; ++k)
+                    {
+                        rhRvec(fullIdx, 0) = rhR[i](k, j);
+                        fullIdx++;
+                    }
+                }
+            }
+            int fullTranslSz = sz_.n_ * sz_.p_; // TODO: class member function for this
+            MatD rhTvec(MatD::Zero(fullTranslSz, 1));
+            fullIdx = 0; //!! resetting fullIdx
+            for (int j = 0; j < sz_.n_; ++j)
+            {
+                for (int k = 0; k < sz_.p_; ++k)
+                {
+                    rhTvec(fullIdx, 0) = rhT(k, j);
+                    fullIdx++;
+                }
+            }
+            Eigen::VectorXd hessV(rhRvec.size() + rhTvec.size());
+            hessV << rhRvec, rhTvec;
+
+            // uFull = [matStackH(v.R), v.T];
+            MatD uRvec(MatD::Zero(fullRotsSz, 1));
+            fullIdx = 0;
+            for (int i = 0; i < sz_.n_; ++i)
+            {
+                for (int j = 0; j < sz_.d_; ++j)
+                {
+                    for (int k = 0; k < sz_.p_; ++k)
+                    {
+                        uRvec(fullIdx, 0) = uR[i](k, j);
+                        fullIdx++;
+                    }
+                }
+            }
+            MatD uTvec(MatD::Zero(fullTranslSz, 1));
+            fullIdx = 0; //!! resetting fullIdx
+            for (int j = 0; j < sz_.n_; ++j)
+            {
+                for (int k = 0; k < sz_.p_; ++k)
+                {
+                    uTvec(fullIdx, 0) = uT(k, j);
+                    fullIdx++;
+                }
+            }
+            Eigen::VectorXd uFull(uRvec.size() + uTvec.size());
+            uFull << uRvec, uTvec;
+
+            // diff = norm((lambda)*uFull(:) - hessV(:),'inf');
+            double diff = (lambda * uFull - hessV).lpNorm<Eigen::Infinity>();
 
             // if diff < thr
             //     fprintf("%g is a GENPROC eigenvalue\n", lambda);
@@ -263,7 +321,18 @@ namespace ROPTLIB
             //     eig_bool = boolean(0);
             // end
 
-            return true;
+            if (diff < thr)
+            {
+                std::cout << lambda << "is a GENPROC eigenvalue" << std::endl;
+                return true;
+            }
+            else
+            {
+                std::cout << lambda << "is NOT a GENPROC eigenvalue: diff " << diff << " > thr " << thr << std::endl;
+                // return false;
+            }
+
+            return false;
         }
 
         void catZeroRow(const MatD &mIn, MatD &mOut) const
@@ -302,7 +371,7 @@ namespace ROPTLIB
             });
 
             int n = mIn.size();
-            for (int i=0; i<n; ++i)
+            for (int i = 0; i < n; ++i)
                 normalizeEucl(mIn[i], mOut[i]);
         }
 
