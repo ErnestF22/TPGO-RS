@@ -850,12 +850,19 @@ namespace ROPTLIB
             term_1[i] = uR[i] * (0.5 * (xR[i].transpose() * egR[i]) + 0.5 * (egR[i].transpose() * xR[i]));
             term_2[i] = xR[i] * (0.5 * (uR[i].transpose() * egR[i]) + 0.5 * (egR[i].transpose() * uR[i]));
             DGf[i] = -term_1[i] - term_2[i];
+            // ROFL_VAR2(i, egR[i]);
+            // ROFL_VAR2(xR[i], uR[i]);
+            // ROFL_VAR3(term_1[i], term_2[i], DGf[i]);
         }
 
         std::for_each(hRR.begin(), hRR.end(), [](MatD &x) { //^^^ take argument by reference
             x.setZero();
         });
         stiefelTangentProj(xR, DGf, hRR);
+        // for (int i = 0; i < sz_.n_; ++i)
+        // {
+        //     ROFL_VAR2(i, hRR[i]);
+        // }
     }
 
     void SampleSomProblem::computeHtt(const MatD &uT, const MatD &LR, MatD &hTT) const
@@ -886,6 +893,11 @@ namespace ROPTLIB
         });
 
         stiefelTangentProj(xR, W, hrt);
+        ROFL_VAR1(uT);
+        for (int i = 0; i < sz_.n_; ++i)
+        {
+            ROFL_VAR2(i, hrt[i]);
+        }
     }
 
     void SampleSomProblem::computeHtr(const VecMatD &uR, MatD &htr) const
