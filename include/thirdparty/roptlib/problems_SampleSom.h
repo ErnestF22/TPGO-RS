@@ -375,6 +375,176 @@ namespace ROPTLIB
                 normalizeEucl(mIn[i], mOut[i]);
         }
 
+        void stiefelRandTgNormVector(const MatD &mIn, MatD &mOut) const
+        {
+            int r = mIn.rows();
+            int c = mIn.cols();
+
+            ROFL_ASSERT(r == mOut.rows() && c == mOut.cols());
+
+            // generate random Stiefel element
+            Vector tmp = Stiefel(r, c).RandominManifold();
+            MatD tmpEig(MatD::Zero(r, c));
+            RoptToEig(tmp, tmpEig);
+            MatD tmpProj(MatD::Zero(r, c));
+            stiefelTangentProj(mIn, tmpEig, tmpProj);
+
+            normalizeEucl(tmpProj, mOut);
+
+            // For any matrix representative $U \in St(n, p)$, the tangent space of $St(n, p)$ at $U$ is represented by
+            // U\transpose \Delta = -\Delta\transpose U
+
+            double diff = (mIn.transpose() * mOut + mOut.transpose() * mIn).cwiseAbs().maxCoeff();
+            double mOutNorm = mOut.norm();
+            ROFL_ASSERT_VAR1(mOutNorm > 1 - 1e-5 && mOutNorm < 1 + 1e-5, mOutNorm);
+            ROFL_ASSERT_VAR1(diff >= 0 && diff < 1e-5, diff);
+        }
+
+        void stiefelRandTgNormVector(const VecMatD &mIn, VecMatD &mOut) const
+        {
+            int n = mIn.size();
+            ROFL_ASSERT(n == mOut.size());
+            std::for_each(mOut.begin(), mOut.end(), [](MatD &x) { //^^^ take argument by reference: LAMBDA FUNCTION
+                x.setZero();
+            });
+
+            for (int i = 0; i < n; ++i)
+            {
+                stiefelRandTgNormVector(mIn[i], mOut[i]);
+            }
+        }
+
+        void vectorizeR(const VecMatD &R, MatD &RvecOut) const
+        {
+            // int fullRotsSz = sz_.p_ * sz_.d_ * sz_.n_;
+
+            // for (int i=0; i<fullRotsSz; ++i) {
+            // }
+
+            int fullIdx = 0;
+            for (int i = 0; i < sz_.n_; ++i)
+            {
+                for (int j = 0; j < sz_.d_; ++j)
+                {
+                    for (int k = 0; k < sz_.p_; ++k)
+                    {
+                        RvecOut(fullIdx, 0) = R[i](k, j);
+                        fullIdx++;
+                        ROFL_VAR4(i, j, k, fullIdx);
+                    }
+                }
+            }
+        }
+
+        void pimFunctionGenproc(const VecMatD &xR, const MatD &xT, const VecMatD &uR, const MatD &uT, double &lambdaMax, VecMatD &uFullR, MatD &uFullT, double thresh = 1e-5) const
+        {
+            // Note: normalization is done across entire ProdMani vector through simple eucl. metric
+
+            // % % R iterative_change = 1e+6;
+            // xR = x_start.R;
+            // xT = x_start.T;
+            // xfull = [ matStackH(x_start.R), x_start.T ];
+
+            int staircaseLevel = xR.size();
+
+            MatD uRhStacked(MatD::Zero(staircaseLevel, sz_.d_ * sz_.n_));
+            hstack(uR, uRhStacked);
+
+            MatD uTcopy = uT; // useful for keeping const in function params
+
+            MatD uFullHst(MatD::Zero(staircaseLevel, sz_.n_ + uRhStacked.cols()));
+            uFullHst.block(0, 0, staircaseLevel, uRhStacked.cols()) = uRhStacked;
+            uFullHst.block(0, uRhStacked.cols(), staircaseLevel, sz_.n_) = uTcopy;
+            // iteration_num = 0;
+            int iterationNum = 0;
+            // while (iteration_num < 2500)
+            //     % &&(abs(iterative_change) > thresh)
+            //      iteration_num = iteration_num + 1;
+            //      x_prev_R = xR;
+            //      x_prev_T = xT;
+            //      xfull_prev = [ matStackH(x_prev_R), x_prev_T ];
+            //      norm_RT = norm(xfull);
+            //      x.R = xR / norm_RT;
+            //      x.T = xT / norm_RT;
+            //      fx = f(x);
+            //      xR = -fx.R;
+            //      xT = -fx.T;
+            //      xfull = [ matStackH(xR), xT ];
+            //      iterative_change = max(normalization_fun(xfull_prev - xfull), [], "all");
+            // end
+            MatD uRprevHst(MatD::Zero(staircaseLevel, sz_.d_ * sz_.n_));
+            MatD uTprev(MatD::Zero(staircaseLevel, sz_.n_));
+            while (iterationNum < 2500) // && iterativeChange < 1e-3
+            {
+                iterationNum++;
+                uRprevHst = uRhStacked;
+                uTprev = uTcopy;
+
+                MatD uFullHstPrev(MatD::Zero(staircaseLevel, sz_.n_ + uRhStacked.cols()));
+                uFullHstPrev.block(0, 0, staircaseLevel, uRhStacked.cols()) = uRprevHst;
+                uFullHstPrev.block(0, uRhStacked.cols(), staircaseLevel, sz_.n_) = uTprev;
+
+                double normRT = uFullHst.norm();
+                uRhStacked /= normRT;
+                uTcopy /= normRT;
+
+                VecMatD uRunstackedTmp(sz_.n_, MatD::Zero(staircaseLevel, sz_.d_));
+                unStackH(uRhStacked, uRunstackedTmp);
+
+                VecMatD uRunstackedOutTmp(sz_.n_, MatD::Zero(staircaseLevel, sz_.d_));
+                MatD uTout(MatD::Zero(staircaseLevel, sz_.n_));
+                hessGenprocEigen(xR, uRunstackedTmp, xT, uTcopy, uRunstackedOutTmp, uTout);
+
+                std::for_each(uRunstackedOutTmp.begin(), uRunstackedOutTmp.end(), [](MatD &x) { //^^^ take argument by reference: LAMBDA FUNCTION
+                    x *= -1;
+                });
+                uTcopy = -uTout;
+
+                hstack(uRunstackedOutTmp, uRhStacked);
+                uFullHst.block(0, 0, staircaseLevel, uRhStacked.cols()) = uRhStacked;
+                uFullHst.block(0, uRhStacked.cols(), staircaseLevel, sz_.n_) = uTcopy;
+
+                //      iterative_change = max(normalization_fun(xfull_prev - xfull), [], "all");
+                double iterativeChange = (uFullHstPrev - uFullHst).cwiseAbs().maxCoeff();
+            }
+
+            // norm_RT_max = norm([ matStackH(x.R), x.T ]);
+            double normRTmax = uFullHst.norm();
+
+            // x_max.R = x.R / norm_RT_max;
+            // x_max.T = x.T / norm_RT_max;
+            uFullHst /= normRTmax;
+
+            // f_x_max = f(x_max);
+            VecMatD uRunstacked(sz_.n_, MatD::Zero(staircaseLevel, sz_.d_));
+            unStackH(uRhStacked / normRTmax, uRunstacked, sz_.d_);
+            VecMatD fxRunstackedOut(sz_.n_, MatD::Zero(staircaseLevel, sz_.d_));
+
+            MatD uTout1(MatD::Zero(staircaseLevel, sz_.n_));
+
+            hessGenprocEigen(xR, uRunstacked, xT, uTcopy / normRTmax, fxRunstackedOut, uTout1);
+
+            // % lambda_max_R = sum(stiefel_metric([], (x_max.R), f_x_max.R)) / ... % sum(stiefel_metric([], x_max.R, x_max.R));
+            // % lambda_max_T = sum(stiefel_metric([], (x_max.T), f_x_max.T)) / ... % sum(stiefel_metric([], x_max.T, x_max.T));
+
+            MatD vecR(MatD::Zero(sz_.d_ * staircaseLevel * sz_.n_, 1));
+            vectorizeR(uRunstacked, vecR);
+            MatD vecFxR(MatD::Zero(sz_.d_ * staircaseLevel * sz_.n_, 1));
+            vectorizeR(fxRunstackedOut, vecFxR);
+
+            // lambda_max = x_max.R( :) ' * f_x_max.R(:) + x_max.T(:)' * f_x_max.T( :);
+            auto lmax = vecR.transpose() * vecFxR + uTout1.reshaped(1, staircaseLevel * sz_.n_) * (uTcopy / normRTmax).reshaped(staircaseLevel * sz_.n_, 1);
+            lambdaMax = lmax(0, 0);
+
+            // full_xmax = [ matStackH(x_max.R), x_max.T ];
+            auto uFullRhSt = uFullHst.block(0, 0, staircaseLevel, sz_.d_ * sz_.n_);
+            unStackH(uFullRhSt, uFullR, sz_.d_);
+            uFullT = uFullHst.block(0, sz_.d_ * sz_.n_, staircaseLevel, sz_.n_);
+
+            // lambda_max = lambda_max / sum(stiefel_metric([], full_xmax( :), full_xmax( :)));
+            lambdaMax /= uFullHst.norm();
+        }
+
         void rsomPimHessianGenproc(double thresh, const VecMatD &R, const MatD &T) const
         {
             // [Y_star, lambda, v] = rsom_pim_hessian_genproc( ...
@@ -395,25 +565,39 @@ namespace ROPTLIB
             // Xnext.R = Rnext;
             // Xnext.T = Tnext;
             // rhess_fun_han = @(u) hess_genproc(Xnext,u,problem_struct_next);
-            VecMatD Rnext(sz_.n_, MatD::Zero(sz_.p_ + 1, sz_.d_));
+            int staircaseNextStepLevel = R.size() + 1;
+            VecMatD Rnext(sz_.n_, MatD::Zero(staircaseNextStepLevel, sz_.d_));
             catZeroRow3dArray(R, Rnext);
-            MatD Tnext(MatD::Zero(sz_.p_ + 1, sz_.d_));
+            MatD Tnext(MatD::Zero(staircaseNextStepLevel, sz_.d_));
             catZeroRow(T, Tnext);
 
-            VecMatD rhR(sz_.n_, MatD::Zero(sz_.p_ + 1, sz_.d_));
-            MatD rhT(MatD::Zero(sz_.p_ + 1, sz_.d_));
+            VecMatD rhR(sz_.n_, MatD::Zero(staircaseNextStepLevel, sz_.d_));
+            MatD rhT(MatD::Zero(staircaseNextStepLevel, sz_.d_));
 
             // stiefel_normalize_han = @(x) x./ (norm(x(:))); //Note: this is basically eucl_normalize_han
             // hessGenprocEigen(Rnext, uRnext, Tnext, uTnext, rhR, rhT);
 
             // u_start.R = stiefel_randTangentNormVector(Rnext);
+            VecMatD RnextTg(sz_.n_, MatD::Zero(staircaseNextStepLevel, sz_.d_));
+            stiefelRandTgNormVector(Rnext, RnextTg);
             // u_start.R = stiefel_normalize(Rnext, u_start.R);
+            VecMatD RnextTgNorm(sz_.n_, MatD::Zero(staircaseNextStepLevel, sz_.d_));
+            normalizeEucl(RnextTg, RnextTgNorm);
+
             // u_start.T = rand(size(Tnext));
+            auto TnextTg = MatD::Random(staircaseNextStepLevel, sz_.d_);
             // u_start.T = stiefel_normalize_han(u_start.T);
+            MatD TnextTgNorm(MatD::Zero(staircaseNextStepLevel, sz_.d_));
+            normalizeEucl(TnextTg, TnextTgNorm);
 
             // [lambda_pim, v_pim] = pim_function_genproc(rhess_fun_han, u_start, stiefel_normalize_han, thresh);
             // disp('Difference between lambda*v_max and H(v_max) should be in the order of the tolerance:')
             // eigencheck_hessian_genproc(lambda_pim, v_pim, rhess_fun_han);
+            double lambdaPim = 1e+6;
+            VecMatD vPimR(sz_.n_, MatD::Zero(staircaseNextStepLevel, sz_.d_));
+            MatD vPimT(MatD::Zero(staircaseNextStepLevel, sz_.n_));
+
+            pimFunctionGenproc(Rnext, Tnext, RnextTgNorm, TnextTgNorm, lambdaPim, vPimR, vPimT);
 
             // if lambda_pim>0
             // // %     fprintf("lambda_pim R %g\n", lambda_pim.R);
