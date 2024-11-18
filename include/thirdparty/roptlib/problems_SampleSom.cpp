@@ -510,11 +510,78 @@ namespace ROPTLIB
         ROFL_VAR2(htr, htt);
 
         // TODO: use less memory
-        
+
         // sum diag component with antidiag one
         std::transform(hrr.begin(), hrr.end(), hrt.begin(), rhR.begin(), std::plus<MatD>());
         ROFL_VAR5(rhR[0], rhR[1], rhR[2], rhR[3], rhR[4]);
         rhT = htt + htr;
+        ROFL_VAR1(rhT);
+    }
+
+    void SampleSomProblem::hessGenprocEigenShifted(
+        const VecMatD &xR, const VecMatD &uR, const MatD &xT, const MatD &uT,
+        double mu, VecMatD &rhR, MatD &rhT) const
+    {
+        // P = zeros(nrs, d*N);
+        MatD P(MatD::Zero(sz_.p_, sz_.d_ * sz_.n_));
+        double frct = 0.0;
+
+        // LR = zeros(N,N);
+        // PR = zeros(N,nrs);
+        // BR_const = zeros(d,d);
+        MatD Lr(MatD::Zero(sz_.n_, sz_.n_));
+        MatD Pr(MatD::Zero(sz_.n_, sz_.p_));
+        MatD Br(MatD::Zero(sz_.d_, sz_.d_));
+
+        // VecMatD rhR(sz_.n_, MatD::Zero(sz_.p_, sz_.d_));
+        // MatD rhT(MatD::Zero(sz_.p_, sz_.n_));
+        makePfrct(xT, P, frct);
+        ROFL_VAR2(P, frct);
+        makeLrPrBr(xR, Lr, Pr, Br);
+        ROFL_VAR3(Lr, Pr, Br);
+
+        VecMatD rgR(sz_.n_, MatD::Zero(sz_.p_, sz_.d_));
+        rgradR(xR, P, rgR);
+
+        MatD rgT(MatD::Zero(sz_.p_, sz_.n_));
+        rgradT(xT, Lr, Pr, rgT);
+
+        // result->NewMemoryOnWrite();
+        // result = Domain->RandomInManifold();
+
+        // compute Hrr, Htt
+        VecMatD hrr(sz_.n_, MatD::Zero(sz_.p_, sz_.d_));
+        computeHrr(xR, uR, P, hrr);
+        MatD htt(MatD::Zero(sz_.p_, sz_.n_));
+        computeHtt(uT, Lr, htt);
+
+        // h.R = rsom_rhess_rot_stiefel(R, Rdot, problem_structs) + hrt;
+        // h.T = rsom_rhess_transl_stiefel(T, Tdot, problem_structs) + htr;
+        VecMatD hrt(sz_.n_, MatD::Zero(sz_.p_, sz_.d_));
+        computeHrt(xR, uT, hrt);
+        MatD htr(MatD::Zero(sz_.p_, sz_.n_));
+        computeHtr(uR, htr);
+
+        ROFL_VAR2(hrr[0], hrt[0]);
+        ROFL_VAR2(hrr[1], hrt[1]);
+        ROFL_VAR2(hrr[2], hrt[2]);
+        ROFL_VAR2(hrr[3], hrt[3]);
+        ROFL_VAR2(hrr[4], hrt[4]);
+        ROFL_VAR2(htr, htt);
+
+        // TODO: use less memory
+
+        // sum diag component with antidiag one
+        std::transform(hrr.begin(), hrr.end(), hrt.begin(), rhR.begin(), std::plus<MatD>());
+        // shift!
+        for (int i = 0; i < sz_.n_; ++i)
+        {
+            rhR[i] -= mu * uR[i];
+        };
+        ROFL_VAR5(rhR[0], rhR[1], rhR[2], rhR[3], rhR[4]);
+
+        rhT = htt + htr;
+        rhT -= mu * uT; // shift!
         ROFL_VAR1(rhT);
     }
 
