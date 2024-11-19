@@ -86,11 +86,11 @@ namespace ROPTLIB
                 getTi(xEigen, Ti, i);
                 getTi(xEigen, Tj, j);
 
-                ROFL_VAR3(i, j, e);
-                ROFL_VAR4(Ri, tij.transpose(), Ti.transpose(), Tj.transpose());
+                // ROFL_VAR3(i, j, e);
+                // ROFL_VAR4(Ri, tij.transpose(), Ti.transpose(), Tj.transpose());
 
                 double costE = (Ri * tij - Tj + Ti).norm(); // TODO: use squaredNorm() here directly
-                ROFL_VAR1(costE);
+                // ROFL_VAR1(costE);
 
                 cost += costE * costE;
             }
@@ -953,72 +953,75 @@ namespace ROPTLIB
                     // result->GetElement(gElemIdx).SetToIdentity(); // Ri
                     // result->GetElement(gElemIdx).Print("Ri before assignment");
 
-                    Vector rgRiVec(sz_.p_, sz_.d_);
-                    // rgRiVec.Initialize();
-                    realdp *GroptlibWriteArray = rgRiVec.ObtainWriteEntireData();
+                    Vector RnextROPT(sz_.p_, sz_.d_);
+                    // RnextROPT.Initialize();
+                    realdp *GroptlibWriteArray = RnextROPT.ObtainWriteEntireData();
                     for (int j = 0; j < rotSz; ++j)
                     {
                         // ROFL_VAR2(i, j);
-                        // rgRiVec.Print("rgRiVec before assignment");
+                        // RnextROPT.Print("RnextROPT before assignment");
 
-                        // ROFL_VAR1(rgRiVec.GetElement(j, 0));
+                        // ROFL_VAR1(RnextROPT.GetElement(j, 0));
 
                         GroptlibWriteArray[j] = Rnext[i].reshaped(sz_.d_ * sz_.p_, 1)(j);
 
                         // ROFL_VAR1("");
-                        // rgRiVec.Print("rgRiVec after assignment");
+                        // RnextROPT.Print("RnextROPT after assignment");
                     }
-                    rgRiVec.CopyTo(xIn.GetElement(gElemIdx));
+                    RnextROPT.CopyTo(xIn.GetElement(gElemIdx));
                     // result->GetElement(gElemIdx).Print("Riem. grad Ri after assignment");
                     gElemIdx++;
                 }
 
                 // fill result with computed gradient values : T
 
-                Vector rgTiVec(sz_.p_, sz_.n_);
-                realdp *GroptlibWriteArray = rgTiVec.ObtainWriteEntireData();
+                Vector TnextROPT(sz_.p_, sz_.n_);
+                realdp *GroptlibWriteArray = TnextROPT.ObtainWriteEntireData();
                 for (int j = 0; j < sz_.p_ * sz_.n_; ++j)
                 {
-                    // rgTiVec.Print("rgTiVec before assignment");
+                    // TnextROPT.Print("TnextROPT before assignment");
 
-                    // ROFL_VAR1(rgRiVec.GetElement(j, 0));
+                    // ROFL_VAR1(RnextROPT.GetElement(j, 0));
 
                     GroptlibWriteArray[j] = Tnext.reshaped(sz_.n_ * sz_.p_, 1)(j);
 
                     // ROFL_VAR1("");
-                    // rgTiVec.Print("rgTiVec after assignment");
+                    // TnextROPT.Print("TnextROPT after assignment");
                 }
-                rgTiVec.CopyTo(xIn.GetElement(gElemIdx));
+                TnextROPT.CopyTo(xIn.GetElement(gElemIdx));
             } // end of EigToRopt scope for xIn
 
             // Vector Y0;
             linesearchArmijoROPTLIB(xIn, szNext, Y0);
         }
 
-        void linesearchArmijoROPTLIB(const Vector &xIn, const SomSize &somSz, Vector &Y0) const
+        void linesearchArmijoROPTLIB(const Vector &xIn, const SomSize &somSzLocal, Vector &Y0) const
         {
-            Stiefel mani1(somSz.p_, somSz.d_);
+            Stiefel mani1(somSzLocal.p_, somSzLocal.d_);
             mani1.ChooseParamsSet2();
             integer numoftypes = 2; // 2 i.e. (3D) Stiefel + Euclidean
 
-            integer numofmani1 = somSz.n_; // num of Stiefel manifolds
+            integer numofmani1 = somSzLocal.n_; // num of Stiefel manifolds
             integer numofmani2 = 1;
-            Euclidean mani2(somSz.p_, somSz.n_);
+            Euclidean mani2(somSzLocal.p_, somSzLocal.n_);
             ProductManifold ProdMani(numoftypes, &mani1, numofmani1, &mani2, numofmani2);
 
-            SampleSomProblem ProbLS(somSz, Tijs_, edges_);
+            SampleSomProblem ProbLS(somSzLocal, Tijs_, edges_);
             ProbLS.SetDomain(&ProdMani);
 
             std::cout << "cost of LS input " << ProbLS.f(xIn) << std::endl; // x cost
 
+            xIn.Print("Printing xIn inside linesearchArmijoROPTLIB()");
+
             ROPTLIB::RNewton *RNewtonSolver = new RNewton(&ProbLS, &xIn); // USE INITGUESS HERE!
-            // RNewtonSolver->Verbose = ITERRESULT;
+            RNewtonSolver->Verbose = ITERRESULT;
 
             PARAMSMAP solverParams = {std::pair<std::string, double>("Max_Inner_Iter", 1)};
             RNewtonSolver->SetParams(solverParams);
+            RNewtonSolver->CheckParams();
+
             RNewtonSolver->Run();
 
-            RNewtonSolver->CheckParams();
             RNewtonSolver->GetXopt().Print("Xopt");
 
             Y0 = RNewtonSolver->GetXopt();

@@ -119,6 +119,9 @@ include/thirdparty/roptlib/others_Timer.cpp
 add_executable(test_roptlib_som test_roptlib_som.cpp)
 target_link_libraries(test_roptlib_som ${rofl_LIBRARIES} roptlib_local m blas lapack boost_iostreams boost_system boost_filesystem)
 
+add_executable(test_linesearch_som test_linesearch_som.cpp)
+target_link_libraries(test_linesearch_som ${rofl_LIBRARIES} roptlib_local m blas lapack boost_iostreams boost_system boost_filesystem)
+
 # Option "make install": copy binaries
 #INSTALL(TARGETS som
 #  RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin

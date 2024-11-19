@@ -461,9 +461,9 @@ namespace ROPTLIB
         // VecMatD rhR(sz_.n_, MatD::Zero(sz_.p_, sz_.d_));
         // MatD rhT(MatD::Zero(sz_.p_, sz_.n_));
         makePfrct(xT, P, frct);
-        ROFL_VAR2(P, frct);
+        // ROFL_VAR2(P, frct);
         makeLrPrBr(xR, Lr, Pr, Br);
-        ROFL_VAR3(Lr, Pr, Br);
+        // ROFL_VAR3(Lr, Pr, Br);
 
         VecMatD rgR(sz_.n_, MatD::Zero(sz_.p_, sz_.d_));
         rgradR(xR, P, rgR);
@@ -487,20 +487,20 @@ namespace ROPTLIB
         MatD htr(MatD::Zero(sz_.p_, sz_.n_));
         computeHtr(uR, htr);
 
-        ROFL_VAR2(hrr[0], hrt[0]);
-        ROFL_VAR2(hrr[1], hrt[1]);
-        ROFL_VAR2(hrr[2], hrt[2]);
-        ROFL_VAR2(hrr[3], hrt[3]);
-        ROFL_VAR2(hrr[4], hrt[4]);
-        ROFL_VAR2(htr, htt);
+        // ROFL_VAR2(hrr[0], hrt[0]);
+        // ROFL_VAR2(hrr[1], hrt[1]);
+        // ROFL_VAR2(hrr[2], hrt[2]);
+        // ROFL_VAR2(hrr[3], hrt[3]);
+        // ROFL_VAR2(hrr[4], hrt[4]);
+        // ROFL_VAR2(htr, htt);
 
         // TODO: use less memory
 
         // sum diag component with antidiag one
         std::transform(hrr.begin(), hrr.end(), hrt.begin(), rhR.begin(), std::plus<MatD>());
-        ROFL_VAR5(rhR[0], rhR[1], rhR[2], rhR[3], rhR[4]);
+        // ROFL_VAR5(rhR[0], rhR[1], rhR[2], rhR[3], rhR[4]);
         rhT = htt + htr;
-        ROFL_VAR1(rhT);
+        // ROFL_VAR1(rhT);
     }
 
     void SampleSomProblem::hessGenprocEigenShifted(
@@ -521,9 +521,9 @@ namespace ROPTLIB
         // VecMatD rhR(sz_.n_, MatD::Zero(sz_.p_, sz_.d_));
         // MatD rhT(MatD::Zero(sz_.p_, sz_.n_));
         makePfrct(xT, P, frct);
-        ROFL_VAR2(P, frct);
+        // ROFL_VAR2(P, frct);
         makeLrPrBr(xR, Lr, Pr, Br);
-        ROFL_VAR3(Lr, Pr, Br);
+        // ROFL_VAR3(Lr, Pr, Br);
 
         VecMatD rgR(sz_.n_, MatD::Zero(sz_.p_, sz_.d_));
         rgradR(xR, P, rgR);
@@ -547,12 +547,12 @@ namespace ROPTLIB
         MatD htr(MatD::Zero(sz_.p_, sz_.n_));
         computeHtr(uR, htr);
 
-        ROFL_VAR2(hrr[0], hrt[0]);
-        ROFL_VAR2(hrr[1], hrt[1]);
-        ROFL_VAR2(hrr[2], hrt[2]);
-        ROFL_VAR2(hrr[3], hrt[3]);
-        ROFL_VAR2(hrr[4], hrt[4]);
-        ROFL_VAR2(htr, htt);
+        // ROFL_VAR2(hrr[0], hrt[0]);
+        // ROFL_VAR2(hrr[1], hrt[1]);
+        // ROFL_VAR2(hrr[2], hrt[2]);
+        // ROFL_VAR2(hrr[3], hrt[3]);
+        // ROFL_VAR2(hrr[4], hrt[4]);
+        // ROFL_VAR2(htr, htt);
 
         // TODO: use less memory
 
@@ -599,8 +599,8 @@ namespace ROPTLIB
         MatD uT(MatD::Zero(sz_.p_, sz_.n_));
         getTranslations(xEtaEig, uT);
 
-        ROFL_VAR2(R[0], uR[0]);
-        ROFL_VAR2(T, uT);
+        // ROFL_VAR2(R[0], uR[0]);
+        // ROFL_VAR2(T, uT);
 
         VecMatD rhR(sz_.n_, MatD::Zero(sz_.p_, sz_.d_));
         MatD rhT(MatD::Zero(sz_.p_, sz_.n_));
@@ -891,7 +891,7 @@ namespace ROPTLIB
     {
         VecMatD egR(sz_.n_, MatD::Zero(sz_.p_, sz_.d_));
         egradR(P, egR);
-        ROFL_VAR2(P, egR[0]);
+        // ROFL_VAR2(P, egR[0]);
 
         VecMatD term_1(sz_.n_, MatD::Zero(sz_.p_, sz_.d_));
         VecMatD term_2(sz_.n_, MatD::Zero(sz_.p_, sz_.d_));
@@ -953,11 +953,11 @@ namespace ROPTLIB
         });
 
         stiefelTangentProj(xR, W, hrt);
-        ROFL_VAR1(uT);
-        for (int i = 0; i < sz_.n_; ++i)
-        {
-            ROFL_VAR2(i, hrt[i]);
-        }
+        // ROFL_VAR1(uT);
+        // for (int i = 0; i < sz_.n_; ++i)
+        // {
+        //     ROFL_VAR2(i, hrt[i]);
+        // }
     }
 
     void SampleSomProblem::computeHtr(const VecMatD &uR, MatD &htr) const
