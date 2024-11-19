@@ -13,6 +13,15 @@ namespace ROPTLIB
         fullSz_ = sz_.d_ * sz_.p_ * sz_.n_ + sz_.p_ * sz_.n_;
     }
 
+    SampleSomProblem::SampleSomProblem(const SomSize somSz, const MatD &Tijs, const Eigen::MatrixXi &edges)
+    {
+        sz_ = somSz;
+        Tijs_ = Tijs;
+        edges_ = edges;
+        numEdges_ = Tijs_.cols();
+        fullSz_ = sz_.d_ * sz_.p_ * sz_.n_ + sz_.p_ * sz_.n_;
+    }
+
     SampleSomProblem::~SampleSomProblem() {};
 
     realdp SampleSomProblem::f(const Variable &x) const
@@ -21,31 +30,7 @@ namespace ROPTLIB
         RoptToEig(x, xEigen);
         // ROFL_VAR1(x);
 
-        realdp cost = 0.0;
-
-        for (int e = 0; e < numEdges_; ++e)
-        {
-            MatD Ri(MatD::Zero(sz_.p_, sz_.d_));
-            MatD Ti(MatD::Zero(sz_.p_, 1));
-            MatD Tj(MatD::Zero(sz_.p_, 1));
-
-            VecD tij(VecD::Zero(sz_.d_));
-            tij = Tijs_.col(e);
-
-            int i = edges_(e, 0) - 1; // !! -1
-            int j = edges_(e, 1) - 1; // !! -1
-            getRi(xEigen, Ri, i);
-            getTi(xEigen, Ti, i);
-            getTi(xEigen, Tj, j);
-
-            ROFL_VAR3(i, j, e);
-            ROFL_VAR4(Ri, tij.transpose(), Ti.transpose(), Tj.transpose());
-
-            double costE = (Ri * tij - Tj + Ti).norm(); // TODO: use squaredNorm() here directly
-            ROFL_VAR1(costE);
-
-            cost += costE * costE;
-        }
+        realdp cost = costEigen(xEigen);
 
         ROFL_VAR1(cost);
         // ROFL_ASSERT(!std::isnan(corr));

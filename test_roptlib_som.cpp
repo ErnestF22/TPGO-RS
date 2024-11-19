@@ -9,9 +9,6 @@
 #include <filesystem>
 #include <boost/lexical_cast.hpp>
 
-#include "thirdparty/roptlib/manifolds_Euclidean.h"
-#include "thirdparty/roptlib/manifolds_MultiManifolds.h"
-
 #include "thirdparty/roptlib/problems_SampleSom.h"
 
 #include "thirdparty/roptlib/solvers_RTRNewton.h"
@@ -52,7 +49,6 @@ void readCsvInitguess(std::string fname, Vector &csvVec)
         std::cerr << "Error opening file!" << std::endl;
         return;
     }
-        
 
     std::string line;
     // getline(fout, csvVec.header, '\n');
@@ -151,8 +147,6 @@ void testSomSample(SomSize somSz, MatD &Tijs, Eigen::MatrixXi &edges)
     Vector hessStart = ProdMani.RandominManifold();
     hessStart = Prob.RieHessianEta(startX, etaStartX, &hessStart);
     hessStart.Print("hess Start");
-    
-
 
     // output the parameters of the manifold of domain
     ROPTLIB::RTRNewton *RTRNewtonSolver = new RTRNewton(&Prob, &startX); // USE INITGUESS HERE!

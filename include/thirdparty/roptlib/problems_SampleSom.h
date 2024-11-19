@@ -1,5 +1,7 @@
-#include "manifolds_Rotations.h"
+// #include "manifolds_Rotations.h"
 #include "manifolds_Stiefel.h"
+#include "manifolds_Euclidean.h"
+#include "manifolds_MultiManifolds.h"
 
 #include <vector>
 
@@ -11,6 +13,8 @@
 // #include <ars3d/RshRotation.h>
 
 // #include <ars3d_test/rsh_utils.h>
+
+#include "solvers_RNewton.h" //for RS linesearch
 
 #include "problems_Problem.h"
 #include "others_def.h"
@@ -49,6 +53,11 @@ namespace ROPTLIB
         SampleSomProblem(SomSize somSz, MatD &Tijs, Eigen::MatrixXi &edges);
 
         /**
+         * Standard constructor with problem data inputs (most commonly used)
+         */
+        SampleSomProblem(const SomSize somSz, const MatD &Tijs, const Eigen::MatrixXi &edges);
+
+        /**
          * Standard (empty) destructor
          */
         virtual ~SampleSomProblem();
@@ -58,6 +67,35 @@ namespace ROPTLIB
          * OBS. ROPT to Eig conversion performed here internally
          */
         virtual realdp f(const Variable &x) const;
+
+        double costEigen(const MatD &xEigen) const
+        {
+            double cost = 0.0f;
+            for (int e = 0; e < numEdges_; ++e)
+            {
+                MatD Ri(MatD::Zero(sz_.p_, sz_.d_));
+                MatD Ti(MatD::Zero(sz_.p_, 1));
+                MatD Tj(MatD::Zero(sz_.p_, 1));
+
+                VecD tij(VecD::Zero(sz_.d_));
+                tij = Tijs_.col(e);
+
+                int i = edges_(e, 0) - 1; // !! -1
+                int j = edges_(e, 1) - 1; // !! -1
+                getRi(xEigen, Ri, i);
+                getTi(xEigen, Ti, i);
+                getTi(xEigen, Tj, j);
+
+                ROFL_VAR3(i, j, e);
+                ROFL_VAR4(Ri, tij.transpose(), Ti.transpose(), Tj.transpose());
+
+                double costE = (Ri * tij - Tj + Ti).norm(); // TODO: use squaredNorm() here directly
+                ROFL_VAR1(costE);
+
+                cost += costE * costE;
+            }
+            return cost;
+        }
 
         /**
          * Computation of Euclidean Gradient of cost function
@@ -887,10 +925,40 @@ namespace ROPTLIB
             // v_pim_out = v_pim_after_shift;
         }
 
-        void linesearchArmijo(void)
+        void linesearchArmijoROPTLIB(const Vector &xIn, const SomSize &somSz, Vector &Y0) const
         {
+            Stiefel mani1(somSz.p_, somSz.d_);
+            mani1.ChooseParamsSet2();
+            integer numoftypes = 2; // 2 i.e. (3D) Stiefel + Euclidean
+
+            integer numofmani1 = somSz.n_; // num of Stiefel manifolds
+            integer numofmani2 = 1;
+            Euclidean mani2(somSz.p_, somSz.n_);
+            ProductManifold ProdMani(numoftypes, &mani1, numofmani1, &mani2, numofmani2);
+
+            SampleSomProblem ProbLS(somSz, Tijs_, edges_);
+            ProbLS.SetDomain(&ProdMani);
+
+            std::cout << "cost of LS input " << ProbLS.f(xIn) << std::endl; // x cost
+
+            ROPTLIB::RNewton *RNewtonSolver = new RNewton(&ProbLS, &xIn); // USE INITGUESS HERE!
+            // RNewtonSolver->Verbose = ITERRESULT;
+
+            PARAMSMAP solverParams = {std::pair<std::string, double>("Max_Inner_Iter", 1)};
+            RNewtonSolver->SetParams(solverParams);
+            RNewtonSolver->Run();
+
+            RNewtonSolver->CheckParams();
+            RNewtonSolver->GetXopt().Print("Xopt");
+
+            Y0 = RNewtonSolver->GetXopt();
+
+            std::cout << "cost of LS output " << RNewtonSolver->Getfinalfun() << std::endl; // x cost
+        }
+
+        void linesearchArmijo(const MatD &xIn) {
             // // LSstatus = LSSM_SUCCESS;
-            // f2 = h();
+            // double f2 = costEigen(xIn);
             // realdp maxpref = f1;
             // std::list<realdp>::iterator j;
             // std::list<realdp>::iterator jend;
