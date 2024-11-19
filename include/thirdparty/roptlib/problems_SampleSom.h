@@ -807,7 +807,7 @@ namespace ROPTLIB
             lambdaMax /= uFullHst.norm();
         }
 
-        void rsomPimHessianGenproc(double thresh, const VecMatD &R, const MatD &T) const
+        void rsomPimHessianGenproc(double thresh, const VecMatD &R, const MatD &T, Vector &Y0) const
         {
             // [Y_star, lambda, v] = rsom_pim_hessian_genproc( ...
             //     X, problem_struct_next, thr);
@@ -899,10 +899,25 @@ namespace ROPTLIB
                 eigencheckHessianGenprocShifted(highestNormEigenval, Rnext, vPimRshift, Tnext, vPimTshift, mu);
             }
 
+            //////!!!!/////!!!!
             // // %Preparing linesearch
             // nrs_next = problem_struct_next.sz(1);
             // d = problem_struct_next.sz(2);
             // N = problem_struct_next.sz(3);
+            int nrsNext = sz_.p_ + 1;
+            SomSize szNext(nrsNext, sz_.d_, sz_.n_);
+
+            Stiefel mani1(szNext.p_, szNext.d_);
+            mani1.ChooseParamsSet2();
+            integer numoftypes = 2; // 2 i.e. (3D) Stiefel + Euclidean
+
+            integer numofmani1 = szNext.n_; // num of Stiefel manifolds
+            integer numofmani2 = 1;
+            Euclidean mani2(szNext.p_, szNext.n_);
+            ProductManifold ProdManiNext(numoftypes, &mani1, numofmani1, &mani2, numofmani2);
+
+            Vector xIn = ProdManiNext.RandominManifold(); //!! in other cases xIn would have been a pointer
+
             // tuple_next.R = stiefelfactory(nrs_next, d, N);
             // tuple_next.T = euclideanfactory(nrs_next, N);
             // M = productmanifold(tuple_next);
@@ -923,6 +938,61 @@ namespace ROPTLIB
 
             // lambda_pim_out = highest_norm_eigenval;
             // v_pim_out = v_pim_after_shift;
+
+            { // EigToRopt scope for xIn
+
+                int rotSz = getRotSz();
+                int translSz = getTranslSz();
+
+                int gElemIdx = 0;
+                // fill result with computed gradient values : R
+                for (int i = 0; i < sz_.n_; ++i)
+                {
+                    // ROFL_VAR1(gElemIdx);
+                    // ROFL_VAR2("\n", rgR[gElemIdx]);
+                    // result->GetElement(gElemIdx).SetToIdentity(); // Ri
+                    // result->GetElement(gElemIdx).Print("Ri before assignment");
+
+                    Vector rgRiVec(sz_.p_, sz_.d_);
+                    // rgRiVec.Initialize();
+                    realdp *GroptlibWriteArray = rgRiVec.ObtainWriteEntireData();
+                    for (int j = 0; j < rotSz; ++j)
+                    {
+                        // ROFL_VAR2(i, j);
+                        // rgRiVec.Print("rgRiVec before assignment");
+
+                        // ROFL_VAR1(rgRiVec.GetElement(j, 0));
+
+                        GroptlibWriteArray[j] = Rnext[i].reshaped(sz_.d_ * sz_.p_, 1)(j);
+
+                        // ROFL_VAR1("");
+                        // rgRiVec.Print("rgRiVec after assignment");
+                    }
+                    rgRiVec.CopyTo(xIn.GetElement(gElemIdx));
+                    // result->GetElement(gElemIdx).Print("Riem. grad Ri after assignment");
+                    gElemIdx++;
+                }
+
+                // fill result with computed gradient values : T
+
+                Vector rgTiVec(sz_.p_, sz_.n_);
+                realdp *GroptlibWriteArray = rgTiVec.ObtainWriteEntireData();
+                for (int j = 0; j < sz_.p_ * sz_.n_; ++j)
+                {
+                    // rgTiVec.Print("rgTiVec before assignment");
+
+                    // ROFL_VAR1(rgRiVec.GetElement(j, 0));
+
+                    GroptlibWriteArray[j] = Tnext.reshaped(sz_.n_ * sz_.p_, 1)(j);
+
+                    // ROFL_VAR1("");
+                    // rgTiVec.Print("rgTiVec after assignment");
+                }
+                rgTiVec.CopyTo(xIn.GetElement(gElemIdx));
+            } // end of EigToRopt scope for xIn
+
+            // Vector Y0;
+            linesearchArmijoROPTLIB(xIn, szNext, Y0);
         }
 
         void linesearchArmijoROPTLIB(const Vector &xIn, const SomSize &somSz, Vector &Y0) const
