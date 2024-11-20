@@ -11,78 +11,9 @@
 
 #include "thirdparty/roptlib/problems_SampleSom.h"
 
-#include "thirdparty/roptlib/solvers_RTRNewton.h"
-
 using namespace ROPTLIB;
 
-void deserializeRow(const std::string &row, double &pt)
-{
-    std::stringstream ss(row);
-    std::vector<std::string> ptCoordStrings;
-
-    // ROFL_VAR1("\n");
-    for (std::string strI; ss >> strI;)
-    {
-        ptCoordStrings.push_back(strI);
-
-        if (ss.peek() == ',')
-            ss.ignore();
-
-        strI.erase(std::remove(strI.begin(), strI.end(), ','), strI.end()); // this should no nothing
-        // ROFL_VAR1(strI);
-
-        double ptCoord = std::stod(strI);
-
-        // ROFL_VAR1(ptCoord);
-        pt = ptCoord;
-    }
-    // ROFL_VAR1(pt.transpose());
-}
-
-void readCsvInitguess(std::string fname, Vector &csvVec)
-{
-    std::fstream fout;
-    fout.open(fname, std::ios::in);
-
-    if (!fout.is_open())
-    {
-        std::cerr << "Error opening file!" << std::endl;
-        return;
-    }
-
-    std::string line;
-    // getline(fout, csvVec.header, '\n');
-    // ROFL_VAR1(csvVec.header);
-    csvVec.ObtainWriteEntireData();
-
-    /////
-    // Vector rgTiVec(sz_.p_, sz_.n_);
-    realdp *GroptlibWriteArray = csvVec.ObtainWriteEntireData();
-
-    /////
-
-    int j = 0;
-    while (getline(fout, line, '\n'))
-    {
-        // ROFL_VAR1(line);
-
-        // add all the column data
-        // of a row to a vector
-
-        deserializeRow(line, GroptlibWriteArray[j]);
-        j++;
-        // ROFL_VAR1(line);
-
-        // csvVec.pts.push_back(pt);
-    }
-
-    // rgTiVec.CopyTo(result->GetElement(gElemIdx));
-    // csvVec.Print("csv read result");
-
-    fout.close();
-}
-
-void testSomSample(SomSize somSz, MatD &Tijs, Eigen::MatrixXi &edges)
+void testSomSample(SomUtils::SomSize somSz, SomUtils::MatD &Tijs, Eigen::MatrixXi &edges)
 {
     ROFL_VAR3(somSz.p_, somSz.d_, somSz.n_);
 
@@ -99,7 +30,7 @@ void testSomSample(SomSize somSz, MatD &Tijs, Eigen::MatrixXi &edges)
     // Obtain an initial iterate
     Vector startX = ProdMani.RandominManifold();
 
-    // readCsvInitguess("../data/X_initguess.csv", startX);
+    // SomUtils::readCsvInitguess("../data/X_initguess.csv", startX);
     // startX.Print("startX");
 
     // ProdMani.SetIsIntrApproach(false);
@@ -141,7 +72,7 @@ void testSomSample(SomSize somSz, MatD &Tijs, Eigen::MatrixXi &edges)
     // RS step !!!!
 
     int nrsNext = somSz.p_ + 1;
-    SomSize szNext(nrsNext, somSz.d_, somSz.n_);
+    SomUtils::SomSize szNext(nrsNext, somSz.d_, somSz.n_);
 
     Vector xOptPrevStep = RTRNewtonSolver->GetXopt();
     int fullSz = somSz.p_ * somSz.d_ * somSz.n_ + somSz.p_ * somSz.n_;
@@ -157,22 +88,22 @@ void testSomSample(SomSize somSz, MatD &Tijs, Eigen::MatrixXi &edges)
 
     Vector Y0 = ProdManiNext.RandominManifold();
 
-    MatD xOptPrevStepEig(MatD::Zero(fullSz, 1));
+    SomUtils::MatD xOptPrevStepEig(SomUtils::MatD::Zero(fullSz, 1));
 
     Prob.RoptToEig(xOptPrevStep, xOptPrevStepEig);
 
-    VecMatD R(somSz.n_, MatD::Zero(somSz.p_, somSz.d_));
+    SomUtils::VecMatD R(somSz.n_, SomUtils::MatD::Zero(somSz.p_, somSz.d_));
     Prob.getRotations(xOptPrevStepEig, R);
 
-    MatD T(MatD::Zero(somSz.p_, somSz.n_));
+    SomUtils::MatD T(SomUtils::MatD::Zero(somSz.p_, somSz.n_));
     Prob.getTranslations(xOptPrevStepEig, T);
 
     // 1) cat zero rows on R, T
-    VecMatD Rnext(szNext.n_, MatD::Zero(szNext.p_, szNext.d_));
-    Prob.catZeroRow3dArray(R, Rnext); //does the same job as ProbNext.catZeroRow3dArray()
+    SomUtils::VecMatD Rnext(szNext.n_, SomUtils::MatD::Zero(szNext.p_, szNext.d_));
+    Prob.catZeroRow3dArray(R, Rnext); // does the same job as ProbNext.catZeroRow3dArray()
 
-    MatD Tnext(MatD::Zero(szNext.p_, szNext.n_));
-    Prob.catZeroRow(T, Tnext); //does the same job as ProbNext.catZeroRow()
+    SomUtils::MatD Tnext(SomUtils::MatD::Zero(szNext.p_, szNext.n_));
+    Prob.catZeroRow(T, Tnext); // does the same job as ProbNext.catZeroRow()
 
     SampleSomProblem ProbNext(szNext, Tijs, edges);
     ProbNext.SetDomain(&ProdMani);
@@ -231,7 +162,7 @@ void testSomSample(SomSize somSz, MatD &Tijs, Eigen::MatrixXi &edges)
     } // end of EigToRopt scope for xOptNext
 
     //
-    
+
     Prob.linesearchArmijoROPTLIB(xOptNext, szNext, Y0);
 
     Y0.Print("Y0 before delete RTRNewtonSolver");
@@ -244,9 +175,9 @@ int main(int argc, char **argv)
     int p = 4;
     int d = 3;
     int n = 5;
-    SomSize somSz(p, d, n);
+    SomUtils::SomSize somSz(p, d, n);
     int numEdges = 18;
-    MatD Tijs = MatD::Random(d, numEdges);
+    SomUtils::MatD Tijs = SomUtils::MatD::Random(d, numEdges);
     Eigen::MatrixXi edges(numEdges, 2);
     edges << 2, 1,
         3, 1,

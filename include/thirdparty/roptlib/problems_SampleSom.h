@@ -19,22 +19,11 @@
 #include "problems_Problem.h"
 #include "others_def.h"
 
-struct SomSize
-{
-    int p_;
-    int d_;
-    int n_;
+#include "manifolds_Manifold.h"
+#include "problems_Problem.h"
+#include "solvers_RTRNewton.h"
 
-    SomSize() : p_(1), d_(1), n_(1) {}
-
-    SomSize(int p, int d, int n) : p_(p), d_(d), n_(n)
-    {
-    }
-};
-
-using MatD = Eigen::MatrixXd;
-using VecMatD = std::vector<MatD>;
-using VecD = Eigen::VectorXd;
+#include "../../som_utils.h"
 
 namespace ROPTLIB
 {
@@ -50,12 +39,12 @@ namespace ROPTLIB
         /**
          * Standard constructor with problem data inputs (most commonly used)
          */
-        SampleSomProblem(SomSize somSz, MatD &Tijs, Eigen::MatrixXi &edges);
+        SampleSomProblem(SomUtils::SomSize somSz, SomUtils::MatD &Tijs, Eigen::MatrixXi &edges);
 
         /**
          * Standard constructor with problem data inputs (most commonly used)
          */
-        SampleSomProblem(const SomSize somSz, const MatD &Tijs, const Eigen::MatrixXi &edges);
+        SampleSomProblem(const SomUtils::SomSize somSz, const SomUtils::MatD &Tijs, const Eigen::MatrixXi &edges);
 
         /**
          * Standard (empty) destructor
@@ -68,16 +57,16 @@ namespace ROPTLIB
          */
         virtual realdp f(const Variable &x) const;
 
-        double costEigen(const MatD &xEigen) const
+        double costEigen(const SomUtils::MatD &xEigen) const
         {
             double cost = 0.0f;
             for (int e = 0; e < numEdges_; ++e)
             {
-                MatD Ri(MatD::Zero(sz_.p_, sz_.d_));
-                MatD Ti(MatD::Zero(sz_.p_, 1));
-                MatD Tj(MatD::Zero(sz_.p_, 1));
+                SomUtils::MatD Ri(SomUtils::MatD::Zero(sz_.p_, sz_.d_));
+                SomUtils::MatD Ti(SomUtils::MatD::Zero(sz_.p_, 1));
+                SomUtils::MatD Tj(SomUtils::MatD::Zero(sz_.p_, 1));
 
-                VecD tij(VecD::Zero(sz_.d_));
+                SomUtils::VecD tij(SomUtils::VecD::Zero(sz_.d_));
                 tij = Tijs_.col(e);
 
                 int i = edges_(e, 0) - 1; // !! -1
@@ -115,22 +104,22 @@ namespace ROPTLIB
         /**
          * Function that computes Euclidean gradient of Translation estimation cost (with Eigen inputs/outputs)
          */
-        void egradR(const MatD &P, VecMatD &egR) const;
+        void egradR(const SomUtils::MatD &P, SomUtils::VecMatD &egR) const;
 
         /**
          * Function that computes Riemannian gradient of Rotation estimation cost (with Eigen inputs/outputs)
          */
-        void rgradR(const VecMatD &R, const MatD &P, VecMatD &rgR) const;
+        void rgradR(const SomUtils::VecMatD &R, const SomUtils::MatD &P, SomUtils::VecMatD &rgR) const;
 
         /**
          * Function that computes Euclidean gradient of Translation estimation cost (with Eigen inputs/outputs)
          */
-        void egradT(const MatD &T, const MatD &Lr, const MatD &Pr, MatD &egT) const;
+        void egradT(const SomUtils::MatD &T, const SomUtils::MatD &Lr, const SomUtils::MatD &Pr, SomUtils::MatD &egT) const;
 
         /**
          * Function that computes Riemannian gradient of Translation estimation cost (with Eigen inputs/outputs)
          */
-        void rgradT(const MatD &T, const MatD &Lr, const MatD &Pr, MatD &egT) const;
+        void rgradT(const SomUtils::MatD &T, const SomUtils::MatD &Lr, const SomUtils::MatD &Pr, SomUtils::MatD &egT) const;
 
         /**
          * Euclidean Hessian action i.e., *result = H(x)[etax]
@@ -141,12 +130,12 @@ namespace ROPTLIB
          * Hessian (Genproc) with Eigen I/O;
          * called internally by RieHessianEta()
          */
-        void hessGenprocEigen(const VecMatD &xR, const VecMatD &uR, const MatD &xT, const MatD &uT, VecMatD &rhR, MatD &rhT) const;
+        void hessGenprocEigen(const SomUtils::VecMatD &xR, const SomUtils::VecMatD &uR, const SomUtils::MatD &xT, const SomUtils::MatD &uT, SomUtils::VecMatD &rhR, SomUtils::MatD &rhT) const;
 
         /**
          * Hessian (Genproc) with Eigen I/O of f-(mu*u)
          */
-        void hessGenprocEigenShifted(const VecMatD &xR, const VecMatD &uR, const MatD &xT, const MatD &uT, double mu, VecMatD &rhR, MatD &rhT) const;
+        void hessGenprocEigenShifted(const SomUtils::VecMatD &xR, const SomUtils::VecMatD &uR, const SomUtils::MatD &xT, const SomUtils::MatD &uT, double mu, SomUtils::VecMatD &rhR, SomUtils::MatD &rhT) const;
 
         /**
          * Hessian action i.e., *result = H(x)[etax]
@@ -157,87 +146,87 @@ namespace ROPTLIB
          * Convert ROPTLIB Vector into Eigen equivalent
          * TOCHECK: for now seems to work only with vectors (not matrices, tensors)
          */
-        void RoptToEig(Vector x, MatD &xEigen) const;
+        void RoptToEig(Vector x, SomUtils::MatD &xEigen) const;
 
         /**
          * Vertically stack input vector
          */
-        void vstack(const VecMatD &in, MatD &out) const;
+        void vstack(const SomUtils::VecMatD &in, SomUtils::MatD &out) const;
 
         /**
          * Horizontally stack input vector
          */
-        void hstack(const VecMatD &in, MatD &out) const;
+        void hstack(const SomUtils::VecMatD &in, SomUtils::MatD &out) const;
 
         /**
          * Unstack a vertically stacked "3D" array
          */
-        void unStackV(const MatD &in, VecMatD &out, int rowsOut = 3) const;
+        void unStackV(const SomUtils::MatD &in, SomUtils::VecMatD &out, int rowsOut = 3) const;
 
         /**
          * Unstack a horizontally stacked "3D" array
          */
-        void unStackH(const MatD &in, VecMatD &out, int colsOut = 3) const;
+        void unStackH(const SomUtils::MatD &in, SomUtils::VecMatD &out, int colsOut = 3) const;
 
         /**
          * Get i-th Rotation from ROPTLIB variable x
          */
-        void getRi(const Variable &x, MatD &rOut, int i) const;
+        void getRi(const Variable &x, SomUtils::MatD &rOut, int i) const;
 
         /**
          * Get i-th Rotation from Eigen-converted variable xEig
          */
-        void getRi(const MatD &xEig, MatD &rOut, int i) const;
+        void getRi(const SomUtils::MatD &xEig, SomUtils::MatD &rOut, int i) const;
 
         /**
          * Get all roatations in vector of pxd matrices tOut (with n elements)
          */
-        void getRotations(const MatD &xEig, VecMatD &rOut) const;
+        void getRotations(const SomUtils::MatD &xEig, SomUtils::VecMatD &rOut) const;
 
         /**
          * Get i-th Translation from ROPTLIB variable x
          */
-        void getTi(const Variable &x, MatD &rOut, int i) const;
+        void getTi(const Variable &x, SomUtils::MatD &rOut, int i) const;
 
         /**
          * Get i-th Translation from Eigen-converted variable xEig
          */
-        void getTi(const MatD &xEig, MatD &tOut, int i) const;
+        void getTi(const SomUtils::MatD &xEig, SomUtils::MatD &tOut, int i) const;
 
         /**
          * Get all translations in p * n matrix tOut
          */
-        void getTranslations(const MatD &xEig, MatD &tOut) const;
+        void getTranslations(const SomUtils::MatD &xEig, SomUtils::MatD &tOut) const;
 
         /**
          * Computes matrices used in rotation estimation cost
          */
-        void makePfrct(const MatD &T, MatD &P, double &frct) const;
+        void makePfrct(const SomUtils::MatD &T, SomUtils::MatD &P, double &frct) const;
 
         /**
          * Computes matrices used in translation estimation cost
          */
-        void makeLrPrBr(const VecMatD &R, MatD &Lr, MatD &Pr, MatD &Br) const;
+        void makeLrPrBr(const SomUtils::VecMatD &R, SomUtils::MatD &Lr, SomUtils::MatD &Pr, SomUtils::MatD &Br) const;
 
         /**
          * Compute one of the Genproc Hessian subparts
          */
-        void computeHrr(const VecMatD &xR, const VecMatD &uR, const MatD &P, VecMatD &hRR) const;
+        void computeHrr(const SomUtils::VecMatD &xR, const SomUtils::VecMatD &uR, const SomUtils::MatD &P, SomUtils::VecMatD &hRR) const;
 
         /**
          * Compute one of the Genproc Hessian subparts
          */
-        void computeHtt(const MatD &uT, const MatD &LR, MatD &hTT) const;
+        void computeHtt(const SomUtils::MatD &uT, const SomUtils::MatD &LR, SomUtils::MatD &hTT) const;
 
         /**
          * Compute one of the Genproc Hessian subparts
          */
-        void computeHrt(const VecMatD &xR, const MatD uT, VecMatD &hrt) const;
+        void computeHrt(const SomUtils::VecMatD &xR, const SomUtils::MatD uT, SomUtils::VecMatD &hrt) const;
 
         /**
          * Compute one of the Genproc Hessian subparts
          */
-        void computeHtr(const VecMatD &uR, MatD &htr) const;
+        void computeHtr(const SomUtils::VecMatD &uR, SomUtils::MatD &htr) const;
 
         /**
          * Return p * d (size of a sigle Stiefel-rotation)
@@ -252,30 +241,30 @@ namespace ROPTLIB
         /**
          * Project Hin onto tangent space at Y (3D Stiefel)
          */
-        void stiefelTangentProj(const VecMatD &Y, const VecMatD &Hin, VecMatD &Hout) const;
+        void stiefelTangentProj(const SomUtils::VecMatD &Y, const SomUtils::VecMatD &Hin, SomUtils::VecMatD &Hout) const;
 
         /**
          * Project Hin onto tangent space at Y (single Stiefel matrix)
          */
-        void stiefelTangentProj(const MatD &Y, const MatD &Hin, MatD &Hout) const;
+        void stiefelTangentProj(const SomUtils::MatD &Y, const SomUtils::MatD &Hin, SomUtils::MatD &Hout) const;
 
         /**
          * Extract symmetric part of input (square) matrix
          */
-        void extractSymmetricPart(const MatD &in, MatD &out) const;
+        void extractSymmetricPart(const SomUtils::MatD &in, SomUtils::MatD &out) const;
 
         // private: //TODO: separate public from private members
 
         /**
          * Struct that contains problem size info
          */
-        SomSize sz_;
+        SomUtils::SomSize sz_;
 
         /**
          * (Estimated) Relative translations between nodes
          * Size: d x e
          */
-        MatD Tijs_;
+        SomUtils::MatD Tijs_;
 
         /**
          * Edges
@@ -295,8 +284,8 @@ namespace ROPTLIB
         int fullSz_;
 
         bool eigencheckHessianGenproc(const double &lambda,
-                                      const VecMatD &xR, const VecMatD &uR,
-                                      const MatD &xT, const MatD &uT, double thr = 1e-3) const
+                                      const SomUtils::VecMatD &xR, const SomUtils::VecMatD &uR,
+                                      const SomUtils::MatD &xT, const SomUtils::MatD &uT, double thr = 1e-3) const
         {
             // if ~exist('thr','var')
             //     thr = 1e-3;
@@ -305,12 +294,12 @@ namespace ROPTLIB
             // hessV = [matStackH(hess_fun_han(v).R), hess_fun_han(v).T];
 
             // OBS. TODO: These vectorizations can probably be done faster as elements order is not really important
-            VecMatD rhR(sz_.n_, MatD::Zero(xR[0].rows(), xR[0].cols()));
-            MatD rhT(MatD::Zero(xT.rows(), xT.cols()));
+            SomUtils::VecMatD rhR(sz_.n_, SomUtils::MatD::Zero(xR[0].rows(), xR[0].cols()));
+            SomUtils::MatD rhT(SomUtils::MatD::Zero(xT.rows(), xT.cols()));
             hessGenprocEigen(xR, uR, xT, uT, rhR, rhT);
 
             int fullRotsSz = sz_.n_ * sz_.p_ * sz_.d_; // TODO: class function for this
-            MatD rhRvec(MatD::Zero(fullRotsSz, 1));
+            SomUtils::MatD rhRvec(SomUtils::MatD::Zero(fullRotsSz, 1));
             int fullIdx = 0;
             for (int i = 0; i < sz_.n_; ++i)
             {
@@ -324,7 +313,7 @@ namespace ROPTLIB
                 }
             }
             int fullTranslSz = sz_.n_ * sz_.p_; // TODO: class member function for this
-            MatD rhTvec(MatD::Zero(fullTranslSz, 1));
+            SomUtils::MatD rhTvec(SomUtils::MatD::Zero(fullTranslSz, 1));
             fullIdx = 0; //!! resetting fullIdx
             for (int j = 0; j < sz_.n_; ++j)
             {
@@ -338,7 +327,7 @@ namespace ROPTLIB
             hessV << rhRvec, rhTvec;
 
             // uFull = [matStackH(v.R), v.T];
-            MatD uRvec(MatD::Zero(fullRotsSz, 1));
+            SomUtils::MatD uRvec(SomUtils::MatD::Zero(fullRotsSz, 1));
             fullIdx = 0;
             for (int i = 0; i < sz_.n_; ++i)
             {
@@ -351,7 +340,7 @@ namespace ROPTLIB
                     }
                 }
             }
-            MatD uTvec(MatD::Zero(fullTranslSz, 1));
+            SomUtils::MatD uTvec(SomUtils::MatD::Zero(fullTranslSz, 1));
             fullIdx = 0; //!! resetting fullIdx
             for (int j = 0; j < sz_.n_; ++j)
             {
@@ -391,8 +380,8 @@ namespace ROPTLIB
         }
 
         bool eigencheckHessianGenprocShifted(const double &lambda,
-                                             const VecMatD &xR, const VecMatD &uR,
-                                             const MatD &xT, const MatD &uT, double mu, double thr = 1e-3) const
+                                             const SomUtils::VecMatD &xR, const SomUtils::VecMatD &uR,
+                                             const SomUtils::MatD &xT, const SomUtils::MatD &uT, double mu, double thr = 1e-3) const
         {
             // if ~exist('thr','var')
             //     thr = 1e-3;
@@ -401,12 +390,12 @@ namespace ROPTLIB
             // hessV = [matStackH(hess_fun_han(v).R), hess_fun_han(v).T];
 
             // OBS. TODO: These vectorizations can probably be done faster as elements order is not really important
-            VecMatD rhR(sz_.n_, MatD::Zero(xR[0].rows(), xR[0].cols()));
-            MatD rhT(MatD::Zero(xT.rows(), xT.cols()));
+            SomUtils::VecMatD rhR(sz_.n_, SomUtils::MatD::Zero(xR[0].rows(), xR[0].cols()));
+            SomUtils::MatD rhT(SomUtils::MatD::Zero(xT.rows(), xT.cols()));
             hessGenprocEigenShifted(xR, uR, xT, uT, mu, rhR, rhT);
 
             int fullRotsSz = sz_.n_ * sz_.p_ * sz_.d_; // TODO: class function for this
-            MatD rhRvec(MatD::Zero(fullRotsSz, 1));
+            SomUtils::MatD rhRvec(SomUtils::MatD::Zero(fullRotsSz, 1));
             int fullIdx = 0;
             for (int i = 0; i < sz_.n_; ++i)
             {
@@ -420,7 +409,7 @@ namespace ROPTLIB
                 }
             }
             int fullTranslSz = sz_.n_ * sz_.p_; // TODO: class member function for this
-            MatD rhTvec(MatD::Zero(fullTranslSz, 1));
+            SomUtils::MatD rhTvec(SomUtils::MatD::Zero(fullTranslSz, 1));
             fullIdx = 0; //!! resetting fullIdx
             for (int j = 0; j < sz_.n_; ++j)
             {
@@ -434,7 +423,7 @@ namespace ROPTLIB
             hessV << rhRvec, rhTvec;
 
             // uFull = [matStackH(v.R), v.T];
-            MatD uRvec(MatD::Zero(fullRotsSz, 1));
+            SomUtils::MatD uRvec(SomUtils::MatD::Zero(fullRotsSz, 1));
             fullIdx = 0;
             for (int i = 0; i < sz_.n_; ++i)
             {
@@ -447,7 +436,7 @@ namespace ROPTLIB
                     }
                 }
             }
-            MatD uTvec(MatD::Zero(fullTranslSz, 1));
+            SomUtils::MatD uTvec(SomUtils::MatD::Zero(fullTranslSz, 1));
             fullIdx = 0; //!! resetting fullIdx
             for (int j = 0; j < sz_.n_; ++j)
             {
@@ -486,7 +475,7 @@ namespace ROPTLIB
             return false;
         }
 
-        void catZeroRow(const MatD &mIn, MatD &mOut) const
+        void catZeroRow(const SomUtils::MatD &mIn, SomUtils::MatD &mOut) const
         {
             ROFL_ASSERT(mOut.rows() == mIn.rows() + 1);
             ROFL_ASSERT(mOut.cols() == mIn.cols());
@@ -495,7 +484,7 @@ namespace ROPTLIB
             mOut.block(0, 0, mIn.rows(), mIn.cols()) = mIn;
         }
 
-        void catZeroRow3dArray(const VecMatD &mIn, VecMatD &mOut) const
+        void catZeroRow3dArray(const SomUtils::VecMatD &mIn, SomUtils::VecMatD &mOut) const
         {
             ROFL_ASSERT(mIn.size() == mOut.size())
 
@@ -506,7 +495,7 @@ namespace ROPTLIB
             }
         }
 
-        void normalizeEucl(const MatD &mIn, MatD &mOut) const
+        void normalizeEucl(const SomUtils::MatD &mIn, SomUtils::MatD &mOut) const
         {
             mOut = mIn;
             int normF = mIn.norm(); // TODO: maybe use .normalized() directly?
@@ -514,10 +503,10 @@ namespace ROPTLIB
             mOut /= normF;
         }
 
-        void normalizeEucl(const VecMatD &mIn, VecMatD &mOut) const
+        void normalizeEucl(const SomUtils::VecMatD &mIn, SomUtils::VecMatD &mOut) const
         {
             ROFL_ASSERT(mIn.size() == mOut.size())
-            std::for_each(mOut.begin(), mOut.end(), [](MatD &x) { //^^^ take argument by reference: LAMBDA FUNCTION
+            std::for_each(mOut.begin(), mOut.end(), [](SomUtils::MatD &x) { //^^^ take argument by reference: LAMBDA FUNCTION
                 x.setZero();
             });
 
@@ -526,7 +515,7 @@ namespace ROPTLIB
                 normalizeEucl(mIn[i], mOut[i]);
         }
 
-        void stiefelRandTgNormVector(const MatD &mIn, MatD &mOut) const
+        void stiefelRandTgNormVector(const SomUtils::MatD &mIn, SomUtils::MatD &mOut) const
         {
             int r = mIn.rows();
             int c = mIn.cols();
@@ -535,9 +524,9 @@ namespace ROPTLIB
 
             // generate random Stiefel element
             Vector tmp = Stiefel(r, c).RandominManifold();
-            MatD tmpEig(MatD::Zero(r, c));
+            SomUtils::MatD tmpEig(SomUtils::MatD::Zero(r, c));
             RoptToEig(tmp, tmpEig);
-            MatD tmpProj(MatD::Zero(r, c));
+            SomUtils::MatD tmpProj(SomUtils::MatD::Zero(r, c));
             stiefelTangentProj(mIn, tmpEig, tmpProj);
 
             normalizeEucl(tmpProj, mOut);
@@ -551,11 +540,11 @@ namespace ROPTLIB
             ROFL_ASSERT_VAR1(diff >= 0 && diff < 1e-5, diff);
         }
 
-        void stiefelRandTgNormVector(const VecMatD &mIn, VecMatD &mOut) const
+        void stiefelRandTgNormVector(const SomUtils::VecMatD &mIn, SomUtils::VecMatD &mOut) const
         {
             int n = mIn.size();
             ROFL_ASSERT(n == mOut.size());
-            std::for_each(mOut.begin(), mOut.end(), [](MatD &x) { //^^^ take argument by reference: LAMBDA FUNCTION
+            std::for_each(mOut.begin(), mOut.end(), [](SomUtils::MatD &x) { //^^^ take argument by reference: LAMBDA FUNCTION
                 x.setZero();
             });
 
@@ -565,7 +554,7 @@ namespace ROPTLIB
             }
         }
 
-        void vectorizeR(const VecMatD &R, MatD &RvecOut) const
+        void vectorizeR(const SomUtils::VecMatD &R, SomUtils::MatD &RvecOut) const
         {
             // int fullRotsSz = sz_.p_ * sz_.d_ * sz_.n_;
 
@@ -587,8 +576,8 @@ namespace ROPTLIB
             }
         }
 
-        void pimFunctionGenproc(const VecMatD &xR, const MatD &xT, const VecMatD &uR, const MatD &uT,
-                                double &lambdaMax, VecMatD &uFullR, MatD &uFullT, double thresh = 1e-5) const
+        void pimFunctionGenproc(const SomUtils::VecMatD &xR, const SomUtils::MatD &xT, const SomUtils::VecMatD &uR, const SomUtils::MatD &uT,
+                                double &lambdaMax, SomUtils::VecMatD &uFullR, SomUtils::MatD &uFullT, double thresh = 1e-5) const
         {
             // Note: normalization is done across entire ProdMani vector through simple eucl. metric
 
@@ -599,12 +588,12 @@ namespace ROPTLIB
 
             int staircaseLevel = xR.size();
 
-            MatD uRhStacked(MatD::Zero(staircaseLevel, sz_.d_ * sz_.n_));
+            SomUtils::MatD uRhStacked(SomUtils::MatD::Zero(staircaseLevel, sz_.d_ * sz_.n_));
             hstack(uR, uRhStacked);
 
-            MatD uTcopy = uT; // useful for keeping const in function params
+            SomUtils::MatD uTcopy = uT; // useful for keeping const in function params
 
-            MatD uFullHst(MatD::Zero(staircaseLevel, sz_.n_ + uRhStacked.cols()));
+            SomUtils::MatD uFullHst(SomUtils::MatD::Zero(staircaseLevel, sz_.n_ + uRhStacked.cols()));
             uFullHst.block(0, 0, staircaseLevel, uRhStacked.cols()) = uRhStacked;
             uFullHst.block(0, uRhStacked.cols(), staircaseLevel, sz_.n_) = uTcopy;
             // iteration_num = 0;
@@ -624,15 +613,15 @@ namespace ROPTLIB
             //      xfull = [ matStackH(xR), xT ];
             //      iterative_change = max(normalization_fun(xfull_prev - xfull), [], "all");
             // end
-            MatD uRprevHst(MatD::Zero(staircaseLevel, sz_.d_ * sz_.n_));
-            MatD uTprev(MatD::Zero(staircaseLevel, sz_.n_));
+            SomUtils::MatD uRprevHst(SomUtils::MatD::Zero(staircaseLevel, sz_.d_ * sz_.n_));
+            SomUtils::MatD uTprev(SomUtils::MatD::Zero(staircaseLevel, sz_.n_));
             while (iterationNum < 2500) // && iterativeChange < 1e-3
             {
                 iterationNum++;
                 uRprevHst = uRhStacked;
                 uTprev = uTcopy;
 
-                MatD uFullHstPrev(MatD::Zero(staircaseLevel, sz_.n_ + uRhStacked.cols()));
+                SomUtils::MatD uFullHstPrev(SomUtils::MatD::Zero(staircaseLevel, sz_.n_ + uRhStacked.cols()));
                 uFullHstPrev.block(0, 0, staircaseLevel, uRhStacked.cols()) = uRprevHst;
                 uFullHstPrev.block(0, uRhStacked.cols(), staircaseLevel, sz_.n_) = uTprev;
 
@@ -640,14 +629,14 @@ namespace ROPTLIB
                 uRhStacked /= normRT;
                 uTcopy /= normRT;
 
-                VecMatD uRunstackedTmp(sz_.n_, MatD::Zero(staircaseLevel, sz_.d_));
+                SomUtils::VecMatD uRunstackedTmp(sz_.n_, SomUtils::MatD::Zero(staircaseLevel, sz_.d_));
                 unStackH(uRhStacked, uRunstackedTmp);
 
-                VecMatD uRunstackedOutTmp(sz_.n_, MatD::Zero(staircaseLevel, sz_.d_));
-                MatD uTout(MatD::Zero(staircaseLevel, sz_.n_));
+                SomUtils::VecMatD uRunstackedOutTmp(sz_.n_, SomUtils::MatD::Zero(staircaseLevel, sz_.d_));
+                SomUtils::MatD uTout(SomUtils::MatD::Zero(staircaseLevel, sz_.n_));
                 hessGenprocEigen(xR, uRunstackedTmp, xT, uTcopy, uRunstackedOutTmp, uTout);
 
-                std::for_each(uRunstackedOutTmp.begin(), uRunstackedOutTmp.end(), [](MatD &x) { //^^^ take argument by reference: LAMBDA FUNCTION
+                std::for_each(uRunstackedOutTmp.begin(), uRunstackedOutTmp.end(), [](SomUtils::MatD &x) { //^^^ take argument by reference: LAMBDA FUNCTION
                     x *= -1;
                 });
                 uTcopy = -uTout;
@@ -668,20 +657,20 @@ namespace ROPTLIB
             uFullHst /= normRTmax;
 
             // f_x_max = f(x_max);
-            VecMatD uRunstacked(sz_.n_, MatD::Zero(staircaseLevel, sz_.d_));
+            SomUtils::VecMatD uRunstacked(sz_.n_, SomUtils::MatD::Zero(staircaseLevel, sz_.d_));
             unStackH(uRhStacked / normRTmax, uRunstacked, sz_.d_);
-            VecMatD fxRunstackedOut(sz_.n_, MatD::Zero(staircaseLevel, sz_.d_));
+            SomUtils::VecMatD fxRunstackedOut(sz_.n_, SomUtils::MatD::Zero(staircaseLevel, sz_.d_));
 
-            MatD uTout1(MatD::Zero(staircaseLevel, sz_.n_));
+            SomUtils::MatD uTout1(SomUtils::MatD::Zero(staircaseLevel, sz_.n_));
 
             hessGenprocEigen(xR, uRunstacked, xT, uTcopy / normRTmax, fxRunstackedOut, uTout1);
 
             // % lambda_max_R = sum(stiefel_metric([], (x_max.R), f_x_max.R)) / ... % sum(stiefel_metric([], x_max.R, x_max.R));
             // % lambda_max_T = sum(stiefel_metric([], (x_max.T), f_x_max.T)) / ... % sum(stiefel_metric([], x_max.T, x_max.T));
 
-            MatD vecR(MatD::Zero(sz_.d_ * staircaseLevel * sz_.n_, 1));
+            SomUtils::MatD vecR(SomUtils::MatD::Zero(sz_.d_ * staircaseLevel * sz_.n_, 1));
             vectorizeR(uRunstacked, vecR);
-            MatD vecFxR(MatD::Zero(sz_.d_ * staircaseLevel * sz_.n_, 1));
+            SomUtils::MatD vecFxR(SomUtils::MatD::Zero(sz_.d_ * staircaseLevel * sz_.n_, 1));
             vectorizeR(fxRunstackedOut, vecFxR);
 
             // lambda_max = x_max.R( :) ' * f_x_max.R(:) + x_max.T(:)' * f_x_max.T( :);
@@ -697,8 +686,8 @@ namespace ROPTLIB
             lambdaMax /= uFullHst.norm();
         }
 
-        void pimFunctionGenprocShifted(const VecMatD &xR, const MatD &xT, const VecMatD &uR, const MatD &uT, double mu,
-                                       double &lambdaMax, VecMatD &uFullR, MatD &uFullT, double thresh = 1e-5) const
+        void pimFunctionGenprocShifted(const SomUtils::VecMatD &xR, const SomUtils::MatD &xT, const SomUtils::VecMatD &uR, const SomUtils::MatD &uT, double mu,
+                                       double &lambdaMax, SomUtils::VecMatD &uFullR, SomUtils::MatD &uFullT, double thresh = 1e-5) const
         {
             // Note: normalization is done across entire ProdMani vector through simple eucl. metric
 
@@ -709,12 +698,12 @@ namespace ROPTLIB
 
             int staircaseLevel = xR.size();
 
-            MatD uRhStacked(MatD::Zero(staircaseLevel, sz_.d_ * sz_.n_));
+            SomUtils::MatD uRhStacked(SomUtils::MatD::Zero(staircaseLevel, sz_.d_ * sz_.n_));
             hstack(uR, uRhStacked);
 
-            MatD uTcopy = uT; // useful for keeping const in function params
+            SomUtils::MatD uTcopy = uT; // useful for keeping const in function params
 
-            MatD uFullHst(MatD::Zero(staircaseLevel, sz_.n_ + uRhStacked.cols()));
+            SomUtils::MatD uFullHst(SomUtils::MatD::Zero(staircaseLevel, sz_.n_ + uRhStacked.cols()));
             uFullHst.block(0, 0, staircaseLevel, uRhStacked.cols()) = uRhStacked;
             uFullHst.block(0, uRhStacked.cols(), staircaseLevel, sz_.n_) = uTcopy;
             // iteration_num = 0;
@@ -734,15 +723,15 @@ namespace ROPTLIB
             //      xfull = [ matStackH(xR), xT ];
             //      iterative_change = max(normalization_fun(xfull_prev - xfull), [], "all");
             // end
-            MatD uRprevHst(MatD::Zero(staircaseLevel, sz_.d_ * sz_.n_));
-            MatD uTprev(MatD::Zero(staircaseLevel, sz_.n_));
+            SomUtils::MatD uRprevHst(SomUtils::MatD::Zero(staircaseLevel, sz_.d_ * sz_.n_));
+            SomUtils::MatD uTprev(SomUtils::MatD::Zero(staircaseLevel, sz_.n_));
             while (iterationNum < 2500) // && iterativeChange < 1e-3
             {
                 iterationNum++;
                 uRprevHst = uRhStacked;
                 uTprev = uTcopy;
 
-                MatD uFullHstPrev(MatD::Zero(staircaseLevel, sz_.n_ + uRhStacked.cols()));
+                SomUtils::MatD uFullHstPrev(SomUtils::MatD::Zero(staircaseLevel, sz_.n_ + uRhStacked.cols()));
                 uFullHstPrev.block(0, 0, staircaseLevel, uRhStacked.cols()) = uRprevHst;
                 uFullHstPrev.block(0, uRhStacked.cols(), staircaseLevel, sz_.n_) = uTprev;
 
@@ -750,14 +739,14 @@ namespace ROPTLIB
                 uRhStacked /= normRT;
                 uTcopy /= normRT;
 
-                VecMatD uRunstackedTmp(sz_.n_, MatD::Zero(staircaseLevel, sz_.d_));
+                SomUtils::VecMatD uRunstackedTmp(sz_.n_, SomUtils::MatD::Zero(staircaseLevel, sz_.d_));
                 unStackH(uRhStacked, uRunstackedTmp);
 
-                VecMatD uRunstackedOutTmp(sz_.n_, MatD::Zero(staircaseLevel, sz_.d_));
-                MatD uTout(MatD::Zero(staircaseLevel, sz_.n_));
+                SomUtils::VecMatD uRunstackedOutTmp(sz_.n_, SomUtils::MatD::Zero(staircaseLevel, sz_.d_));
+                SomUtils::MatD uTout(SomUtils::MatD::Zero(staircaseLevel, sz_.n_));
                 hessGenprocEigenShifted(xR, uRunstackedTmp, xT, uTcopy, mu, uRunstackedOutTmp, uTout);
 
-                std::for_each(uRunstackedOutTmp.begin(), uRunstackedOutTmp.end(), [](MatD &x) { //^^^ take argument by reference: LAMBDA FUNCTION
+                std::for_each(uRunstackedOutTmp.begin(), uRunstackedOutTmp.end(), [](SomUtils::MatD &x) { //^^^ take argument by reference: LAMBDA FUNCTION
                     x *= -1;
                 });
                 uTcopy = -uTout;
@@ -778,20 +767,20 @@ namespace ROPTLIB
             uFullHst /= normRTmax;
 
             // f_x_max = f(x_max);
-            VecMatD uRunstacked(sz_.n_, MatD::Zero(staircaseLevel, sz_.d_));
+            SomUtils::VecMatD uRunstacked(sz_.n_, SomUtils::MatD::Zero(staircaseLevel, sz_.d_));
             unStackH(uRhStacked / normRTmax, uRunstacked, sz_.d_);
-            VecMatD fxRunstackedOut(sz_.n_, MatD::Zero(staircaseLevel, sz_.d_));
+            SomUtils::VecMatD fxRunstackedOut(sz_.n_, SomUtils::MatD::Zero(staircaseLevel, sz_.d_));
 
-            MatD uTout1(MatD::Zero(staircaseLevel, sz_.n_));
+            SomUtils::MatD uTout1(SomUtils::MatD::Zero(staircaseLevel, sz_.n_));
 
             hessGenprocEigen(xR, uRunstacked, xT, uTcopy / normRTmax, fxRunstackedOut, uTout1);
 
             // % lambda_max_R = sum(stiefel_metric([], (x_max.R), f_x_max.R)) / ... % sum(stiefel_metric([], x_max.R, x_max.R));
             // % lambda_max_T = sum(stiefel_metric([], (x_max.T), f_x_max.T)) / ... % sum(stiefel_metric([], x_max.T, x_max.T));
 
-            MatD vecR(MatD::Zero(sz_.d_ * staircaseLevel * sz_.n_, 1));
+            SomUtils::MatD vecR(SomUtils::MatD::Zero(sz_.d_ * staircaseLevel * sz_.n_, 1));
             vectorizeR(uRunstacked, vecR);
-            MatD vecFxR(MatD::Zero(sz_.d_ * staircaseLevel * sz_.n_, 1));
+            SomUtils::MatD vecFxR(SomUtils::MatD::Zero(sz_.d_ * staircaseLevel * sz_.n_, 1));
             vectorizeR(fxRunstackedOut, vecFxR);
 
             // lambda_max = x_max.R( :) ' * f_x_max.R(:) + x_max.T(:)' * f_x_max.T( :);
@@ -807,7 +796,7 @@ namespace ROPTLIB
             lambdaMax /= uFullHst.norm();
         }
 
-        void rsomPimHessianGenproc(double thresh, const VecMatD &R, const MatD &T, Vector &Y0) const
+        void rsomPimHessianGenproc(double thresh, const SomUtils::VecMatD &R, const SomUtils::MatD &T, Vector &Y0) const
         {
             // [Y_star, lambda, v] = rsom_pim_hessian_genproc( ...
             //     X, problem_struct_next, thr);
@@ -828,31 +817,31 @@ namespace ROPTLIB
             // Xnext.T = Tnext;
             // rhess_fun_han = @(u) hess_genproc(Xnext,u,problem_struct_next);
             int staircaseNextStepLevel = R.size() + 1;
-            VecMatD Rnext(sz_.n_, MatD::Zero(staircaseNextStepLevel, sz_.d_));
+            SomUtils::VecMatD Rnext(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
             catZeroRow3dArray(R, Rnext);
-            MatD Tnext(MatD::Zero(staircaseNextStepLevel, sz_.d_));
+            SomUtils::MatD Tnext(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
             catZeroRow(T, Tnext);
 
             // stiefel_normalize_han = @(x) x./ (norm(x(:))); //Note: this is basically eucl_normalize_han
 
             // u_start.R = stiefel_randTangentNormVector(Rnext);
-            VecMatD RnextTg(sz_.n_, MatD::Zero(staircaseNextStepLevel, sz_.d_));
+            SomUtils::VecMatD RnextTg(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
             stiefelRandTgNormVector(Rnext, RnextTg);
             // u_start.R = stiefel_normalize(Rnext, u_start.R);
-            VecMatD RnextTgNorm(sz_.n_, MatD::Zero(staircaseNextStepLevel, sz_.d_));
+            SomUtils::VecMatD RnextTgNorm(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
             normalizeEucl(RnextTg, RnextTgNorm);
 
             // u_start.T = rand(size(Tnext));
-            auto TnextTg = MatD::Random(staircaseNextStepLevel, sz_.d_);
+            auto TnextTg = SomUtils::MatD::Random(staircaseNextStepLevel, sz_.d_);
             // u_start.T = stiefel_normalize_han(u_start.T);
-            MatD TnextTgNorm(MatD::Zero(staircaseNextStepLevel, sz_.d_));
+            SomUtils::MatD TnextTgNorm(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
             normalizeEucl(TnextTg, TnextTgNorm);
 
             // [lambda_pim, v_pim] = pim_function_genproc(rhess_fun_han, u_start, stiefel_normalize_han, thresh);
             // disp('Difference between lambda*v_max and H(v_max) should be in the order of the tolerance:')
             double lambdaPim = 1e+6;
-            VecMatD vPimR(sz_.n_, MatD::Zero(staircaseNextStepLevel, sz_.d_));
-            MatD vPimT(MatD::Zero(staircaseNextStepLevel, sz_.n_));
+            SomUtils::VecMatD vPimR(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
+            SomUtils::MatD vPimT(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
 
             pimFunctionGenproc(Rnext, Tnext, RnextTgNorm, TnextTgNorm, lambdaPim, vPimR, vPimT);
             std::cout << "Difference between lambda_pim_after_shift*v_pim_after_shift"
@@ -875,17 +864,17 @@ namespace ROPTLIB
                 //     u_start_second_iter.T = stiefel_normalize_han(u_start.T);
                 //     [lambda_pim_after_shift, v_pim_after_shift] = pim_function_genproc( ...
                 //         rhess_shifted_fun_han, u_start_second_iter, stiefel_normalize_han, thresh);
-                VecMatD RnextTgShift(sz_.n_, MatD::Zero(staircaseNextStepLevel, sz_.d_));
+                SomUtils::VecMatD RnextTgShift(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
                 stiefelRandTgNormVector(Rnext, RnextTgShift);
-                VecMatD RnextTgNormShift(sz_.n_, MatD::Zero(staircaseNextStepLevel, sz_.d_));
+                SomUtils::VecMatD RnextTgNormShift(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
                 normalizeEucl(RnextTgShift, RnextTgNormShift);
 
-                auto TnextTgShift = MatD::Random(staircaseNextStepLevel, sz_.d_);
-                MatD TnextTgNormShift(MatD::Zero(staircaseNextStepLevel, sz_.d_));
+                auto TnextTgShift = SomUtils::MatD::Random(staircaseNextStepLevel, sz_.d_);
+                SomUtils::MatD TnextTgNormShift(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
                 normalizeEucl(TnextTgShift, TnextTgNormShift);
 
-                VecMatD vPimRshift(sz_.n_, MatD::Zero(staircaseNextStepLevel, sz_.d_));
-                MatD vPimTshift(MatD::Zero(staircaseNextStepLevel, sz_.n_));
+                SomUtils::VecMatD vPimRshift(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
+                SomUtils::MatD vPimTshift(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
                 double lambdaPimShift = 1e+6; // "after" shift is intended
                 pimFunctionGenprocShifted(Rnext, Tnext, RnextTgNorm, TnextTgNorm, mu, lambdaPimShift, vPimRshift, vPimTshift);
 
@@ -905,7 +894,7 @@ namespace ROPTLIB
             // d = problem_struct_next.sz(2);
             // N = problem_struct_next.sz(3);
             int nrsNext = sz_.p_ + 1;
-            SomSize szNext(nrsNext, sz_.d_, sz_.n_);
+            SomUtils::SomSize szNext(nrsNext, sz_.d_, sz_.n_);
 
             Stiefel mani1(szNext.p_, szNext.d_);
             mani1.ChooseParamsSet2();
@@ -995,7 +984,7 @@ namespace ROPTLIB
             linesearchArmijoROPTLIB(xIn, szNext, Y0);
         }
 
-        void linesearchArmijoROPTLIB(const Vector &xIn, const SomSize &somSzLocal, Vector &Y0) const
+        void linesearchArmijoROPTLIB(const Vector &xIn, const SomUtils::SomSize &somSzLocal, Vector &Y0) const
         {
             Stiefel mani1(somSzLocal.p_, somSzLocal.d_);
             mani1.ChooseParamsSet2();
@@ -1029,7 +1018,7 @@ namespace ROPTLIB
             std::cout << "cost of LS output " << RNewtonSolver->Getfinalfun() << std::endl; // x cost
         }
 
-        void linesearchArmijo(const MatD &xIn) {
+        void linesearchArmijo(const SomUtils::MatD &xIn) {
             // // LSstatus = LSSM_SUCCESS;
             // double f2 = costEigen(xIn);
             // realdp maxpref = f1;
