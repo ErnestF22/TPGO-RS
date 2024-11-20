@@ -1088,16 +1088,16 @@ namespace ROPTLIB
             // rsomPimHessianGenproc(double thresh, const SomUtils::VecMatD &R, const SomUtils::MatD &T, Vector &Y0);
 
             int staircaseNextStepLevel = xRin.size() + 1;
-            SomUtils::VecMatD Rnext(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
-            catZeroRow3dArray(xRin, Rnext);
-            SomUtils::MatD Tnext(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
-            catZeroRow(xTin, Tnext);
+            // SomUtils::VecMatD Rnext(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
+            // catZeroRow3dArray(xRin, Rnext);
+            // SomUtils::MatD Tnext(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
+            // catZeroRow(xTin, Tnext);
 
             // stiefel_normalize_han = @(x) x./ (norm(x(:))); //Note: this is basically eucl_normalize_han
 
             // u_start.R = stiefel_randTangentNormVector(Rnext);
             SomUtils::VecMatD RnextTg(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
-            stiefelRandTgNormVector(Rnext, RnextTg);
+            stiefelRandTgNormVector(xRin, RnextTg);
             // u_start.R = stiefel_normalize(Rnext, u_start.R);
             SomUtils::VecMatD RnextTgNorm(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
             normalizeEucl(RnextTg, RnextTgNorm);
@@ -1114,10 +1114,10 @@ namespace ROPTLIB
             SomUtils::VecMatD vPimR(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
             SomUtils::MatD vPimT(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
 
-            pimFunctionGenproc(Rnext, Tnext, RnextTgNorm, TnextTgNorm, lambdaPim, vPimR, vPimT);
+            pimFunctionGenproc(xRin, xTin, RnextTgNorm, TnextTgNorm, lambdaPim, vPimR, vPimT);
             std::cout << "Difference between lambda_pim_after_shift*v_pim_after_shift"
                       << "and H_SH(v_pim_after_shift) should be in the order of the tolerance:" << std::endl;
-            eigencheckHessianGenproc(lambdaPim, Rnext, vPimR, Tnext, vPimT);
+            eigencheckHessianGenproc(lambdaPim, xRin, vPimR, xTin, vPimT);
 
             // if lambda_pim>0
             double highestNormEigenval = 1e+6;
@@ -1138,7 +1138,7 @@ namespace ROPTLIB
                 //     [lambda_pim_after_shift, v_pim_after_shift] = pim_function_genproc( ...
                 //         rhess_shifted_fun_han, u_start_second_iter, stiefel_normalize_han, thresh);
                 SomUtils::VecMatD RnextTgShift(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
-                stiefelRandTgNormVector(Rnext, RnextTgShift);
+                stiefelRandTgNormVector(xRin, RnextTgShift);
                 SomUtils::VecMatD RnextTgNormShift(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
                 normalizeEucl(RnextTgShift, RnextTgNormShift);
 
@@ -1147,7 +1147,7 @@ namespace ROPTLIB
                 normalizeEucl(TnextTgShift, TnextTgNormShift);
 
                 double lambdaPimShift = 1e+6; // "after" shift is intended
-                pimFunctionGenprocShifted(Rnext, Tnext, RnextTgNorm, TnextTgNorm, mu, lambdaPimShift, vPimRshift, vPimTshift);
+                pimFunctionGenprocShifted(xRin, xTin, RnextTgNorm, TnextTgNorm, mu, lambdaPimShift, vPimRshift, vPimTshift);
 
                 //     disp(['Difference between lambda_pim_after_shift*v_pim_after_shift ' ...
                 //         'and H_SH(v_pim_after_shift) should be in the order of the tolerance:'])
@@ -1156,7 +1156,7 @@ namespace ROPTLIB
                 std::cout << "Difference between lambda_pim_after_shift*v_pim_after_shift"
                           << "and H_SH(v_pim_after_shift) should be in the order of the tolerance:" << std::endl;
                 highestNormEigenval = lambdaPimShift + mu;
-                eigencheckHessianGenprocShifted(highestNormEigenval, Rnext, vPimRshift, Tnext, vPimTshift, mu);
+                eigencheckHessianGenprocShifted(highestNormEigenval, xRin, vPimRshift, xTin, vPimTshift, mu);
             }
 
             //////!!!!/////!!!!
@@ -1168,7 +1168,9 @@ namespace ROPTLIB
             SomUtils::SomSize szNext(nrsNext, sz_.d_, sz_.n_);
 
             SomUtils::VecMatD Y0R(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
-            stiefelRetraction(Rnext, vPimRshift, Y0R);
+            stiefelRetraction(xRin, vPimRshift, Y0R);
+
+            //Need also eucl. retraction
         };
     };
 
