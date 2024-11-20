@@ -172,31 +172,19 @@ void testSomSample(SomUtils::SomSize somSz, SomUtils::MatD &Tijs, Eigen::MatrixX
 
 int main(int argc, char **argv)
 {
-    int p = 4;
+    int p = 3;
     int d = 3;
-    int n = 5;
+    int n = 10;
     SomUtils::SomSize somSz(p, d, n);
-    int numEdges = 18;
-    SomUtils::MatD Tijs = SomUtils::MatD::Random(d, numEdges);
+    int numEdges = 38;
+    SomUtils::MatD Tijs(d, numEdges);
     Eigen::MatrixXi edges(numEdges, 2);
-    edges << 2, 1,
-        3, 1,
-        4, 1,
-        1, 2,
-        3, 2,
-        4, 2,
-        5, 2,
-        1, 3,
-        2, 3,
-        4, 3,
-        5, 3,
-        1, 4,
-        2, 4,
-        3, 4,
-        5, 4,
-        2, 5,
-        3, 5,
-        4, 5;
+
+    SomUtils::readCsvTijs("../data/tijs_n10.csv", Tijs, d, numEdges);
+    SomUtils::readCsvEdges("../data/edges_n10.csv", edges);
+
+    ROFL_VAR2(Tijs.transpose(), edges); //transpose is for visualization puropses
+    ROFL_VAR2(Tijs.rows(), Tijs.cols());
 
     testSomSample(somSz, Tijs, edges);
     return 0;

@@ -39,9 +39,52 @@ namespace SomUtils
     void deserializeRow(const std::string &row, double &pt);
 
     /**
-     * Read Initguess as a row (no size checks)
+     * Read Initguess from csv file in vectorized form (no size checks)
      */
     void readCsvInitguess(std::string fname, ROPTLIB::Vector &csvVec);
+
+    /**
+     * Called from readCsvTijs
+     */
+    void deserializeRowTijs(const std::string &row, Eigen::VectorXd &tij);
+
+    /**
+     * Read Tijs from csv file in vectorized form (no size checks)
+     * Need numEdges
+     * d is unused ATM but might be needed for more complex cases
+     */
+    void readCsvTijs(std::string fname, Eigen::MatrixXd &Tijs, int d, int numEdges);
+
+    /**
+     * Called from readCsvEdges
+     */
+    void deserializeRowEdges(const std::string &row, Eigen::Vector2i &edges);
+
+    /**
+     * Read Edges from rows in csv files (no size checks)
+     */
+    void readCsvEdges(std::string fname, Eigen::MatrixXi &edges);
+
+    // template <typename M>
+    // M load_csv(const std::string &path)
+    // {
+    //     std::ifstream indata;
+    //     indata.open(path);
+    //     std::string line;
+    //     std::vector<double> values;
+    //     uint rows = 0;
+    //     while (std::getline(indata, line))
+    //     {
+    //         std::stringstream lineStream(line);
+    //         std::string cell;
+    //         while (std::getline(lineStream, cell, ','))
+    //         {
+    //             values.push_back(std::stod(cell));
+    //         }
+    //         ++rows;
+    //     }
+    //     return Eigen::Map<const Eigen::Matrix<typename M::Scalar, M::RowsAtCompileTime, M::ColsAtCompileTime, Eigen::ColMajor>>(values.data(), rows, values.size() / rows);
+    // }
 
 } // end of namespace SomUtils
 
