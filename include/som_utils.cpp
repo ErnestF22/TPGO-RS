@@ -86,7 +86,7 @@ namespace SomUtils
             strI.erase(std::remove(strI.begin(), strI.end(), ','), strI.end()); // this should nothing
             // ROFL_VAR2(idx,strI);
             tij(idx) = stod(strI);
-            idx++; //idx should not go higher that d-1
+            idx++; // idx should not go higher that d-1
         }
     }
 
@@ -148,7 +148,7 @@ namespace SomUtils
             strI.erase(std::remove(strI.begin(), strI.end(), ','), strI.end()); // this should nothing
             // ROFL_VAR2(idx,strI);
             edgeI(idx) = stoi(strI);
-            idx++; //idx should not go higher that 1
+            idx++; // idx should not go higher that 1
         }
     }
 
@@ -191,5 +191,10 @@ namespace SomUtils
 
         fout.close();
     }
+
+    double LinesearchInput(integer iter, const ROPTLIB::Variable &x1, const ROPTLIB::Vector &exeta1, realdp initialstepsize, realdp initialslope, const ROPTLIB::Problem *prob, const ROPTLIB::Solvers *solver)
+    {
+        return 1;
+    };
 
 } // end of namespace SomUtils

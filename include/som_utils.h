@@ -13,6 +13,10 @@
 #include <eigen3/Eigen/Dense>
 
 #include "thirdparty/roptlib/manifolds_Element.h"
+#include "thirdparty/roptlib/problems_Problem.h"
+#include "thirdparty/roptlib/solvers_Solvers.h"
+
+
 
 namespace SomUtils
 {
@@ -85,6 +89,9 @@ namespace SomUtils
     //     }
     //     return Eigen::Map<const Eigen::Matrix<typename M::Scalar, M::RowsAtCompileTime, M::ColsAtCompileTime, Eigen::ColMajor>>(values.data(), rows, values.size() / rows);
     // }
+
+    /* User - specified linesearch algorithm */
+    double LinesearchInput(integer iter, const ROPTLIB::Variable &x1, const ROPTLIB::Vector &exeta1, realdp initialstepsize, realdp initialslope, const ROPTLIB::Problem *prob, const ROPTLIB::Solvers *solver);
 
 } // end of namespace SomUtils
 

@@ -6,6 +6,7 @@
 #include <vector>
 
 #include <eigen3/Eigen/Dense>
+#include <unsupported/Eigen/MatrixFunctions>
 
 #include <rofl/common/io.h>
 #include <rofl/common/macros.h>
@@ -1009,6 +1010,13 @@ namespace ROPTLIB
             RNewtonSolver->SetParams(solverParams);
             RNewtonSolver->CheckParams();
 
+            RNewtonSolver->LineSearch_LS = LSSM_INPUTFUN;
+            RNewtonSolver->LinesearchInput = &SomUtils::LinesearchInput;
+            // LinesearchInput(iter, x1, eta1, stepsize, initialslope, Prob, this)
+            RNewtonSolver->IsPureLSInput = false;
+            // RNewtonSolver->StopPtr = &MyStop;
+            RNewtonSolver->Max_Iteration = 1;
+
             RNewtonSolver->Run();
 
             RNewtonSolver->GetXopt().Print("Xopt");
@@ -1018,90 +1026,149 @@ namespace ROPTLIB
             std::cout << "cost of LS output " << RNewtonSolver->Getfinalfun() << std::endl; // x cost
         }
 
-        void linesearchArmijo(const SomUtils::MatD &xIn) {
-            // // LSstatus = LSSM_SUCCESS;
-            // double f2 = costEigen(xIn);
-            // realdp maxpref = f1;
-            // std::list<realdp>::iterator j;
-            // std::list<realdp>::iterator jend;
-            // if (pre_funs.size() > 0)
-            // {
-            //     j = pre_funs.begin();
-            //     jend = pre_funs.end();
-            //     jend--;
-            // }
-            // for (integer i = 0; i < Num_pre_funs && j != jend; i++, j++)
-            // {
-            //     if (maxpref < *j)
-            //         maxpref = *j;
-            // }
-            // /* simple backtracking */
-            // if (LS_ratio2 <= LS_ratio1)
-            // {
-            //     realdp LS_ratio = LS_ratio1;
-            //     while (maxpref - f2 < -LS_alpha * initialslope * stepsize)
-            //     {
-            //         stepsize *= LS_ratio;
-            //         if (stepsize < Minstepsize)
-            //         {
-            //             if (Verbose > FINALRESULT)
-            //             {
-            //                 printf("Warning: step size reaches the minimum: %3.2e!\n", Minstepsize);
-            //             }
-            //             LSstatus = LSSM_MINSTEPSIZE;
-            //             break;
-            //         }
-            //         f2 = h();
-            //     }
-            //     newslope = dh();
-            //     return;
-            // }
+        void stiefelRetractionQR(const SomUtils::VecMatD &x, const SomUtils::VecMatD &e, SomUtils::VecMatD &rxe) const
+        {
+            // N = size(x, 3);
+            // p = size(x, 2);
+            // if N > 1
+            //     rxe = zeros(size(x));
+            //     for ii = 1 : N
+            //         x_ii = x( :, :, ii);
+            //         e_ii = e( :, :, ii);
+            //         [ Q, R ] = qr(x_ii + e_ii);
+            //         rxe( :, :, ii) = R;
+            //     end
+            // else % rxe = zeros(size(x));
+            //     [ Q, R ] = qr(x + e);
+            //     rxe = R;
+            // end
+        }
 
-            // /* use polynomial interplation */
-            // realdp prestepsize = stepsize, prestepsize2 = 0, f2pre = 0;
-            // if (maxpref - f2 < -LS_alpha * initialslope * stepsize)
-            // {
-            //     stepsize = -initialslope * prestepsize * prestepsize / 2 / (f2 - f1 - initialslope * prestepsize);
-            //     stepsize = (stepsize < LS_ratio2 * prestepsize) ? stepsize : LS_ratio2 * prestepsize;
-            //     stepsize = (stepsize > LS_ratio1 * prestepsize) ? stepsize : LS_ratio1 * prestepsize;
-            //     f2pre = f2;
-            //     prestepsize2 = prestepsize;
-            //     f2 = h();
-            //     prestepsize = stepsize;
-            // }
+        void stiefelRetraction(const SomUtils::MatD &xIn, const SomUtils::MatD &e, SomUtils::MatD &rxe) const
+        {
 
-            // realdp a11, a12, a21, a22, b1, b2, c, a = 0, b = 0;
-            // while (maxpref - f2 < -LS_alpha * initialslope * stepsize)
-            // {
-            //     a11 = static_cast<realdp>(1) / prestepsize / prestepsize;
-            //     a12 = static_cast<realdp>(-1) / prestepsize2 / prestepsize2;
-            //     a21 = -prestepsize2 / prestepsize / prestepsize;
-            //     a22 = prestepsize / prestepsize2 / prestepsize2;
-            //     b1 = f2 - f1 - initialslope * prestepsize;
-            //     b2 = f2pre - f1 - initialslope * prestepsize2;
-            //     c = prestepsize - prestepsize2;
-            //     a = (a11 * b1 + a12 * b2) / c;
-            //     b = (a21 * b1 + a22 * b2) / c;
-            //     stepsize = (-b + sqrt(b * b - 3 * a * initialslope)) / 3 / a;
-            //     stepsize = (stepsize < LS_ratio2 * prestepsize) ? stepsize : LS_ratio2 * prestepsize;
-            //     stepsize = (stepsize > LS_ratio1 * prestepsize) ? stepsize : LS_ratio1 * prestepsize;
-            //     if (stepsize < Minstepsize)
-            //     {
-            //         if (Verbose > FINALRESULT)
-            //         {
-            //             printf("Warning: step size reaches the minimum: %3.2e!\n", Minstepsize);
-            //         }
-            //         LSstatus = LSSM_MINSTEPSIZE;
-            //         break;
-            //     }
-            //     f2pre = f2;
-            //     prestepsize2 = prestepsize;
-            //     f2 = h();
-            //     prestepsize = stepsize;
-            // }
-            // Prob->Grad(x2, &gf2);
-            // ng++;
-            // newslope = INFINITY;
+            // else %     rxe = zeros(size(x));
+            //     i_p = eye(p,p);
+            //     snd_term = inv(sqrtm((i_p + e' * e)));
+            //     rxe = (x + e)*snd_term;
+            // end
+
+            rxe.setZero();
+            SomUtils::MatD Ip(SomUtils::MatD::Identity(sz_.p_, sz_.p_));
+            SomUtils::MatD sndTerm = (Ip + e.transpose() * e).sqrt().inverse();
+            rxe = (xIn + e) * sndTerm;
+
+            // Assert check that new element is still on Stiefel
+            ROFL_ASSERT(((rxe.transpose() * rxe) - SomUtils::MatD::Identity(sz_.d_, sz_.d_)).cwiseAbs().maxCoeff() < 1e-6);
+        }
+
+        void stiefelRetraction(const SomUtils::VecMatD &xIn, const SomUtils::VecMatD &e, SomUtils::VecMatD &rxe) const
+        {
+            // N = size(x, 3);
+            // p = size(x, 2);
+
+            // if N> 1
+            //     rxe = zeros(size(x));
+            //     i_p = eye3d(p, p, N);
+            //     for ii = 1 : N
+            //         x_ii = x( :, :, ii);
+            //         e_ii = e( :, :, ii);
+            //         snd_term_ii = inv(sqrtm((i_p(:,:,ii) + e_ii' * e_ii)));
+            //         rxe(:,:,ii) = (x_ii + e_ii)*snd_term_ii;
+            //     end
+
+            for (int i = 0; i < sz_.n_; ++i)
+            {
+                stiefelRetraction(xIn[i], e[i], rxe[i]);
+            }
+        }
+
+        void linesearchDummy(const SomUtils::VecMatD &xRin, const SomUtils::MatD &xTin, SomUtils::VecMatD &xRout, SomUtils::MatD &xTout)
+        {
+            // rsomPimHessianGenproc(double thresh, const SomUtils::VecMatD &R, const SomUtils::MatD &T, Vector &Y0);
+
+            int staircaseNextStepLevel = xRin.size() + 1;
+            SomUtils::VecMatD Rnext(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
+            catZeroRow3dArray(xRin, Rnext);
+            SomUtils::MatD Tnext(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
+            catZeroRow(xTin, Tnext);
+
+            // stiefel_normalize_han = @(x) x./ (norm(x(:))); //Note: this is basically eucl_normalize_han
+
+            // u_start.R = stiefel_randTangentNormVector(Rnext);
+            SomUtils::VecMatD RnextTg(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
+            stiefelRandTgNormVector(Rnext, RnextTg);
+            // u_start.R = stiefel_normalize(Rnext, u_start.R);
+            SomUtils::VecMatD RnextTgNorm(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
+            normalizeEucl(RnextTg, RnextTgNorm);
+
+            // u_start.T = rand(size(Tnext));
+            auto TnextTg = SomUtils::MatD::Random(staircaseNextStepLevel, sz_.d_);
+            // u_start.T = stiefel_normalize_han(u_start.T);
+            SomUtils::MatD TnextTgNorm(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
+            normalizeEucl(TnextTg, TnextTgNorm);
+
+            // [lambda_pim, v_pim] = pim_function_genproc(rhess_fun_han, u_start, stiefel_normalize_han, thresh);
+            // disp('Difference between lambda*v_max and H(v_max) should be in the order of the tolerance:')
+            double lambdaPim = 1e+6;
+            SomUtils::VecMatD vPimR(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
+            SomUtils::MatD vPimT(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
+
+            pimFunctionGenproc(Rnext, Tnext, RnextTgNorm, TnextTgNorm, lambdaPim, vPimR, vPimT);
+            std::cout << "Difference between lambda_pim_after_shift*v_pim_after_shift"
+                      << "and H_SH(v_pim_after_shift) should be in the order of the tolerance:" << std::endl;
+            eigencheckHessianGenproc(lambdaPim, Rnext, vPimR, Tnext, vPimT);
+
+            // if lambda_pim>0
+            double highestNormEigenval = 1e+6;
+            SomUtils::VecMatD vPimRshift(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
+            SomUtils::MatD vPimTshift(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
+            if (lambdaPim > 0)
+            {
+                std::cout << "lambdaPim " << lambdaPim << std::endl;
+                double mu = 1.1 * lambdaPim;
+
+                //     rhess_shifted_fun_han = @(u) hess_genproc_shifted(Xnext,u,mu,problem_struct_next);
+
+                //     // %run shifted power iteration
+                //     u_start_second_iter.R = stiefel_randTangentNormVector(Rnext);
+                //     u_start_second_iter.R = stiefel_normalize(Rnext, u_start_second_iter.R);
+                //     u_start_second_iter.T = rand(size(Tnext));
+                //     u_start_second_iter.T = stiefel_normalize_han(u_start.T);
+                //     [lambda_pim_after_shift, v_pim_after_shift] = pim_function_genproc( ...
+                //         rhess_shifted_fun_han, u_start_second_iter, stiefel_normalize_han, thresh);
+                SomUtils::VecMatD RnextTgShift(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
+                stiefelRandTgNormVector(Rnext, RnextTgShift);
+                SomUtils::VecMatD RnextTgNormShift(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
+                normalizeEucl(RnextTgShift, RnextTgNormShift);
+
+                auto TnextTgShift = SomUtils::MatD::Random(staircaseNextStepLevel, sz_.d_);
+                SomUtils::MatD TnextTgNormShift(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
+                normalizeEucl(TnextTgShift, TnextTgNormShift);
+
+                double lambdaPimShift = 1e+6; // "after" shift is intended
+                pimFunctionGenprocShifted(Rnext, Tnext, RnextTgNorm, TnextTgNorm, mu, lambdaPimShift, vPimRshift, vPimTshift);
+
+                //     disp(['Difference between lambda_pim_after_shift*v_pim_after_shift ' ...
+                //         'and H_SH(v_pim_after_shift) should be in the order of the tolerance:'])
+                //     eigencheck_hessian_genproc(lambda_pim_after_shift, v_pim_after_shift, ...
+                //         rhess_shifted_fun_han);
+                std::cout << "Difference between lambda_pim_after_shift*v_pim_after_shift"
+                          << "and H_SH(v_pim_after_shift) should be in the order of the tolerance:" << std::endl;
+                highestNormEigenval = lambdaPimShift + mu;
+                eigencheckHessianGenprocShifted(highestNormEigenval, Rnext, vPimRshift, Tnext, vPimTshift, mu);
+            }
+
+            //////!!!!/////!!!!
+            // // %Preparing linesearch
+            // nrs_next = problem_struct_next.sz(1);
+            // d = problem_struct_next.sz(2);
+            // N = problem_struct_next.sz(3);
+            int nrsNext = sz_.p_ + 1;
+            SomUtils::SomSize szNext(nrsNext, sz_.d_, sz_.n_);
+
+            SomUtils::VecMatD Y0R(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
+            stiefelRetraction(Rnext, vPimRshift, Y0R);
         };
     };
 

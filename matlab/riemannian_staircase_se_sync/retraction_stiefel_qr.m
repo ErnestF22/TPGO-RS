@@ -1,4 +1,4 @@
-function rxe = retraction_stiefel(x,e)
+function rxe = retraction_stiefel_qr(x,e)
 %RETRACTION_STIEFEL Compute and outputs rxe = retraction on Stiefel manifold
 % x is on the Stiefel manifolds and e is on the tangent space to the
 % manifold at x

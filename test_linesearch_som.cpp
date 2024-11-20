@@ -30,7 +30,7 @@ void testSomSample(SomUtils::SomSize somSz, SomUtils::MatD &Tijs, Eigen::MatrixX
     // Obtain an initial iterate
     Vector startX = ProdMani.RandominManifold();
 
-    // SomUtils::readCsvInitguess("../data/X_initguess.csv", startX);
+    // SomUtils::readCsvInitguess("../data/X_initguess_n10.csv", startX);
     // startX.Print("startX");
 
     // ProdMani.SetIsIntrApproach(false);
@@ -160,10 +160,14 @@ void testSomSample(SomUtils::SomSize somSz, SomUtils::MatD &Tijs, Eigen::MatrixX
         }
         TnextROPT.CopyTo(xOptNext.GetElement(gElemIdx));
     } // end of EigToRopt scope for xOptNext
+    // Prob.linesearchArmijoROPTLIB(xOptNext, szNext, Y0);
 
-    //
+    /////////////////////////END OF ROPTLIB SOLUTION AND BEGINNING OF DUMMY SOLUTION
 
-    Prob.linesearchArmijoROPTLIB(xOptNext, szNext, Y0);
+    ROFL_VAR1("Now running linesearchDummy");
+    SomUtils::VecMatD RnextLSoutput(szNext.n_, SomUtils::MatD::Zero(szNext.p_, szNext.d_));
+    SomUtils::MatD TnextLSoutput(SomUtils::MatD::Zero(szNext.p_, szNext.n_));
+    ProbNext.linesearchDummy(Rnext, Tnext, RnextLSoutput, TnextLSoutput);
 
     Y0.Print("Y0 before delete RTRNewtonSolver");
 
