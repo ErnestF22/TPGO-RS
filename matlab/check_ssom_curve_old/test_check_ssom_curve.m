@@ -4,7 +4,7 @@ function [curve, Y0, R1, dR1, ddR1, R2, dR2, ddR2] = ...
 
 sz=problem.sz;
 % sz(3) = 1; %remove this later!
-Y0=make_rand_stiefel_3d_array(sz(1), sz(2), sz(3));
+Y0=stiefel_randn(eye3d(sz(1), sz(2), sz(3)));
 R10=eye3d(sz(1), sz(1), sz(3));
 R20=eye3d(sz(2), sz(2), sz(3));
 [R1,dR1,~,~,~,ddR1]=rot_geodFun(R10, []);
@@ -17,4 +17,3 @@ curve.ddc=@(t) multiprod3(ddR1(t),Y0,R2(t)) + ...
                 multiprod3(R1(t),Y0,ddR2(t));
 
 
-end
