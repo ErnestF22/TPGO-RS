@@ -368,12 +368,12 @@ namespace ROPTLIB
 
             if (diff < thr)
             {
-                std::cout << lambda << "is a GENPROC eigenvalue" << std::endl;
+                std::cout << lambda << " is a GENPROC eigenvalue" << std::endl;
                 return true;
             }
             else
             {
-                std::cout << lambda << "is NOT a GENPROC eigenvalue: diff " << diff << " > thr " << thr << std::endl;
+                std::cout << lambda << " is NOT a GENPROC eigenvalue: diff " << diff << " > thr " << thr << std::endl;
                 // return false;
             }
 
@@ -464,12 +464,12 @@ namespace ROPTLIB
 
             if (diff < thr)
             {
-                std::cout << lambda << "is a GENPROC eigenvalue" << std::endl;
+                std::cout << lambda << " is a GENPROC eigenvalue" << std::endl;
                 return true;
             }
             else
             {
-                std::cout << lambda << "is NOT a GENPROC eigenvalue: diff " << diff << " > thr " << thr << std::endl;
+                std::cout << lambda << " is NOT a GENPROC eigenvalue: diff " << diff << " > thr " << thr << std::endl;
                 // return false;
             }
 
@@ -499,9 +499,10 @@ namespace ROPTLIB
         void normalizeEucl(const SomUtils::MatD &mIn, SomUtils::MatD &mOut) const
         {
             mOut = mIn;
-            int normF = mIn.norm(); // TODO: maybe use .normalized() directly?
+            double normF = mIn.norm(); // TODO: maybe use .normalized() directly?
 
             mOut /= normF;
+            ROFL_VAR3(mIn, normF, mOut);
         }
 
         void normalizeEucl(const SomUtils::VecMatD &mIn, SomUtils::VecMatD &mOut) const
@@ -516,8 +517,21 @@ namespace ROPTLIB
                 normalizeEucl(mIn[i], mOut[i]);
         }
 
+        void RoptToEigStiefel(Vector x, SomUtils::MatD &xEigen) const
+        {
+            Vector xT = x.GetTranspose(); // Eigen ADV init is row-major!!
+
+            int totSz = xEigen.rows(); // xEigen is supposed to be a vectorized matrix
+
+            const realdp *xArr = xT.ObtainWriteEntireData();
+            for (int i = 0; i < totSz; ++i)
+                xEigen(i) = xArr[i];
+        }
+
         void stiefelRandTgNormVector(const SomUtils::MatD &mIn, SomUtils::MatD &mOut) const
         {
+            mOut.setIdentity();
+
             int r = mIn.rows();
             int c = mIn.cols();
 
@@ -525,20 +539,26 @@ namespace ROPTLIB
 
             // generate random Stiefel element
             Vector tmp = Stiefel(r, c).RandominManifold();
-            SomUtils::MatD tmpEig(SomUtils::MatD::Zero(r, c));
-            RoptToEig(tmp, tmpEig);
+            tmp.Print("tmp inside stiefelRandTgNormVector()");
+            SomUtils::MatD tmpEigVec(SomUtils::MatD::Zero(r * c, 1));
+            RoptToEigStiefel(tmp, tmpEigVec); // xEigen is supposed to be a vectorized matrix
+            ROFL_VAR1(tmpEigVec);
+            SomUtils::MatD tmpEig = tmpEigVec.reshaped<Eigen::RowMajor>(r, c);
+            ROFL_VAR1(tmpEig);
             SomUtils::MatD tmpProj(SomUtils::MatD::Zero(r, c));
             stiefelTangentProj(mIn, tmpEig, tmpProj);
+            ROFL_VAR1(tmpProj);
 
             normalizeEucl(tmpProj, mOut);
+            ROFL_VAR1(mOut);
 
             // For any matrix representative $U \in St(n, p)$, the tangent space of $St(n, p)$ at $U$ is represented by
             // U\transpose \Delta = -\Delta\transpose U
 
             double diff = (mIn.transpose() * mOut + mOut.transpose() * mIn).cwiseAbs().maxCoeff();
+            ROFL_ASSERT_VAR1(diff >= 0 && diff < 1e-5, diff);
             double mOutNorm = mOut.norm();
             ROFL_ASSERT_VAR1(mOutNorm > 1 - 1e-5 && mOutNorm < 1 + 1e-5, mOutNorm);
-            ROFL_ASSERT_VAR1(diff >= 0 && diff < 1e-5, diff);
         }
 
         void stiefelRandTgNormVector(const SomUtils::VecMatD &mIn, SomUtils::VecMatD &mOut) const
@@ -571,7 +591,7 @@ namespace ROPTLIB
                     {
                         RvecOut(fullIdx, 0) = R[i](k, j);
                         fullIdx++;
-                        ROFL_VAR4(i, j, k, fullIdx);
+                        // ROFL_VAR4(i, j, k, fullIdx);
                     }
                 }
             }
@@ -587,9 +607,10 @@ namespace ROPTLIB
             // xT = x_start.T;
             // xfull = [ matStackH(x_start.R), x_start.T ];
 
-            int staircaseLevel = xR.size();
-
+            int staircaseLevel = xT.rows();
+            ROFL_VAR1(staircaseLevel);
             SomUtils::MatD uRhStacked(SomUtils::MatD::Zero(staircaseLevel, sz_.d_ * sz_.n_));
+            // ROFL_VAR1("hstack call from here");
             hstack(uR, uRhStacked);
 
             SomUtils::MatD uTcopy = uT; // useful for keeping const in function params
@@ -642,6 +663,7 @@ namespace ROPTLIB
                 });
                 uTcopy = -uTout;
 
+                // ROFL_VAR1("hstack call from here");
                 hstack(uRunstackedOutTmp, uRhStacked);
                 uFullHst.block(0, 0, staircaseLevel, uRhStacked.cols()) = uRhStacked;
                 uFullHst.block(0, uRhStacked.cols(), staircaseLevel, sz_.n_) = uTcopy;
@@ -697,9 +719,10 @@ namespace ROPTLIB
             // xT = x_start.T;
             // xfull = [ matStackH(x_start.R), x_start.T ];
 
-            int staircaseLevel = xR.size();
+            int staircaseLevel = xT.rows();
 
             SomUtils::MatD uRhStacked(SomUtils::MatD::Zero(staircaseLevel, sz_.d_ * sz_.n_));
+            // ROFL_VAR1("hstack call from here");
             hstack(uR, uRhStacked);
 
             SomUtils::MatD uTcopy = uT; // useful for keeping const in function params
@@ -752,6 +775,7 @@ namespace ROPTLIB
                 });
                 uTcopy = -uTout;
 
+                // ROFL_VAR1("hstack call from here");
                 hstack(uRunstackedOutTmp, uRhStacked);
                 uFullHst.block(0, 0, staircaseLevel, uRhStacked.cols()) = uRhStacked;
                 uFullHst.block(0, uRhStacked.cols(), staircaseLevel, sz_.n_) = uTcopy;
@@ -774,7 +798,7 @@ namespace ROPTLIB
 
             SomUtils::MatD uTout1(SomUtils::MatD::Zero(staircaseLevel, sz_.n_));
 
-            hessGenprocEigen(xR, uRunstacked, xT, uTcopy / normRTmax, fxRunstackedOut, uTout1);
+            hessGenprocEigenShifted(xR, uRunstacked, xT, uTcopy / normRTmax, mu, fxRunstackedOut, uTout1);
 
             // % lambda_max_R = sum(stiefel_metric([], (x_max.R), f_x_max.R)) / ... % sum(stiefel_metric([], x_max.R, x_max.R));
             // % lambda_max_T = sum(stiefel_metric([], (x_max.T), f_x_max.T)) / ... % sum(stiefel_metric([], x_max.T, x_max.T));
@@ -795,6 +819,108 @@ namespace ROPTLIB
 
             // lambda_max = lambda_max / sum(stiefel_metric([], full_xmax( :), full_xmax( :)));
             lambdaMax /= uFullHst.norm();
+        }
+
+        void rsomPimHessianGenprocSmall(double thresh, const SomUtils::VecMatD &R, const SomUtils::MatD &T) const
+        {
+            // [Y_star, lambda, v] = rsom_pim_hessian_genproc( ...
+            //     X, problem_struct_next, thr);
+            // disp("v") // %just to remove unused variable warning
+            // disp(v)
+            // if lambda > 0
+            //     disp("R, T eigenvals > 0: exiting staircase")
+            // break;
+
+            /////////////////////////////////////////////////////
+            // if ~exist('thresh', 'var')
+            //     thresh = 1e-6;
+            // end
+
+            // Rnext = cat_zero_rows_3d_array(X.R);
+            // Tnext = cat_zero_row(X.T);
+            // Xnext.R = Rnext;
+            // Xnext.T = Tnext;
+            // rhess_fun_han = @(u) hess_genproc(Xnext,u,problem_struct_next);
+            int staircaseNextStepLevel = T.rows() + 1;
+            ROFL_VAR1(staircaseNextStepLevel);
+            SomUtils::VecMatD Rnext(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
+            catZeroRow3dArray(R, Rnext);
+            SomUtils::MatD Tnext(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
+            catZeroRow(T, Tnext);
+
+            // stiefel_normalize_han = @(x) x./ (norm(x(:))); //Note: this is basically eucl_normalize_han
+
+            // u_start.R = stiefel_randTangentNormVector(Rnext);
+            SomUtils::VecMatD RnextTg(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
+            stiefelRandTgNormVector(Rnext, RnextTg);
+            // u_start.R = stiefel_normalize(Rnext, u_start.R);
+            SomUtils::VecMatD RnextTgNorm(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
+            normalizeEucl(RnextTg, RnextTgNorm);
+
+            // u_start.T = rand(size(Tnext));
+            auto TnextTg = SomUtils::MatD::Random(staircaseNextStepLevel, sz_.n_);
+            // u_start.T = stiefel_normalize_han(u_start.T);
+            SomUtils::MatD TnextTgNorm(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
+            normalizeEucl(TnextTg, TnextTgNorm);
+
+            // [lambda_pim, v_pim] = pim_function_genproc(rhess_fun_han, u_start, stiefel_normalize_han, thresh);
+            // disp('Difference between lambda*v_max and H(v_max) should be in the order of the tolerance:')
+            double lambdaPim = 1e+6;
+            SomUtils::VecMatD vPimR(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
+            SomUtils::MatD vPimT(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
+
+            pimFunctionGenproc(Rnext, Tnext, RnextTgNorm, TnextTgNorm, lambdaPim, vPimR, vPimT);
+            std::cout << "Difference between lambda_pim_after_shift*v_pim_after_shift"
+                      << " and H_SH(v_pim_after_shift) should be in the order of the tolerance:" << std::endl;
+            eigencheckHessianGenproc(lambdaPim, Rnext, vPimR, Tnext, vPimT);
+
+            // if lambda_pim>0
+            double highestNormEigenval = 1e+6;
+            if (lambdaPim > 0)
+            {
+                std::cout << "lambdaPim " << lambdaPim << std::endl;
+                double mu = 100 * lambdaPim;
+
+                //     rhess_shifted_fun_han = @(u) hess_genproc_shifted(Xnext,u,mu,problem_struct_next);
+
+                //     // %run shifted power iteration
+                //     u_start_second_iter.R = stiefel_randTangentNormVector(Rnext);
+                //     u_start_second_iter.R = stiefel_normalize(Rnext, u_start_second_iter.R);
+                //     u_start_second_iter.T = rand(size(Tnext));
+                //     u_start_second_iter.T = stiefel_normalize_han(u_start.T);
+                //     [lambda_pim_after_shift, v_pim_after_shift] = pim_function_genproc( ...
+                //         rhess_shifted_fun_han, u_start_second_iter, stiefel_normalize_han, thresh);
+                SomUtils::VecMatD RnextTgShift(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
+                stiefelRandTgNormVector(Rnext, RnextTgShift);
+                SomUtils::VecMatD RnextTgNormShift(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
+                normalizeEucl(RnextTgShift, RnextTgNormShift);
+
+                auto TnextTgShift = SomUtils::MatD::Random(staircaseNextStepLevel, sz_.n_);
+                SomUtils::MatD TnextTgNormShift(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
+                normalizeEucl(TnextTgShift, TnextTgNormShift);
+
+                SomUtils::VecMatD vPimRshift(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
+                SomUtils::MatD vPimTshift(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
+                double lambdaPimShift = 1e+6; // "after" shift is intended
+                pimFunctionGenprocShifted(Rnext, Tnext, RnextTgNorm, TnextTgNorm, mu, lambdaPimShift, vPimRshift, vPimTshift);
+
+                //     disp(['Difference between lambda_pim_after_shift*v_pim_after_shift ' ...
+                //         'and H_SH(v_pim_after_shift) should be in the order of the tolerance:'])
+                //     eigencheck_hessian_genproc(lambda_pim_after_shift, v_pim_after_shift, ...
+                //         rhess_shifted_fun_han);
+                std::cout << "Difference between lambda_pim_after_shift*v_pim_after_shift"
+                          << "and H_SH(v_pim_after_shift) should be in the order of the tolerance:" << std::endl;
+                eigencheckHessianGenprocShifted(lambdaPimShift, Rnext, vPimRshift, Tnext, vPimTshift, mu);
+                highestNormEigenval = lambdaPimShift + mu;
+                std::cout << "Difference between (lambda_pim_after_shift + mu)*v_pim_after_shift"
+                          << "and H_SH(v_pim_after_shift) should be in the order of the tolerance:" << std::endl;
+                eigencheckHessianGenprocShifted(highestNormEigenval, Rnext, vPimRshift, Tnext, vPimTshift, mu);
+                ROFL_VAR3(highestNormEigenval, vPimRshift[0], vPimTshift);
+            }
+            else
+            {
+                highestNormEigenval = lambdaPim;
+            }
         }
 
         void rsomPimHessianGenproc(double thresh, const SomUtils::VecMatD &R, const SomUtils::MatD &T, Vector &Y0) const
@@ -846,7 +972,7 @@ namespace ROPTLIB
 
             pimFunctionGenproc(Rnext, Tnext, RnextTgNorm, TnextTgNorm, lambdaPim, vPimR, vPimT);
             std::cout << "Difference between lambda_pim_after_shift*v_pim_after_shift"
-                      << "and H_SH(v_pim_after_shift) should be in the order of the tolerance:" << std::endl;
+                      << " and H_SH(v_pim_after_shift) should be in the order of the tolerance:" << std::endl;
             eigencheckHessianGenproc(lambdaPim, Rnext, vPimR, Tnext, vPimT);
 
             // if lambda_pim>0
@@ -887,7 +1013,7 @@ namespace ROPTLIB
                           << "and H_SH(v_pim_after_shift) should be in the order of the tolerance:" << std::endl;
                 highestNormEigenval = lambdaPimShift + mu;
                 eigencheckHessianGenprocShifted(highestNormEigenval, Rnext, vPimRshift, Tnext, vPimTshift, mu);
-            }
+            } // SMALL VERSION UP TO HERE!!
 
             //////!!!!/////!!!!
             // // %Preparing linesearch
@@ -1116,7 +1242,7 @@ namespace ROPTLIB
 
             pimFunctionGenproc(xRin, xTin, RnextTgNorm, TnextTgNorm, lambdaPim, vPimR, vPimT);
             std::cout << "Difference between lambda_pim_after_shift*v_pim_after_shift"
-                      << "and H_SH(v_pim_after_shift) should be in the order of the tolerance:" << std::endl;
+                      << " and H_SH(v_pim_after_shift) should be in the order of the tolerance:" << std::endl;
             eigencheckHessianGenproc(lambdaPim, xRin, vPimR, xTin, vPimT);
 
             // if lambda_pim>0
@@ -1170,7 +1296,7 @@ namespace ROPTLIB
             SomUtils::VecMatD Y0R(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
             stiefelRetraction(xRin, vPimRshift, Y0R);
 
-            //Need also eucl. retraction
+            // Need also eucl. retraction
         };
     };
 

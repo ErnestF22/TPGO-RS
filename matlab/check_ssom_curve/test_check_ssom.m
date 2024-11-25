@@ -69,7 +69,7 @@ problem_curve_data.Tijs = Tijs;
 problem_curve_data.cost=@(x) ssom_cost_lambda(x,problem_curve_data);
 problem_curve_data.egrad_lambda=@(x) egrad_lambda(x,problem_curve_data);
 problem_curve_data.egrad_R=@(x,T,lambdas) egrad_R(x,T,lambdas,problem_curve_data);
-problem_curve_data.egrad_T=@(x,R,lambdas) egrad_T(x,R,lambdas,problem_curve_data);
+problem_curve_data.egrad_T=@(x) egrad_T(x,problem_data_T);
 problem_curve_data.ssom_ehess_lambda_lambda=@(x,u,R) ssom_ehess_lambda_lambda(x,u,R,problem_curve_data);
 problem_curve_data.ssom_ehess_lambda_r=@(x,u,T,Tdot,R) ssom_ehess_lambda_r(x,u,T,Tdot,R,problem_curve_data);
 problem_curve_data.ssom_ehess_r_lambda=@(x,u,T,lambdas_dot) ssom_ehess_r_lambda(x,u,T,lambdas_dot,problem_curve_data);
@@ -78,7 +78,7 @@ problem_curve_data.ssom_ehess_t_lambda=@(x,u,R,lambdas_dot) ssom_ehess_t_lambda(
 
 end %file function
 
-function g=egrad_R(x,T,lambdas,problem_data_lambdas)
+function g=egrad_R(x,problem_data_lambdas)
     % lambdas = x.lambda;
     % T = x.T;
     
@@ -95,17 +95,16 @@ function g=egrad_R(x,T,lambdas,problem_data_lambdas)
     g = rsom_egrad_rot_stiefel(x, problem_data_R);
 end
 
-function g=egrad_T(x,R,lambdas,problem_data_lambdas)
+function g=egrad_T(x,problem_data_T)
 
-    edges = problem_data_lambdas.edges;
+    % edges = problem_data_T.edges;
 
-    tijs_scaled = make_tijs_scaled(lambdas, problem_data_lambdas.Tijs);
+    % tijs_scaled = make_tijs_scaled(lambdas, problem_data_T.Tijs);
     
     %g.T
-    problem_data_T = problem_data_lambdas;
-    problem_data_T.Tijs = tijs_scaled;
-    [problem_data_T.LR, problem_data_T.PR, problem_data_T.BR] = ...
-        make_LR_PR_BR_noloops(R, tijs_scaled, edges);
+    % problem_data_T.Tijs = tijs_scaled;
+    % [problem_data_T.LR, problem_data_T.PR, problem_data_T.BR] = ...
+    %     make_LR_PR_BR_noloops(problem_data_T.R, tijs_scaled, edges);
     g = rsom_egrad_transl_stiefel(x, problem_data_T);
 end
 

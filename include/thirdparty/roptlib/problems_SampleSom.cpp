@@ -448,43 +448,44 @@ namespace ROPTLIB
     void SampleSomProblem::hessGenprocEigen(const SomUtils::VecMatD &xR, const SomUtils::VecMatD &uR, const SomUtils::MatD &xT, const SomUtils::MatD &uT, SomUtils::VecMatD &rhR, SomUtils::MatD &rhT) const
     {
         // P = zeros(nrs, d*N);
-        SomUtils::MatD P(SomUtils::MatD::Zero(sz_.p_, sz_.d_ * sz_.n_));
+        int staircaseStep = xT.rows();
+        SomUtils::MatD P(SomUtils::MatD::Zero(staircaseStep, sz_.d_ * sz_.n_));
         double frct = 0.0;
 
         // LR = zeros(N,N);
         // PR = zeros(N,nrs);
         // BR_const = zeros(d,d);
         SomUtils::MatD Lr(SomUtils::MatD::Zero(sz_.n_, sz_.n_));
-        SomUtils::MatD Pr(SomUtils::MatD::Zero(sz_.n_, sz_.p_));
+        SomUtils::MatD Pr(SomUtils::MatD::Zero(sz_.n_, staircaseStep));
         SomUtils::MatD Br(SomUtils::MatD::Zero(sz_.d_, sz_.d_));
 
-        // SomUtils::VecMatD rhR(sz_.n_, SomUtils::MatD::Zero(sz_.p_, sz_.d_));
-        // SomUtils::MatD rhT(SomUtils::MatD::Zero(sz_.p_, sz_.n_));
+        // SomUtils::VecMatD rhR(sz_.n_, SomUtils::MatD::Zero(staircaseStep, sz_.d_));
+        // SomUtils::MatD rhT(SomUtils::MatD::Zero(staircaseStep, sz_.n_));
         makePfrct(xT, P, frct);
         // ROFL_VAR2(P, frct);
         makeLrPrBr(xR, Lr, Pr, Br);
         // ROFL_VAR3(Lr, Pr, Br);
 
-        SomUtils::VecMatD rgR(sz_.n_, SomUtils::MatD::Zero(sz_.p_, sz_.d_));
+        SomUtils::VecMatD rgR(sz_.n_, SomUtils::MatD::Zero(staircaseStep, sz_.d_));
         rgradR(xR, P, rgR);
 
-        SomUtils::MatD rgT(SomUtils::MatD::Zero(sz_.p_, sz_.n_));
+        SomUtils::MatD rgT(SomUtils::MatD::Zero(staircaseStep, sz_.n_));
         rgradT(xT, Lr, Pr, rgT);
 
         // result->NewMemoryOnWrite();
         // result = Domain->RandomInManifold();
 
         // compute Hrr, Htt
-        SomUtils::VecMatD hrr(sz_.n_, SomUtils::MatD::Zero(sz_.p_, sz_.d_));
+        SomUtils::VecMatD hrr(sz_.n_, SomUtils::MatD::Zero(staircaseStep, sz_.d_));
         computeHrr(xR, uR, P, hrr);
-        SomUtils::MatD htt(SomUtils::MatD::Zero(sz_.p_, sz_.n_));
+        SomUtils::MatD htt(SomUtils::MatD::Zero(staircaseStep, sz_.n_));
         computeHtt(uT, Lr, htt);
 
         // h.R = rsom_rhess_rot_stiefel(R, Rdot, problem_structs) + hrt;
         // h.T = rsom_rhess_transl_stiefel(T, Tdot, problem_structs) + htr;
-        SomUtils::VecMatD hrt(sz_.n_, SomUtils::MatD::Zero(sz_.p_, sz_.d_));
+        SomUtils::VecMatD hrt(sz_.n_, SomUtils::MatD::Zero(staircaseStep, sz_.d_));
         computeHrt(xR, uT, hrt);
-        SomUtils::MatD htr(SomUtils::MatD::Zero(sz_.p_, sz_.n_));
+        SomUtils::MatD htr(SomUtils::MatD::Zero(staircaseStep, sz_.n_));
         computeHtr(uR, htr);
 
         // ROFL_VAR2(hrr[0], hrt[0]);
@@ -507,67 +508,16 @@ namespace ROPTLIB
         const SomUtils::VecMatD &xR, const SomUtils::VecMatD &uR, const SomUtils::MatD &xT, const SomUtils::MatD &uT,
         double mu, SomUtils::VecMatD &rhR, SomUtils::MatD &rhT) const
     {
-        // P = zeros(nrs, d*N);
-        SomUtils::MatD P(SomUtils::MatD::Zero(sz_.p_, sz_.d_ * sz_.n_));
-        double frct = 0.0;
-
-        // LR = zeros(N,N);
-        // PR = zeros(N,nrs);
-        // BR_const = zeros(d,d);
-        SomUtils::MatD Lr(SomUtils::MatD::Zero(sz_.n_, sz_.n_));
-        SomUtils::MatD Pr(SomUtils::MatD::Zero(sz_.n_, sz_.p_));
-        SomUtils::MatD Br(SomUtils::MatD::Zero(sz_.d_, sz_.d_));
-
-        // SomUtils::VecMatD rhR(sz_.n_, SomUtils::MatD::Zero(sz_.p_, sz_.d_));
-        // SomUtils::MatD rhT(SomUtils::MatD::Zero(sz_.p_, sz_.n_));
-        makePfrct(xT, P, frct);
-        // ROFL_VAR2(P, frct);
-        makeLrPrBr(xR, Lr, Pr, Br);
-        // ROFL_VAR3(Lr, Pr, Br);
-
-        SomUtils::VecMatD rgR(sz_.n_, SomUtils::MatD::Zero(sz_.p_, sz_.d_));
-        rgradR(xR, P, rgR);
-
-        SomUtils::MatD rgT(SomUtils::MatD::Zero(sz_.p_, sz_.n_));
-        rgradT(xT, Lr, Pr, rgT);
-
-        // result->NewMemoryOnWrite();
-        // result = Domain->RandomInManifold();
-
-        // compute Hrr, Htt
-        SomUtils::VecMatD hrr(sz_.n_, SomUtils::MatD::Zero(sz_.p_, sz_.d_));
-        computeHrr(xR, uR, P, hrr);
-        SomUtils::MatD htt(SomUtils::MatD::Zero(sz_.p_, sz_.n_));
-        computeHtt(uT, Lr, htt);
-
-        // h.R = rsom_rhess_rot_stiefel(R, Rdot, problem_structs) + hrt;
-        // h.T = rsom_rhess_transl_stiefel(T, Tdot, problem_structs) + htr;
-        SomUtils::VecMatD hrt(sz_.n_, SomUtils::MatD::Zero(sz_.p_, sz_.d_));
-        computeHrt(xR, uT, hrt);
-        SomUtils::MatD htr(SomUtils::MatD::Zero(sz_.p_, sz_.n_));
-        computeHtr(uR, htr);
-
-        // ROFL_VAR2(hrr[0], hrt[0]);
-        // ROFL_VAR2(hrr[1], hrt[1]);
-        // ROFL_VAR2(hrr[2], hrt[2]);
-        // ROFL_VAR2(hrr[3], hrt[3]);
-        // ROFL_VAR2(hrr[4], hrt[4]);
-        // ROFL_VAR2(htr, htt);
-
-        // TODO: use less memory
-
-        // sum diag component with antidiag one
-        std::transform(hrr.begin(), hrr.end(), hrt.begin(), rhR.begin(), std::plus<SomUtils::MatD>());
-        // shift!
+        hessGenprocEigen(xR, uR, xT, uT, rhR, rhT);
         for (int i = 0; i < sz_.n_; ++i)
         {
             rhR[i] -= mu * uR[i];
         };
-        ROFL_VAR5(rhR[0], rhR[1], rhR[2], rhR[3], rhR[4]);
+        // ROFL_VAR5(rhR[0], rhR[1], rhR[2], rhR[3], rhR[4]);
 
-        rhT = htt + htr;
+        // rhT = htt + htr;
         rhT -= mu * uT; // shift!
-        ROFL_VAR1(rhT);
+        // ROFL_VAR1(rhT);
     }
 
     Vector &SampleSomProblem::RieHessianEta(const Variable &x, const Vector &etax, Vector *result) const
@@ -674,12 +624,14 @@ namespace ROPTLIB
 
     void SampleSomProblem::vstack(const SomUtils::VecMatD &in, SomUtils::MatD &out) const
     {
+        ROFL_ASSERT(out.cols() == in[0].cols() && out.rows() == in[0].rows() * in.size());
+
         // out has same number of columns, whereas number of rows is the product of the size of the other 2 dimensions
 
-        int rowJump = sz_.p_; // TODO: generalize later
+        int rowJump = in[0].rows();
         for (int i = 0; i < in.size(); ++i)
         {
-            out.block(rowJump * i, 0, rowJump, sz_.d_) = in[i];
+            out.block(rowJump * i, 0, rowJump, out.cols()) = in[i];
         }
     }
 
@@ -687,10 +639,13 @@ namespace ROPTLIB
     {
         // out has same number of columns, whereas number of rows is the product of the size of the other 2 dimensions
 
-        int colJump = sz_.d_; // TODO: generalize later
+        ROFL_ASSERT_VAR5(out.rows() == in[0].rows() && out.cols() == in[0].cols() * in.size(), out.rows(), out.cols(), in[0].rows(), in[0].cols(), in.size());
+
+        int colJump = in[0].cols(); 
         for (int i = 0; i < in.size(); ++i)
         {
-            out.block(0, colJump * i, sz_.p_, colJump) = in[i];
+            // ROFL_VAR2(out.block(0, colJump * i, out.rows(), colJump), in[i]);
+            out.block(0, colJump * i, out.rows(), colJump) = in[i];
         }
     }
 
@@ -716,7 +671,7 @@ namespace ROPTLIB
     {
         int n = (int)in.cols() / colsOut;
 
-        int fixedSz = sz_.p_; // size that does not change in the 3D->2D transition (here, number of rows)
+        int fixedSz = in.rows(); // size that does not change in the 3D->2D transition (here, number of rows)
 
         ROFL_ASSERT(n * colsOut == in.cols());
 
@@ -846,7 +801,7 @@ namespace ROPTLIB
             SomUtils::MatD T_i = T.col(ii);
             SomUtils::MatD tij = Tijs_.col(e);
             SomUtils::MatD Pe = 2 * (T_i * tij.transpose() - T_j * tij.transpose());
-            P.block(0, ii * sz_.d_, sz_.p_, sz_.d_) += Pe;
+            P.block(0, ii * sz_.d_, T.rows(), sz_.d_) += Pe;
 
             SomUtils::MatD c = T_i * T_i.transpose() + T_j * T_j.transpose() - T_i * T_j.transpose() - T_j * T_i.transpose();
             SomUtils::MatD d = tij * tij.transpose();
@@ -889,13 +844,14 @@ namespace ROPTLIB
 
     void SampleSomProblem::computeHrr(const SomUtils::VecMatD &xR, const SomUtils::VecMatD &uR, const SomUtils::MatD &P, SomUtils::VecMatD &hRR) const
     {
-        SomUtils::VecMatD egR(sz_.n_, SomUtils::MatD::Zero(sz_.p_, sz_.d_));
+        int staircaseStep = xR[0].rows();
+        SomUtils::VecMatD egR(sz_.n_, SomUtils::MatD::Zero(staircaseStep, sz_.d_));
         egradR(P, egR);
         // ROFL_VAR2(P, egR[0]);
 
-        SomUtils::VecMatD term_1(sz_.n_, SomUtils::MatD::Zero(sz_.p_, sz_.d_));
-        SomUtils::VecMatD term_2(sz_.n_, SomUtils::MatD::Zero(sz_.p_, sz_.d_));
-        SomUtils::VecMatD DGf(sz_.n_, SomUtils::MatD::Zero(sz_.p_, sz_.d_));
+        SomUtils::VecMatD term_1(sz_.n_, SomUtils::MatD::Zero(staircaseStep, sz_.d_));
+        SomUtils::VecMatD term_2(sz_.n_, SomUtils::MatD::Zero(staircaseStep, sz_.d_));
+        SomUtils::VecMatD DGf(sz_.n_, SomUtils::MatD::Zero(staircaseStep, sz_.d_));
 
         // TODO: improve efficiency of this
         //  Original code was:
@@ -932,15 +888,16 @@ namespace ROPTLIB
 
     void SampleSomProblem::computeHrt(const SomUtils::VecMatD &xR, const SomUtils::MatD uT, SomUtils::VecMatD &hrt) const
     {
-        SomUtils::VecMatD W(sz_.n_, SomUtils::MatD::Zero(sz_.p_, sz_.d_));
+        int staircaseStep = xR[0].rows();
+        SomUtils::VecMatD W(sz_.n_, SomUtils::MatD::Zero(staircaseStep, sz_.d_));
 
         for (int e = 0; e < numEdges_; ++e)
         {
             int ii = edges_(e, 0) - 1;
             int jj = edges_(e, 1) - 1;
-            SomUtils::MatD uTi(SomUtils::MatD::Zero(sz_.p_, 1));
+            SomUtils::MatD uTi(SomUtils::MatD::Zero(staircaseStep, 1));
             uTi = uT.col(ii);
-            SomUtils::MatD uTj(SomUtils::MatD::Zero(sz_.p_, 1));
+            SomUtils::MatD uTj(SomUtils::MatD::Zero(staircaseStep, 1));
             uTj = uT.col(jj);
 
             SomUtils::MatD tij = Tijs_.col(e);

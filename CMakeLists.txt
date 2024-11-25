@@ -122,6 +122,9 @@ target_link_libraries(test_roptlib_som ${rofl_LIBRARIES} roptlib_local m blas la
 add_executable(test_linesearch_som test_linesearch_som.cpp include/som_utils.cpp)
 target_link_libraries(test_linesearch_som ${rofl_LIBRARIES} roptlib_local m blas lapack boost_iostreams boost_system boost_filesystem)
 
+add_executable(test_rphg test_rphg.cpp include/som_utils.cpp)
+target_link_libraries(test_rphg ${rofl_LIBRARIES} roptlib_local m blas lapack boost_iostreams boost_system boost_filesystem)
+
 # Option "make install": copy binaries
 #INSTALL(TARGETS som
 #  RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
