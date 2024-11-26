@@ -728,7 +728,7 @@ namespace ROPTLIB
             // lambda_max = x_max.R( :) ' * f_x_max.R(:) + x_max.T(:)' * f_x_max.T( :);
             auto lmax = vecR.transpose() * vecFxR + uTout1.reshaped(1, staircaseLevel * sz_.n_) * (uTcopy / normRTmax).reshaped(staircaseLevel * sz_.n_, 1);
             ROFL_VAR1(lmax)
-            lambdaMax = lmax(0, 0); //lmax is supposedly a scalar
+            lambdaMax = lmax(0, 0); // lmax is supposedly a scalar
 
             // 5
             // full_xmax = [ matStackH(x_max.R), x_max.T ];
@@ -946,8 +946,10 @@ namespace ROPTLIB
                 highestNormEigenval = lambdaPimShift + mu;
                 std::cout << "Difference between (lambda_pim_after_shift + mu)*v_pim_after_shift"
                           << "and H_SH(v_pim_after_shift) should be in the order of the tolerance:" << std::endl;
-                eigencheckHessianGenprocShifted(highestNormEigenval, Rnext, vPimRshift, Tnext, vPimTshift, mu);
-                ROFL_VAR3(highestNormEigenval, vPimRshift[0], vPimTshift);
+                eigencheckHessianGenproc(highestNormEigenval, Rnext, vPimRshift, Tnext, vPimTshift, mu);
+                // ROFL_VAR3(highestNormEigenval, vPimRshift[0], vPimTshift);
+                vPimR = vPimRshift;
+                vPimT = vPimTshift;
             }
             else
             {
@@ -975,10 +977,11 @@ namespace ROPTLIB
             // Xnext.R = Rnext;
             // Xnext.T = Tnext;
             // rhess_fun_han = @(u) hess_genproc(Xnext,u,problem_struct_next);
-            int staircaseNextStepLevel = R.size() + 1;
+            int staircaseNextStepLevel = T.rows() + 1;
+            ROFL_VAR1(staircaseNextStepLevel);
             SomUtils::VecMatD Rnext(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
             catZeroRow3dArray(R, Rnext);
-            SomUtils::MatD Tnext(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
+            SomUtils::MatD Tnext(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
             catZeroRow(T, Tnext);
 
             // stiefel_normalize_han = @(x) x./ (norm(x(:))); //Note: this is basically eucl_normalize_han
@@ -991,9 +994,9 @@ namespace ROPTLIB
             normalizeEucl(RnextTg, RnextTgNorm);
 
             // u_start.T = rand(size(Tnext));
-            auto TnextTg = SomUtils::MatD::Random(staircaseNextStepLevel, sz_.d_);
+            auto TnextTg = SomUtils::MatD::Random(staircaseNextStepLevel, sz_.n_);
             // u_start.T = stiefel_normalize_han(u_start.T);
-            SomUtils::MatD TnextTgNorm(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
+            SomUtils::MatD TnextTgNorm(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
             normalizeEucl(TnextTg, TnextTgNorm);
 
             // [lambda_pim, v_pim] = pim_function_genproc(rhess_fun_han, u_start, stiefel_normalize_han, thresh);
@@ -1028,8 +1031,8 @@ namespace ROPTLIB
                 SomUtils::VecMatD RnextTgNormShift(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
                 normalizeEucl(RnextTgShift, RnextTgNormShift);
 
-                auto TnextTgShift = SomUtils::MatD::Random(staircaseNextStepLevel, sz_.d_);
-                SomUtils::MatD TnextTgNormShift(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
+                auto TnextTgShift = SomUtils::MatD::Random(staircaseNextStepLevel, sz_.n_);
+                SomUtils::MatD TnextTgNormShift(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
                 normalizeEucl(TnextTgShift, TnextTgNormShift);
 
                 SomUtils::VecMatD vPimRshift(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
@@ -1043,8 +1046,18 @@ namespace ROPTLIB
                 //         rhess_shifted_fun_han);
                 std::cout << "Difference between lambda_pim_after_shift*v_pim_after_shift"
                           << "and H_SH(v_pim_after_shift) should be in the order of the tolerance:" << std::endl;
+                eigencheckHessianGenprocShifted(lambdaPimShift, Rnext, vPimRshift, Tnext, vPimTshift, mu);
                 highestNormEigenval = lambdaPimShift + mu;
-                eigencheckHessianGenprocShifted(highestNormEigenval, Rnext, vPimRshift, Tnext, vPimTshift, mu);
+                std::cout << "Difference between (lambda_pim_after_shift + mu)*v_pim_after_shift"
+                          << "and H_SH(v_pim_after_shift) should be in the order of the tolerance:" << std::endl;
+                eigencheckHessianGenproc(highestNormEigenval, Rnext, vPimRshift, Tnext, vPimTshift, mu);
+                // ROFL_VAR3(highestNormEigenval, vPimRshift[0], vPimTshift);
+                vPimR = vPimRshift;
+                vPimT = vPimTshift;
+            }
+            else
+            {
+                highestNormEigenval = lambdaPim;
             } // SMALL VERSION UP TO HERE!!
 
             //////!!!!/////!!!!

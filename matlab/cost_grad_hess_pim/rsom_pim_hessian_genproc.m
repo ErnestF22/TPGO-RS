@@ -60,8 +60,10 @@ if lambda_pim>0
     highest_norm_eigenval = lambda_pim_after_shift + mu;
     eigencheck_hessian_genproc(highest_norm_eigenval, v_pim_after_shift, ...
         rhess_fun_han);
+else
+    v_pim_after_shift = v_pim; %variable name in this case is misleading since shift does not happen at all
 end
-%TODO! if lambda_pim already < 0
+
 
 %%%
 % disp(['Checking if highest_norm_eigenval = lambda_pim_after_shift + mu' ...
