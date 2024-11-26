@@ -498,11 +498,13 @@ namespace ROPTLIB
 
         void normalizeEucl(const SomUtils::MatD &mIn, SomUtils::MatD &mOut) const
         {
+            ROFL_ASSERT(mIn.rows() == mOut.rows() && mIn.cols() == mOut.cols())
+
             mOut = mIn;
             double normF = mIn.norm(); // TODO: maybe use .normalized() directly?
 
             mOut /= normF;
-            ROFL_VAR3(mIn, normF, mOut);
+            // ROFL_VAR3(mIn, normF, mOut);
         }
 
         void normalizeEucl(const SomUtils::VecMatD &mIn, SomUtils::VecMatD &mOut) const
@@ -539,18 +541,18 @@ namespace ROPTLIB
 
             // generate random Stiefel element
             Vector tmp = Stiefel(r, c).RandominManifold();
-            tmp.Print("tmp inside stiefelRandTgNormVector()");
+            // tmp.Print("tmp inside stiefelRandTgNormVector()");
             SomUtils::MatD tmpEigVec(SomUtils::MatD::Zero(r * c, 1));
             RoptToEigStiefel(tmp, tmpEigVec); // xEigen is supposed to be a vectorized matrix
-            ROFL_VAR1(tmpEigVec);
+            // ROFL_VAR1(tmpEigVec);
             SomUtils::MatD tmpEig = tmpEigVec.reshaped<Eigen::RowMajor>(r, c);
-            ROFL_VAR1(tmpEig);
+            // ROFL_VAR1(tmpEig);
             SomUtils::MatD tmpProj(SomUtils::MatD::Zero(r, c));
             stiefelTangentProj(mIn, tmpEig, tmpProj);
-            ROFL_VAR1(tmpProj);
+            // ROFL_VAR1(tmpProj);
 
             normalizeEucl(tmpProj, mOut);
-            ROFL_VAR1(mOut);
+            // ROFL_VAR1(mOut);
 
             // For any matrix representative $U \in St(n, p)$, the tangent space of $St(n, p)$ at $U$ is represented by
             // U\transpose \Delta = -\Delta\transpose U
@@ -582,12 +584,16 @@ namespace ROPTLIB
             // for (int i=0; i<fullRotsSz; ++i) {
             // }
 
+            int n = R.size();
+
             int fullIdx = 0;
-            for (int i = 0; i < sz_.n_; ++i)
+            for (int i = 0; i < n; ++i)
             {
-                for (int j = 0; j < sz_.d_; ++j)
+                int ric = R[i].cols();
+                int rir = R[i].rows();
+                for (int j = 0; j < ric; ++j)
                 {
-                    for (int k = 0; k < sz_.p_; ++k)
+                    for (int k = 0; k < rir; ++k)
                     {
                         RvecOut(fullIdx, 0) = R[i](k, j);
                         fullIdx++;
@@ -595,10 +601,11 @@ namespace ROPTLIB
                     }
                 }
             }
+            ROFL_ASSERT(fullIdx == RvecOut.rows())
         }
 
         void pimFunctionGenproc(const SomUtils::VecMatD &xR, const SomUtils::MatD &xT, const SomUtils::VecMatD &uR, const SomUtils::MatD &uT,
-                                double &lambdaMax, SomUtils::VecMatD &uFullR, SomUtils::MatD &uFullT, double thresh = 1e-5) const
+                                double &lambdaMax, SomUtils::VecMatD &uOutR, SomUtils::MatD &uOutT, double thresh = 1e-5) const
         {
             // Note: normalization is done across entire ProdMani vector through simple eucl. metric
 
@@ -609,15 +616,20 @@ namespace ROPTLIB
 
             int staircaseLevel = xT.rows();
             ROFL_VAR1(staircaseLevel);
+
             SomUtils::MatD uRhStacked(SomUtils::MatD::Zero(staircaseLevel, sz_.d_ * sz_.n_));
             // ROFL_VAR1("hstack call from here");
             hstack(uR, uRhStacked);
+            ROFL_VAR1(uRhStacked);
 
             SomUtils::MatD uTcopy = uT; // useful for keeping const in function params
+            ROFL_VAR1(uTcopy);
 
             SomUtils::MatD uFullHst(SomUtils::MatD::Zero(staircaseLevel, sz_.n_ + uRhStacked.cols()));
             uFullHst.block(0, 0, staircaseLevel, uRhStacked.cols()) = uRhStacked;
             uFullHst.block(0, uRhStacked.cols(), staircaseLevel, sz_.n_) = uTcopy;
+            ROFL_VAR1(uFullHst);
+
             // iteration_num = 0;
             int iterationNum = 0;
             // while (iteration_num < 2500)
@@ -639,46 +651,66 @@ namespace ROPTLIB
             SomUtils::MatD uTprev(SomUtils::MatD::Zero(staircaseLevel, sz_.n_));
             while (iterationNum < 2500) // && iterativeChange < 1e-3
             {
+                ROFL_VAR1(iterationNum);
                 iterationNum++;
+
+                // 1
                 uRprevHst = uRhStacked;
+                ROFL_VAR1(uRprevHst);
+
                 uTprev = uTcopy;
+                ROFL_VAR1(uTprev);
 
+                // 2
                 SomUtils::MatD uFullHstPrev(SomUtils::MatD::Zero(staircaseLevel, sz_.n_ + uRhStacked.cols()));
-                uFullHstPrev.block(0, 0, staircaseLevel, uRhStacked.cols()) = uRprevHst;
-                uFullHstPrev.block(0, uRhStacked.cols(), staircaseLevel, sz_.n_) = uTprev;
+                uFullHstPrev.block(0, 0, staircaseLevel, uRprevHst.cols()) = uRprevHst;
+                uFullHstPrev.block(0, uRprevHst.cols(), staircaseLevel, uTprev.cols()) = uTprev;
+                ROFL_VAR1(uFullHstPrev);
 
+                // 3
                 double normRT = uFullHst.norm();
+                ROFL_VAR1(normRT);
+
+                // 4
                 uRhStacked /= normRT;
                 uTcopy /= normRT;
 
                 SomUtils::VecMatD uRunstackedTmp(sz_.n_, SomUtils::MatD::Zero(staircaseLevel, sz_.d_));
                 unStackH(uRhStacked, uRunstackedTmp);
 
+                // 5
                 SomUtils::VecMatD uRunstackedOutTmp(sz_.n_, SomUtils::MatD::Zero(staircaseLevel, sz_.d_));
                 SomUtils::MatD uTout(SomUtils::MatD::Zero(staircaseLevel, sz_.n_));
                 hessGenprocEigen(xR, uRunstackedTmp, xT, uTcopy, uRunstackedOutTmp, uTout);
 
+                // 6
                 std::for_each(uRunstackedOutTmp.begin(), uRunstackedOutTmp.end(), [](SomUtils::MatD &x) { //^^^ take argument by reference: LAMBDA FUNCTION
                     x *= -1;
                 });
                 uTcopy = -uTout;
 
-                // ROFL_VAR1("hstack call from here");
+                // 7
                 hstack(uRunstackedOutTmp, uRhStacked);
+                // ROFL_VAR1("hstack call from here");
                 uFullHst.block(0, 0, staircaseLevel, uRhStacked.cols()) = uRhStacked;
                 uFullHst.block(0, uRhStacked.cols(), staircaseLevel, sz_.n_) = uTcopy;
+                ROFL_VAR1(uFullHst);
 
                 //      iterative_change = max(normalization_fun(xfull_prev - xfull), [], "all");
                 double iterativeChange = (uFullHstPrev - uFullHst).cwiseAbs().maxCoeff();
+                ROFL_VAR1(iterativeChange);
             }
 
+            // 1
             // norm_RT_max = norm([ matStackH(x.R), x.T ]);
             double normRTmax = uFullHst.norm();
 
+            // 2
             // x_max.R = x.R / norm_RT_max;
             // x_max.T = x.T / norm_RT_max;
             uFullHst /= normRTmax;
 
+            // 3
             // f_x_max = f(x_max);
             SomUtils::VecMatD uRunstacked(sz_.n_, SomUtils::MatD::Zero(staircaseLevel, sz_.d_));
             unStackH(uRhStacked / normRTmax, uRunstacked, sz_.d_);
@@ -688,29 +720,29 @@ namespace ROPTLIB
 
             hessGenprocEigen(xR, uRunstacked, xT, uTcopy / normRTmax, fxRunstackedOut, uTout1);
 
-            // % lambda_max_R = sum(stiefel_metric([], (x_max.R), f_x_max.R)) / ... % sum(stiefel_metric([], x_max.R, x_max.R));
-            // % lambda_max_T = sum(stiefel_metric([], (x_max.T), f_x_max.T)) / ... % sum(stiefel_metric([], x_max.T, x_max.T));
-
+            // 4
             SomUtils::MatD vecR(SomUtils::MatD::Zero(sz_.d_ * staircaseLevel * sz_.n_, 1));
             vectorizeR(uRunstacked, vecR);
             SomUtils::MatD vecFxR(SomUtils::MatD::Zero(sz_.d_ * staircaseLevel * sz_.n_, 1));
             vectorizeR(fxRunstackedOut, vecFxR);
-
             // lambda_max = x_max.R( :) ' * f_x_max.R(:) + x_max.T(:)' * f_x_max.T( :);
             auto lmax = vecR.transpose() * vecFxR + uTout1.reshaped(1, staircaseLevel * sz_.n_) * (uTcopy / normRTmax).reshaped(staircaseLevel * sz_.n_, 1);
-            lambdaMax = lmax(0, 0);
+            ROFL_VAR1(lmax)
+            lambdaMax = lmax(0, 0); //lmax is supposedly a scalar
 
+            // 5
             // full_xmax = [ matStackH(x_max.R), x_max.T ];
             auto uFullRhSt = uFullHst.block(0, 0, staircaseLevel, sz_.d_ * sz_.n_);
-            unStackH(uFullRhSt, uFullR, sz_.d_);
-            uFullT = uFullHst.block(0, sz_.d_ * sz_.n_, staircaseLevel, sz_.n_);
+            unStackH(uFullRhSt, uOutR, sz_.d_);
+            uOutT = uFullHst.block(0, sz_.d_ * sz_.n_, staircaseLevel, sz_.n_);
 
+            // 6
             // lambda_max = lambda_max / sum(stiefel_metric([], full_xmax( :), full_xmax( :)));
             lambdaMax /= uFullHst.norm();
         }
 
         void pimFunctionGenprocShifted(const SomUtils::VecMatD &xR, const SomUtils::MatD &xT, const SomUtils::VecMatD &uR, const SomUtils::MatD &uT, double mu,
-                                       double &lambdaMax, SomUtils::VecMatD &uFullR, SomUtils::MatD &uFullT, double thresh = 1e-5) const
+                                       double &lambdaMax, SomUtils::VecMatD &uOutR, SomUtils::MatD &uOutT, double thresh = 1e-5) const
         {
             // Note: normalization is done across entire ProdMani vector through simple eucl. metric
 
@@ -814,8 +846,8 @@ namespace ROPTLIB
 
             // full_xmax = [ matStackH(x_max.R), x_max.T ];
             auto uFullRhSt = uFullHst.block(0, 0, staircaseLevel, sz_.d_ * sz_.n_);
-            unStackH(uFullRhSt, uFullR, sz_.d_);
-            uFullT = uFullHst.block(0, sz_.d_ * sz_.n_, staircaseLevel, sz_.n_);
+            unStackH(uFullRhSt, uOutR, sz_.d_);
+            uOutT = uFullHst.block(0, sz_.d_ * sz_.n_, staircaseLevel, sz_.n_);
 
             // lambda_max = lambda_max / sum(stiefel_metric([], full_xmax( :), full_xmax( :)));
             lambdaMax /= uFullHst.norm();
@@ -879,7 +911,7 @@ namespace ROPTLIB
             if (lambdaPim > 0)
             {
                 std::cout << "lambdaPim " << lambdaPim << std::endl;
-                double mu = 100 * lambdaPim;
+                double mu = 1.1 * lambdaPim;
 
                 //     rhess_shifted_fun_han = @(u) hess_genproc_shifted(Xnext,u,mu,problem_struct_next);
 

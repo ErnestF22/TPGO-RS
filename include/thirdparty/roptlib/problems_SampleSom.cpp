@@ -641,7 +641,7 @@ namespace ROPTLIB
 
         ROFL_ASSERT_VAR5(out.rows() == in[0].rows() && out.cols() == in[0].cols() * in.size(), out.rows(), out.cols(), in[0].rows(), in[0].cols(), in.size());
 
-        int colJump = in[0].cols(); 
+        int colJump = in[0].cols();
         for (int i = 0; i < in.size(); ++i)
         {
             // ROFL_VAR2(out.block(0, colJump * i, out.rows(), colJump), in[i]);
@@ -664,6 +664,7 @@ namespace ROPTLIB
         for (int i = 0; i < n; ++i)
         {
             out[i] = in.block(rowsOut * i, 0, rowsOut, fixedSz);
+            ROFL_ASSERT(out[i].cols() == in.cols())
         }
     }
 
@@ -681,6 +682,7 @@ namespace ROPTLIB
         for (int i = 0; i < n; ++i)
         {
             out[i] = in.block(0, colsOut * i, fixedSz, colsOut);
+            ROFL_ASSERT(out[i].rows() == in.rows())
         }
     }
 
