@@ -651,25 +651,25 @@ namespace ROPTLIB
             SomUtils::MatD uTprev(SomUtils::MatD::Zero(staircaseLevel, sz_.n_));
             while (iterationNum < 2500) // && iterativeChange < 1e-3
             {
-                ROFL_VAR1(iterationNum);
+                // ROFL_VAR1(iterationNum);
                 iterationNum++;
 
                 // 1
                 uRprevHst = uRhStacked;
-                ROFL_VAR1(uRprevHst);
+                // ROFL_VAR1(uRprevHst);
 
                 uTprev = uTcopy;
-                ROFL_VAR1(uTprev);
+                // ROFL_VAR1(uTprev);
 
                 // 2
                 SomUtils::MatD uFullHstPrev(SomUtils::MatD::Zero(staircaseLevel, sz_.n_ + uRhStacked.cols()));
                 uFullHstPrev.block(0, 0, staircaseLevel, uRprevHst.cols()) = uRprevHst;
                 uFullHstPrev.block(0, uRprevHst.cols(), staircaseLevel, uTprev.cols()) = uTprev;
-                ROFL_VAR1(uFullHstPrev);
+                // ROFL_VAR1(uFullHstPrev);
 
                 // 3
                 double normRT = uFullHst.norm();
-                ROFL_VAR1(normRT);
+                // ROFL_VAR1(normRT);
 
                 // 4
                 uRhStacked /= normRT;
@@ -694,11 +694,11 @@ namespace ROPTLIB
                 // ROFL_VAR1("hstack call from here");
                 uFullHst.block(0, 0, staircaseLevel, uRhStacked.cols()) = uRhStacked;
                 uFullHst.block(0, uRhStacked.cols(), staircaseLevel, sz_.n_) = uTcopy;
-                ROFL_VAR1(uFullHst);
+                // ROFL_VAR1(uFullHst);
 
                 //      iterative_change = max(normalization_fun(xfull_prev - xfull), [], "all");
                 double iterativeChange = (uFullHstPrev - uFullHst).cwiseAbs().maxCoeff();
-                ROFL_VAR1(iterativeChange);
+                ROFL_VAR2(iterationNum, iterativeChange);
             }
 
             // 1
@@ -814,6 +814,7 @@ namespace ROPTLIB
 
                 //      iterative_change = max(normalization_fun(xfull_prev - xfull), [], "all");
                 double iterativeChange = (uFullHstPrev - uFullHst).cwiseAbs().maxCoeff();
+                ROFL_VAR2(iterationNum, iterativeChange);
             }
 
             // norm_RT_max = norm([ matStackH(x.R), x.T ]);
@@ -957,7 +958,7 @@ namespace ROPTLIB
             }
         }
 
-        void rsomPimHessianGenproc(double thresh, const SomUtils::VecMatD &R, const SomUtils::MatD &T, Vector &Y0) const
+        void rsomPimHessianGenproc(double thresh, const SomUtils::VecMatD &R, const SomUtils::MatD &T, Vector &Y0, bool armijo = true) const
         {
             // [Y_star, lambda, v] = rsom_pim_hessian_genproc( ...
             //     X, problem_struct_next, thr);
@@ -1065,16 +1066,15 @@ namespace ROPTLIB
             // nrs_next = problem_struct_next.sz(1);
             // d = problem_struct_next.sz(2);
             // N = problem_struct_next.sz(3);
-            int nrsNext = sz_.p_ + 1;
-            SomUtils::SomSize szNext(nrsNext, sz_.d_, sz_.n_);
+            SomUtils::SomSize szNext(staircaseNextStepLevel, sz_.d_, sz_.n_);
 
-            Stiefel mani1(szNext.p_, szNext.d_);
+            Stiefel mani1(staircaseNextStepLevel, szNext.d_);
             mani1.ChooseParamsSet2();
             integer numoftypes = 2; // 2 i.e. (3D) Stiefel + Euclidean
 
             integer numofmani1 = szNext.n_; // num of Stiefel manifolds
             integer numofmani2 = 1;
-            Euclidean mani2(szNext.p_, szNext.n_);
+            Euclidean mani2(staircaseNextStepLevel, szNext.n_);
             ProductManifold ProdManiNext(numoftypes, &mani1, numofmani1, &mani2, numofmani2);
 
             Vector xIn = ProdManiNext.RandominManifold(); //!! in other cases xIn would have been a pointer
@@ -1100,64 +1100,129 @@ namespace ROPTLIB
             // lambda_pim_out = highest_norm_eigenval;
             // v_pim_out = v_pim_after_shift;
 
-            { // EigToRopt scope for xIn
+            if (armijo)
+            {
+                { // EigToRopt scope for xIn
 
-                int rotSz = getRotSz();
-                int translSz = getTranslSz();
+                    int rotSz = szNext.p_ * szNext.d_;
+                    // int translSz = szNext.p_;
 
-                int gElemIdx = 0;
-                // fill result with computed gradient values : R
-                for (int i = 0; i < sz_.n_; ++i)
-                {
-                    // ROFL_VAR1(gElemIdx);
-                    // ROFL_VAR2("\n", rgR[gElemIdx]);
-                    // result->GetElement(gElemIdx).SetToIdentity(); // Ri
-                    // result->GetElement(gElemIdx).Print("Ri before assignment");
-
-                    Vector RnextROPT(sz_.p_, sz_.d_);
-                    // RnextROPT.Initialize();
-                    realdp *GroptlibWriteArray = RnextROPT.ObtainWriteEntireData();
-                    for (int j = 0; j < rotSz; ++j)
+                    int gElemIdx = 0;
+                    // fill result with computed gradient values : R
+                    for (int i = 0; i < sz_.n_; ++i)
                     {
-                        // ROFL_VAR2(i, j);
-                        // RnextROPT.Print("RnextROPT before assignment");
+                        // ROFL_VAR1(gElemIdx);
+                        // ROFL_VAR2("\n", rgR[gElemIdx]);
+                        // result->GetElement(gElemIdx).SetToIdentity(); // Ri
+                        // result->GetElement(gElemIdx).Print("Ri before assignment");
+
+                        Vector RnextROPT(staircaseNextStepLevel, sz_.d_);
+                        // RnextROPT.Initialize();
+                        realdp *GroptlibWriteArray = RnextROPT.ObtainWriteEntireData();
+                        for (int j = 0; j < rotSz; ++j)
+                        {
+                            // ROFL_VAR2(i, j);
+                            // RnextROPT.Print("RnextROPT before assignment");
+
+                            // ROFL_VAR1(RnextROPT.GetElement(j, 0));
+
+                            GroptlibWriteArray[j] = Rnext[i].reshaped(sz_.d_ * staircaseNextStepLevel, 1)(j);
+
+                            // ROFL_VAR1("");
+                            // RnextROPT.Print("RnextROPT after assignment");
+                        }
+                        RnextROPT.CopyTo(xIn.GetElement(gElemIdx));
+                        // result->GetElement(gElemIdx).Print("Riem. grad Ri after assignment");
+                        gElemIdx++;
+                    }
+
+                    // fill result with computed gradient values : T
+
+                    Vector TnextROPT(staircaseNextStepLevel, sz_.n_);
+                    realdp *GroptlibWriteArray = TnextROPT.ObtainWriteEntireData();
+                    for (int j = 0; j < staircaseNextStepLevel * sz_.n_; ++j)
+                    {
+                        // TnextROPT.Print("TnextROPT before assignment");
 
                         // ROFL_VAR1(RnextROPT.GetElement(j, 0));
 
-                        GroptlibWriteArray[j] = Rnext[i].reshaped(sz_.d_ * sz_.p_, 1)(j);
+                        GroptlibWriteArray[j] = Tnext.reshaped(sz_.n_ * staircaseNextStepLevel, 1)(j);
 
                         // ROFL_VAR1("");
-                        // RnextROPT.Print("RnextROPT after assignment");
+                        // TnextROPT.Print("TnextROPT after assignment");
                     }
-                    RnextROPT.CopyTo(xIn.GetElement(gElemIdx));
-                    // result->GetElement(gElemIdx).Print("Riem. grad Ri after assignment");
-                    gElemIdx++;
-                }
+                    TnextROPT.CopyTo(xIn.GetElement(gElemIdx));
+                } // end of EigToRopt scope for xIn
 
-                // fill result with computed gradient values : T
+                linesearchArmijoROPTLIB(xIn, szNext, Y0);
+            }
+            else
+            {
+                SomUtils::MatD Y0T(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
+                SomUtils::VecMatD Y0R(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
+                linesearchDummy(Rnext, Tnext, vPimR, vPimT, Y0R, Y0T);
+                Y0 = ProdManiNext.RandominManifold();
+                // ROFL_VAR1(Y0T);
 
-                Vector TnextROPT(sz_.p_, sz_.n_);
-                realdp *GroptlibWriteArray = TnextROPT.ObtainWriteEntireData();
-                for (int j = 0; j < sz_.p_ * sz_.n_; ++j)
-                {
-                    // TnextROPT.Print("TnextROPT before assignment");
+                { // EigToRopt scope for Y0
 
-                    // ROFL_VAR1(RnextROPT.GetElement(j, 0));
+                    int rotSz = szNext.p_ * szNext.d_;
+                    // int translSz = szNext.p_;
 
-                    GroptlibWriteArray[j] = Tnext.reshaped(sz_.n_ * sz_.p_, 1)(j);
+                    int gElemIdx = 0;
+                    // fill result with computed gradient values : R
+                    for (int i = 0; i < sz_.n_; ++i)
+                    {
+                        // ROFL_VAR1(gElemIdx);
+                        // ROFL_VAR2("\n", rgR[gElemIdx]);
+                        // result->GetElement(gElemIdx).SetToIdentity(); // Ri
+                        // result->GetElement(gElemIdx).Print("Ri before assignment");
 
-                    // ROFL_VAR1("");
-                    // TnextROPT.Print("TnextROPT after assignment");
-                }
-                TnextROPT.CopyTo(xIn.GetElement(gElemIdx));
-            } // end of EigToRopt scope for xIn
+                        Vector RnextROPT(staircaseNextStepLevel, sz_.d_);
+                        // RnextROPT.Initialize();
+                        realdp *GroptlibWriteArray = RnextROPT.ObtainWriteEntireData();
+                        for (int j = 0; j < rotSz; ++j)
+                        {
+                            // ROFL_VAR2(i, j);
+                            // RnextROPT.Print("RnextROPT before assignment");
 
-            // Vector Y0;
-            linesearchArmijoROPTLIB(xIn, szNext, Y0);
+                            // ROFL_VAR1(RnextROPT.GetElement(j, 0));
+
+                            GroptlibWriteArray[j] = Y0R[i].reshaped(sz_.d_ * staircaseNextStepLevel, 1)(j);
+
+                            // ROFL_VAR1("");
+                            // RnextROPT.Print("RnextROPT after assignment");
+                        }
+                        RnextROPT.CopyTo(Y0.GetElement(gElemIdx));
+                        // result->GetElement(gElemIdx).Print("Riem. grad Ri after assignment");
+                        gElemIdx++;
+                    }
+
+                    // fill result with computed gradient values : T
+
+                    Vector TnextROPT(staircaseNextStepLevel, sz_.n_);
+                    realdp *GroptlibWriteArray = TnextROPT.ObtainWriteEntireData();
+                    for (int j = 0; j < staircaseNextStepLevel * sz_.n_; ++j)
+                    {
+                        // TnextROPT.Print("TnextROPT before assignment");
+
+                        // ROFL_VAR1(RnextROPT.GetElement(j, 0));
+
+                        GroptlibWriteArray[j] = Y0T.reshaped(sz_.n_ * staircaseNextStepLevel, 1)(j);
+
+                        // ROFL_VAR1("");
+                        // TnextROPT.Print("TnextROPT after assignment");
+                    }
+                    TnextROPT.Print("line 1215");
+                    Y0.GetElement(gElemIdx).Print("line 1216");
+                    TnextROPT.CopyTo(Y0.GetElement(gElemIdx));
+                } // end of EigToRopt scope for xIn
+            }
         }
 
         void linesearchArmijoROPTLIB(const Vector &xIn, const SomUtils::SomSize &somSzLocal, Vector &Y0) const
         {
+            ROFL_VAR1("Running linesearchArmijoROPTLIB()")
             Stiefel mani1(somSzLocal.p_, somSzLocal.d_);
             mani1.ChooseParamsSet2();
             integer numoftypes = 2; // 2 i.e. (3D) Stiefel + Euclidean
@@ -1175,18 +1240,18 @@ namespace ROPTLIB
             xIn.Print("Printing xIn inside linesearchArmijoROPTLIB()");
 
             ROPTLIB::RNewton *RNewtonSolver = new RNewton(&ProbLS, &xIn); // USE INITGUESS HERE!
-            RNewtonSolver->Verbose = ITERRESULT;
+            RNewtonSolver->Verbose = ITERRESULT;                          // TODO: comment this to remove some output
 
             PARAMSMAP solverParams = {std::pair<std::string, double>("Max_Inner_Iter", 1)};
             RNewtonSolver->SetParams(solverParams);
             RNewtonSolver->CheckParams();
 
-            RNewtonSolver->LineSearch_LS = LSSM_INPUTFUN;
+            RNewtonSolver->LineSearch_LS = LSSM_ARMIJO;
             RNewtonSolver->LinesearchInput = &SomUtils::LinesearchInput;
             // LinesearchInput(iter, x1, eta1, stepsize, initialslope, Prob, this)
-            RNewtonSolver->IsPureLSInput = false;
+            // RNewtonSolver->IsPureLSInput = false;
             // RNewtonSolver->StopPtr = &MyStop;
-            RNewtonSolver->Max_Iteration = 1;
+            // RNewtonSolver->Max_Iteration = 25; // should be the same as the default one
 
             RNewtonSolver->Run();
 
@@ -1213,6 +1278,13 @@ namespace ROPTLIB
             //     [ Q, R ] = qr(x + e);
             //     rxe = R;
             // end
+        }
+
+        void euclRetraction(const SomUtils::MatD &x, const SomUtils::MatD &d, SomUtils::MatD &y, double t = 1.0) const
+        {
+            ROFL_ASSERT(y.rows() == x.rows() && y.rows() == d.rows())
+            ROFL_ASSERT(y.cols() == x.cols() && y.cols() == d.cols())
+            y = x + t * d;
         }
 
         void stiefelRetraction(const SomUtils::MatD &xIn, const SomUtils::MatD &e, SomUtils::MatD &rxe) const
@@ -1254,94 +1326,20 @@ namespace ROPTLIB
             }
         }
 
-        void linesearchDummy(const SomUtils::VecMatD &xRin, const SomUtils::MatD &xTin, SomUtils::VecMatD &xRout, SomUtils::MatD &xTout)
+        void linesearchDummy(const SomUtils::VecMatD &xRin, const SomUtils::MatD &xTin,
+                             const SomUtils::VecMatD &vRin, const SomUtils::MatD &vTin,
+                             SomUtils::VecMatD &Y0R, SomUtils::MatD &Y0T) const
         {
-            // rsomPimHessianGenproc(double thresh, const SomUtils::VecMatD &R, const SomUtils::MatD &T, Vector &Y0);
+            ROFL_VAR1("Running linesearchDummy()")
 
-            int staircaseNextStepLevel = xRin.size() + 1;
-            // SomUtils::VecMatD Rnext(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
-            // catZeroRow3dArray(xRin, Rnext);
-            // SomUtils::MatD Tnext(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
-            // catZeroRow(xTin, Tnext);
+            int nrs = xTin.rows();
+            SomUtils::SomSize szNext(nrs, sz_.d_, sz_.n_);
 
-            // stiefel_normalize_han = @(x) x./ (norm(x(:))); //Note: this is basically eucl_normalize_han
+            stiefelRetraction(xRin, vRin, Y0R);
+            ROFL_VAR1(Y0R[0]);
 
-            // u_start.R = stiefel_randTangentNormVector(Rnext);
-            SomUtils::VecMatD RnextTg(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
-            stiefelRandTgNormVector(xRin, RnextTg);
-            // u_start.R = stiefel_normalize(Rnext, u_start.R);
-            SomUtils::VecMatD RnextTgNorm(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
-            normalizeEucl(RnextTg, RnextTgNorm);
-
-            // u_start.T = rand(size(Tnext));
-            auto TnextTg = SomUtils::MatD::Random(staircaseNextStepLevel, sz_.d_);
-            // u_start.T = stiefel_normalize_han(u_start.T);
-            SomUtils::MatD TnextTgNorm(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
-            normalizeEucl(TnextTg, TnextTgNorm);
-
-            // [lambda_pim, v_pim] = pim_function_genproc(rhess_fun_han, u_start, stiefel_normalize_han, thresh);
-            // disp('Difference between lambda*v_max and H(v_max) should be in the order of the tolerance:')
-            double lambdaPim = 1e+6;
-            SomUtils::VecMatD vPimR(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
-            SomUtils::MatD vPimT(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
-
-            pimFunctionGenproc(xRin, xTin, RnextTgNorm, TnextTgNorm, lambdaPim, vPimR, vPimT);
-            std::cout << "Difference between lambda_pim_after_shift*v_pim_after_shift"
-                      << " and H_SH(v_pim_after_shift) should be in the order of the tolerance:" << std::endl;
-            eigencheckHessianGenproc(lambdaPim, xRin, vPimR, xTin, vPimT);
-
-            // if lambda_pim>0
-            double highestNormEigenval = 1e+6;
-            SomUtils::VecMatD vPimRshift(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
-            SomUtils::MatD vPimTshift(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
-            if (lambdaPim > 0)
-            {
-                std::cout << "lambdaPim " << lambdaPim << std::endl;
-                double mu = 1.1 * lambdaPim;
-
-                //     rhess_shifted_fun_han = @(u) hess_genproc_shifted(Xnext,u,mu,problem_struct_next);
-
-                //     // %run shifted power iteration
-                //     u_start_second_iter.R = stiefel_randTangentNormVector(Rnext);
-                //     u_start_second_iter.R = stiefel_normalize(Rnext, u_start_second_iter.R);
-                //     u_start_second_iter.T = rand(size(Tnext));
-                //     u_start_second_iter.T = stiefel_normalize_han(u_start.T);
-                //     [lambda_pim_after_shift, v_pim_after_shift] = pim_function_genproc( ...
-                //         rhess_shifted_fun_han, u_start_second_iter, stiefel_normalize_han, thresh);
-                SomUtils::VecMatD RnextTgShift(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
-                stiefelRandTgNormVector(xRin, RnextTgShift);
-                SomUtils::VecMatD RnextTgNormShift(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
-                normalizeEucl(RnextTgShift, RnextTgNormShift);
-
-                auto TnextTgShift = SomUtils::MatD::Random(staircaseNextStepLevel, sz_.d_);
-                SomUtils::MatD TnextTgNormShift(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
-                normalizeEucl(TnextTgShift, TnextTgNormShift);
-
-                double lambdaPimShift = 1e+6; // "after" shift is intended
-                pimFunctionGenprocShifted(xRin, xTin, RnextTgNorm, TnextTgNorm, mu, lambdaPimShift, vPimRshift, vPimTshift);
-
-                //     disp(['Difference between lambda_pim_after_shift*v_pim_after_shift ' ...
-                //         'and H_SH(v_pim_after_shift) should be in the order of the tolerance:'])
-                //     eigencheck_hessian_genproc(lambda_pim_after_shift, v_pim_after_shift, ...
-                //         rhess_shifted_fun_han);
-                std::cout << "Difference between lambda_pim_after_shift*v_pim_after_shift"
-                          << "and H_SH(v_pim_after_shift) should be in the order of the tolerance:" << std::endl;
-                highestNormEigenval = lambdaPimShift + mu;
-                eigencheckHessianGenprocShifted(highestNormEigenval, xRin, vPimRshift, xTin, vPimTshift, mu);
-            }
-
-            //////!!!!/////!!!!
-            // // %Preparing linesearch
-            // nrs_next = problem_struct_next.sz(1);
-            // d = problem_struct_next.sz(2);
-            // N = problem_struct_next.sz(3);
-            int nrsNext = sz_.p_ + 1;
-            SomUtils::SomSize szNext(nrsNext, sz_.d_, sz_.n_);
-
-            SomUtils::VecMatD Y0R(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
-            stiefelRetraction(xRin, vPimRshift, Y0R);
-
-            // Need also eucl. retraction
+            euclRetraction(xTin, vTin, Y0T);
+            ROFL_VAR1(Y0T)
         };
     };
 

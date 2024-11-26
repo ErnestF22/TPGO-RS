@@ -261,7 +261,7 @@ namespace ROPTLIB
         // result->SetToZeros();
         // *result = Groptlib;
 
-        result->Print("printing final result");
+        // result->Print("printing final result");
 
         // ROFL_ASSERT(0);
 
@@ -528,8 +528,8 @@ namespace ROPTLIB
 
         // result->Print("RieHessianEta: printing it just after NewMemoryOnWrite()");
 
-        x.Print("x inside RieHessianEta");
-        etax.Print("etax inside RieHessianEta");
+        // x.Print("x inside RieHessianEta");
+        // etax.Print("etax inside RieHessianEta");
 
         SomUtils::MatD xEig(fullSz_, 1);
         RoptToEig(x, xEig);
@@ -604,9 +604,9 @@ namespace ROPTLIB
             // rhTiVec.Print("rhTiVec after assignment");
         }
         rhTiVec.CopyTo(result->GetElement(gElemIdx));
-        result->GetElement(gElemIdx).Print("RieHess T after assignment");
+        // result->GetElement(gElemIdx).Print("RieHess T after assignment");
 
-        result->Print("RieHessianEta: printing just before end of function");
+        // result->Print("RieHessianEta: printing just before end of function");
 
         return *result;
     };

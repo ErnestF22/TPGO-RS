@@ -69,7 +69,23 @@ void testSomSample(SomUtils::SomSize somSz, SomUtils::MatD &Tijs, Eigen::MatrixX
     SomUtils::MatD T(SomUtils::MatD::Zero(somSz.p_, somSz.n_));
     Prob.getTranslations(xEig, T);
 
-    Prob.rsomPimHessianGenprocSmall(1e-4, R, T);
+    auto somSzNext = somSz;
+    somSzNext.p_++;
+    SampleSomProblem ProbNext(somSzNext, Tijs, edges);
+
+    Stiefel mani1next(somSzNext.p_, somSz.d_);
+    mani1next.ChooseParamsSet2();
+    Euclidean mani2next(somSzNext.p_, somSz.n_);
+    ProductManifold ProdManiNext(numoftypes, &mani1, numofmani1, &mani2, numofmani2);
+    Vector Y0 = ProdManiNext.RandominManifold();
+    Prob.rsomPimHessianGenproc(1e-4, R, T, Y0);
+
+    Y0.Print("Y0 output of rphg small + linesearch");
+
+    // check whether cost has actually decreased
+
+    ROFL_VAR1(Prob.f(startX));
+    ROFL_VAR1(ProbNext.f(Y0));
 
     // std::cout << "Prob.GetUseGrad() " << Prob.GetUseGrad() << std::endl;
     // std::cout << "Prob.GetUseHess() " << Prob.GetUseHess() << std::endl;

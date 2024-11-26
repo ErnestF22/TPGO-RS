@@ -30,10 +30,10 @@ void testSomSample(SomUtils::SomSize somSz, SomUtils::MatD &Tijs, Eigen::MatrixX
     // Obtain an initial iterate
     Vector startX = ProdMani.RandominManifold();
 
-    // SomUtils::readCsvInitguess("../data/X_initguess_n10.csv", startX);
-    // startX.Print("startX");
+    SomUtils::readCsvInitguess("../data/rphg_test_x.csv", startX);
+    startX.Print("startX");
 
-    // ProdMani.SetIsIntrApproach(false);
+    ProdMani.SetIsIntrApproach(false);
 
     // Set the domain of the problem to be the product of Stiefel manifolds
     SampleSomProblem Prob(somSz, Tijs, edges);
@@ -44,8 +44,6 @@ void testSomSample(SomUtils::SomSize somSz, SomUtils::MatD &Tijs, Eigen::MatrixX
 
     Prob.SetUseGrad(true);
     Prob.SetUseHess(true);
-    // Prob.SetNumGradHess(true);
-    // Prob.CheckGradHessian(startX);
 
     // output the parameters of the manifold of domain
     ROPTLIB::RTRNewton *RTRNewtonSolver = new RTRNewton(&Prob, &startX); // USE INITGUESS HERE!
@@ -56,120 +54,36 @@ void testSomSample(SomUtils::SomSize somSz, SomUtils::MatD &Tijs, Eigen::MatrixX
     // RTRNewtonSolver->SetParams(solverParams);
     RTRNewtonSolver->CheckParams();
 
-    // % Solve.
-    // [x, xcost, info, options] = trustregions(problem);
-    RTRNewtonSolver->Run();
-    Prob.CheckGradHessian(RTRNewtonSolver->GetXopt());
-
-    std::cout << "Prob.GetUseGrad() " << Prob.GetUseGrad() << std::endl;
-    std::cout << "Prob.GetUseHess() " << Prob.GetUseHess() << std::endl;
-    // std::cout << "Prob.GetNumGradHess() " << Prob.GetNumGradHess() << std::endl;
-
-    // Outputs
-    RTRNewtonSolver->GetXopt().Print("Xopt");
-    std::cout << "xcost " << RTRNewtonSolver->Getfinalfun() << std::endl; // x cost
-
-    // RS step !!!!
-
-    int nrsNext = somSz.p_ + 1;
-    SomUtils::SomSize szNext(nrsNext, somSz.d_, somSz.n_);
-
-    Vector xOptPrevStep = RTRNewtonSolver->GetXopt();
-    int fullSz = somSz.p_ * somSz.d_ * somSz.n_ + somSz.p_ * somSz.n_;
-    int fullSzNext = szNext.p_ * szNext.d_ * szNext.n_ + szNext.p_ * szNext.n_;
-
-    Stiefel mani1Next(szNext.p_, szNext.d_);
-    mani1Next.ChooseParamsSet2();
-
-    Euclidean mani2Next(szNext.p_, szNext.n_);
-    ProductManifold ProdManiNext(numoftypes, &mani1Next, numofmani1, &mani2Next, numofmani2);
-
-    Vector xOptNext = ProdManiNext.RandominManifold(); //!! in other cases xOptNext would have been a pointer
-
-    Vector Y0 = ProdManiNext.RandominManifold();
-
-    SomUtils::MatD xOptPrevStepEig(SomUtils::MatD::Zero(fullSz, 1));
-
-    Prob.RoptToEig(xOptPrevStep, xOptPrevStepEig);
+    SomUtils::MatD xEig(SomUtils::MatD::Zero(Prob.fullSz_, 1));
+    Prob.RoptToEig(startX, xEig);
 
     SomUtils::VecMatD R(somSz.n_, SomUtils::MatD::Zero(somSz.p_, somSz.d_));
-    Prob.getRotations(xOptPrevStepEig, R);
 
+    Prob.getRotations(xEig, R);
     SomUtils::MatD T(SomUtils::MatD::Zero(somSz.p_, somSz.n_));
-    Prob.getTranslations(xOptPrevStepEig, T);
+    Prob.getTranslations(xEig, T);
 
-    // 1) cat zero rows on R, T
-    SomUtils::VecMatD Rnext(szNext.n_, SomUtils::MatD::Zero(szNext.p_, szNext.d_));
-    Prob.catZeroRow3dArray(R, Rnext); // does the same job as ProbNext.catZeroRow3dArray()
+    auto somSzNext = somSz;
+    somSzNext.p_++;
+    SampleSomProblem ProbNext(somSzNext, Tijs, edges);
 
-    SomUtils::MatD Tnext(SomUtils::MatD::Zero(szNext.p_, szNext.n_));
-    Prob.catZeroRow(T, Tnext); // does the same job as ProbNext.catZeroRow()
+    ROFL_VAR3(somSzNext.p_, somSzNext.d_, somSzNext.n_);
+    // return;
 
-    SampleSomProblem ProbNext(szNext, Tijs, edges);
-    ProbNext.SetDomain(&ProdMani);
+    Stiefel mani1next(somSzNext.p_, somSz.d_);
+    mani1next.ChooseParamsSet2();
+    Euclidean mani2next(somSzNext.p_, somSz.n_);
+    ProductManifold ProdManiNext(numoftypes, &mani1, numofmani1, &mani2, numofmani2);
+    Vector Y0 = ProdManiNext.RandominManifold();
+    Prob.rsomPimHessianGenproc(1e-4, R, T, Y0, false);
 
-    // 2) Eig to ROPT
-    { // EigToRopt scope for xOptNext
+    Y0.Print("Y0 output of rphg small + linesearch");
 
-        int rotSz = ProbNext.getRotSz();
-        int translSz = ProbNext.getTranslSz();
+    // check whether cost has actually decreased
 
-        int gElemIdx = 0;
-        // fill result with computed gradient values : R
-        for (int i = 0; i < szNext.n_; ++i)
-        {
-            // ROFL_VAR1(gElemIdx);
-            // ROFL_VAR2("\n", rgR[gElemIdx]);
-            // result->GetElement(gElemIdx).SetToIdentity(); // Ri
-            // result->GetElement(gElemIdx).Print("Ri before assignment");
+    ROFL_VAR1(Prob.f(startX));
+    ROFL_VAR1(ProbNext.f(Y0));
 
-            Vector RnextROPT(szNext.p_, szNext.d_);
-            // RnextROPT.Initialize();
-            realdp *GroptlibWriteArray = RnextROPT.ObtainWriteEntireData();
-            for (int j = 0; j < rotSz; ++j)
-            {
-                // ROFL_VAR2(i, j);
-                // RnextROPT.Print("RnextROPT before assignment");
-
-                // ROFL_VAR1(RnextROPT.GetElement(j, 0));
-
-                GroptlibWriteArray[j] = Rnext[i].reshaped(szNext.d_ * szNext.p_, 1)(j);
-
-                // ROFL_VAR1("");
-                // RnextROPT.Print("RnextROPT after assignment");
-            }
-            RnextROPT.CopyTo(xOptNext.GetElement(gElemIdx));
-            // result->GetElement(gElemIdx).Print("Riem. grad Ri after assignment");
-            gElemIdx++;
-        }
-
-        // fill result with computed gradient values : T
-
-        Vector TnextROPT(szNext.p_, szNext.n_);
-        realdp *GroptlibWriteArray = TnextROPT.ObtainWriteEntireData();
-        for (int j = 0; j < szNext.p_ * szNext.n_; ++j)
-        {
-            // TnextROPT.Print("TnextROPT before assignment");
-
-            // ROFL_VAR1(RnextROPT.GetElement(j, 0));
-
-            GroptlibWriteArray[j] = Tnext.reshaped(szNext.n_ * szNext.p_, 1)(j);
-
-            // ROFL_VAR1("");
-            // TnextROPT.Print("TnextROPT after assignment");
-        }
-        TnextROPT.CopyTo(xOptNext.GetElement(gElemIdx));
-    } // end of EigToRopt scope for xOptNext
-    // Prob.linesearchArmijoROPTLIB(xOptNext, szNext, Y0);
-
-    /////////////////////////END OF ROPTLIB SOLUTION AND BEGINNING OF DUMMY SOLUTION
-
-    ROFL_VAR1("Now running linesearchDummy");
-    SomUtils::VecMatD RnextLSoutput(szNext.n_, SomUtils::MatD::Zero(szNext.p_, szNext.d_));
-    SomUtils::MatD TnextLSoutput(SomUtils::MatD::Zero(szNext.p_, szNext.n_));
-    ProbNext.linesearchDummy(Rnext, Tnext, RnextLSoutput, TnextLSoutput);
-
-    Y0.Print("Y0 before delete RTRNewtonSolver");
 
     delete RTRNewtonSolver;
 }
@@ -184,10 +98,10 @@ int main(int argc, char **argv)
     SomUtils::MatD Tijs(d, numEdges);
     Eigen::MatrixXi edges(numEdges, 2);
 
-    SomUtils::readCsvTijs("../data/tijs_n10.csv", Tijs, d, numEdges);
-    SomUtils::readCsvEdges("../data/edges_n10.csv", edges);
+    SomUtils::readCsvTijs("../data/rphg_test_tijs.csv", Tijs, d, numEdges);
+    SomUtils::readCsvEdges("../data/rphg_test_edges.csv", edges);
 
-    ROFL_VAR2(Tijs.transpose(), edges); //transpose is for visualization puropses
+    ROFL_VAR2(Tijs.transpose(), edges); // transpose is for visualization puropses
     ROFL_VAR2(Tijs.rows(), Tijs.cols());
 
     testSomSample(somSz, Tijs, edges);
