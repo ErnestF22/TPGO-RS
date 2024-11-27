@@ -1340,7 +1340,214 @@ namespace ROPTLIB
 
             euclRetraction(xTin, vTin, Y0T);
             ROFL_VAR1(Y0T)
-        };
+        }
+
+        // Code for recovery
+
+        void makeAdjMatFromEdges(Eigen::MatrixXi &adjMat) const
+        {
+            ROFL_ASSERT(adjMat.rows() == numEdges_)
+            ROFL_ASSERT(adjMat.cols() == numEdges_)
+
+            adjMat.setZero();
+            for (int k = 0; k < numEdges_; ++k)
+            {
+                int ii = edges_(k, 0) - 1;
+                int jj = edges_(k, 1) - 1;
+                adjMat(ii, jj) = 1;
+            }
+        }
+
+        void computeNodeDegrees(Eigen::ArrayXi &nodeDegrees) const
+        {
+            ROFL_ASSERT(nodeDegrees.rows() == sz_.n_)
+
+            Eigen::MatrixXi adjMat(Eigen::MatrixXi::Zero(numEdges_, numEdges_));
+            makeAdjMatFromEdges(adjMat);
+
+            nodeDegrees.setZero();
+            nodeDegrees = adjMat.colwise().sum();
+        }
+
+        void makeTedges(const SomUtils::MatD &T, SomUtils::MatD &Tedges, SomUtils::MatD &T1offset) const
+        {
+            int nrs = T.rows();
+            Tedges.setZero();
+            ROFL_ASSERT(Tedges.rows() == nrs && Tedges.cols() == numEdges_)
+            for (int e = 0; e < numEdges_; ++e)
+            {
+                int ii = edges_(e, 0) - 1;
+                int jj = edges_(e, 1) - 1;
+
+                Tedges.col(e) = T.col(ii) - T.col(jj);
+            }
+
+            ROFL_ASSERT(T1offset.rows() == nrs && T1offset.cols() == 1)
+            T1offset = T.col(0);
+        }
+
+        void makeTedges(const SomUtils::MatD &T, SomUtils::MatD &Tedges) const
+        {
+            int nrs = T.rows();
+            Tedges.setZero();
+            ROFL_ASSERT(Tedges.rows() == nrs && Tedges.cols() == numEdges_)
+            for (int e = 0; e < numEdges_; ++e)
+            {
+                int ii = edges_(e, 0) - 1;
+                int jj = edges_(e, 1) - 1;
+
+                Tedges.col(e) = T.col(ii) - T.col(jj);
+            }
+        }
+
+        void POCRotateToMinimizeLastEntries(const SomUtils::MatD &x, SomUtils::MatD &Qtransp) const
+        {
+            Eigen::JacobiSVD<SomUtils::MatD> svd(x, Eigen::ComputeFullV | Eigen::ComputeFullU); // TODO: ComputeFullV flag can probably be removed
+            auto Q = svd.matrixU();
+            Qtransp = Q.transpose();
+        }
+
+        void edgeDiffs2T(const SomUtils::MatD& Tdiffs, int n, SomUtils::MatD& T) const {
+            // nrs = size(T_diffs, 1);
+            // booleans_T = boolean(0) * ones(N,1); % alg should stop when all these are 1
+            // booleans_T(1) = boolean(1); % node 1 chosen as reference
+            // % d = size(T_diffs, 1);
+            // T = zeros(nrs, N);
+            // adjmat = edges2adjmatrix(edges);
+            // g = digraph(adjmat);
+            // for ii = 2:N
+            //     [shortest_p, length, edge_path] = shortestpath(g, ii, 1);
+            // %     fprintf("shortest_p for node %g\n", ii);
+            // %     disp(shortest_p)
+            // %     fprintf("length for node %g\n", ii);
+            // %     disp(length)
+            // %     fprintf("edge_path for node %g\n", ii);
+            // %     disp(edge_path)
+            //     for ep = edge_path
+            //         T(:,ii) = T(:,ii) + T_diffs(:,ep);
+            //         disp('');
+            //     end
+            //     T(:,ii) = -T(:,ii);    
+            // end
+        }
+
+        bool recoverySEdN(int staircaseStepIdx,
+                          const SomUtils::VecMatD &RmanoptOut, const SomUtils::MatD &TmanoptOut,
+                          SomUtils::VecMatD &Rrecovered, SomUtils::MatD &Trecovered) const
+        {
+            if (staircaseStepIdx > sz_.d_ + 1)
+            {
+                int nrs = staircaseStepIdx - 1;
+                int lowDeg = 2; // TODO: not necessarily in more complex graph cases
+
+                Eigen::ArrayXi nodeDegrees(Eigen::ArrayXi::Zero(sz_.n_));
+                computeNodeDegrees(nodeDegrees);
+
+                auto nodesHighDeg = nodeDegrees > lowDeg;
+
+                SomUtils::MatD Tedges(SomUtils::MatD::Zero(nrs, numEdges_));
+
+                // RT_stacked_high_deg = [ matStackH(R_manopt_out( :, :, nodes_high_deg)), T_edges ];
+                auto numNodesHighDeg = nodesHighDeg.sum();
+                SomUtils::MatD RTstackedHighDeg(SomUtils::MatD::Zero(nrs, sz_.d_ * numNodesHighDeg + Tedges.cols()));
+                SomUtils::MatD RstackedHighDeg(SomUtils::MatD::Zero(nrs, sz_.d_ * numNodesHighDeg));
+                hstack(RmanoptOut, RstackedHighDeg);
+                RTstackedHighDeg.block(0, 0, nrs, sz_.d_ * numNodesHighDeg) = RstackedHighDeg;
+                RTstackedHighDeg.block(0, sz_.d_ * numNodesHighDeg, nrs, numEdges_) = Tedges;
+
+                SomUtils::MatD QxEdges(SomUtils::MatD::Zero(nrs, nrs));
+                POCRotateToMinimizeLastEntries(RTstackedHighDeg, QxEdges);
+
+                // R_tilde2_edges = multiprod(repmat(Qx_edges, 1, 1, sum(nodes_high_deg)), R_manopt_out( :, :, nodes_high_deg));
+                SomUtils::VecMatD Rtilde2edges(numNodesHighDeg, SomUtils::MatD::Zero(nrs, sz_.d_));
+                int highDegId = 0;
+                for (int i = 0; i < sz_.n_; ++i)
+                {
+                    if (nodesHighDeg[i])
+                    {
+                        Rtilde2edges[highDegId] = QxEdges * RmanoptOut[i];
+                        highDegId++;
+                    }
+                }
+                ROFL_ASSERT(highDegId == numNodesHighDeg)
+
+                std::for_each(Rrecovered.begin(), Rrecovered.end(), [](SomUtils::MatD &x) { //^^^ take argument by reference: LAMBDA FUNCTION
+                    x.setZero();
+                });
+
+                // R_recovered( :, :, nodes_high_deg) = R_tilde2_edges(1 : d, :, :);
+                highDegId = 0;
+                for (int i = 0; i < sz_.n_; ++i)
+                {
+                    if (nodesHighDeg[i])
+                    {
+                        Rrecovered[i] = Rtilde2edges[highDegId].block(0, 0, sz_.d_, sz_.d_);
+                        highDegId++;
+                    }
+                }
+                ROFL_ASSERT(highDegId == numNodesHighDeg)
+
+                auto nodesLowDeg = !nodesHighDeg;
+                ROFL_VAR1(nodesLowDeg.transpose())
+
+                if (!nodesLowDeg.any())
+                {
+                    ROFL_VAR1("No nodes low deg!");
+                    SomUtils::MatD TdiffsShifted = QxEdges * Tedges; // this has last row to 0
+                    edgeDiffs2T(TdiffsShifted.block(0,0, sz_.d_, TdiffsShifted.cols()), sz_.n_, Trecovered);
+                }
+                else
+                {
+                    // for
+                    //     node_id = 1 : length(params.node_degrees)
+                    //                       node_deg = params.node_degrees(node_id);
+
+                    // if node_deg
+                    //     == low_deg
+                    //             fprintf("Running recoverRitilde() on node %g\n", node_id);
+                    // R_i_tilde2 = R_manopt_out( :, :, node_id);
+                    // cost_gt = rsom_cost_base(X_gt, problem_struct_next);
+                    // disp("cost_gt")
+                    //     disp(cost_gt)
+                    //         cost_manopt_output = rsom_cost_base(X_manopt_out, problem_struct_next);
+                    // disp("cost_manopt_output")
+                    //     disp(cost_manopt_output)
+                    //         T_diffs_shifted = Qx_edges * T_edges;
+                    // % this has last row to 0
+                    //         [~, Tij1j2_tilde] = make_Tij1j2s_edges(node_id, T_diffs_shifted, Tijs, edges, params);
+                    // [ RitildeEst1, RitildeEst2, ~, ~] = recoverRitilde(Qx_edges * R_i_tilde2, Tij1j2_tilde);
+                    // disp('') % TODO : how to decide between RitildeEst1, RitildeEst2 ? ? det_RitildeEst1 = det(RitildeEst1(1 : d, :));
+                    // det_RitildeEst2 = det(RitildeEst2(1 : d, :));
+                    // use_positive_det = boolean(1);
+                    // if (sum(multidet(R_tilde2_edges(1 : d, :, :))) < 0)
+                    //     use_positive_det = boolean(0);
+                    // end if (det_RitildeEst1 > 1 - 1e-5 && det_RitildeEst1 < 1 + 1e-5) if use_positive_det
+                    //     R_recovered( :, :, node_id) = RitildeEst1(1 : d, :);
+                    // else R_recovered( :, :, node_id) = RitildeEst2(1 : d, :);
+                    // elseif(det_RitildeEst2 > 1 - 1e-5 && det_RitildeEst2 < 1 + 1e-5) if use_positive_det
+                    //     R_recovered( :, :, node_id) = RitildeEst2(1 : d, :);
+                    // else R_recovered( :, :, node_id) = RitildeEst1(1 : d, :);
+                    // else fprintf("ERROR in recovery: Ritilde DETERMINANTS ~= +-1\n")
+
+                    //     rs_recovery_success = boolean(0);
+                    // T_recovered = edge_diffs_2_T(T_diffs_shifted(1 : d, :), edges, N);
+                    // else
+                    //     % recovery is not actually performed but using the same variable names
+                    //     % for simplicity
+                    //     R_recovered = R_manopt_out;
+                    // T_recovered = T_manopt_out;
+
+                    // % checking that cost has not changed during "recovery" X_recovered.T = T_recovered;
+                    // X_recovered.R = R_recovered;
+                    // cost_out = rsom_cost_base(X_recovered, problem_struct_next);
+                    // disp("cost_out")
+                    //     disp(cost_out)
+
+                    //         disp("[matStackH(X_gt.R); matStackH(R_recovered)]");
+                    // disp([matStackH(X_gt.R); matStackH(R_recovered)]);
+                }
+            }
+        }
     };
 
 } // end of namespace ROPTLIB
