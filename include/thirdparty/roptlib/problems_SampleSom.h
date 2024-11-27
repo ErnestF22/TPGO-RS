@@ -1407,13 +1407,21 @@ namespace ROPTLIB
             Qtransp = Q.transpose();
         }
 
-        void edgeDiffs2T(const SomUtils::MatD& Tdiffs, int n, SomUtils::MatD& T) const {
+        void edgeDiffs2T(const SomUtils::MatD &Tdiffs, int n, SomUtils::MatD &T) const
+        {
             // nrs = size(T_diffs, 1);
+            int nrs = Tdiffs.rows();
+            ROFL_ASSERT(nrs == T.rows())
+            ROFL_ASSERT(T.cols() == n)
             // booleans_T = boolean(0) * ones(N,1); % alg should stop when all these are 1
+            Eigen::ArrayXi booleansT(Eigen::ArrayXi::Ones(n));
             // booleans_T(1) = boolean(1); % node 1 chosen as reference
-            // % d = size(T_diffs, 1);
+            booleansT(0) = true;
             // T = zeros(nrs, N);
+            T.setZero();
             // adjmat = edges2adjmatrix(edges);
+            Eigen::MatrixXi adjMat(Eigen::MatrixXi::Zero(numEdges_, numEdges_));
+            makeAdjMatFromEdges(adjMat);
             // g = digraph(adjmat);
             // for ii = 2:N
             //     [shortest_p, length, edge_path] = shortestpath(g, ii, 1);
@@ -1427,7 +1435,7 @@ namespace ROPTLIB
             //         T(:,ii) = T(:,ii) + T_diffs(:,ep);
             //         disp('');
             //     end
-            //     T(:,ii) = -T(:,ii);    
+            //     T(:,ii) = -T(:,ii);
             // end
         }
 
@@ -1494,7 +1502,7 @@ namespace ROPTLIB
                 {
                     ROFL_VAR1("No nodes low deg!");
                     SomUtils::MatD TdiffsShifted = QxEdges * Tedges; // this has last row to 0
-                    edgeDiffs2T(TdiffsShifted.block(0,0, sz_.d_, TdiffsShifted.cols()), sz_.n_, Trecovered);
+                    edgeDiffs2T(TdiffsShifted.block(0, 0, sz_.d_, TdiffsShifted.cols()), sz_.n_, Trecovered);
                 }
                 else
                 {

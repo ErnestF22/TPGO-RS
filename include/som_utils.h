@@ -16,8 +16,6 @@
 #include "thirdparty/roptlib/problems_Problem.h"
 #include "thirdparty/roptlib/solvers_Solvers.h"
 
-
-
 namespace SomUtils
 {
     struct SomSize
@@ -93,6 +91,15 @@ namespace SomUtils
     /* User - specified linesearch algorithm */
     double LinesearchInput(integer iter, const ROPTLIB::Variable &x1, const ROPTLIB::Vector &exeta1, realdp initialstepsize, realdp initialslope, const ROPTLIB::Problem *prob, const ROPTLIB::Solvers *solver);
 
+    /**
+     * Used to compute minimum distance inside DijkstraAlgo
+     */
+    int miniDist(const std::vector<int> &distance, const std::vector<bool> &Tset);
+
+    /**
+     * Dijkstra Algorithm (shortest path) as per https://favtutor.com/blogs/dijkstras-algorithm-cpp
+     */
+    void DijkstraAlgo(const Eigen::MatrixXi &adjMat, int src); // adjacency matrix
 } // end of namespace SomUtils
 
 #endif /*SOM_UTILS_H_*/

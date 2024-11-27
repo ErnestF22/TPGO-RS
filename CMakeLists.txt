@@ -125,6 +125,18 @@ target_link_libraries(test_linesearch_som ${rofl_LIBRARIES} roptlib_local m blas
 add_executable(test_rphg test_rphg.cpp include/som_utils.cpp)
 target_link_libraries(test_rphg ${rofl_LIBRARIES} roptlib_local m blas lapack boost_iostreams boost_system boost_filesystem)
 
+# add_executable(test_favtutor_graph test_favtutor_graph.cpp include/som_utils.cpp)
+# target_link_libraries(test_favtutor_graph ${rofl_LIBRARIES} roptlib_local m blas lapack boost_iostreams boost_system boost_filesystem)
+
+# add_executable(test_tsp test_tsp.cpp include/som_utils.cpp)
+# target_link_libraries(test_tsp ${rofl_LIBRARIES} roptlib_local m blas lapack boost_iostreams boost_system boost_filesystem)
+
+# add_executable(test_gfg_dijkstra test_gfg_dijkstra.cpp include/som_utils.cpp)
+# target_link_libraries(test_gfg_dijkstra ${rofl_LIBRARIES} roptlib_local m blas lapack boost_iostreams boost_system boost_filesystem)
+
+# add_executable(test_dijkstra_edges test_dijkstra_edges.cpp include/som_utils.cpp)
+# target_link_libraries(test_dijkstra_edges ${rofl_LIBRARIES} roptlib_local m blas lapack boost_iostreams boost_system boost_filesystem)
+
 # Option "make install": copy binaries
 #INSTALL(TARGETS som
 #  RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin

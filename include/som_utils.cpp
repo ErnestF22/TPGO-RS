@@ -197,4 +197,57 @@ namespace SomUtils
         return 1;
     };
 
+    int miniDist(const std::vector<int> &distance, const std::vector<bool> &Tset) // finding minimum distance
+    {
+        int minimum = INT_MAX, ind;
+
+        int n = distance.size();
+        ROFL_ASSERT(n == Tset.size())
+
+        for (int k = 0; k < n; k++)
+        {
+            if (Tset[k] == false && distance[k] <= minimum)
+            {
+                minimum = distance[k];
+                ind = k;
+            }
+        }
+        return ind;
+    }
+
+    void DijkstraAlgo(const Eigen::MatrixXi &adjMat, int src) // adjacency matrix
+    {
+        int n = adjMat.rows();
+
+        ROFL_ASSERT(n == adjMat.cols())
+        std::vector<int> distance(adjMat.rows()); // // array to calculate the minimum distance for each node
+        std::vector<bool> Tset(adjMat.cols());    // boolean array to mark visited and unvisited for each node
+
+        for (int k = 0; k < 6; k++)
+        {
+            distance[k] = INT_MAX;
+            Tset[k] = false;
+        }
+
+        distance[src] = 0; // Source vertex distance is set 0
+
+        for (int k = 0; k < n; k++)
+        {
+            int m = miniDist(distance, Tset);
+            Tset[m] = true;
+            for (int k = 0; k < n; k++)
+            {
+                // updating the distance of neighbouring vertex
+                if (!Tset[k] && adjMat(m, k) && distance[m] != INT_MAX && distance[m] + adjMat(m, k) < distance[k])
+                    distance[k] = distance[m] + adjMat(m, k);
+            }
+        }
+        std::cout << "Vertex\t\tDistance from source vertex" << std::endl;
+        for (int k = 0; k < n; k++)
+        {
+            char str = 65 + k;
+            std::cout << str << "\t\t\t" << distance[k] << std::endl;
+        }
+    }
+
 } // end of namespace SomUtils
