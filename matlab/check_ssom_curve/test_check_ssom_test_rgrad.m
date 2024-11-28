@@ -1,4 +1,4 @@
-function test_check_ssom_test_egrad()
+function test_check_ssom_test_rgrad()
 %% lambda
 disp("grad lambda")
 
@@ -17,7 +17,7 @@ vLambda0=rand(e,1,1);
 curve.c=@(t) lambda(t);
 curve.dc=@(t) dLambda(t);
 
-f=@(t) problem.cost(curve.c(t));
+f=@(t) problem.cost_lambda(curve.c(t));
 egradf=@(t) problem.egrad_lambda(curve.c(t));
 df=@(t) sum(stiefel_metric([],egradf(t),curve.dc(t)));
 funCheckDer(f,df)
@@ -40,7 +40,7 @@ vT0=rand(nrs,N);
 curve.c=@(t) T(t);
 curve.dc=@(t) dT(t);
 
-f=@(t) problem.cost(curve.c(t));
+f=@(t) problem.cost_T(curve.c(t));
 egradf=@(t) problem.egrad_T(curve.c(t));
 df=@(t) sum(stiefel_metric([],egradf(t),curve.dc(t)));
 funCheckDer(f,df)
@@ -51,18 +51,18 @@ disp("grad R")
 problem=test_check_ssom();
 
 N = problem.sz(3);
-nrs = problem.sz(1);
+% nrs = problem.sz(1);
 d = problem.sz(2);
 % e = size(problem.edges,1);
 
-T0=rand(nrs,N);
-vT0=rand(nrs,N);
+R0=randrot(d,N);
+vR0=rot_randTangentNormVector(R0);
 
-[R,dR,~,~,~]=rot_geodFun(T0, vT0);
+[R,dR,~,~,~]=rot_geodFun(R0, vR0);
 curve.c=@(t) R(t);
 curve.dc=@(t) dR(t);
 
-f=@(t) problem.cost(curve.c(t));
-egradf=@(t) problem.egrad_T(curve.c(t));
+f=@(t) problem.cost_R(curve.c(t));
+egradf=@(t) problem.rgrad_R(curve.c(t));
 df=@(t) sum(stiefel_metric([],egradf(t),curve.dc(t)));
-funCheckDer(f,df)
+funCheckDer(f,df,'angle')

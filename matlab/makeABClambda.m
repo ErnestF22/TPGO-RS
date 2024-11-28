@@ -5,7 +5,7 @@ R = X.R;
 
 
 edges = problem_data.edges;
-Tijs_vec = problem_data.Tijs;
+tijs_vec = problem_data.tijs;
 % rho = problem_data.rho;
 
 num_edges = size(edges, 1);
@@ -18,7 +18,7 @@ for ee = 1:num_edges
     ii = edges(ee, 1);
     jj = edges(ee, 2);
     % lambda_e = lambdas(ee);
-    tij_e = Tijs_vec(:, ee);
+    tij_e = tijs_vec(:, ee);
     T_i = T(:, ii);
     T_j = T(:, jj);
     R_i = R(:, :, ii);
