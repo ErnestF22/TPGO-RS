@@ -1409,6 +1409,52 @@ namespace ROPTLIB
             Qtransp = Q.transpose();
         }
 
+        void makeTij1j2sEdges(int nodeId, const Eigen::ArrayXi &nodeDegrees, const SomUtils::MatD &Tedges,
+                              SomUtils::MatD &Tij1j2, SomUtils::MatD &Tij1j2_tilde) const
+        {
+            // num_rows_T = size(T_edges, 1);
+            int numRowsT = Tedges.rows();
+            // % nrs = params.nrs;
+            // d = params.d;
+            auto nodeDeg = nodeDegrees(nodeId); // usually equal to low deg
+
+            ROFL_ASSERT(Tij1j2.rows() == sz_.d_ && Tij1j2.cols() == nodeDeg)
+            // SomUtils::MatD Tij1j2 = SomUtils::MatD::Zero(sz_.d_, nodeDeg);
+            ROFL_ASSERT(Tij1j2_tilde.rows() == numRowsT && Tij1j2_tilde.cols() == nodeDeg)
+            // SomUtils::MatD Tij1j2_tilde = SomUtils::MatD::Zero(num_rows_T, node_deg);
+
+            Tij1j2.setZero();
+            Tij1j2_tilde.setZero();
+
+            int found = 1;
+            for (int e = 0; e < edges_.rows(); ++e)
+            {
+                auto eI = edges_(e, 0);
+                // % e_j = edges(e, 2);
+                if (eI == nodeId)
+                {
+                    Tij1j2.col(found) = Tijs_.col(e);
+                    Tij1j2_tilde.col(found) = -Tedges.col(e);
+                    found++;
+                }
+            }
+        }
+
+        void recoverRiTilde() const
+        {
+            // PARAMS IN: Qx_edges*R_i_tilde2, Tij1j2_tilde
+
+            // Qx = align2d(Tijtilde);
+            // QxRitilde2Bot = Qx(3 : 4, :) * Ritilde2;
+            // [ U, ~, ~] = svd(QxRitilde2Bot, 'econ');
+            // c = U( :, 2);
+
+            // QLastRight = Qx(3 : 4, 4)';
+
+            //     RbEst = procrustesRb(c, QLastRight'); RitildeEst1 = Qx '*blkdiag(eye(2),-RbEst') * Qx * Ritilde2;
+            // RitildeEst2=Qx'*blkdiag(eye(2),RbEst')*Qx*Ritilde2;
+        }
+
         struct Vertex
         {
             int index;
@@ -1420,7 +1466,7 @@ namespace ROPTLIB
             ~Vertex() {}
         };
 
-        void dijkstraBT(int src, int n, const std::vector<int> &prev, std::vector<std::vector<int>> &list)
+        void dijkstraBT(int src, int n, const std::vector<int> &prev, std::vector<std::vector<int>> &list) const
         {
             list.clear();
             list.resize(n);
@@ -1450,7 +1496,7 @@ namespace ROPTLIB
             }
         }
 
-        void dijkstraBTedges(int src, int n, const std::vector<int> &prev, const Eigen::MatrixXi &edges, std::vector<std::vector<int>> &listEdges)
+        void dijkstraBTedges(int src, int n, const std::vector<int> &prev, const Eigen::MatrixXi &edges, std::vector<std::vector<int>> &listEdges) const
         {
             std::vector<std::vector<int>> listNodes;
             dijkstraBT(src, n, prev, listNodes);
@@ -1603,21 +1649,36 @@ namespace ROPTLIB
             // adjmat = edges2adjmatrix(edges);
             Eigen::MatrixXi adjMat(Eigen::MatrixXi::Zero(numEdges_, numEdges_));
             makeAdjMatFromEdges(adjMat);
-            // g = digraph(adjmat);
-            // for ii = 2:N
-            //     [shortest_p, length, edge_path] = shortestpath(g, ii, 1);
-            // %     fprintf("shortest_p for node %g\n", ii);
-            // %     disp(shortest_p)
-            // %     fprintf("length for node %g\n", ii);
-            // %     disp(length)
-            // %     fprintf("edge_path for node %g\n", ii);
-            // %     disp(edge_path)
-            //     for ep = edge_path
-            //         T(:,ii) = T(:,ii) + T_diffs(:,ep);
-            //         disp('');
-            //     end
-            //     T(:,ii) = -T(:,ii);
-            // end
+            //
+            int globalId = 0;
+            std::vector<double> dist;
+            std::vector<int> prev;
+            dijkstraSP(sz_.n_, globalId, adjMat, dist, prev);
+            std::vector<std::vector<int>> listEdges;
+            dijkstraBTedges(globalId, sz_.n_, prev, edges_, listEdges);
+
+            for (int i = 0; i < sz_.n_; ++i)
+            {
+                if (i == globalId)
+                    continue;
+                // %     fprintf("shortest_p for node %g\n", ii);
+                // %     disp(shortest_p)
+                // %     fprintf("length for node %g\n", ii);
+                // %     disp(length)
+                // %     fprintf("edge_path for node %g\n", ii);
+                // %     disp(edge_path)
+                auto edgePath = listEdges[i];
+                for (int j = 0; j < edgePath.size(); ++j)
+                {
+                    T.col(i) += Tdiffs.col(j);
+                }
+                T.col(i) *= -1;
+                //     for ep = edge_path
+                //         T(:,ii) = T(:,ii) + T_diffs(:,ep);
+                //         disp('');
+                //     end
+                //     T(:,ii) = -T(:,ii);
+            }
         }
 
         bool recoverySEdN(int staircaseStepIdx,
