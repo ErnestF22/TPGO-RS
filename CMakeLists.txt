@@ -125,6 +125,9 @@ target_link_libraries(test_linesearch_som ${rofl_LIBRARIES} roptlib_local m blas
 add_executable(test_rphg test_rphg.cpp include/som_utils.cpp)
 target_link_libraries(test_rphg ${rofl_LIBRARIES} roptlib_local m blas lapack boost_iostreams boost_system boost_filesystem)
 
+add_executable(test_dijkstra_self test_dijkstra_self.cpp include/som_utils.cpp)
+target_link_libraries(test_dijkstra_self ${rofl_LIBRARIES} roptlib_local m blas lapack boost_iostreams boost_system boost_filesystem)
+
 # add_executable(test_favtutor_graph test_favtutor_graph.cpp include/som_utils.cpp)
 # target_link_libraries(test_favtutor_graph ${rofl_LIBRARIES} roptlib_local m blas lapack boost_iostreams boost_system boost_filesystem)
 

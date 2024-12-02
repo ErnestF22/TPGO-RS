@@ -4,6 +4,8 @@
 #include "manifolds_MultiManifolds.h"
 
 #include <vector>
+#include <queue>
+#include <numeric>
 
 #include <eigen3/Eigen/Dense>
 #include <unsupported/Eigen/MatrixFunctions>
@@ -1405,6 +1407,185 @@ namespace ROPTLIB
             Eigen::JacobiSVD<SomUtils::MatD> svd(x, Eigen::ComputeFullV | Eigen::ComputeFullU); // TODO: ComputeFullV flag can probably be removed
             auto Q = svd.matrixU();
             Qtransp = Q.transpose();
+        }
+
+        struct Vertex
+        {
+            int index;
+
+            Vertex() : index(-1) {}
+
+            Vertex(int idx) : index(idx) {}
+
+            ~Vertex() {}
+        };
+
+        void dijkstraBT(int src, int n, const std::vector<int> &prev, std::vector<std::vector<int>> &list)
+        {
+            list.clear();
+            list.resize(n);
+
+            for (int i = 0; i < n; ++i)
+            {
+                list[i].push_back(src);
+
+                if (i == src)
+                {
+                    continue;
+                }
+                int curr = prev[i];
+                int currIdx = i;
+                do
+                {
+                    // ROFL_VAR3(i, curr, prev[curr]);
+                    if (curr != src)
+                        list[i].insert(list[i].begin() + 1, curr);
+                    currIdx = curr;
+                    curr = prev[curr];
+                } while (currIdx != src);
+
+                // list[i].pop_back();
+
+                list[i].push_back(i);
+            }
+        }
+
+        void dijkstraBTedges(int src, int n, const std::vector<int> &prev, const Eigen::MatrixXi &edges, std::vector<std::vector<int>> &listEdges)
+        {
+            std::vector<std::vector<int>> listNodes;
+            dijkstraBT(src, n, prev, listNodes);
+
+            listEdges.clear();
+            listEdges.resize(n);
+
+            // for each node
+            for (int i = 0; i < n; ++i)
+            {
+                if (i == src)
+                    continue;
+
+                auto listNodeI = listNodes[i];
+
+                // run through node list (of i-th node)
+                for (int j = 0; j < listNodeI.size() - 1; ++j)
+                {
+                    int idxI = listNodeI[j] + 1;     //+1!!
+                    int idxJ = listNodeI[j + 1] + 1; //+1!!
+
+                    // add edges
+                    bool addedEdge = false;
+                    for (int k = 0; k < edges.rows(); ++k)
+                    {
+                        if (edges(k, 0) == idxI && edges(k, 1) == idxJ)
+                        {
+                            listEdges[i].push_back(k);
+                            addedEdge = true;
+                            break;
+                        }
+                    }
+                    ROFL_ASSERT(addedEdge)
+                }
+            }
+        }
+
+        void dijkstraSP(int n, int src, const Eigen::MatrixXi &adjmat, std::vector<double> &dist, std::vector<int> &prev) const
+        {
+            // function Dijkstra(Graph, source):
+
+            // for each vertex v in Graph.Vertices:
+            //     dist[v] ← INFINITY
+            //     prev[v] ← UNDEFINED
+            //     add v to Q
+
+            dist.clear();
+            prev.clear();
+            dist.assign(n, INFINITY);
+            prev.assign(n, nan("nan"));
+            std::vector<Vertex> q(n);
+            for (int i = 0; i < n; ++i)
+            {
+                Vertex qI(i);
+                q[i] = qI;
+            }
+
+            // ROFL_VAR1("dist, prev init")
+            // for (int i = 0; i < dist.size(); ++i)
+            // {
+            //     ROFL_VAR2(dist[i], prev[i]);
+            // }
+
+            // dist[source] ← 0
+
+            dist[src] = 0.0;
+
+            // while Q is not empty:
+            while (!q.empty())
+            {
+                // ROFL_VAR1(q.size());
+
+                //     u ← vertex in Q with minimum dist[u]
+                Vertex uVert;
+                double mindist = INFINITY;
+                int u = -1;
+                int iToErase = -1;
+                for (int i = 0; i < q.size(); ++i)
+                {
+                    auto qI = q[i];
+                    // ROFL_VAR2(i, qI.index)
+                    if (dist[qI.index] < mindist)
+                    {
+                        iToErase = i;
+                        // ROFL_VAR1("Saving i, qI.index")
+                        uVert = qI;
+                        u = qI.index;
+                        mindist = dist[qI.index];
+                    }
+                }
+
+                // ROFL_VAR2(u, mindist)
+
+                //     remove u from Q
+                q.erase(q.begin() + iToErase);
+
+                // ROFL_VAR2("After erase", q.size())
+
+                //     for each neighbor v of u still in Q:
+                for (int v = 0; v < adjmat.cols(); ++v)
+                {
+                    bool isNeighborInQ = false;
+                    for (int j = 0; j < q.size(); ++j)
+                    {
+                        if (adjmat(u, v) > 0 && q[j].index == v)
+                        {
+                            isNeighborInQ = true;
+                            break;
+                        }
+                    }
+                    if (!isNeighborInQ)
+                        continue;
+
+                    // ROFL_VAR2(q.size(), v);
+
+                    //         alt ← dist[u] + Graph.Edges(u, v)
+                    double alt = mindist + adjmat(u, v);
+                    //         if alt < dist[v]:
+                    if (alt < dist[v])
+                    {
+                        //             dist[v] ← alt
+                        //             prev[v] ← u
+                        // ROFL_VAR1("Updating dist, prev")
+                        dist[v] = alt;
+                        prev[v] = u;
+                    }
+                }
+
+                // for (int i = 0; i < n; ++i)
+                // {
+                //     ROFL_VAR3(i, dist[i], prev[i]);
+                // }
+            }
+
+            // return dist[], prev[]
         }
 
         void edgeDiffs2T(const SomUtils::MatD &Tdiffs, int n, SomUtils::MatD &T) const
