@@ -717,6 +717,20 @@ namespace ROPTLIB
         rOut = rOutVec.reshaped(sz_.p_, sz_.d_);
     }
 
+    void SampleSomProblem::getRiSEdN(const SomUtils::MatD &xEig, SomUtils::MatD &rOut, int i) const
+    {
+        // rOut already needs to have fixed size by here
+        int rotSz = sz_.d_*sz_.d_; // as a vector
+
+        int startId = i * rotSz;
+        // int endId = (i+1) * rotSz;
+
+        SomUtils::MatD rOutVec(SomUtils::MatD::Zero(rotSz, 1));
+        rOutVec = xEig.block(startId, 0, rotSz, 1);
+
+        rOut = rOutVec.reshaped(sz_.d_, sz_.d_);
+    }
+
     void SampleSomProblem::getRotations(const SomUtils::MatD &xEig, SomUtils::VecMatD &rOut) const
     {
         // rOut already needs to have fixed size by here
@@ -760,6 +774,20 @@ namespace ROPTLIB
         // rOut already needs to have fixed size by here
         int rotSz = getRotSz();
         int translSz = getTranslSz();
+
+        int startId = sz_.n_ * rotSz + i * translSz;
+        // int endId = (i+1) * rotSz;
+
+        // ROFL_VAR1(startId);
+        tOut.setZero(); // TODO: remove later
+        tOut = xEig.block(startId, 0, translSz, 1);
+    }
+
+    void SampleSomProblem::getTiSEdN(const SomUtils::MatD &xEig, SomUtils::MatD &tOut, int i) const
+    {
+        // rOut already needs to have fixed size by here
+        int rotSz = sz_.d_*sz_.d_;
+        int translSz = sz_.d_;
 
         int startId = sz_.n_ * rotSz + i * translSz;
         // int endId = (i+1) * rotSz;

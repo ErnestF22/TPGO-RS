@@ -60,6 +60,35 @@ namespace ROPTLIB
          */
         virtual realdp f(const Variable &x) const;
 
+        double costEigenSEdN(const SomUtils::MatD &xEigen) const
+        {
+            double cost = 0.0f;
+            for (int e = 0; e < numEdges_; ++e)
+            {
+                SomUtils::MatD Ri(SomUtils::MatD::Zero(sz_.d_, sz_.d_));
+                SomUtils::MatD Ti(SomUtils::MatD::Zero(sz_.d_, 1));
+                SomUtils::MatD Tj(SomUtils::MatD::Zero(sz_.d_, 1));
+
+                SomUtils::VecD tij(SomUtils::VecD::Zero(sz_.d_));
+                tij = Tijs_.col(e);
+
+                int i = edges_(e, 0) - 1; // !! -1
+                int j = edges_(e, 1) - 1; // !! -1
+                getRiSEdN(xEigen, Ri, i);
+                getRiSEdN(xEigen, Ti, i);
+                getRiSEdN(xEigen, Tj, j);
+
+                // ROFL_VAR3(i, j, e);
+                // ROFL_VAR4(Ri, tij.transpose(), Ti.transpose(), Tj.transpose());
+
+                double costE = (Ri * tij - Tj + Ti).norm(); // TODO: use squaredNorm() here directly
+                // ROFL_VAR1(costE);
+
+                cost += costE * costE;
+            }
+            return cost;
+        }
+
         double costEigen(const SomUtils::MatD &xEigen) const
         {
             double cost = 0.0f;
@@ -182,6 +211,11 @@ namespace ROPTLIB
         void getRi(const SomUtils::MatD &xEig, SomUtils::MatD &rOut, int i) const;
 
         /**
+         * Get i-th Rotation from Eigen-converted variable xEig on SE(d)^N
+         */
+        void getRiSEdN(const SomUtils::MatD &xEig, SomUtils::MatD &rOut, int i) const;
+
+        /**
          * Get all roatations in vector of pxd matrices tOut (with n elements)
          */
         void getRotations(const SomUtils::MatD &xEig, SomUtils::VecMatD &rOut) const;
@@ -195,6 +229,12 @@ namespace ROPTLIB
          * Get i-th Translation from Eigen-converted variable xEig
          */
         void getTi(const SomUtils::MatD &xEig, SomUtils::MatD &tOut, int i) const;
+
+        /**
+         * Get i-th Translation from Eigen-converted variable xEig on SE(d)^N
+         */
+    void getTiSEdN(const SomUtils::MatD &xEig, SomUtils::MatD &tOut, int i) const;
+
 
         /**
          * Get all translations in p * n matrix tOut
@@ -1691,7 +1731,7 @@ namespace ROPTLIB
             if (staircaseStepIdx > sz_.d_ + 1)
             {
                 int nrs = staircaseStepIdx - 1;
-                int lowDeg = 2; // TODO: not necessarily in more complex graph cases
+                int lowDeg = 2; // TODO: not necessarily 2 in more complex graph cases (?)
 
                 Eigen::ArrayXi nodeDegrees(Eigen::ArrayXi::Zero(sz_.n_));
                 computeNodeDegrees(nodeDegrees);
@@ -1766,10 +1806,20 @@ namespace ROPTLIB
                             // R_i_tilde2 = R_manopt_out( :, :, node_id);
                             auto RiTilde2 = RmanoptOut[nodeId];
 
-                            // TODO: add cost_gt check
-                            // cost_gt = rsom_cost_base(X_gt, problem_struct_next);
+                            SomUtils::MatD Xgt(SomUtils::MatD::Zero(sz_.d_, sz_.d_ * sz_.n_ + sz_.d_ * sz_.n_));
+                            SomUtils::MatD RgtSt(SomUtils::MatD::Zero(sz_.d_, sz_.d_ * sz_.n_));
+                            // ROFL_VAR1("hstack call from here");
+                            hstack(Rgt_, RgtSt);
+                            ROFL_VAR1(RgtSt);
+
+                            Xgt.block(0, 0, sz_.d_, RgtSt.cols()) = RgtSt;
+                            Xgt.block(0, RgtSt.cols(), sz_.d_, Tgt_.cols()) = Tgt_;
+
                             // disp("cost_gt")
                             // disp(cost_gt)
+                            double costGt = costEigen(Xgt);
+                            ROFL_VAR1(costGt)
+                            
 
                             SomUtils::MatD XmanoptOut(SomUtils::MatD::Zero(nrs, sz_.d_ * sz_.n_ + sz_.d_ * sz_.n_));
                             SomUtils::MatD RmanoptOutSt(SomUtils::MatD::Zero(nrs, sz_.d_ * sz_.n_));
@@ -1880,65 +1930,175 @@ namespace ROPTLIB
             Xrecovered.block(0, 0, sz_.d_, RrecoveredSt.cols()) = RrecoveredSt;
             Xrecovered.block(0, RrecoveredSt.cols(), sz_.d_, Trecovered.cols()) = Trecovered;
 
-            //TODO: add this after GT part above
-            // disp("[matStackH(X_gt.R); matStackH(R_recovered)]");
-            // disp([matStackH(X_gt.R); matStackH(R_recovered)]);
+            ROFL_VAR1("Before end of recoverySEdN(9)")
+            //  disp("[matStackH(X_gt.R); matStackH(R_recovered)]");
+            //  disp([matStackH(X_gt.R); matStackH(R_recovered)]);
+            for (int i=0; i<sz_.n_; ++i)
+            {
+                ROFL_VAR3(i, Rgt_[i], Rrecovered[i])
+            }
+        }
 
-            // NEXTFROMHERE: GLOBALIZATION! -> probably put it in another function?
+        bool isEqualFloats(const SomUtils::MatD &a, const SomUtils::MatD &b, double thr = 1e-5) const
+        {
+            ROFL_ASSERT(a.rows() == b.rows() && a.cols() == b.cols())
+
+            double val = (a - b).cwiseAbs().maxCoeff();
+
+            if (val > thr)
+                return false;
+
+            return true;
+        }
+
+        bool isEqualFloats(const SomUtils::VecMatD &a, const SomUtils::VecMatD &b, double thr = 1e-5) const
+        {
+            int n = a.size();
+            ROFL_ASSERT(n == b.size())
+            bool retval = true;
+            for (int i = 0; i < n; ++i)
+            {
+                if (!isEqualFloats(a, b, thr))
+                    return false;
+            }
+            return true;
+        }
+
+        void globalize(int src, const SomUtils::VecMatD &Rsedn, const SomUtils::MatD &Tsedn,
+                       SomUtils::VecMatD &Rout, SomUtils::MatD &Tout)
+        {
+            // R_recovered -> Rsedn
+            // T_recovered -> Tsedn
+
+            // GLOBALIZATION! -> probably put it in another function?
             // R_global = R_recovered(:,:,1) * X_gt.R(:,:,1)'; %!!
-            // % code for making all rotations global at once
+            auto Rglobal = Rsedn[src] * Rgt_[src].transpose();
+
+            // code for making all rotations global at once
             // R_recovered_global = multiprod(repmat(R_global', 1, 1, N), R_recovered);
+            SomUtils::VecMatD RrecoveredGlobal(sz_.n_, SomUtils::MatD::Zero(sz_.d_, sz_.d_));
+            for (int i = 0; i < sz_.n_; ++i)
+            {
+                RrecoveredGlobal[i] = Rglobal.transpose() * Rsedn[i];
+            }
             // disp("[matStackH(X_gt.R); matStackH(R_recovered_global)]");
             // disp([matStackH(X_gt.R); matStackH(R_recovered_global)]);
+            for (int i = 0; i < sz_.n_; ++i)
+            {
+                ROFL_VAR3(i, Rgt_[i], RrecoveredGlobal[i])
+            }
 
             // T_global = R_global * T_recovered(:,1) - X_gt.T(:,1); %!!
-            // % code for making all translation global at once
+            auto Tglobal = Rglobal * Tsedn.col(src) - Tgt_.col(src);
+            // code for making all translation global at once
             // disp("[X_gt.T; T_recovered]");
+
             // T_recovered_global = R_global' * T_recovered - T_global;
             // disp([X_gt.T; T_recovered_global]);
+            auto TrecoveredGlobal = Rglobal.transpose() * Tsedn - Tglobal;
+            ROFL_VAR2(Tgt_, TrecoveredGlobal)
 
+            // Checking recovery success
             // for ii = 1:N
-            //     R_gt_i = X_gt.R(:,:,ii);
-            //     R_recov_i_global = R_recovered_global(:,:,ii); %GLOBAL!
-            //     fprintf("ii %g\n", ii);
-            //     % rotations
-            //     disp("R_gt_i, R_recov_i");
-            //     disp([R_gt_i, R_recov_i_global]);
-            //     disp("is_equal_floats(R_gt_i, R_recov_i_global)")
-            //     disp(is_equal_floats(R_gt_i, R_recov_i_global))
-            //     if (~is_equal_floats(R_gt_i, R_recov_i_global))
-            // %         error("rot found NOT equal")
-            //         fprintf("ERROR in recovery: R_GLOBAL\n");
-            //         rs_recovery_success = boolean(0);
-            //     end
-            //     % translations
-            //     T_gt_i = X_gt.T(:,ii);
-            //     T_recov_i_global = T_recovered_global(:,ii);
-            //     disp("[X_gt.T, T_recovered]");
-            //     disp([T_gt_i, T_recov_i_global]);
-            //     disp("is_equal_floats(T_gt_i, T_recov_i_global)")
-            //     disp(is_equal_floats(T_gt_i, T_recov_i_global))
-            //     if (~is_equal_floats(T_gt_i, T_recov_i_global))
-            // %         error("transl found NOT equal")
-            //         fprintf("ERROR in recovery: T_GLOBAL\n");
-            //         rs_recovery_success = boolean(0);
-            //     end
-            // end
+            rsRecoverySuccess_ = true;
+            for (int i = 0; i < sz_.n_; ++i)
+            {
+                //     R_gt_i = X_gt.R(:,:,ii);
+                auto RgtI = Rgt_[i];
+                //     R_recov_i_global = R_recovered_global(:,:,ii); %GLOBAL!
+                auto RrecovIglobal = RrecoveredGlobal[i];
+                //     fprintf("ii %g\n", ii);
+                ROFL_VAR1(i)
+                //     % rotations
+                //     disp("R_gt_i, R_recov_i_global");
+                //     disp([R_gt_i, R_recov_i_global]);
+                //     disp("is_equal_floats(R_gt_i, R_recov_i_global)")
+                //     disp(is_equal_floats(R_gt_i, R_recov_i_global))
+                ROFL_VAR2(RgtI, RrecovIglobal)
+                //     if (~is_equal_floats(R_gt_i, R_recov_i_global))
+                // %         error("rot found NOT equal")
+                //         fprintf("ERROR in recovery: R_GLOBAL\n");
+                //         rs_recovery_success = boolean(0);
+                if (!isEqualFloats(RgtI, RrecovIglobal))
+                {
+                    ROFL_VAR1("ERROR in recovery: R_GLOBAL")
+                    rsRecoverySuccess_ = false;
+                    // ROFL_ASSERT(0)
+                }
+                //     % translations
+                //     T_gt_i = X_gt.T(:,ii);
+                auto TgtI = Tgt_.col(i);
+                //     T_recov_i_global = T_recovered_global(:,ii);
+                auto TrecovIglobal = TrecoveredGlobal.col(i);
+                //     disp("[X_gt.T, T_recovered]");
+                //     disp([T_gt_i, T_recov_i_global]);
+                ROFL_VAR2(TgtI, TrecovIglobal);
+
+                //     disp("is_equal_floats(T_gt_i, T_recov_i_global)")
+                //     disp(is_equal_floats(T_gt_i, T_recov_i_global))
+                ROFL_VAR1(isEqualFloats(TgtI, TrecovIglobal))
+                //     if (~is_equal_floats(T_gt_i, T_recov_i_global))
+                // %         error("transl found NOT equal")
+                //         fprintf("ERROR in recovery: T_GLOBAL\n");
+                //         rs_recovery_success = boolean(0);
+                if (!isEqualFloats(TgtI, TrecovIglobal))
+                {
+                    ROFL_VAR1("ERROR in recovery: T_GLOBAL")
+                    rsRecoverySuccess_ = false;
+                    // ROFL_ASSERT(0)
+                }
+            }
 
             // fprintf("rs_recovery_success: %g\n", rs_recovery_success);
+            ROFL_VAR1(rsRecoverySuccess_)
+
             // X_recovered_global.R = R_recovered_global;
             // X_recovered_global.T = T_recovered_global;
             // cost_out_global = rsom_cost_base(X_recovered_global, problem_struct_next);
             // disp("cost_out_global")
             // disp(cost_out_global)
+            SomUtils::MatD Xout(SomUtils::MatD::Zero(sz_.d_, sz_.d_ * sz_.n_ + sz_.d_ * sz_.n_));
+            SomUtils::MatD RoutSt(SomUtils::MatD::Zero(sz_.d_, sz_.d_ * sz_.n_));
+            // ROFL_VAR1("hstack call from here");
+            hstack(Rout, RoutSt);
+            ROFL_VAR1(RoutSt);
+            Xout.block(0, 0, sz_.d_, RoutSt.cols()) = RoutSt;
+            Xout.block(0, RoutSt.cols(), sz_.d_, Tout.cols()) = Tout;
+            ROFL_VAR1(costEigen(Xout))
+
             // transf_out = RT2G(R_recovered_global, T_recovered_global); %rsom_genproc() function output
 
+            // DETERMINANTS CHECK
+            std::vector<double> multidetRrecovered, multidetRrecoveredGlobal;
             // disp('multidet(R_recovered)')
             // disp(multidet(R_recovered))
+            multidet(Rsedn, multidetRrecovered);
+            for (int i = 0; i < sz_.n_; ++i)
+                ROFL_VAR2(i, multidetRrecovered[i]);
 
             // disp('multidet(R_recovered_global)')
             // disp(multidet(R_recovered_global))
+            multidet(Rout, multidetRrecoveredGlobal);
+            for (int i = 0; i < sz_.n_; ++i)
+                ROFL_VAR2(i, multidetRrecoveredGlobal[i]);
         }
+
+        void multidet(const SomUtils::VecMatD &a3d, std::vector<double> &dets) const
+        {
+            int n = a3d.size();
+            dets.clear();
+            dets.assign(0.0, n);
+            ROFL_ASSERT(n == dets.size())
+
+            for (int i = 0; i < n; ++i)
+                dets[i] = a3d[i].determinant();
+        }
+
+        SomUtils::VecMatD Rgt_;
+
+        SomUtils::MatD Tgt_;
+
+        bool rsRecoverySuccess_;
     };
 
 } // end of namespace ROPTLIB
