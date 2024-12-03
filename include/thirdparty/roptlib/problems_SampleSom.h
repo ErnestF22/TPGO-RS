@@ -1438,9 +1438,11 @@ namespace ROPTLIB
                     found++;
                 }
             }
+            ROFL_ASSERT(found == numEdges_)
         }
 
-        void recoverRiTilde() const
+        void recoverRiTilde(const SomUtils::MatD &Ritilde2, const SomUtils::MatD &Tij1j2_tilde,
+                            SomUtils::MatD &RitildeEst1, SomUtils::MatD &RitildeEst2) const
         {
             // PARAMS IN: Qx_edges*R_i_tilde2, Tij1j2_tilde
 
@@ -1685,6 +1687,7 @@ namespace ROPTLIB
                           const SomUtils::VecMatD &RmanoptOut, const SomUtils::MatD &TmanoptOut,
                           SomUtils::VecMatD &Rrecovered, SomUtils::MatD &Trecovered) const
         {
+            ROFL_ASSERT(Rrecovered.size() == sz_.n_ && Trecovered.rows() == sz_.d_ && Trecovered.cols() == sz_.n_)
             if (staircaseStepIdx > sz_.d_ + 1)
             {
                 int nrs = staircaseStepIdx - 1;
@@ -1731,6 +1734,7 @@ namespace ROPTLIB
                 {
                     if (nodesHighDeg[i])
                     {
+                        ROFL_ASSERT(Rrecovered[i].rows() == sz_.d_ && Rrecovered[i].cols() == sz_.d_)
                         Rrecovered[i] = Rtilde2edges[highDegId].block(0, 0, sz_.d_, sz_.d_);
                         highDegId++;
                     }
@@ -1748,55 +1752,192 @@ namespace ROPTLIB
                 }
                 else
                 {
-                    // for
-                    //     node_id = 1 : length(params.node_degrees)
-                    //                       node_deg = params.node_degrees(node_id);
+                    // for node_id = 1 : length(params.node_degrees)
+                    //
+                    for (int nodeId = 0; nodeId < nodeDegrees.size(); ++nodeId)
+                    {
+                        // node_deg = params.node_degrees(node_id);
+                        auto nodeDeg = nodeDegrees(nodeId);
+                        // if node_deg == low_deg
+                        if (nodeDeg == lowDeg)
+                        {
+                            //             fprintf("Running recoverRitilde() on node %g\n", node_id);
+                            std::cout << "Running recoverRitilde() on node " << nodeId << std::endl;
+                            // R_i_tilde2 = R_manopt_out( :, :, node_id);
+                            auto RiTilde2 = RmanoptOut[nodeId];
 
-                    // if node_deg
-                    //     == low_deg
-                    //             fprintf("Running recoverRitilde() on node %g\n", node_id);
-                    // R_i_tilde2 = R_manopt_out( :, :, node_id);
-                    // cost_gt = rsom_cost_base(X_gt, problem_struct_next);
-                    // disp("cost_gt")
-                    //     disp(cost_gt)
-                    //         cost_manopt_output = rsom_cost_base(X_manopt_out, problem_struct_next);
-                    // disp("cost_manopt_output")
-                    //     disp(cost_manopt_output)
-                    //         T_diffs_shifted = Qx_edges * T_edges;
-                    // % this has last row to 0
-                    //         [~, Tij1j2_tilde] = make_Tij1j2s_edges(node_id, T_diffs_shifted, Tijs, edges, params);
-                    // [ RitildeEst1, RitildeEst2, ~, ~] = recoverRitilde(Qx_edges * R_i_tilde2, Tij1j2_tilde);
-                    // disp('') % TODO : how to decide between RitildeEst1, RitildeEst2 ? ? det_RitildeEst1 = det(RitildeEst1(1 : d, :));
-                    // det_RitildeEst2 = det(RitildeEst2(1 : d, :));
-                    // use_positive_det = boolean(1);
-                    // if (sum(multidet(R_tilde2_edges(1 : d, :, :))) < 0)
-                    //     use_positive_det = boolean(0);
-                    // end if (det_RitildeEst1 > 1 - 1e-5 && det_RitildeEst1 < 1 + 1e-5) if use_positive_det
-                    //     R_recovered( :, :, node_id) = RitildeEst1(1 : d, :);
-                    // else R_recovered( :, :, node_id) = RitildeEst2(1 : d, :);
-                    // elseif(det_RitildeEst2 > 1 - 1e-5 && det_RitildeEst2 < 1 + 1e-5) if use_positive_det
-                    //     R_recovered( :, :, node_id) = RitildeEst2(1 : d, :);
-                    // else R_recovered( :, :, node_id) = RitildeEst1(1 : d, :);
-                    // else fprintf("ERROR in recovery: Ritilde DETERMINANTS ~= +-1\n")
+                            // TODO: add cost_gt check
+                            // cost_gt = rsom_cost_base(X_gt, problem_struct_next);
+                            // disp("cost_gt")
+                            // disp(cost_gt)
 
-                    //     rs_recovery_success = boolean(0);
-                    // T_recovered = edge_diffs_2_T(T_diffs_shifted(1 : d, :), edges, N);
-                    // else
-                    //     % recovery is not actually performed but using the same variable names
-                    //     % for simplicity
-                    //     R_recovered = R_manopt_out;
-                    // T_recovered = T_manopt_out;
+                            SomUtils::MatD XmanoptOut(SomUtils::MatD::Zero(nrs, sz_.d_ * sz_.n_ + sz_.d_ * sz_.n_));
+                            SomUtils::MatD RmanoptOutSt(SomUtils::MatD::Zero(nrs, sz_.d_ * sz_.n_));
+                            // ROFL_VAR1("hstack call from here");
+                            hstack(RmanoptOut, RmanoptOutSt);
+                            ROFL_VAR1(RmanoptOutSt);
 
-                    // % checking that cost has not changed during "recovery" X_recovered.T = T_recovered;
-                    // X_recovered.R = R_recovered;
-                    // cost_out = rsom_cost_base(X_recovered, problem_struct_next);
-                    // disp("cost_out")
-                    //     disp(cost_out)
+                            XmanoptOut.block(0, 0, nrs, RmanoptOutSt.cols()) = RmanoptOutSt;
+                            XmanoptOut.block(0, RmanoptOutSt.cols(), nrs, TmanoptOut.cols()) = TmanoptOut;
 
-                    //         disp("[matStackH(X_gt.R); matStackH(R_recovered)]");
-                    // disp([matStackH(X_gt.R); matStackH(R_recovered)]);
+                            double costManoptOutput = costEigen(XmanoptOut); // TOCHECK: is costEigen actually defined for this kind of input?
+
+                            // disp("cost_manopt_output")
+                            // disp(cost_manopt_output)
+                            ROFL_VAR1(costManoptOutput);
+                            // T_diffs_shifted = Qx_edges * T_edges;
+                            auto TdiffsShifted = QxEdges * Tedges; // this has last row to 0
+
+                            // [~, Tij1j2_tilde] = make_Tij1j2s_edges(node_id, T_diffs_shifted, Tijs, edges, params);
+                            SomUtils::MatD Tij1j2(SomUtils::MatD::Zero(sz_.d_, nodeDeg));
+                            SomUtils::MatD Tij1j2_tilde(SomUtils::MatD::Zero(nrs, nodeDeg));
+                            makeTij1j2sEdges(nodeId, nodeDegrees, Tedges, Tij1j2, Tij1j2_tilde);
+
+                            // [ RitildeEst1, RitildeEst2, ~, ~] = recoverRitilde(Qx_edges * R_i_tilde2, Tij1j2_tilde);
+                            SomUtils::MatD RiTildeEst1(SomUtils::MatD::Zero(nrs, sz_.d_));
+                            SomUtils::MatD RiTildeEst2(SomUtils::MatD::Zero(nrs, sz_.d_));
+                            recoverRiTilde(QxEdges * RiTilde2, Tij1j2_tilde, RiTildeEst1, RiTildeEst2); // TODO: add possibility of returning "local" Qx
+
+                            // disp('')
+                            std::cout << std::endl; // TODO : how to decide between RitildeEst1, RitildeEst2 ? ? det_RitildeEst1 = det(RitildeEst1(1 : d, :));
+                            // det_RitildeEst2 = det(RitildeEst2(1 : d, :));
+                            auto detRiTildeEst1 = RiTildeEst1.block(0, 0, sz_.d_, sz_.d_).determinant();
+                            auto detRiTildeEst2 = RiTildeEst2.block(0, 0, sz_.d_, sz_.d_).determinant();
+
+                            // use_positive_det = boolean(1);
+                            bool usePositiveDet = true;
+
+                            // if (sum(multidet(R_tilde2_edges(1 : d, :, :))) < 0)
+                            //     use_positive_det = boolean(0);
+                            double tmp = 0.0;
+                            for (int i = 0; i < Rtilde2edges.size(); ++i)
+                            {
+                                tmp += Rtilde2edges[i].block(0, 0, sz_.d_, sz_.d_).determinant();
+                            }
+                            if (tmp < 0)
+                                usePositiveDet = false;
+
+                            if (detRiTildeEst1 > 1 - 1e-5 && detRiTildeEst1 < 1 + 1e-5)
+                            {
+                                ROFL_ASSERT(Rrecovered[nodeId].rows() == sz_.d_ && Rrecovered[nodeId].cols() == sz_.d_)
+
+                                //      if use_positive_det
+                                //          R_recovered( :, :, node_id) = RitildeEst1(1 : d, :);
+                                //      else
+                                //          R_recovered( :, :, node_id) = RitildeEst2(1 : d, :);
+                                if (usePositiveDet)
+                                    Rrecovered[nodeId] = RiTildeEst1.block(0, 0, sz_.d_, sz_.d_);
+                                else
+                                    Rrecovered[nodeId] = RiTildeEst2.block(0, 0, sz_.d_, sz_.d_);
+                            }
+                            else if (detRiTildeEst2 > 1 - 1e-5 && detRiTildeEst2 < 1 + 1e-5)
+                            {
+                                ROFL_ASSERT(Rrecovered[nodeId].rows() == sz_.d_ && Rrecovered[nodeId].cols() == sz_.d_)
+
+                                //     if use_positive_det
+                                //          R_recovered( :, :, node_id) = RitildeEst2(1 : d, :);
+                                //     else
+                                //          R_recovered( :, :, node_id) = RitildeEst1(1 : d, :);
+                                if (usePositiveDet)
+                                    Rrecovered[nodeId] = RiTildeEst2.block(0, 0, sz_.d_, sz_.d_);
+                                else
+                                    Rrecovered[nodeId] = RiTildeEst1.block(0, 0, sz_.d_, sz_.d_);
+                            }
+                            else
+                            {
+                                // if ~params.noisy_test
+                                // {
+                                ROFL_VAR1("ERROR in recovery: Ritilde DETERMINANTS ~= +-1\n")
+                                // rs_recovery_success = boolean(0); // maybe add possibility to return this also
+                                // save('data/zerodet_ws.mat')
+                                ROFL_ASSERT(0) // TODO: remove this line for noisy cases (required condition is too strong)
+                                // }
+                            }
+                            // T_recovered = edge_diffs_2_T(T_diffs_shifted(1 : d, :), edges, N);
+                            edgeDiffs2T(TdiffsShifted, sz_.n_, Trecovered);
+                            std::cout << std::endl;
+                        }
+                    }
                 }
             }
+            else
+            {
+                // recovery is not actually performed but using the same variable names for simplicity
+                Rrecovered = RmanoptOut;
+                Trecovered = TmanoptOut;
+            }
+
+            // checking that cost has not changed during "recovery" X_recovered.T = T_recovered;
+            // X_recovered.R = R_recovered;
+            // cost_out = rsom_cost_base(X_recovered, problem_struct_next);
+            // disp("cost_out")
+            // disp(cost_out)
+            SomUtils::MatD Xrecovered(SomUtils::MatD::Zero(sz_.d_, sz_.d_ * sz_.n_ + sz_.d_ * sz_.n_));
+            SomUtils::MatD RrecoveredSt(SomUtils::MatD::Zero(sz_.d_, sz_.d_ * sz_.n_));
+            // ROFL_VAR1("hstack call from here");
+            hstack(Rrecovered, RrecoveredSt);
+            ROFL_VAR1(RrecoveredSt);
+            Xrecovered.block(0, 0, sz_.d_, RrecoveredSt.cols()) = RrecoveredSt;
+            Xrecovered.block(0, RrecoveredSt.cols(), sz_.d_, Trecovered.cols()) = Trecovered;
+
+            //TODO: add this after GT part above
+            // disp("[matStackH(X_gt.R); matStackH(R_recovered)]");
+            // disp([matStackH(X_gt.R); matStackH(R_recovered)]);
+
+            // NEXTFROMHERE: GLOBALIZATION! -> probably put it in another function?
+            // R_global = R_recovered(:,:,1) * X_gt.R(:,:,1)'; %!!
+            // % code for making all rotations global at once
+            // R_recovered_global = multiprod(repmat(R_global', 1, 1, N), R_recovered);
+            // disp("[matStackH(X_gt.R); matStackH(R_recovered_global)]");
+            // disp([matStackH(X_gt.R); matStackH(R_recovered_global)]);
+
+            // T_global = R_global * T_recovered(:,1) - X_gt.T(:,1); %!!
+            // % code for making all translation global at once
+            // disp("[X_gt.T; T_recovered]");
+            // T_recovered_global = R_global' * T_recovered - T_global;
+            // disp([X_gt.T; T_recovered_global]);
+
+            // for ii = 1:N
+            //     R_gt_i = X_gt.R(:,:,ii);
+            //     R_recov_i_global = R_recovered_global(:,:,ii); %GLOBAL!
+            //     fprintf("ii %g\n", ii);
+            //     % rotations
+            //     disp("R_gt_i, R_recov_i");
+            //     disp([R_gt_i, R_recov_i_global]);
+            //     disp("is_equal_floats(R_gt_i, R_recov_i_global)")
+            //     disp(is_equal_floats(R_gt_i, R_recov_i_global))
+            //     if (~is_equal_floats(R_gt_i, R_recov_i_global))
+            // %         error("rot found NOT equal")
+            //         fprintf("ERROR in recovery: R_GLOBAL\n");
+            //         rs_recovery_success = boolean(0);
+            //     end
+            //     % translations
+            //     T_gt_i = X_gt.T(:,ii);
+            //     T_recov_i_global = T_recovered_global(:,ii);
+            //     disp("[X_gt.T, T_recovered]");
+            //     disp([T_gt_i, T_recov_i_global]);
+            //     disp("is_equal_floats(T_gt_i, T_recov_i_global)")
+            //     disp(is_equal_floats(T_gt_i, T_recov_i_global))
+            //     if (~is_equal_floats(T_gt_i, T_recov_i_global))
+            // %         error("transl found NOT equal")
+            //         fprintf("ERROR in recovery: T_GLOBAL\n");
+            //         rs_recovery_success = boolean(0);
+            //     end
+            // end
+
+            // fprintf("rs_recovery_success: %g\n", rs_recovery_success);
+            // X_recovered_global.R = R_recovered_global;
+            // X_recovered_global.T = T_recovered_global;
+            // cost_out_global = rsom_cost_base(X_recovered_global, problem_struct_next);
+            // disp("cost_out_global")
+            // disp(cost_out_global)
+            // transf_out = RT2G(R_recovered_global, T_recovered_global); %rsom_genproc() function output
+
+            // disp('multidet(R_recovered)')
+            // disp(multidet(R_recovered))
+
+            // disp('multidet(R_recovered_global)')
+            // disp(multidet(R_recovered_global))
         }
     };
 
