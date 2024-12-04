@@ -91,7 +91,7 @@ int main(int argc, char **argv)
     ProbNrs.RoptToEig(xManoptOut, XmanoptOutVecEig);
     ProbNrs.getRotations(XmanoptOutVecEig, RmanoptOutEig);
     ProbNrs.getTranslations(XmanoptOutVecEig, TmanoptOutEig);
-    Prob.setGt(RgtEig, TgtEig); // !!
+    ProbNrs.setGt(RgtEig, TgtEig); // !!
 
     for (auto &m : RmanoptOutEig)
         ROFL_VAR1(m)

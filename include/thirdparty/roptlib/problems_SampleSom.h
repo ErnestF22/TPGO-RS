@@ -1467,18 +1467,22 @@ namespace ROPTLIB
 
                 Tedges.col(e) = T.col(ii) - T.col(jj);
             }
+            ROFL_VAR2(T, Tedges)
         }
 
         void POCRotateToMinimizeLastEntries(const SomUtils::MatD &x, SomUtils::MatD &Qtransp) const
         {
-            Eigen::JacobiSVD<SomUtils::MatD> svd(x, Eigen::ComputeFullV | Eigen::ComputeFullU); // TODO: ComputeFullV flag can probably be removed
+            Eigen::JacobiSVD<SomUtils::MatD> svd(x*x.transpose(), Eigen::ComputeFullV | Eigen::ComputeFullU); // TODO: ComputeFullV flag can probably be removed
             auto Q = svd.matrixU();
             Qtransp = Q.transpose();
         }
 
         void makeTij1j2sEdges(int nodeId, const Eigen::ArrayXi &nodeDegrees, const SomUtils::MatD &Tedges,
-                              SomUtils::MatD &Tij1j2, SomUtils::MatD &Tij1j2_tilde) const
+                              SomUtils::MatD &Tij1j2, SomUtils::MatD &Tij1j2tilde) const
         {
+            ROFL_VAR1("makeTij1j2sEdges START")
+            ROFL_VAR1(Tedges)
+
             // num_rows_T = size(T_edges, 1);
             int numRowsT = Tedges.rows();
             // % nrs = params.nrs;
@@ -1487,11 +1491,11 @@ namespace ROPTLIB
 
             ROFL_ASSERT(Tij1j2.rows() == sz_.d_ && Tij1j2.cols() == nodeDeg)
             // SomUtils::MatD Tij1j2 = SomUtils::MatD::Zero(sz_.d_, nodeDeg);
-            ROFL_ASSERT(Tij1j2_tilde.rows() == numRowsT && Tij1j2_tilde.cols() == nodeDeg)
+            ROFL_ASSERT(Tij1j2tilde.rows() == numRowsT && Tij1j2tilde.cols() == nodeDeg)
             // SomUtils::MatD Tij1j2_tilde = SomUtils::MatD::Zero(num_rows_T, node_deg);
 
             Tij1j2.setZero();
-            Tij1j2_tilde.setZero();
+            Tij1j2tilde.setZero();
 
             int found = 0;
             for (int e = 0; e < edges_.rows(); ++e)
@@ -1501,31 +1505,153 @@ namespace ROPTLIB
                 if (eI == nodeId)
                 {
                     Tij1j2.col(found) = Tijs_.col(e);
-                    Tij1j2_tilde.col(found) = -Tedges.col(e);
+                    Tij1j2tilde.col(found) = -Tedges.col(e);
                     found++;
                 }
             }
             ROFL_ASSERT_VAR3(found == nodeDeg, nodeId, found, nodeDeg)
+
+            ROFL_VAR1("makeTij1j2sEdges END")
+            ROFL_VAR2(Tij1j2, Tij1j2tilde)
         }
 
-        void recoverRiTilde(const SomUtils::MatD &RiTilde2, const SomUtils::MatD &Tij1j2tilde,
+        void orthComplement(const SomUtils::MatD &v, SomUtils::MatD &vOrth) const
+        {
+            // %Compute a basis for the orthogonal complement to the columns of v, i.e.,
+            // %vOrth'*v=0
+
+            // r=size(v,2);
+            int r = v.cols();
+            // [U,S,V]=svd(v);
+            Eigen::JacobiSVD<SomUtils::MatD> svd(v, Eigen::ComputeFullV | Eigen::ComputeFullU); // TODO: ComputeFullV flag can probably be removed
+            auto U = svd.matrixU();
+            // vOrth=U(:,r+1:end);
+            vOrth = U.block(0, r, U.rows(), U.cols() - r);
+        }
+
+        void orthCompleteBasis(const SomUtils::MatD &Q, SomUtils::MatD &Qout) const
+        {
+            // %Complete the columns of Q (assumed orthonormal) to an orthonormal basis.
+            Qout = Q;
+            // [n,p]=size(Q);
+            int n = Q.rows();
+            int p = Q.cols();
+
+            // [U,~,V]=svd([Q zeros(n,n-p)]);
+            SomUtils::MatD Qpadded = SomUtils::MatD::Zero(n, n);
+            Qpadded.block(0, 0, n, p) = Q;
+            Eigen::JacobiSVD<SomUtils::MatD> svd(Qpadded, Eigen::ComputeFullV | Eigen::ComputeFullU); // TODO: ComputeFullV flag can probably be removed
+            auto U = svd.matrixU();
+            auto V = svd.matrixV();
+
+            // Q=U*V';
+            Qout = U * V.transpose();
+
+            // %impose positive det(Q) (if Q is square) by flipping sign of last added
+            // %column (if necessary)
+            // if det(Q)<0 && p<n
+            //     Q(:,end)=-Q(:,end);
+            if (Qout.determinant() < 0 && p < n)
+                Qout.col(Qout.cols() - 1) *= -1.0;
+        }
+
+        void fliplr(const SomUtils::MatD &Ain, SomUtils::MatD &Aout) const
+        {
+            ROFL_ASSERT(Ain.rows() == Aout.rows() && Ain.cols() == Aout.cols())
+            int ncols = Ain.cols();
+            for (int i = 0; i < ncols; ++i)
+            {
+                Aout.col(i) = Ain.col(ncols - i - 1);
+            }
+        }
+
+        void flipud(const SomUtils::MatD &Ain, SomUtils::MatD &Aout) const
+        {
+            ROFL_ASSERT(Ain.rows() == Aout.rows() && Ain.cols() == Aout.cols())
+            int nrows = Ain.rows();
+            for (int i = 0; i < nrows; ++i)
+            {
+                Aout.row(i) = Ain.row(nrows - i - 1);
+            }
+        }
+
+        void align2d(const SomUtils::MatD &v, SomUtils::MatD &Qx) const
+        {
+            // Q=fliplr(orthComplement(v));
+            SomUtils::MatD ocv = SomUtils::MatD::Zero(4, 2);
+            SomUtils::MatD Q = SomUtils::MatD::Zero(4, 2);
+            orthComplement(v, ocv);
+            fliplr(ocv, Q);
+            ROFL_VAR1("align2d first part")
+            ROFL_VAR3(v, ocv, Q)
+
+            // Qx=flipud(orthCompleteBasis(Q)');
+            SomUtils::MatD ocb = SomUtils::MatD::Zero(4, 4);
+            orthCompleteBasis(Q, ocb);
+            flipud(ocb.transpose(), Qx);
+            ROFL_VAR1("align2d second part")
+            ROFL_VAR2(ocb, Qx)
+        }
+
+        void procrustesRb(const SomUtils::MatD &c, const SomUtils::MatD &q, SomUtils::MatD &RbEst) const
+        {
+            // [U,~,V]=svd(c*q');
+            Eigen::JacobiSVD<SomUtils::MatD> svd(c * q.transpose(), Eigen::ComputeFullU | Eigen::ComputeFullV); // TODO: ComputeFullV flag can probably be removed
+            auto U = svd.matrixU();
+            auto V = svd.matrixV();
+
+            // RbEst=U*diag([1 det(U*V')])*V';
+            SomUtils::MatD tmp(SomUtils::MatD::Identity(2, 2));
+            tmp(1, 1) = (U * V.transpose()).determinant();
+            RbEst = U * tmp * V.transpose();
+
+            ROFL_VAR1("procrustesRb output")
+            ROFL_VAR3(c, q, RbEst);
+        }
+
+        void recoverRiTilde(const SomUtils::MatD &RiTilde2, const SomUtils::MatD &Tijtilde,
                             SomUtils::MatD &RiTildeEst1, SomUtils::MatD &RiTildeEst2) const
         {
             // PARAMS IN: Qx_edges*R_i_tilde2, Tij1j2_tilde
+            ROFL_VAR1("Start of recoverRiTilde")
+            ROFL_VAR2(RiTilde2, Tijtilde)
 
             // Qx = align2d(Tijtilde);
+            SomUtils::MatD Qx(SomUtils::MatD::Zero(sz_.p_, sz_.p_));
+            align2d(Tijtilde, Qx);
+
             // QxRitilde2Bot = Qx(3 : 4, :) * Ritilde2;
+            auto QxRiTilde2bot = Qx.block(2, 0, 2, Qx.cols());
+
             // [ U, ~, ~] = svd(QxRitilde2Bot, 'econ');
+            Eigen::JacobiSVD<SomUtils::MatD> svd(QxRiTilde2bot, Eigen::ComputeThinU); // TODO: ComputeFullV flag can probably be removed
+            auto U = svd.matrixU();
+
             // c = U( :, 2);
+            auto c = U.col(1);
 
             // QLastRight = Qx(3 : 4, 4)';
+            auto QLastRightT = Qx.block(2, 3, 2, 1);
+            // auto QLastRight = QLastRightT.transpose();
 
-            //     RbEst = procrustesRb(c, QLastRight'); RitildeEst1 = Qx '*blkdiag(eye(2),-RbEst') * Qx * Ritilde2;
+            // RbEst = procrustesRb(c, QLastRight');
+            SomUtils::MatD RbEst(SomUtils::MatD::Zero(2, 2));
+            procrustesRb(c, QLastRightT, RbEst);
+
+            // RitildeEst1 = Qx' * blkdiag(eye(2),-RbEst') * Qx * Ritilde2;
+            SomUtils::MatD tmp1(SomUtils::MatD::Identity(4, 4));
+            tmp1.block(2, 2, 2, 2) = -RbEst.transpose();
+            RiTildeEst1 = Qx.transpose() * tmp1 * Qx * RiTilde2;
+
             // RitildeEst2=Qx'*blkdiag(eye(2),RbEst')*Qx*Ritilde2;
+            SomUtils::MatD tmp2(SomUtils::MatD::Identity(4, 4));
+            tmp2.block(2, 2, 2, 2) = RbEst.transpose();
+            RiTildeEst2 = Qx.transpose() * tmp2 * Qx * RiTilde2;
 
-            // TODO: implement above code
-            RiTildeEst1 = RiTilde2;
-            RiTildeEst2 = RiTilde2;
+            ROFL_VAR1("recoverRiTilde input")
+            ROFL_VAR2(RiTilde2, Tijtilde)
+            ROFL_VAR1("recoverRiTilde output")
+            ROFL_VAR2(RiTildeEst1, RiTildeEst2)
         }
 
         struct Vertex
@@ -1781,7 +1907,9 @@ namespace ROPTLIB
                 ROFL_VAR1(nodesHighDeg.transpose());
                 ROFL_VAR1(nodesLowDeg.transpose())
 
+                // [T_edges, T1_offset] = make_T_edges(T_manopt_out, edges);
                 SomUtils::MatD Tedges(SomUtils::MatD::Zero(nrs, numEdges_));
+                makeTedges(TmanoptOut, Tedges);
 
                 // RT_stacked_high_deg = [ matStackH(R_manopt_out( :, :, nodes_high_deg)), T_edges ];
                 auto numNodesHighDeg = nodesHighDeg.sum();
@@ -1798,8 +1926,12 @@ namespace ROPTLIB
                 RTstackedHighDeg.block(0, 0, nrs, sz_.d_ * numNodesHighDeg) = RstackedHighDeg;
                 RTstackedHighDeg.block(0, sz_.d_ * numNodesHighDeg, nrs, numEdges_) = Tedges;
 
+                ROFL_VAR1(RTstackedHighDeg)
+
                 SomUtils::MatD QxEdges(SomUtils::MatD::Zero(nrs, nrs));
                 POCRotateToMinimizeLastEntries(RTstackedHighDeg, QxEdges);
+
+                ROFL_VAR1(QxEdges)
 
                 // R_tilde2_edges = multiprod(repmat(Qx_edges, 1, 1, sum(nodes_high_deg)), R_manopt_out( :, :, nodes_high_deg));
                 SomUtils::VecMatD Rtilde2edges(numNodesHighDeg, SomUtils::MatD::Zero(nrs, sz_.d_));
@@ -1886,19 +2018,21 @@ namespace ROPTLIB
 
                             // [~, Tij1j2_tilde] = make_Tij1j2s_edges(node_id, T_diffs_shifted, Tijs, edges, params);
                             SomUtils::MatD Tij1j2(SomUtils::MatD::Zero(sz_.d_, nodeDeg));
-                            SomUtils::MatD Tij1j2_tilde(SomUtils::MatD::Zero(nrs, nodeDeg));
-                            makeTij1j2sEdges(nodeId, nodeDegrees, Tedges, Tij1j2, Tij1j2_tilde);
+                            SomUtils::MatD Tij1j2tilde(SomUtils::MatD::Zero(nrs, nodeDeg));
+                            makeTij1j2sEdges(nodeId, nodeDegrees, TdiffsShifted, Tij1j2, Tij1j2tilde);
 
                             // [ RitildeEst1, RitildeEst2, ~, ~] = recoverRitilde(Qx_edges * R_i_tilde2, Tij1j2_tilde);
                             SomUtils::MatD RiTildeEst1(SomUtils::MatD::Zero(nrs, sz_.d_));
                             SomUtils::MatD RiTildeEst2(SomUtils::MatD::Zero(nrs, sz_.d_));
-                            recoverRiTilde(QxEdges * RiTilde2, Tij1j2_tilde, RiTildeEst1, RiTildeEst2); // TODO: add possibility of returning "local" Qx
+                            ROFL_VAR2(QxEdges, RiTilde2)
+                            recoverRiTilde(QxEdges * RiTilde2, Tij1j2tilde, RiTildeEst1, RiTildeEst2); // TODO: add possibility of returning "local" Qx
 
                             // disp('')
                             std::cout << std::endl; // TODO : how to decide between RitildeEst1, RitildeEst2 ? ? det_RitildeEst1 = det(RitildeEst1(1 : d, :));
                             // det_RitildeEst2 = det(RitildeEst2(1 : d, :));
                             auto detRiTildeEst1 = RiTildeEst1.block(0, 0, sz_.d_, sz_.d_).determinant();
                             auto detRiTildeEst2 = RiTildeEst2.block(0, 0, sz_.d_, sz_.d_).determinant();
+                            ROFL_VAR2(detRiTildeEst1, detRiTildeEst2)
 
                             // use_positive_det = boolean(1);
                             bool usePositiveDet = true;
@@ -2044,9 +2178,9 @@ namespace ROPTLIB
             // disp([X_gt.T; T_recovered_global]);
             ROFL_VAR3(Rglobal.transpose(), Tsedn, Tglobal)
             SomUtils::MatD TglobalRepmat(SomUtils::MatD::Zero(sz_.d_, sz_.n_));
-            for (int i =0; i<sz_.n_; ++i)
+            for (int i = 0; i < sz_.n_; ++i)
             {
-                TglobalRepmat.col(i) = Tglobal; //TODO: maybe use some other adv init
+                TglobalRepmat.col(i) = Tglobal; // TODO: maybe use some other adv init
             }
             auto TrecoveredGlobal = Rglobal.transpose() * Tsedn - TglobalRepmat;
             ROFL_VAR2(Tgt_, TrecoveredGlobal)
