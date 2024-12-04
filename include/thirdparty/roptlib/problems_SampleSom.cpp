@@ -11,6 +11,11 @@ namespace ROPTLIB
         edges_ = edges;
         numEdges_ = Tijs_.cols();
         fullSz_ = sz_.d_ * sz_.p_ * sz_.n_ + sz_.p_ * sz_.n_;
+
+        Rgt_.resize(sz_.n_, SomUtils::MatD::Zero(sz_.d_, sz_.d_));
+        Tgt_ = SomUtils::MatD::Zero(sz_.d_, sz_.n_);
+
+        src_ = 0;
     }
 
     SampleSomProblem::SampleSomProblem(const SomUtils::SomSize somSz, const SomUtils::MatD &Tijs, const Eigen::MatrixXi &edges)
@@ -20,6 +25,11 @@ namespace ROPTLIB
         edges_ = edges;
         numEdges_ = Tijs_.cols();
         fullSz_ = sz_.d_ * sz_.p_ * sz_.n_ + sz_.p_ * sz_.n_;
+
+        Rgt_.resize(sz_.n_, SomUtils::MatD::Zero(sz_.d_, sz_.d_));
+        Tgt_ = SomUtils::MatD::Zero(sz_.d_, sz_.n_);
+
+        src_ = 0;
     }
 
     SampleSomProblem::~SampleSomProblem() {};
@@ -30,7 +40,7 @@ namespace ROPTLIB
         RoptToEig(x, xEigen);
         // ROFL_VAR1(x);
 
-        realdp cost = costEigen(xEigen);
+        realdp cost = costEigenVec(xEigen);
 
         ROFL_VAR1(cost);
         // ROFL_ASSERT(!std::isnan(corr));
@@ -720,7 +730,7 @@ namespace ROPTLIB
     void SampleSomProblem::getRiSEdN(const SomUtils::MatD &xEig, SomUtils::MatD &rOut, int i) const
     {
         // rOut already needs to have fixed size by here
-        int rotSz = sz_.d_*sz_.d_; // as a vector
+        int rotSz = sz_.d_ * sz_.d_; // as a vector
 
         int startId = i * rotSz;
         // int endId = (i+1) * rotSz;
@@ -786,7 +796,7 @@ namespace ROPTLIB
     void SampleSomProblem::getTiSEdN(const SomUtils::MatD &xEig, SomUtils::MatD &tOut, int i) const
     {
         // rOut already needs to have fixed size by here
-        int rotSz = sz_.d_*sz_.d_;
+        int rotSz = sz_.d_ * sz_.d_;
         int translSz = sz_.d_;
 
         int startId = sz_.n_ * rotSz + i * translSz;

@@ -60,7 +60,7 @@ namespace ROPTLIB
          */
         virtual realdp f(const Variable &x) const;
 
-        double costEigenSEdN(const SomUtils::MatD &xEigen) const
+        double costEigenVecSEdN(const SomUtils::MatD &xEigen) const
         {
             double cost = 0.0f;
             for (int e = 0; e < numEdges_; ++e)
@@ -89,7 +89,33 @@ namespace ROPTLIB
             return cost;
         }
 
-        double costEigen(const SomUtils::MatD &xEigen) const
+        double costEigen(const SomUtils::VecMatD &Reigen, const SomUtils::MatD &Teigen) const
+        {
+            double cost = 0.0f;
+            for (int e = 0; e < numEdges_; ++e)
+            {
+                int i = edges_(e, 0) - 1; // !! -1
+                int j = edges_(e, 1) - 1; // !! -1
+
+                auto Ri = Reigen[i];
+                auto Ti = Teigen.col(i);
+                auto Tj = Teigen.col(j);
+
+                SomUtils::VecD tij(SomUtils::VecD::Zero(sz_.d_));
+                tij = Tijs_.col(e);
+
+                // ROFL_VAR3(i, j, e);
+                // ROFL_VAR4(Ri, tij.transpose(), Ti.transpose(), Tj.transpose());
+
+                double costEsq = (Ri * tij - Tj + Ti).squaredNorm(); // TODO: use squaredNorm() here directly
+                // ROFL_VAR1(costE);
+
+                cost += costEsq;
+            }
+            return cost;
+        }
+
+        double costEigenVec(const SomUtils::MatD &xEigen) const
         {
             double cost = 0.0f;
             for (int e = 0; e < numEdges_; ++e)
@@ -233,8 +259,7 @@ namespace ROPTLIB
         /**
          * Get i-th Translation from Eigen-converted variable xEig on SE(d)^N
          */
-    void getTiSEdN(const SomUtils::MatD &xEig, SomUtils::MatD &tOut, int i) const;
-
+        void getTiSEdN(const SomUtils::MatD &xEig, SomUtils::MatD &tOut, int i) const;
 
         /**
          * Get all translations in p * n matrix tOut
@@ -1388,8 +1413,8 @@ namespace ROPTLIB
 
         void makeAdjMatFromEdges(Eigen::MatrixXi &adjMat) const
         {
-            ROFL_ASSERT(adjMat.rows() == numEdges_)
-            ROFL_ASSERT(adjMat.cols() == numEdges_)
+            ROFL_ASSERT(adjMat.rows() == sz_.n_)
+            ROFL_ASSERT(adjMat.cols() == sz_.n_)
 
             adjMat.setZero();
             for (int k = 0; k < numEdges_; ++k)
@@ -1404,8 +1429,10 @@ namespace ROPTLIB
         {
             ROFL_ASSERT(nodeDegrees.rows() == sz_.n_)
 
-            Eigen::MatrixXi adjMat(Eigen::MatrixXi::Zero(numEdges_, numEdges_));
+            Eigen::MatrixXi adjMat(Eigen::MatrixXi::Zero(sz_.n_, sz_.n_));
             makeAdjMatFromEdges(adjMat);
+
+            ROFL_VAR1(adjMat)
 
             nodeDegrees.setZero();
             nodeDegrees = adjMat.colwise().sum();
@@ -1466,10 +1493,10 @@ namespace ROPTLIB
             Tij1j2.setZero();
             Tij1j2_tilde.setZero();
 
-            int found = 1;
+            int found = 0;
             for (int e = 0; e < edges_.rows(); ++e)
             {
-                auto eI = edges_(e, 0);
+                auto eI = edges_(e, 0) - 1;
                 // % e_j = edges(e, 2);
                 if (eI == nodeId)
                 {
@@ -1478,11 +1505,11 @@ namespace ROPTLIB
                     found++;
                 }
             }
-            ROFL_ASSERT(found == numEdges_)
+            ROFL_ASSERT_VAR3(found == nodeDeg, nodeId, found, nodeDeg)
         }
 
-        void recoverRiTilde(const SomUtils::MatD &Ritilde2, const SomUtils::MatD &Tij1j2_tilde,
-                            SomUtils::MatD &RitildeEst1, SomUtils::MatD &RitildeEst2) const
+        void recoverRiTilde(const SomUtils::MatD &RiTilde2, const SomUtils::MatD &Tij1j2tilde,
+                            SomUtils::MatD &RiTildeEst1, SomUtils::MatD &RiTildeEst2) const
         {
             // PARAMS IN: Qx_edges*R_i_tilde2, Tij1j2_tilde
 
@@ -1495,6 +1522,10 @@ namespace ROPTLIB
 
             //     RbEst = procrustesRb(c, QLastRight'); RitildeEst1 = Qx '*blkdiag(eye(2),-RbEst') * Qx * Ritilde2;
             // RitildeEst2=Qx'*blkdiag(eye(2),RbEst')*Qx*Ritilde2;
+
+            // TODO: implement above code
+            RiTildeEst1 = RiTilde2;
+            RiTildeEst2 = RiTilde2;
         }
 
         struct Vertex
@@ -1676,11 +1707,10 @@ namespace ROPTLIB
             // return dist[], prev[]
         }
 
-        void edgeDiffs2T(const SomUtils::MatD &Tdiffs, int n, SomUtils::MatD &T) const
+        void edgeDiffs2T(int src, const SomUtils::MatD &Tdiffs, int n, SomUtils::MatD &T) const
         {
             // nrs = size(T_diffs, 1);
             int nrs = Tdiffs.rows();
-            ROFL_ASSERT(nrs == T.rows())
             ROFL_ASSERT(T.cols() == n)
             // booleans_T = boolean(0) * ones(N,1); % alg should stop when all these are 1
             Eigen::ArrayXi booleansT(Eigen::ArrayXi::Ones(n));
@@ -1689,10 +1719,10 @@ namespace ROPTLIB
             // T = zeros(nrs, N);
             T.setZero();
             // adjmat = edges2adjmatrix(edges);
-            Eigen::MatrixXi adjMat(Eigen::MatrixXi::Zero(numEdges_, numEdges_));
+            Eigen::MatrixXi adjMat(Eigen::MatrixXi::Zero(sz_.n_, sz_.n_));
             makeAdjMatFromEdges(adjMat);
             //
-            int globalId = 0;
+            int globalId = src;
             std::vector<double> dist;
             std::vector<int> prev;
             dijkstraSP(sz_.n_, globalId, adjMat, dist, prev);
@@ -1712,7 +1742,7 @@ namespace ROPTLIB
                 auto edgePath = listEdges[i];
                 for (int j = 0; j < edgePath.size(); ++j)
                 {
-                    T.col(i) += Tdiffs.col(j);
+                    T.col(i) += Tdiffs.col(edgePath[j]);
                 }
                 T.col(i) *= -1;
                 //     for ep = edge_path
@@ -1725,7 +1755,7 @@ namespace ROPTLIB
 
         bool recoverySEdN(int staircaseStepIdx,
                           const SomUtils::VecMatD &RmanoptOut, const SomUtils::MatD &TmanoptOut,
-                          SomUtils::VecMatD &Rrecovered, SomUtils::MatD &Trecovered) const
+                          SomUtils::VecMatD &Rrecovered, SomUtils::MatD &Trecovered)
         {
             ROFL_ASSERT(Rrecovered.size() == sz_.n_ && Trecovered.rows() == sz_.d_ && Trecovered.cols() == sz_.n_)
             if (staircaseStepIdx > sz_.d_ + 1)
@@ -1736,15 +1766,35 @@ namespace ROPTLIB
                 Eigen::ArrayXi nodeDegrees(Eigen::ArrayXi::Zero(sz_.n_));
                 computeNodeDegrees(nodeDegrees);
 
-                auto nodesHighDeg = nodeDegrees > lowDeg;
+                // auto nodesHighDeg = nodeDegrees > lowDeg;
+                Eigen::ArrayXi nodesHighDeg(Eigen::ArrayXi::Zero(sz_.n_));
+                Eigen::ArrayXi nodesLowDeg(Eigen::ArrayXi::Zero(sz_.n_));
+
+                for (int i = 0; i < sz_.n_; ++i)
+                {
+                    if (nodeDegrees(i, 0) > lowDeg)
+                        nodesHighDeg(i, 0) = 1;
+                    else
+                        nodesLowDeg(i, 0) = 1;
+                }
+                ROFL_VAR1(nodeDegrees.transpose());
+                ROFL_VAR1(nodesHighDeg.transpose());
+                ROFL_VAR1(nodesLowDeg.transpose())
 
                 SomUtils::MatD Tedges(SomUtils::MatD::Zero(nrs, numEdges_));
 
                 // RT_stacked_high_deg = [ matStackH(R_manopt_out( :, :, nodes_high_deg)), T_edges ];
                 auto numNodesHighDeg = nodesHighDeg.sum();
+                ROFL_VAR1(numNodesHighDeg);
                 SomUtils::MatD RTstackedHighDeg(SomUtils::MatD::Zero(nrs, sz_.d_ * numNodesHighDeg + Tedges.cols()));
                 SomUtils::MatD RstackedHighDeg(SomUtils::MatD::Zero(nrs, sz_.d_ * numNodesHighDeg));
-                hstack(RmanoptOut, RstackedHighDeg);
+                SomUtils::VecMatD RmanoptOutHighDeg;
+                for (int i = 0; i < sz_.n_; ++i)
+                {
+                    if (nodesHighDeg(i, 0) != 0)
+                        RmanoptOutHighDeg.push_back(RmanoptOut[i]);
+                }
+                hstack(RmanoptOutHighDeg, RstackedHighDeg);
                 RTstackedHighDeg.block(0, 0, nrs, sz_.d_ * numNodesHighDeg) = RstackedHighDeg;
                 RTstackedHighDeg.block(0, sz_.d_ * numNodesHighDeg, nrs, numEdges_) = Tedges;
 
@@ -1781,14 +1831,11 @@ namespace ROPTLIB
                 }
                 ROFL_ASSERT(highDegId == numNodesHighDeg)
 
-                auto nodesLowDeg = !nodesHighDeg;
-                ROFL_VAR1(nodesLowDeg.transpose())
-
                 if (!nodesLowDeg.any())
                 {
                     ROFL_VAR1("No nodes low deg!");
                     SomUtils::MatD TdiffsShifted = QxEdges * Tedges; // this has last row to 0
-                    edgeDiffs2T(TdiffsShifted.block(0, 0, sz_.d_, TdiffsShifted.cols()), sz_.n_, Trecovered);
+                    edgeDiffs2T(src_, TdiffsShifted.block(0, 0, sz_.d_, TdiffsShifted.cols()), sz_.n_, Trecovered);
                 }
                 else
                 {
@@ -1817,9 +1864,8 @@ namespace ROPTLIB
 
                             // disp("cost_gt")
                             // disp(cost_gt)
-                            double costGt = costEigen(Xgt);
+                            double costGt = costEigen(Rgt_, Tgt_);
                             ROFL_VAR1(costGt)
-                            
 
                             SomUtils::MatD XmanoptOut(SomUtils::MatD::Zero(nrs, sz_.d_ * sz_.n_ + sz_.d_ * sz_.n_));
                             SomUtils::MatD RmanoptOutSt(SomUtils::MatD::Zero(nrs, sz_.d_ * sz_.n_));
@@ -1830,7 +1876,7 @@ namespace ROPTLIB
                             XmanoptOut.block(0, 0, nrs, RmanoptOutSt.cols()) = RmanoptOutSt;
                             XmanoptOut.block(0, RmanoptOutSt.cols(), nrs, TmanoptOut.cols()) = TmanoptOut;
 
-                            double costManoptOutput = costEigen(XmanoptOut); // TOCHECK: is costEigen actually defined for this kind of input?
+                            double costManoptOutput = costEigen(RmanoptOut, TmanoptOut); // TOCHECK: is costEigen actually defined for this kind of input?
 
                             // disp("cost_manopt_output")
                             // disp(cost_manopt_output)
@@ -1898,13 +1944,13 @@ namespace ROPTLIB
                                 // if ~params.noisy_test
                                 // {
                                 ROFL_VAR1("ERROR in recovery: Ritilde DETERMINANTS ~= +-1\n")
-                                // rs_recovery_success = boolean(0); // maybe add possibility to return this also
+                                rsRecoverySuccess_ = false; // maybe add possibility to return this also
                                 // save('data/zerodet_ws.mat')
-                                ROFL_ASSERT(0) // TODO: remove this line for noisy cases (required condition is too strong)
+                                // ROFL_ASSERT(0) // TODO: add this line for non-noisy cases after recoverRiTilde is implemented
                                 // }
                             }
                             // T_recovered = edge_diffs_2_T(T_diffs_shifted(1 : d, :), edges, N);
-                            edgeDiffs2T(TdiffsShifted, sz_.n_, Trecovered);
+                            edgeDiffs2T(src_, TdiffsShifted.block(0, 0, sz_.d_, TdiffsShifted.cols()), sz_.n_, Trecovered);
                             std::cout << std::endl;
                         }
                     }
@@ -1930,13 +1976,14 @@ namespace ROPTLIB
             Xrecovered.block(0, 0, sz_.d_, RrecoveredSt.cols()) = RrecoveredSt;
             Xrecovered.block(0, RrecoveredSt.cols(), sz_.d_, Trecovered.cols()) = Trecovered;
 
-            ROFL_VAR1("Before end of recoverySEdN(9)")
+            ROFL_VAR1("Before end of recoverySEdN()")
             //  disp("[matStackH(X_gt.R); matStackH(R_recovered)]");
             //  disp([matStackH(X_gt.R); matStackH(R_recovered)]);
-            for (int i=0; i<sz_.n_; ++i)
+            for (int i = 0; i < sz_.n_; ++i)
             {
                 ROFL_VAR3(i, Rgt_[i], Rrecovered[i])
             }
+            return rsRecoverySuccess_;
         }
 
         bool isEqualFloats(const SomUtils::MatD &a, const SomUtils::MatD &b, double thr = 1e-5) const
@@ -1964,7 +2011,7 @@ namespace ROPTLIB
             return true;
         }
 
-        void globalize(int src, const SomUtils::VecMatD &Rsedn, const SomUtils::MatD &Tsedn,
+        bool globalize(int src, const SomUtils::VecMatD &Rsedn, const SomUtils::MatD &Tsedn,
                        SomUtils::VecMatD &Rout, SomUtils::MatD &Tout)
         {
             // R_recovered -> Rsedn
@@ -1995,7 +2042,13 @@ namespace ROPTLIB
 
             // T_recovered_global = R_global' * T_recovered - T_global;
             // disp([X_gt.T; T_recovered_global]);
-            auto TrecoveredGlobal = Rglobal.transpose() * Tsedn - Tglobal;
+            ROFL_VAR3(Rglobal.transpose(), Tsedn, Tglobal)
+            SomUtils::MatD TglobalRepmat(SomUtils::MatD::Zero(sz_.d_, sz_.n_));
+            for (int i =0; i<sz_.n_; ++i)
+            {
+                TglobalRepmat.col(i) = Tglobal; //TODO: maybe use some other adv init
+            }
+            auto TrecoveredGlobal = Rglobal.transpose() * Tsedn - TglobalRepmat;
             ROFL_VAR2(Tgt_, TrecoveredGlobal)
 
             // Checking recovery success
@@ -2018,7 +2071,7 @@ namespace ROPTLIB
                 //     if (~is_equal_floats(R_gt_i, R_recov_i_global))
                 // %         error("rot found NOT equal")
                 //         fprintf("ERROR in recovery: R_GLOBAL\n");
-                //         rs_recovery_success = boolean(0);
+                rsRecoverySuccess_ = false;
                 if (!isEqualFloats(RgtI, RrecovIglobal))
                 {
                     ROFL_VAR1("ERROR in recovery: R_GLOBAL")
@@ -2040,7 +2093,7 @@ namespace ROPTLIB
                 //     if (~is_equal_floats(T_gt_i, T_recov_i_global))
                 // %         error("transl found NOT equal")
                 //         fprintf("ERROR in recovery: T_GLOBAL\n");
-                //         rs_recovery_success = boolean(0);
+                rsRecoverySuccess_ = false;
                 if (!isEqualFloats(TgtI, TrecovIglobal))
                 {
                     ROFL_VAR1("ERROR in recovery: T_GLOBAL")
@@ -2064,7 +2117,7 @@ namespace ROPTLIB
             ROFL_VAR1(RoutSt);
             Xout.block(0, 0, sz_.d_, RoutSt.cols()) = RoutSt;
             Xout.block(0, RoutSt.cols(), sz_.d_, Tout.cols()) = Tout;
-            ROFL_VAR1(costEigen(Xout))
+            ROFL_VAR1(costEigen(Rout, Tout))
 
             // transf_out = RT2G(R_recovered_global, T_recovered_global); %rsom_genproc() function output
 
@@ -2081,17 +2134,40 @@ namespace ROPTLIB
             multidet(Rout, multidetRrecoveredGlobal);
             for (int i = 0; i < sz_.n_; ++i)
                 ROFL_VAR2(i, multidetRrecoveredGlobal[i]);
+
+            return rsRecoverySuccess_;
         }
 
         void multidet(const SomUtils::VecMatD &a3d, std::vector<double> &dets) const
         {
             int n = a3d.size();
             dets.clear();
-            dets.assign(0.0, n);
+            dets.assign(n, 0.0);
             ROFL_ASSERT(n == dets.size())
 
             for (int i = 0; i < n; ++i)
                 dets[i] = a3d[i].determinant();
+        }
+
+        void setGtR(const SomUtils::VecMatD &R)
+        {
+            Rgt_ = R;
+        }
+
+        void setGtR(const SomUtils::MatD &T)
+        {
+            Tgt_ = T;
+        }
+
+        void setGt(const SomUtils::VecMatD &R, const SomUtils::MatD &T)
+        {
+            Rgt_ = R;
+            Tgt_ = T;
+        }
+
+        bool getRsRecoverySuccess() const
+        {
+            return rsRecoverySuccess_;
         }
 
         SomUtils::VecMatD Rgt_;
@@ -2099,6 +2175,8 @@ namespace ROPTLIB
         SomUtils::MatD Tgt_;
 
         bool rsRecoverySuccess_;
+
+        int src_;
     };
 
 } // end of namespace ROPTLIB

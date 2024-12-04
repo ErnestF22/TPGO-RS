@@ -15,7 +15,7 @@ namespace SomUtils
             if (ss.peek() == ',')
                 ss.ignore();
 
-            strI.erase(std::remove(strI.begin(), strI.end(), ','), strI.end()); // this should nothing
+            strI.erase(std::remove(strI.begin(), strI.end(), ','), strI.end()); // this should do nothing if line separator is null
             // ROFL_VAR1(strI);
 
             double ptCoord = std::stod(strI);
@@ -58,7 +58,7 @@ namespace SomUtils
 
             deserializeRow(line, GroptlibWriteArray[j]);
             j++;
-            // ROFL_VAR1(line);
+            // ROFL_VAR2(j, line);
 
             // csvVec.pts.push_back(pt);
         }
