@@ -1621,7 +1621,7 @@ namespace ROPTLIB
             align2d(Tijtilde, Qx);
 
             // QxRitilde2Bot = Qx(3 : 4, :) * Ritilde2;
-            auto QxRiTilde2bot = Qx.block(2, 0, 2, Qx.cols());
+            auto QxRiTilde2bot = Qx.block(2, 0, 2, Qx.cols()) * RiTilde2;
 
             // [ U, ~, ~] = svd(QxRitilde2Bot, 'econ');
             Eigen::JacobiSVD<SomUtils::MatD> svd(QxRiTilde2bot, Eigen::ComputeThinU); // TODO: ComputeFullV flag can probably be removed
@@ -1882,7 +1882,7 @@ namespace ROPTLIB
         bool recoverySEdN(int staircaseStepIdx,
                           const SomUtils::VecMatD &RmanoptOut, const SomUtils::MatD &TmanoptOut,
                           SomUtils::VecMatD &Rrecovered, SomUtils::MatD &Trecovered)
-        {
+        {   rsRecoverySuccess_ = true;
             ROFL_ASSERT(Rrecovered.size() == sz_.n_ && Trecovered.rows() == sz_.d_ && Trecovered.cols() == sz_.n_)
             if (staircaseStepIdx > sz_.d_ + 1)
             {
@@ -1944,6 +1944,9 @@ namespace ROPTLIB
                         highDegId++;
                     }
                 }
+                for (int i =0; i< numNodesHighDeg; ++i)
+                    ROFL_VAR1(Rtilde2edges[i])
+
                 ROFL_ASSERT(highDegId == numNodesHighDeg)
 
                 std::for_each(Rrecovered.begin(), Rrecovered.end(), [](SomUtils::MatD &x) { //^^^ take argument by reference: LAMBDA FUNCTION
@@ -1962,6 +1965,9 @@ namespace ROPTLIB
                     }
                 }
                 ROFL_ASSERT(highDegId == numNodesHighDeg)
+
+                for (int i =0; i< sz_.n_; ++i)
+                    ROFL_VAR1(Rrecovered[i])
 
                 if (!nodesLowDeg.any())
                 {
@@ -2015,17 +2021,23 @@ namespace ROPTLIB
                             ROFL_VAR1(costManoptOutput);
                             // T_diffs_shifted = Qx_edges * T_edges;
                             auto TdiffsShifted = QxEdges * Tedges; // this has last row to 0
+                            ROFL_VAR3(TdiffsShifted, QxEdges, Tedges)
 
                             // [~, Tij1j2_tilde] = make_Tij1j2s_edges(node_id, T_diffs_shifted, Tijs, edges, params);
                             SomUtils::MatD Tij1j2(SomUtils::MatD::Zero(sz_.d_, nodeDeg));
                             SomUtils::MatD Tij1j2tilde(SomUtils::MatD::Zero(nrs, nodeDeg));
                             makeTij1j2sEdges(nodeId, nodeDegrees, TdiffsShifted, Tij1j2, Tij1j2tilde);
+                            ROFL_VAR2(Tij1j2, Tij1j2tilde)
 
                             // [ RitildeEst1, RitildeEst2, ~, ~] = recoverRitilde(Qx_edges * R_i_tilde2, Tij1j2_tilde);
                             SomUtils::MatD RiTildeEst1(SomUtils::MatD::Zero(nrs, sz_.d_));
                             SomUtils::MatD RiTildeEst2(SomUtils::MatD::Zero(nrs, sz_.d_));
                             ROFL_VAR2(QxEdges, RiTilde2)
                             recoverRiTilde(QxEdges * RiTilde2, Tij1j2tilde, RiTildeEst1, RiTildeEst2); // TODO: add possibility of returning "local" Qx
+                            ROFL_VAR2(Tij1j2, Tij1j2tilde)
+                            ROFL_VAR2(RiTildeEst1, RiTildeEst2)
+
+
 
                             // disp('')
                             std::cout << std::endl; // TODO : how to decide between RitildeEst1, RitildeEst2 ? ? det_RitildeEst1 = det(RitildeEst1(1 : d, :));
@@ -2205,7 +2217,6 @@ namespace ROPTLIB
                 //     if (~is_equal_floats(R_gt_i, R_recov_i_global))
                 // %         error("rot found NOT equal")
                 //         fprintf("ERROR in recovery: R_GLOBAL\n");
-                rsRecoverySuccess_ = false;
                 if (!isEqualFloats(RgtI, RrecovIglobal))
                 {
                     ROFL_VAR1("ERROR in recovery: R_GLOBAL")
@@ -2227,7 +2238,6 @@ namespace ROPTLIB
                 //     if (~is_equal_floats(T_gt_i, T_recov_i_global))
                 // %         error("transl found NOT equal")
                 //         fprintf("ERROR in recovery: T_GLOBAL\n");
-                rsRecoverySuccess_ = false;
                 if (!isEqualFloats(TgtI, TrecovIglobal))
                 {
                     ROFL_VAR1("ERROR in recovery: T_GLOBAL")
@@ -2247,10 +2257,13 @@ namespace ROPTLIB
             SomUtils::MatD Xout(SomUtils::MatD::Zero(sz_.d_, sz_.d_ * sz_.n_ + sz_.d_ * sz_.n_));
             SomUtils::MatD RoutSt(SomUtils::MatD::Zero(sz_.d_, sz_.d_ * sz_.n_));
             // ROFL_VAR1("hstack call from here");
-            hstack(Rout, RoutSt);
+            hstack(RrecoveredGlobal, RoutSt);
             ROFL_VAR1(RoutSt);
             Xout.block(0, 0, sz_.d_, RoutSt.cols()) = RoutSt;
-            Xout.block(0, RoutSt.cols(), sz_.d_, Tout.cols()) = Tout;
+            Xout.block(0, RoutSt.cols(), sz_.d_, Tout.cols()) = TrecoveredGlobal;
+
+            Rout = RrecoveredGlobal;
+            Tout = TrecoveredGlobal;
             ROFL_VAR1(costEigen(Rout, Tout))
 
             // transf_out = RT2G(R_recovered_global, T_recovered_global); %rsom_genproc() function output
