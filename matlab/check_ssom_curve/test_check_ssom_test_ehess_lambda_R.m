@@ -27,13 +27,12 @@ curve.ddc=@(t) ddLambda(t);
 
 % f=@(t) problem.cost(curve.c(t));
 
-grad_handle = @(x) grad_lambda_local(lambda0, x, T0, problem);
-gradf=@(t) grad_handle(R(t));
-df=@(t) sum(stiefel_metric([],gradf(t),lambda0));
+grad_handle = @(t) grad_lambda_local(lambda0, R(t), T0, problem);
+df=@(t) sum(stiefel_metric([],grad_handle(t),lambda0));
 % funCheckDer(f,df)
 ehessf = @(t) problem.ssom_ehess_lambda_r(lambda0,vLambda0,T0,R(t),dR(t));
 ddf_1 = @(t) stiefel_metric([], ehessf(t), curve.dc(t), 'euclidean');
-ddf_2 = @(t) stiefel_metric([], gradf(t), curve.ddc(t), 'euclidean');
+ddf_2 = @(t) stiefel_metric([], grad_handle(t), curve.ddc(t), 'euclidean');
 ddf = @(t) sum(ddf_1(t) + ddf_2(t));    
 
 funCheckDer(df,ddf,'angle')
@@ -43,11 +42,11 @@ function g=grad_lambda_local(lambda, R, T, problem_data)
     edges = problem_data.edges;
     tijs_vec = problem_data.tijs;
     rho = problem_data.rho;
-    
+
     % x = lambdas in this context
-    
+
     g = zeros(length(lambda), 1);
-    
+
     num_edges = size(edges, 1);
     for ee = 1:num_edges
         ii = edges(ee, 1);
