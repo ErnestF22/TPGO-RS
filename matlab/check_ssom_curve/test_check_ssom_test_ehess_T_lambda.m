@@ -16,7 +16,7 @@ vR0 = eye3d(d,d,N);
 T0 = rand(d,N);
 vT0 = rand(d,N);
 
-[lambda,dLambda,~,~,~]=real_geodFun(lambda0, vLambda0);
+[lambda,dLambda,~,~,ddLambda]=real_geodFun(lambda0, vLambda0);
 [T,dT,~,~,ddT]=real_geodFun(T0, vT0);
 [R,~,~,~,~]=rot_geodFun(R0, vR0);
 
@@ -28,7 +28,7 @@ curve.ddc=@(t) ddT(t);
 gradf=@(t) problem.egrad_T(curve.c(t));
 df=@(t) sum(stiefel_metric([],gradf(t),curve.dc(t)));
 % funCheckDer(f,df)
-ehessf = @(t) problem.ssom_ehess_t_lambda(curve.c(t),curve.dc(t),R(t), dLambda(t));
+ehessf = @(t) problem.ssom_ehess_t_lambda(curve.c(t),curve.dc(t),R0, ddLambda(t));
 ddf_1 = @(t) stiefel_metric([], ehessf(t), curve.dc(t), 'euclidean');
 ddf_2 = @(t) stiefel_metric([], gradf(t), curve.ddc(t), 'euclidean');
 ddf = @(t) sum(ddf_1(t) + ddf_2(t));    

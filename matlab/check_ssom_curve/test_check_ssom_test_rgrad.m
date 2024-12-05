@@ -5,9 +5,9 @@ disp("grad lambda")
 problem=test_check_ssom();
 % curve=test_check_ssom_curve(problem);
 
-% N = problem.sz(3);
+N = problem.sz(3);
 % nrs = problem.sz(1);
-% d = problem.sz(2);
+d = problem.sz(2);
 e = size(problem.edges,1);
 
 lambda0=rand(e,1,1);
@@ -17,8 +17,16 @@ vLambda0=rand(e,1,1);
 curve.c=@(t) lambda(t);
 curve.dc=@(t) dLambda(t);
 
+R0=randrot(d,N);
+vR0=rot_randTangentNormVector(R0);
+[R,dR,~,~,~,ddR]=rot_geodFun(R0, vR0);
+
+T0 = rand(d,N);
+vT0 = rand(d,N);
+[T,~,~,~,~]=real_geodFun(T0, vT0);
+
 f=@(t) problem.cost_lambda(curve.c(t));
-egradf=@(t) problem.egrad_lambda(curve.c(t));
+egradf=@(t) problem.grad_lambda(curve.c(t),R(t),T(t));
 df=@(t) sum(stiefel_metric([],egradf(t),curve.dc(t)));
 funCheckDer(f,df)
 

@@ -17,12 +17,17 @@ vR0 = eye3d(d,d,N);
 
 [lambda,dLambda,~,~,ddLambda]=real_geodFun(lambda0, vLambda0);
 [R,~,~,~,~]=rot_geodFun(R0, vR0);
+
+T0 = rand(d,N);
+vT0 = rand(d,N);
+[T,~,~,~,~]=real_geodFun(T0, vT0);
+
 curve.c=@(t) lambda(t);
 curve.dc=@(t) dLambda(t);
 curve.ddc=@(t) ddLambda(t);
 
 % f=@(t) problem.cost(curve.c(t));
-egradf=@(t) problem.egrad_lambda(curve.c(t));
+egradf=@(t) problem.grad_lambda(curve.c(t),R(t),T0);
 df=@(t) sum(stiefel_metric([],egradf(t),curve.dc(t)));
 % funCheckDer(f,df)
 ehessf = @(t) problem.ssom_ehess_lambda_lambda(curve.c(t),curve.dc(t),R(t));

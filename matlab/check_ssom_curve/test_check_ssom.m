@@ -46,7 +46,6 @@ problem_data.R = R;
 [aL, bL, cL] = makeABClambda(x, problem_data);
 problem_data.aL = aL; problem_data.bL = bL; problem_data.cL = cL;
 
-
 problem_data.rho = rho; %ReLU() part should not be needed for Hessian tests
 
 %% output (problem_curve_data) definition
@@ -57,15 +56,16 @@ problem_data.cost_lambda=@(x) ssom_cost_lambda(x,problem_data);
 problem_data.cost_R=@(x) rsom_cost_rot_stiefel(x,problem_data);
 problem_data.cost_T=@(x) rsom_cost_transl_stiefel(x,problem_data);
 %
-problem_data.egrad_lambda=@(x) egrad_lambda(x,problem_data);
+% problem_data.egrad_lambda=@(x) egrad_lambda(x,problem_data);
+problem_data.grad_lambda=@(lambdas,R,T) grad_lambda(lambdas,R,T,problem_data);
 problem_data.rgrad_R=@(x) rgrad_R(x,problem_data);
 problem_data.egrad_T=@(x) egrad_T(x,problem_data);
 %
 problem_data.ssom_ehess_lambda_lambda=@(x,u,R) ssom_ehess_lambda_lambda(x,u,R,problem_data);
-problem_data.ssom_ehess_lambda_r=@(x,u,T,R,Rdot) ssom_ehess_lambda_r(x, u, T, R, Rdot, problem_data);
-problem_data.ssom_ehess_r_lambda=@(x,u,T,lambdas_dot) ssom_ehess_r_lambda(x,u,T,lambdas_dot,problem_data);
-problem_data.ssom_ehess_lambda_t=@(x,u,T,R,Rdot) ssom_ehess_lambda_t(x,u,T,R,Rdot,problem_data);
+problem_data.ssom_ehess_r_lambda=@(R, Rdot, T, lambdadot) ssom_ehess_r_lambda(R, Rdot, T, lambdadot, problem_data);
 problem_data.ssom_ehess_t_lambda=@(x,u,R,lambdas_dot) ssom_ehess_t_lambda(x,u,R,lambdas_dot,problem_data);
+problem_data.ssom_ehess_lambda_r=@(x,u,T,R,Rdot) ssom_ehess_lambda_r(x, u, T, R, Rdot, problem_data);
+problem_data.ssom_ehess_lambda_t=@(x,u,T,Tdot,R) ssom_ehess_lambda_t(x,u,T,Tdot,R,problem_data);
 
 end %file function
 
@@ -77,26 +77,84 @@ function g=egrad_T(x,problem_data)
 g = rsom_egrad_transl_stiefel(x, problem_data);
 end
 
-%% 0) egrad lambda
-function g=egrad_lambda(x,problem_data)
-%Note: already checked (genproc-wise) through Manopt
+%% 0) grad lambda
+% function g=egrad_lambda(x,problem_data)
+% %Note: already checked (genproc-wise) through Manopt
+% 
+% % x in this context is already lambda
+% 
+% % g = ssom_grad_lambda(x, problem_data);
+% 
+% edges = problem_data.edges;
+% rho = problem_data.rho;
+% 
+% % x = lambdas in this context
+% 
+% g = zeros(length(x), 1);
+% 
+% num_edges = size(edges, 1);
+% for ee = 1:num_edges
+%     % ii = edges(ee, 1);
+%     % jj = edges(ee, 2);
+%     lambda_e = x(ee);
+%     % tij_e = Tijs_vec(:, ee);
+%     % aLi = problem_data.aL(ee);
+%     bLi = problem_data.bL(ee);
+%     cLi = problem_data.cL(ee);
+%     base_part = 2*cLi * lambda_e + bLi;
+%     relu_part = 0.0;
+%     if (ssom_relu_argument(lambda_e)>0)
+%         relu_part = -rho;
+%     end
+%     g(ee) = base_part + relu_part;
+% end
+% end
 
-% x in this context is already lambda
+function g=grad_lambda(lambdas, R, T, problem_data)
 
-% g = ssom_grad_lambda(x, problem_data);
+%%
 
 edges = problem_data.edges;
+tijs_vec = problem_data.tijs;
+% rho = problem_data.rho;
+
+num_edges = size(edges, 1);
+aL = zeros(size(lambdas));
+bL = zeros(size(lambdas));
+cL = zeros(size(lambdas));
+
+% cost_out = 0.0;
+for ee = 1:num_edges
+    ii = edges(ee, 1);
+    jj = edges(ee, 2);
+    % lambda_e = lambdas(ee);
+    tij_e = tijs_vec(:, ee);
+    T_i = T(:, ii);
+    T_j = T(:, jj);
+    R_i = R(:, :, ii);
+    a = T_i - T_j;
+    b = R_i * tij_e;
+    % cost_lambda_0_ee = trace(aL' * aL + 2 * lambda_e * (aL' * b) + lambda_e^2 * (b' * b));
+    % cost_relu_ee = relu_som(ssom_relu_argument(lambda_e));
+    % cost_out = cost_out + cost_lambda_0_ee + rho * cost_relu_ee;
+    aL(ee) = trace(a' * a);
+    bL(ee) = 2 * trace(a' * b);
+    cL(ee) = trace(b' * b);
+end
+%%
+
+
 rho = problem_data.rho;
 
 % x = lambdas in this context
 
-g = zeros(length(x), 1);
+g = zeros(length(lambdas), 1);
 
 num_edges = size(edges, 1);
 for ee = 1:num_edges
     % ii = edges(ee, 1);
     % jj = edges(ee, 2);
-    lambda_e = x(ee);
+    lambda_e = lambdas(ee);
     % tij_e = Tijs_vec(:, ee);
     % aLi = problem_data.aL(ee);
     bLi = problem_data.bL(ee);
@@ -137,6 +195,64 @@ end
 end
 
 %% 2
+function h = ssom_ehess_r_lambda(R, Rdot, T, lambdadot, problem_data)
+
+% h_r_lambda = zeros(size(hrt));
+
+% lambdas = X.lambda;
+% lambdas_dot = Xdot.lambda;
+edges = problem_data.edges;
+% Tijs_scaled = make_tijs_scaled(X.lambdas, problem_data.Tijs);
+% rho = problem_data.rho;
+
+W = zeros(size(R));
+num_edges = size(edges, 1);
+for e = 1:num_edges
+    ii = edges(e,1);
+    jj = edges(e,2);
+    T_i = T(:,ii);
+    T_j = T(:,jj);
+    tij = problem_data.Tijs(:, e);
+    lambda_dot_e = lambdadot(e);
+    w_ij = 2 * (T_i - T_j)*lambda_dot_e*tij';
+    W(:,:,ii) = W(:,:,ii) + w_ij;
+end
+h = stiefel_tangentProj(R, W);
+% h = W;
+end
+
+
+%% 3
+function h = ssom_ehess_t_lambda(x, ~, R, lambdas_dot, problem_data)
+% h_t_lambda = zeros(size(htr));
+
+edges = problem_data.edges;
+% Tijs_scaled = make_tijs_scaled(X.lambdas, problem_data.Tijs);
+% rho = problem_data.rho;
+
+h = zeros(size(x));
+N = size(R,3);
+num_edges = size(edges, 1);
+for e = 1:num_edges
+    ii = edges(e,1);
+    jj = edges(e,2);
+    Ri = R(:,:,ii);
+    %         Rj = X.R(:,:,jj);
+    %
+    BIJ = zeros(N,1);
+    BIJ(ii) = 1;
+    BIJ(jj) = -1;
+    %
+    tij = problem_data.Tijs(:, e);
+    w_ij = BIJ * lambdas_dot(e) * tij' * Ri';
+    h = h + w_ij';
+end
+
+end
+
+
+
+%% 4
 function h = ssom_ehess_lambda_r(x, xdot, T, R, Rdot, problem_data)
 % h_lambda_t = zeros(size(h_lambda_lambda));
 
@@ -165,44 +281,14 @@ for ee = 1:num_edges
     a = T_i - T_j;
     bdot = R_i_dot * tij;
     b = R_i * tij;
-    e_th_elem = lambda_e^2 * (bdot' * b + b' * bdot) + 2 * lambda_e * a' * bdot;
+    e_th_elem = 2 * lambda_e * (bdot' * b + b' * bdot) + 2 * a' * bdot;
     h(ee) = e_th_elem;
 end
-
-
 end
 
-%% 3
-function h = ssom_ehess_r_lambda(x, ~, T, Tdot, R, problem_data)
 
-% h_r_lambda = zeros(size(hrt));
-
-% lambdas = X.lambda;
-% lambdas_dot = Xdot.lambda;
-edges = problem_data.edges;
-% Tijs_scaled = make_tijs_scaled(X.lambdas, problem_data.Tijs);
-% rho = problem_data.rho;
-
-W = zeros(size(X));
-num_edges = size(edges, 1);
-for e = 1:num_edges
-    ii = edges(e,1);
-    jj = edges(e,2);
-    T_i = T(:,ii);
-    T_j = T(:,jj);
-    tij = problem_data.Tijs(:, e);
-    lambda_dot_e = xdot(e);
-    w_ij = 2 * (T_i - T_j)*lambda_dot_e*tij';
-    W(:,:,ii) = W(:,:,ii) + w_ij;
-end
-h = stiefel_tangentProj(X, W);
-% h = W;
-end
-
-%% 4
-function h = ssom_ehess_lambda_t(x, ~, T, R, Rdot, problem_data)
-
-
+%% 5
+function h = ssom_ehess_lambda_t(x, ~, ~, Tdot, R, problem_data)
 
 % h_lambda_r = zeros(size(h_lambda_lambda));
 
@@ -218,46 +304,20 @@ num_edges = size(edges, 1);
 for ee = 1:num_edges
     ii = edges(ee, 1);
     jj = edges(ee, 2);
-    lambda_e = x(ee);
+    % lambda_e = x(ee);
     tij = tijs_vec(:, ee);
-    T_i = T(:,ii);
-    T_j = T(:,jj);
+    % T_i = T(:,ii);
+    % T_j = T(:,jj);
     T_i_dot = Tdot(:, ii);
     T_j_dot = Tdot(:, jj);
-    a = T_i - T_j;
+    % a = T_i - T_j;
     R_i = R(:, :, ii);
     b = R_i * tij;
     adot = T_i_dot - T_j_dot;
-    e_th_elem = adot' * a + a' * adot + 2 * lambda_e * adot' * b;
+    e_th_elem = 2 * adot' * b;
     h(ee) = e_th_elem;
 end
 
 end
 
-%% 5
-function h = ssom_ehess_t_lambda(x, ~, R, lambdas_dot, problem_data)
-% h_t_lambda = zeros(size(htr));
 
-edges = problem_data.edges;
-% Tijs_scaled = make_tijs_scaled(X.lambdas, problem_data.Tijs);
-% rho = problem_data.rho;
-
-h = zeros(size(x));
-N = size(R,3);
-num_edges = size(edges, 1);
-for e = 1:num_edges
-    ii = edges(e,1);
-    jj = edges(e,2);
-    Ri = R(:,:,ii);
-    %         Rj = X.R(:,:,jj);
-    %
-    BIJ = zeros(N,1);
-    BIJ(ii) = 1;
-    BIJ(jj) = -1;
-    %
-    tij = problem_data.Tijs(:, e);
-    w_ij = BIJ * lambdas_dot(e) * tij' * Ri';
-    h = h + w_ij';
-end
-
-end
