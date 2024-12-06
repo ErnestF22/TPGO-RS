@@ -23,7 +23,7 @@ include_directories(include)
 #list(APPEND som_LINK_LIBS boost_iostreams boost_system boost_filesystem)
 
 # Eigen library v. 3
-find_package(Eigen3 REQUIRED)
+find_package(Eigen3 3.4 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
 
 # rofl
