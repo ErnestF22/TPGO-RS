@@ -53,6 +53,90 @@ namespace ROPTLIB
         return cost; // checked -> the - here should be OK
     };
 
+    double SampleSomProblem::costEigenVecSEdN(const SomUtils::MatD &xEigen) const
+    {
+        double cost = 0.0f;
+        for (int e = 0; e < numEdges_; ++e)
+        {
+            SomUtils::MatD Ri(SomUtils::MatD::Zero(sz_.d_, sz_.d_));
+            SomUtils::MatD Ti(SomUtils::MatD::Zero(sz_.d_, 1));
+            SomUtils::MatD Tj(SomUtils::MatD::Zero(sz_.d_, 1));
+
+            SomUtils::VecD tij(SomUtils::VecD::Zero(sz_.d_));
+            tij = Tijs_.col(e);
+
+            int i = edges_(e, 0) - 1; // !! -1
+            int j = edges_(e, 1) - 1; // !! -1
+            getRiSEdN(xEigen, Ri, i);
+            getRiSEdN(xEigen, Ti, i);
+            getRiSEdN(xEigen, Tj, j);
+
+            // ROFL_VAR3(i, j, e);
+            // ROFL_VAR4(Ri, tij.transpose(), Ti.transpose(), Tj.transpose());
+
+            double costE = (Ri * tij - Tj + Ti).norm(); // TODO: use squaredNorm() here directly
+            // ROFL_VAR1(costE);
+
+            cost += costE * costE;
+        }
+        return cost;
+    }
+
+    double SampleSomProblem::costEigen(const SomUtils::VecMatD &Reigen, const SomUtils::MatD &Teigen) const
+    {
+        double cost = 0.0f;
+        for (int e = 0; e < numEdges_; ++e)
+        {
+            int i = edges_(e, 0) - 1; // !! -1
+            int j = edges_(e, 1) - 1; // !! -1
+
+            auto Ri = Reigen[i];
+            auto Ti = Teigen.col(i);
+            auto Tj = Teigen.col(j);
+
+            SomUtils::VecD tij(SomUtils::VecD::Zero(sz_.d_));
+            tij = Tijs_.col(e);
+
+            // ROFL_VAR3(i, j, e);
+            // ROFL_VAR4(Ri, tij.transpose(), Ti.transpose(), Tj.transpose());
+
+            double costEsq = (Ri * tij - Tj + Ti).squaredNorm(); // TODO: use squaredNorm() here directly
+            // ROFL_VAR1(costE);
+
+            cost += costEsq;
+        }
+        return cost;
+    }
+
+    double SampleSomProblem::costEigenVec(const SomUtils::MatD &xEigen) const
+    {
+        double cost = 0.0f;
+        for (int e = 0; e < numEdges_; ++e)
+        {
+            SomUtils::MatD Ri(SomUtils::MatD::Zero(sz_.p_, sz_.d_));
+            SomUtils::MatD Ti(SomUtils::MatD::Zero(sz_.p_, 1));
+            SomUtils::MatD Tj(SomUtils::MatD::Zero(sz_.p_, 1));
+
+            SomUtils::VecD tij(SomUtils::VecD::Zero(sz_.d_));
+            tij = Tijs_.col(e);
+
+            int i = edges_(e, 0) - 1; // !! -1
+            int j = edges_(e, 1) - 1; // !! -1
+            getRi(xEigen, Ri, i);
+            getTi(xEigen, Ti, i);
+            getTi(xEigen, Tj, j);
+
+            // ROFL_VAR3(i, j, e);
+            // ROFL_VAR4(Ri, tij.transpose(), Ti.transpose(), Tj.transpose());
+
+            double costE = (Ri * tij - Tj + Ti).norm(); // TODO: use squaredNorm() here directly
+            // ROFL_VAR1(costE);
+
+            cost += costE * costE;
+        }
+        return cost;
+    }
+
     // Vector &SampleSomProblem::EucGrad(const Variable &x, Vector *result) const
     // {
     //     // result->NewMemoryOnWrite();
@@ -1018,6 +1102,158 @@ namespace ROPTLIB
     {
         ROFL_ASSERT(in.rows() == in.cols());
         out = 0.5 * (in + in.transpose());
+    }
+
+    void SampleSomProblem::vectorizeR(const SomUtils::VecMatD &R, SomUtils::MatD &RvecOut) const
+    {
+        // int fullRotsSz = sz_.p_ * sz_.d_ * sz_.n_;
+
+        // for (int i=0; i<fullRotsSz; ++i) {
+        // }
+
+        int n = R.size();
+
+        int fullIdx = 0;
+        for (int i = 0; i < n; ++i)
+        {
+            int ric = R[i].cols();
+            int rir = R[i].rows();
+            for (int j = 0; j < ric; ++j)
+            {
+                for (int k = 0; k < rir; ++k)
+                {
+                    RvecOut(fullIdx, 0) = R[i](k, j);
+                    fullIdx++;
+                    // ROFL_VAR4(i, j, k, fullIdx);
+                }
+            }
+        }
+        ROFL_ASSERT(fullIdx == RvecOut.rows())
+    }
+
+    void SampleSomProblem::catZeroRow(const SomUtils::MatD &mIn, SomUtils::MatD &mOut) const
+    {
+        ROFL_ASSERT(mOut.rows() == mIn.rows() + 1);
+        ROFL_ASSERT(mOut.cols() == mIn.cols());
+
+        mOut.setZero();
+        mOut.block(0, 0, mIn.rows(), mIn.cols()) = mIn;
+    }
+
+    void SampleSomProblem::catZeroRow3dArray(const SomUtils::VecMatD &mIn, SomUtils::VecMatD &mOut) const
+    {
+        ROFL_ASSERT(mIn.size() == mOut.size())
+
+        int n = mIn.size();
+        for (int i = 0; i < n; ++i)
+        {
+            catZeroRow(mIn[i], mOut[i]);
+        }
+    }
+
+    void SampleSomProblem::normalizeEucl(const SomUtils::MatD &mIn, SomUtils::MatD &mOut) const
+    {
+        ROFL_ASSERT(mIn.rows() == mOut.rows() && mIn.cols() == mOut.cols())
+
+        mOut = mIn;
+        double normF = mIn.norm(); // TODO: maybe use .normalized() directly?
+
+        mOut /= normF;
+        // ROFL_VAR3(mIn, normF, mOut);
+    }
+
+    void SampleSomProblem::normalizeEucl(const SomUtils::VecMatD &mIn, SomUtils::VecMatD &mOut) const
+    {
+        ROFL_ASSERT(mIn.size() == mOut.size())
+        std::for_each(mOut.begin(), mOut.end(), [](SomUtils::MatD &x) { //^^^ take argument by reference: LAMBDA FUNCTION
+            x.setZero();
+        });
+
+        int n = mIn.size();
+        for (int i = 0; i < n; ++i)
+            normalizeEucl(mIn[i], mOut[i]);
+    }
+
+    void SampleSomProblem::RoptToEigStiefel(Vector x, SomUtils::MatD &xEigen) const
+    {
+        Vector xT = x.GetTranspose(); // Eigen ADV init is row-major!!
+
+        int totSz = xEigen.rows(); // xEigen is supposed to be a vectorized matrix
+
+        const realdp *xArr = xT.ObtainWriteEntireData();
+        for (int i = 0; i < totSz; ++i)
+            xEigen(i) = xArr[i];
+    }
+
+    void SampleSomProblem::makeAdjMatFromEdges(Eigen::MatrixXi &adjMat) const
+    {
+        ROFL_ASSERT(adjMat.rows() == sz_.n_)
+        ROFL_ASSERT(adjMat.cols() == sz_.n_)
+
+        adjMat.setZero();
+        for (int k = 0; k < numEdges_; ++k)
+        {
+            int ii = edges_(k, 0) - 1;
+            int jj = edges_(k, 1) - 1;
+            adjMat(ii, jj) = 1;
+        }
+    }
+
+    bool SampleSomProblem::isEqualFloats(const SomUtils::MatD &a, const SomUtils::MatD &b, double thr) const
+    {
+        ROFL_ASSERT(a.rows() == b.rows() && a.cols() == b.cols())
+
+        double val = (a - b).cwiseAbs().maxCoeff();
+
+        if (val > thr)
+            return false;
+
+        return true;
+    }
+
+    bool SampleSomProblem::isEqualFloats(const SomUtils::VecMatD &a, const SomUtils::VecMatD &b, double thr) const
+    {
+        int n = a.size();
+        ROFL_ASSERT(n == b.size())
+        bool retval = true;
+        for (int i = 0; i < n; ++i)
+        {
+            if (!isEqualFloats(a, b, thr))
+                return false;
+        }
+        return true;
+    }
+
+    void SampleSomProblem::multidet(const SomUtils::VecMatD &a3d, std::vector<double> &dets) const
+    {
+        int n = a3d.size();
+        dets.clear();
+        dets.assign(n, 0.0);
+        ROFL_ASSERT(n == dets.size())
+
+        for (int i = 0; i < n; ++i)
+            dets[i] = a3d[i].determinant();
+    }
+
+    void SampleSomProblem::setGtR(const SomUtils::VecMatD &R)
+    {
+        Rgt_ = R;
+    }
+
+    void SampleSomProblem::setGtT(const SomUtils::MatD &T)
+    {
+        Tgt_ = T;
+    }
+
+    void SampleSomProblem::setGt(const SomUtils::VecMatD &R, const SomUtils::MatD &T)
+    {
+        Rgt_ = R;
+        Tgt_ = T;
+    }
+
+    bool SampleSomProblem::getRsRecoverySuccess() const
+    {
+        return rsRecoverySuccess_;
     }
 
 } // end of namespace ROPTLIB

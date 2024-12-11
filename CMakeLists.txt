@@ -80,6 +80,7 @@ include/thirdparty/roptlib/problems_mexProblem.cpp
 include/thirdparty/roptlib/problems_Problem.cpp
 include/thirdparty/roptlib/problems_ProdStieSumBrockett.cpp
 include/thirdparty/roptlib/problems_SampleSom.cpp #som
+include/thirdparty/roptlib/problems_SampleSom_rs_recovery.cpp #som
 include/thirdparty/roptlib/problems_SFRQLyapunov.cpp
 include/thirdparty/roptlib/problems_SPDKarcherMean.cpp
 include/thirdparty/roptlib/problems_SphereConvexHull.cpp
