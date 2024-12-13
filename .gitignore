@@ -45,3 +45,5 @@ octave-workspace
 build/
 
 .vscode/
+
+matlab/data/cpp_testdata/

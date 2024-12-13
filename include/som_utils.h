@@ -100,6 +100,22 @@ namespace SomUtils
      * Dijkstra Algorithm (shortest path) as per https://favtutor.com/blogs/dijkstras-algorithm-cpp
      */
     void DijkstraAlgo(const Eigen::MatrixXi &adjMat, int src); // adjacency matrix
+
+    /**
+     * @brief No spaces after comma delimiter
+     */
+    void readMatlabCsvEdges(std::string fname, Eigen::MatrixXi &edges);
+
+    /**
+     * @brief No spaces after comma delimiter
+     */
+    void readMatlabCsvTijs(std::string fname, Eigen::MatrixXd &Tijs, int d, int numEdges);
+
+    /**
+     * @brief Read a single integer from a csv file and save it to reference param out
+     */
+    void readSingleIntCsv(std::string fname, int& out);
+
 } // end of namespace SomUtils
 
 #endif /*SOM_UTILS_H_*/

@@ -115,10 +115,10 @@ namespace SomUtils
             // add all the column data
             // of a row to a vector
 
-            Eigen::RowVectorXd edgeI(numEdges);
-            deserializeRowTijs(line, edgeI);
-            ROFL_VAR1(edgeI)
-            Tijs.row(j) = edgeI;
+            Eigen::RowVectorXd tijI(numEdges);
+            deserializeRowTijs(line, tijI);
+            ROFL_VAR1(tijI)
+            Tijs.row(j) = tijI;
             j++;
             // ROFL_VAR1(line);
 
@@ -248,6 +248,107 @@ namespace SomUtils
             char str = 65 + k;
             std::cout << str << "\t\t\t" << distance[k] << std::endl;
         }
+    }
+
+    void readMatlabCsvTijs(std::string fname, Eigen::MatrixXd &Tijs, int d, int numEdges)
+    {
+        std::fstream fout;
+        fout.open(fname, std::ios::in);
+
+        if (!fout.is_open())
+        {
+            std::cerr << "Error opening file!" << std::endl;
+            return;
+        }
+
+        std::string line;
+        // getline(fout, csvVec.header, '\n');
+        // ROFL_VAR1(csvVec.header);
+
+        /////
+
+        int j = 0;
+        while (getline(fout, line, '\n'))
+        {
+            std::stringstream ss(line);
+            std::vector<std::string> result;
+
+            while (ss.good())
+            {
+                std::string substr;
+                getline(ss, substr, ',');
+                result.push_back(substr);
+                // ROFL_VAR1(substr)
+            }
+
+            Eigen::VectorXd rowI(numEdges, 1);
+
+            for (int idx = 0; idx < result.size(); ++idx)
+                rowI(idx, 0) = stod(result[idx]);
+            Tijs.row(j) = rowI;
+            j++;
+        }
+
+        fout.close();
+    }
+
+    void readMatlabCsvEdges(std::string fname, Eigen::MatrixXi &edges)
+    {
+        std::fstream fout;
+        fout.open(fname, std::ios::in);
+
+        if (!fout.is_open())
+        {
+            std::cerr << "Error opening file!" << std::endl;
+            return;
+        }
+
+        std::string line;
+        // getline(fout, csvVec.header, '\n');
+        // ROFL_VAR1(csvVec.header);
+
+        /////
+
+        int j = 0;
+        while (getline(fout, line, '\n'))
+        {
+            std::stringstream ss(line);
+            std::vector<std::string> result;
+
+            while (ss.good())
+            {
+                std::string substr;
+                getline(ss, substr, ',');
+                result.push_back(substr);
+                // ROFL_VAR1(substr)
+            }
+
+            Eigen::Vector2i edgeI;
+
+            for (int e = 0; e < result.size(); ++e)
+                edgeI(e, 0) = stoi(result[e]);
+            edges.row(j) = edgeI;
+            j++;
+        }
+
+        fout.close();
+    }
+
+    void readSingleIntCsv(std::string fname, int &out)
+    {
+        std::fstream fout;
+        fout.open(fname, std::ios::in);
+
+        if (!fout.is_open())
+        {
+            std::cerr << "Error opening file!" << std::endl;
+            return;
+        }
+
+        std::string line;
+        getline(fout, line, '\n');
+
+        out = stoi(line);
     }
 
 } // end of namespace SomUtils

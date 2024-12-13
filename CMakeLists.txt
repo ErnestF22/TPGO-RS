@@ -144,6 +144,9 @@ target_link_libraries(test_check_recovery ${rofl_LIBRARIES} roptlib_local m blas
 # add_executable(test_dijkstra_edges test_dijkstra_edges.cpp include/som_utils.cpp)
 # target_link_libraries(test_dijkstra_edges ${rofl_LIBRARIES} roptlib_local m blas lapack boost_iostreams boost_system boost_filesystem)
 
+add_executable(test_single_run_rsom_rs test_single_run_rsom_rs.cpp include/som_utils.cpp)
+target_link_libraries(test_single_run_rsom_rs ${rofl_LIBRARIES} roptlib_local m blas lapack boost_iostreams boost_system boost_filesystem)
+
 # Option "make install": copy binaries
 #INSTALL(TARGETS som
 #  RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
