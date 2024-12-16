@@ -41,7 +41,6 @@ void runRsomRS(ROPTLIB::SampleSomProblem &Prob, const ROPTLIB::Vector &startX)
     delete RTRNewtonSolver;
 
     // RS
-
     int d = Prob.sz_.d_;
     int n = Prob.sz_.n_;
     int r0 = d + 1;
@@ -54,34 +53,65 @@ void runRsomRS(ROPTLIB::SampleSomProblem &Prob, const ROPTLIB::Vector &startX)
     Prob.RoptToEig(Xopt, XoptEigVec);
     ROFL_VAR1(XoptEigVec.transpose())
 
-    for (int staircaseStepIdx = r0; staircaseStepIdx <= d * n + 1; ++staircaseStepIdx)
+    double costLast = XoptCost;
+    auto ProbPrev = Prob;
+    int staircaseStepIdx;
+    SomUtils::VecMatD RmanoptOutEig(n, SomUtils::MatD::Zero(d, d));
+    SomUtils::MatD TmanoptOutEig(SomUtils::MatD::Zero(d, n));
+
+    auto rGt = Prob.Rgt_;
+    auto tGt = Prob.Tgt_;
+
+    for (staircaseStepIdx = r0; staircaseStepIdx <= d * n + 1; ++staircaseStepIdx)
     {
         ROFL_VAR1(staircaseStepIdx)
+        ROFL_VAR1(costLast)
+
 
         SomUtils::VecMatD R(n, SomUtils::MatD::Zero(staircaseStepIdx - 1, d));
         SomUtils::MatD T(SomUtils::MatD::Zero(staircaseStepIdx - 1, n));
         Prob.getRotations(XoptEigVec, R);
         Prob.getTranslations(XoptEigVec, T);
 
-        SomUtils::VecMatD Rnext(n, SomUtils::MatD::Zero(staircaseStepIdx, d));
-        SomUtils::MatD Tnext(SomUtils::MatD::Zero(staircaseStepIdx, n));
+        // SomUtils::VecMatD Rnext(n, SomUtils::MatD::Zero(staircaseStepIdx, d));
+        // SomUtils::MatD Tnext(SomUtils::MatD::Zero(staircaseStepIdx, n));
 
-        Prob.catZeroRow3dArray(R, Rnext);
-        Prob.catZeroRow(T, Tnext);
+        // Prob.catZeroRow3dArray(R, Rnext);
+        // Prob.catZeroRow(T, Tnext);
 
-        auto somSzNext = Prob.sz_;
-        somSzNext.p_++;
-
+        SomUtils::SomSize somSzNext(staircaseStepIdx, d, n);
         ROPTLIB::SampleSomProblem ProbNext(somSzNext, Prob.Tijs_, Prob.edges_);
+
+        ProbNext.setGt(rGt, tGt);
 
         ROPTLIB::Stiefel mani1next(somSzNext.p_, somSzNext.d_);
         mani1next.ChooseParamsSet2();
         ROPTLIB::Euclidean mani2next(somSzNext.p_, somSzNext.n_);
         ROPTLIB::ProductManifold ProdManiNext(numoftypes, &mani1next, numofmani1, &mani2next, numofmani2);
         ROPTLIB::Vector Y0 = ProdManiNext.RandominManifold();
-        ProbNext.rsomPimHessianGenproc(1e-4, Rnext, Tnext, Y0);
+        double lambda;
+        SomUtils::VecMatD vLambdaR(n, SomUtils::MatD::Zero(somSzNext.p_, somSzNext.d_));
+        SomUtils::MatD vLambdaT(SomUtils::MatD::Zero(somSzNext.p_, somSzNext.n_));
+        ProbPrev.setCostCurr(costLast);
+        ProbPrev.rsomPimHessianGenproc(1e-4, R, T, Y0, lambda, vLambdaR, vLambdaT, true);
+
+        if (lambda < 0)
+        {
+            ROFL_VAR1("R, T eigenvals > 0: exiting staircase")
+            break;
+        }
+
+        double costNewStart = ProbNext.f(Y0);
+        ROFL_VAR1(costNewStart)
 
         // Run next step of staircase with found initial guess
+
+        Y0.Print("Y0");
+
+        // Set Prob params
+        ProbNext.SetDomain(&ProdManiNext);
+        ProbNext.SetUseGrad(true);
+        ProbNext.SetUseHess(true);
 
         ROPTLIB::RTRNewton *RTRNewtonSolverNext = new ROPTLIB::RTRNewton(&ProbNext, &Y0); // USE INITGUESS HERE!
         RTRNewtonSolverNext->Verbose = ROPTLIB::ITERRESULT;
@@ -94,11 +124,22 @@ void runRsomRS(ROPTLIB::SampleSomProblem &Prob, const ROPTLIB::Vector &startX)
         // % Solve.
         // [x, xcost, info, options] = trustregions(problem);
         RTRNewtonSolverNext->Run();
-        // Numerically check gradient consistency (optional).
         auto XoptNext = RTRNewtonSolverNext->GetXopt();
         auto XoptNextCost = RTRNewtonSolverNext->Getfinalfun();
-
+        // Numerically check gradient consistency (optional).
         ProbNext.CheckGradHessian(XoptNext);
+
+        costLast = XoptNextCost;
+
+        ROFL_VAR1(costLast)
+
+        XoptEigVec.resize(staircaseStepIdx * d * n + staircaseStepIdx * n, 1);
+        ProbNext.RoptToEig(XoptNext, XoptEigVec);
+        XoptNext.Print("XoptNext");
+        SomUtils::VecMatD XoptNextR(n, SomUtils::MatD::Zero(staircaseStepIdx, d));
+        SomUtils::MatD XoptNextT(SomUtils::MatD::Zero(staircaseStepIdx, n));
+        ProbNext.getRotations(XoptEigVec, XoptNextR);
+        ProbNext.getTranslations(XoptEigVec, XoptNextT);
 
         // std::cout << "Prob.GetUseGrad() " << Prob.GetUseGrad() << std::endl;
         // std::cout << "Prob.GetUseHess() " << Prob.GetUseHess() << std::endl;
@@ -108,16 +149,73 @@ void runRsomRS(ROPTLIB::SampleSomProblem &Prob, const ROPTLIB::Vector &startX)
         XoptNext.Print("XoptNext");
         std::cout << "XoptNextCost " << XoptNextCost << std::endl; // x cost
 
-        XoptEigVec.resize(staircaseStepIdx * d * n + staircaseStepIdx * n, 1);
-        Prob.RoptToEig(XoptNext, XoptEigVec);
+        ProbNext.RoptToEig(XoptNext, XoptEigVec);
         ROFL_VAR1(XoptEigVec.transpose())
 
         delete RTRNewtonSolverNext;
 
-        break;
+        ProbPrev = ProbNext;
+
+        // save output
+        for (int i = 0; i < n; ++i)
+        {
+            RmanoptOutEig[i].resize(staircaseStepIdx, d);
+        }
+        TmanoptOutEig.resize(staircaseStepIdx, n);
+
+        RmanoptOutEig = XoptNextR;
+        TmanoptOutEig = XoptNextT;
+
+        // Rank stopping condition
+        ROFL_VAR1(staircaseStepIdx)
+        SomUtils::MatD XoutRhSt(SomUtils::MatD::Zero(staircaseStepIdx, d * n));
+        ProbNext.hstack(RmanoptOutEig, XoutRhSt);
+        Eigen::FullPivLU<SomUtils::MatD> luDecomp(XoutRhSt);
+        auto rank = luDecomp.rank();
+        if (rank < staircaseStepIdx)
+        {
+            staircaseStepIdx++;
+            ROFL_VAR1("Rank stopping condition reached -> Exiting RS");
+            break;
+        }
+
+        break; // TODO: For now, just 1 RS step allowed -> remove it later after fixing linesearch
     }
 
-    // Implement recovery procedure
+    // Recovery procedure
+
+    ROFL_VAR1("Running recovery procedure")
+
+    // back to SE(d)^N
+    SomUtils::VecMatD Rrecovered(n, SomUtils::MatD::Zero(d, d));
+    SomUtils::MatD Trecovered(SomUtils::MatD::Zero(d, n));
+    bool recSEDNsuccess = ProbPrev.recoverySEdN(staircaseStepIdx,
+                                                RmanoptOutEig, TmanoptOutEig,
+                                                Rrecovered, Trecovered);
+
+    ROFL_VAR1("Printing R, T SE(d)^N")
+    for (auto &m : Rrecovered)
+        ROFL_VAR1(m)
+    ROFL_VAR1(Trecovered)
+
+    ROFL_VAR1(recSEDNsuccess)
+
+    // globalize
+
+    ROFL_VAR1("Running globalization procedure")
+
+    SomUtils::VecMatD Rout(n, SomUtils::MatD::Zero(d, d));
+    SomUtils::MatD Tout(SomUtils::MatD::Zero(d, n));
+    int src = 0;
+    bool globalRecoverySuccess = ProbPrev.globalize(src, Rrecovered, Trecovered,
+                                                    Rout, Tout);
+
+    ROFL_VAR1("Printing R, T out")
+    for (auto &m : Rout)
+        ROFL_VAR1(m)
+    ROFL_VAR1(Tout)
+
+    ROFL_VAR1(globalRecoverySuccess)
 }
 
 int main(int argc, char **argv)
@@ -150,18 +248,12 @@ int main(int argc, char **argv)
     mani1.ChooseParamsSet2();
     ROPTLIB::Euclidean mani2(d, n);
     ROPTLIB::ProductManifold ProdMani(numoftypes, &mani1, numofmani1, &mani2, numofmani2);
-    // Read from csv
+    ROPTLIB::SampleSomProblem Prob(somSzD, Tijs, edges);
+
+    // Read GT from csv
     ROPTLIB::Vector xGt = ProdMani.RandominManifold();
     SomUtils::readCsvInitguess("../matlab/data/cpp_testdata/tdata_n10_mindeg3/X_gt.csv", xGt);
     xGt.Print("xGt");
-    ROPTLIB::SampleSomProblem Prob(somSzD, Tijs, edges);
-    // Set the domain of the problem to be the product of Stiefel manifolds
-    Prob.SetDomain(&ProdMani);
-
-    // Set Prob params
-    Prob.SetUseGrad(true);
-    Prob.SetUseHess(true);
-
     // ROPT to Eig (GT)
     SomUtils::MatD XgtVecEig(SomUtils::MatD::Zero(d * d * n + d * n, 1));
     SomUtils::VecMatD RgtEig(n, SomUtils::MatD::Zero(d, d));
@@ -170,6 +262,13 @@ int main(int argc, char **argv)
     Prob.getRotations(XgtVecEig, RgtEig);
     Prob.getTranslations(XgtVecEig, TgtEig);
     Prob.setGt(RgtEig, TgtEig);
+
+    // Set the domain of the problem to be the product of Stiefel manifolds
+    Prob.SetDomain(&ProdMani);
+
+    // Set Prob params
+    Prob.SetUseGrad(true);
+    Prob.SetUseHess(true);
 
     ROFL_VAR1("Printing R, T gt")
     for (auto &m : RgtEig)

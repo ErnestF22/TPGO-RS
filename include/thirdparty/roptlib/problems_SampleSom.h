@@ -334,6 +334,11 @@ namespace ROPTLIB
          */
         bool getRsRecoverySuccess() const;
 
+        /**
+         * @brief Set the costCurr_ object to @param cc
+         */
+        void setCostCurr(double cc);
+
         // private: //TODO: separate public from private members
 
         ////////////////////////////////////CLASS MEMBER VARIABLES////////////////////////////////////////////////
@@ -385,6 +390,11 @@ namespace ROPTLIB
          * "Global" reference node id (generally 0)
          */
         int src_;
+
+        /**
+         * @brief Current cost value (useful at some points e.g. linesearches)
+         */
+        double costCurr_;
 
         ////////////////////////////////////////RS////////////////////////////////////////
 
@@ -467,6 +477,21 @@ namespace ROPTLIB
          * Params are:
          * @param thresh for PIM computation thresholds (eigencouple check, stopping conditions of PIM)
          * @param R, @param T are the starting points
+         * @param Y0 reference output: new starting point for RS next step
+         * @param lambdaPimOut, vPimRout, vPimTout reference outputs: associated eigencouple
+         * @param armijo (= false by default) indicates whether the linesearch method used is based
+         * on ROPTLIB's Armijo-Goldstein (armijo = true) implementation of simply linesearchDummy (armijo = false)
+         */
+        void rsomPimHessianGenproc(double thresh,
+                                   const SomUtils::VecMatD &R, const SomUtils::MatD &T,
+                                   Vector &Y0, double &lambdaPimOut, SomUtils::VecMatD &vPimRout, SomUtils::MatD &vPimTout,
+                                   bool armijo = false) const;
+
+        /**
+         * @brief Power iteration method for R, T (generalized Procrustes) version of the problem
+         * Params are:
+         * @param thresh for PIM computation thresholds (eigencouple check, stopping conditions of PIM)
+         * @param R, @param T are the starting points
          * @param Y0 reference output
          * @param armijo (= false by default) indicates whether the linesearch method used is based
          * on ROPTLIB's Armijo-Goldstein (armijo = true) implementation of simply linesearchDummy (armijo = false)
@@ -511,7 +536,8 @@ namespace ROPTLIB
          * @brief Call stiefelRetraction, euclRetraction on szNext elements @param xRin, @param xTin, @param vRin, @param vTin
          * Return new point "Y0" in reference @param Y0R and @param Y0T
          */
-        void linesearchDummy(const SomUtils::VecMatD &xRin, const SomUtils::MatD &xTin,
+        void linesearchDummy(double costInit,
+                             const SomUtils::VecMatD &xRin, const SomUtils::MatD &xTin,
                              const SomUtils::VecMatD &vRin, const SomUtils::MatD &vTin,
                              SomUtils::VecMatD &Y0R, SomUtils::MatD &Y0T) const;
 

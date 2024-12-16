@@ -16,6 +16,8 @@ namespace ROPTLIB
         Tgt_ = SomUtils::MatD::Zero(sz_.d_, sz_.n_);
 
         src_ = 0;
+
+        costCurr_ = 1e+10;
     }
 
     SampleSomProblem::SampleSomProblem(const SomUtils::SomSize somSz, const SomUtils::MatD &Tijs, const Eigen::MatrixXi &edges)
@@ -733,7 +735,8 @@ namespace ROPTLIB
     {
         // out has same number of columns, whereas number of rows is the product of the size of the other 2 dimensions
 
-        ROFL_ASSERT_VAR5(out.rows() == in[0].rows() && out.cols() == in[0].cols() * in.size(), out.rows(), out.cols(), in[0].rows(), in[0].cols(), in.size());
+        ROFL_ASSERT_VAR5(out.rows() == in[0].rows() && out.cols() == in[0].cols() * in.size(),
+                         out.rows(), out.cols(), in[0].rows(), in[0].cols(), in.size());
 
         int colJump = in[0].cols();
         for (int i = 0; i < in.size(); ++i)
@@ -1254,6 +1257,11 @@ namespace ROPTLIB
     bool SampleSomProblem::getRsRecoverySuccess() const
     {
         return rsRecoverySuccess_;
+    }
+
+    void SampleSomProblem::setCostCurr(double cc)
+    {
+        costCurr_ = cc;
     }
 
 } // end of namespace ROPTLIB

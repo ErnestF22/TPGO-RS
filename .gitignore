@@ -41,8 +41,10 @@ octave-workspace
 #matlab/genproc/rot_errors.jpg
 #matlab/genproc/transl_errors.jpg
 
-# C++ Build Folder
+# C++ Build Folders
 build/
+build-release/
+
 
 .vscode/
 
