@@ -561,10 +561,16 @@ namespace ROPTLIB
         void QRunique(const SomUtils::VecMatD &A, SomUtils::VecMatD &Q, SomUtils::VecMatD &R) const;
 
         /**
+         * @brief Stiefel Retraction for 2D manifold from @param xIn towards direction @param e multiplied by @param t
+         * returning new point in reference @param rxe
+         * Retraction version based on QR "unique" decomposition
+         */
+        void stiefelRetractionQR(double t, const SomUtils::VecMatD &x, const SomUtils::VecMatD &e, SomUtils::VecMatD &rxe) const;
+
+        /**
          * @brief Stiefel Retraction for 2D manifold from @param xIn towards direction @param e
          * returning new point in reference @param rxe
-         * Retraction version based on sqrtm
-         * TODO: still to be implemented!!
+         * Retraction version based on QR "unique" decomposition
          */
         void stiefelRetractionQR(const SomUtils::VecMatD &x, const SomUtils::VecMatD &e, SomUtils::VecMatD &rxe) const;
 

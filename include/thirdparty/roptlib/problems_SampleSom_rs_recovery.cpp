@@ -1296,6 +1296,29 @@ namespace ROPTLIB
         }
     }
 
+    void SampleSomProblem::stiefelRetractionQR(double t, const SomUtils::VecMatD &x, const SomUtils::VecMatD &e, SomUtils::VecMatD &rxe) const
+    {
+        // function Y = retraction_qr(X, U, t)
+        //     % It is necessary to call qr_unique rather than simply qr to ensure
+        //     % this is a retraction, to avoid spurious column sign flips.
+        //     if nargin < 3
+        //         Y = qr_unique(X + U);
+        //     else
+        //         Y = qr_unique(X + t*U);
+        //     end
+        // end
+
+        SomUtils::VecMatD rTmp(sz_.n_);
+        SomUtils::VecMatD et = e;
+        std::for_each(et.begin(), et.end(), [t](SomUtils::MatD &x) { //^^^ take argument by reference: LAMBDA FUNCTION
+            // ROFL_VAR1(alpha)
+            x *= t;
+        });
+        SomUtils::VecMatD xetSum (sz_.n_, SomUtils::MatD::Zero(x[0].rows(), x[0].cols()));
+        std::transform (x.begin(), x.end(), et.begin(), xetSum.begin(), std::plus<SomUtils::MatD>());
+        QRunique(xetSum, rxe, rTmp);
+    }
+
     void SampleSomProblem::stiefelRetractionQR(const SomUtils::VecMatD &x, const SomUtils::VecMatD &e, SomUtils::VecMatD &rxe) const
     {
         // function Y = retraction_qr(X, U, t)
@@ -1308,7 +1331,10 @@ namespace ROPTLIB
         //     end
         // end
 
-        
+        SomUtils::VecMatD rTmp(sz_.n_);
+        SomUtils::VecMatD xeSum (sz_.n_, SomUtils::MatD::Zero(x[0].rows(), x[0].cols()));
+        std::transform (x.begin(), x.end(), e.begin(), xeSum.begin(), std::plus<SomUtils::MatD>());
+        QRunique(xeSum, rxe, rTmp);
     }
 
     void SampleSomProblem::euclRetraction(const SomUtils::MatD &x, const SomUtils::MatD &d, SomUtils::MatD &y, double t) const
@@ -1394,7 +1420,7 @@ namespace ROPTLIB
             // ROFL_VAR1(alpha)
             x *= alpha;
         });
-        stiefelRetractionPolar(xRin, alphaVrIn, Y0Rtry);
+        stiefelRetractionQR(xRin, alphaVrIn, Y0Rtry);
         // ROFL_VAR1(Y0R[0]);
 
         SomUtils::MatD alphaVtIn = alpha * vTin;
@@ -1421,7 +1447,7 @@ namespace ROPTLIB
             });
             alphaVtIn = alpha * vTin;
 
-            stiefelRetractionPolar(xRin, alphaVrIn, Y0Rtry);
+            stiefelRetractionQR(xRin, alphaVrIn, Y0Rtry);
             euclRetraction(xTin, alphaVtIn, Y0Ttry);
 
             newf = costEigen(Y0Rtry, Y0Ttry);
