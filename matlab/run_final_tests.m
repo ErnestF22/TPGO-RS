@@ -5,71 +5,71 @@ close all;
 % 1a) PW TRANSLATION DATA INPUT: R, T are the gt, Tijs_nois are the input data
 testdatas = [];
 
-N = 5;
-mindeg = 2;
-testdata = testNetwork_params(3, N, 'banded', mindeg);
-testdata.mindeg = mindeg;
-testdatas = [testdatas, testdata];
-
-N = 5;
-mindeg = 3;
-testdata = testNetwork_params(3, N, 'banded', mindeg);
-testdata.mindeg = mindeg;
-testdatas = [testdatas, testdata];
-
-N = 6;
-mindeg = 2;
-testdata = testNetwork_params(3, N, 'banded', mindeg);
-testdata.mindeg = mindeg;
-testdatas = [testdatas, testdata];
-
-N = 6;
-mindeg = 3;
-testdata = testNetwork_params(3, N, 'banded', mindeg);
-testdata.mindeg = mindeg;
-testdatas = [testdatas, testdata];
-
-N = 7;
-mindeg = 2;
-testdata = testNetwork_params(3, N, 'banded', mindeg);
-testdata.mindeg = mindeg;
-testdatas = [testdatas, testdata];
-
-N = 7;
-mindeg = 3;
-testdata = testNetwork_params(3, N, 'banded', mindeg);
-testdata.mindeg = mindeg;
-testdatas = [testdatas, testdata];
-
-N = 8;
-mindeg = 2;
-testdata = testNetwork_params(3, N, 'banded', mindeg);
-testdata.mindeg = mindeg;
-testdatas = [testdatas, testdata];
-
-N = 8;
-mindeg = 3;
-testdata = testNetwork_params(3, N, 'banded', mindeg);
-testdata.mindeg = mindeg;
-testdatas = [testdatas, testdata];
-
-N = 9;
-mindeg = 2;
-testdata = testNetwork_params(3, N, 'banded', mindeg);
-testdata.mindeg = mindeg;
-testdatas = [testdatas, testdata];
-
-N = 9;
-mindeg = 3;
-testdata = testNetwork_params(3, N, 'banded', mindeg);
-testdata.mindeg = mindeg;
-testdatas = [testdatas, testdata];
-
-% N = 10;
+% N = 5;
 % mindeg = 2;
 % testdata = testNetwork_params(3, N, 'banded', mindeg);
 % testdata.mindeg = mindeg;
 % testdatas = [testdatas, testdata];
+% 
+% N = 5;
+% mindeg = 3;
+% testdata = testNetwork_params(3, N, 'banded', mindeg);
+% testdata.mindeg = mindeg;
+% testdatas = [testdatas, testdata];
+% 
+% N = 6;
+% mindeg = 2;
+% testdata = testNetwork_params(3, N, 'banded', mindeg);
+% testdata.mindeg = mindeg;
+% testdatas = [testdatas, testdata];
+% 
+% N = 6;
+% mindeg = 3;
+% testdata = testNetwork_params(3, N, 'banded', mindeg);
+% testdata.mindeg = mindeg;
+% testdatas = [testdatas, testdata];
+% 
+% N = 7;
+% mindeg = 2;
+% testdata = testNetwork_params(3, N, 'banded', mindeg);
+% testdata.mindeg = mindeg;
+% testdatas = [testdatas, testdata];
+% 
+% N = 7;
+% mindeg = 3;
+% testdata = testNetwork_params(3, N, 'banded', mindeg);
+% testdata.mindeg = mindeg;
+% testdatas = [testdatas, testdata];
+% 
+% N = 8;
+% mindeg = 2;
+% testdata = testNetwork_params(3, N, 'banded', mindeg);
+% testdata.mindeg = mindeg;
+% testdatas = [testdatas, testdata];
+% 
+% N = 8;
+% mindeg = 3;
+% testdata = testNetwork_params(3, N, 'banded', mindeg);
+% testdata.mindeg = mindeg;
+% testdatas = [testdatas, testdata];
+% 
+% N = 9;
+% mindeg = 2;
+% testdata = testNetwork_params(3, N, 'banded', mindeg);
+% testdata.mindeg = mindeg;
+% testdatas = [testdatas, testdata];
+% 
+% N = 9;
+% mindeg = 3;
+% testdata = testNetwork_params(3, N, 'banded', mindeg);
+% testdata.mindeg = mindeg;
+% testdatas = [testdatas, testdata];
+% 
+% % N = 10;
+% % mindeg = 2;
+% % testdata = testNetwork_params(3, N, 'banded', mindeg);
+% % testdata.mindeg = mindeg;
+% % testdatas = [testdatas, testdata];
 
 N = 10;
 mindeg = 3;

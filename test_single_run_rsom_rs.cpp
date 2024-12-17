@@ -62,11 +62,13 @@ void runRsomRS(ROPTLIB::SampleSomProblem &Prob, const ROPTLIB::Vector &startX)
     auto rGt = Prob.Rgt_;
     auto tGt = Prob.Tgt_;
 
+    int staircaseStepSkipped;
+
     for (staircaseStepIdx = r0; staircaseStepIdx <= d * n + 1; ++staircaseStepIdx)
     {
+        staircaseStepSkipped = 1;
         ROFL_VAR1(staircaseStepIdx)
         ROFL_VAR1(costLast)
-
 
         SomUtils::VecMatD R(n, SomUtils::MatD::Zero(staircaseStepIdx - 1, d));
         SomUtils::MatD T(SomUtils::MatD::Zero(staircaseStepIdx - 1, n));
@@ -93,13 +95,15 @@ void runRsomRS(ROPTLIB::SampleSomProblem &Prob, const ROPTLIB::Vector &startX)
         SomUtils::VecMatD vLambdaR(n, SomUtils::MatD::Zero(somSzNext.p_, somSzNext.d_));
         SomUtils::MatD vLambdaT(SomUtils::MatD::Zero(somSzNext.p_, somSzNext.n_));
         ProbPrev.setCostCurr(costLast);
-        ProbPrev.rsomPimHessianGenproc(1e-4, R, T, Y0, lambda, vLambdaR, vLambdaT, true);
+        ProbPrev.rsomPimHessianGenproc(1e-4, R, T, Y0, lambda, vLambdaR, vLambdaT);
 
         if (lambda < 0)
         {
             ROFL_VAR1("R, T eigenvals > 0: exiting staircase")
             break;
         }
+
+        staircaseStepSkipped = 0;
 
         double costNewStart = ProbNext.f(Y0);
         ROFL_VAR1(costNewStart)
@@ -189,7 +193,7 @@ void runRsomRS(ROPTLIB::SampleSomProblem &Prob, const ROPTLIB::Vector &startX)
     // back to SE(d)^N
     SomUtils::VecMatD Rrecovered(n, SomUtils::MatD::Zero(d, d));
     SomUtils::MatD Trecovered(SomUtils::MatD::Zero(d, n));
-    bool recSEDNsuccess = ProbPrev.recoverySEdN(staircaseStepIdx,
+    bool recSEDNsuccess = ProbPrev.recoverySEdN(staircaseStepIdx - staircaseStepSkipped + 1,
                                                 RmanoptOutEig, TmanoptOutEig,
                                                 Rrecovered, Trecovered);
 

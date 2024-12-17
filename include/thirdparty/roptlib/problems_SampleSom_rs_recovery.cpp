@@ -1173,22 +1173,142 @@ namespace ROPTLIB
         std::cout << "cost of LS output " << RNewtonSolver->Getfinalfun() << std::endl; // x cost
     }
 
+    // void SampleSomProblem::stiefelRetractionQR(const SomUtils::VecMatD &x, const SomUtils::VecMatD &e, SomUtils::VecMatD &rxe) const
+    // {
+    //     // N = size(x, 3);
+    //     // p = size(x, 2);
+    //     // if N > 1
+    //     //     rxe = zeros(size(x));
+    //     //     for ii = 1 : N
+    //     //         x_ii = x( :, :, ii);
+    //     //         e_ii = e( :, :, ii);
+    //     //         [ Q, R ] = qr(x_ii + e_ii);
+    //     //         rxe( :, :, ii) = R;
+    //     //     end
+    //     // else % rxe = zeros(size(x));
+    //     //     [ Q, R ] = qr(x + e);
+    //     //     rxe = R;
+    //     // end
+    // }
+
+    void SampleSomProblem::QRunique(const SomUtils::MatD &a, SomUtils::MatD &Q, SomUtils::MatD &R) const
+    {
+        // int m = a.rows();
+        // int n = a.cols();
+
+        // //     [q, r] = qr(A(:, :, k), 0);
+        // Eigen::HouseholderQR<SomUtils::MatD> qr(a);
+        // qr.compute(SomUtils::MatD::Zero(a.rows(), a.cols()));
+        // auto q = qr.matrixQR();
+        // auto r = qr.;
+
+        // // QR decomposition on m-by-n matrix A such that A = Q*R.
+        // ROFL_ASSERT(isEqualFloats(a, q * r))
+
+        // if (m >= n)
+        // {
+        //     // The factor R is an m-by-n upper triangular matrix
+        //     ROFL_ASSERT_VAR3(r.isUpperTriangular() && r.rows() == m && r.cols() == n, r.isUpperTriangular(), r.rows(), r.cols())
+
+        //     // Q is an m-by-m unitary matrix.
+        //     // ROFL_ASSERT_VAR3(q.isUnitary() && q.rows() == m && q.cols() == m, q.isUnitary(), q.rows(), q.cols())
+        // }
+        // else
+        // {
+        //     // The factor R is an m-by-m upper triangular matrix
+        //     ROFL_ASSERT_VAR3(r.isUpperTriangular() && r.rows() == m && r.cols() == m, r.isUpperTriangular(), r.rows(), r.cols())
+
+        //     // Q is an m-by-n unitary matrix.
+        //     ROFL_ASSERT_VAR2(q.rows() == m && q.cols() == n, q.rows(), q.cols())
+        // }
+
+        // //     % In the real case, s holds the signs of the diagonal entries of R.
+        // //     % In the complex case, s holds the unit-modulus phases of these
+        // //     % entries. In both cases, d = diag(s) is a unitary matrix, and
+        // //     % its inverse is d* = diag(conj(s)).
+        // //     s = sign(diag(r));
+        // auto diagR = R.diagonal();
+        // auto s = diagR.array().sign();
+
+        // //     % Since a = qr (with 'a' the slice of A currently being processed),
+        // //     % it is also true that a = (qd)(d*r). By construction, qd still has
+        // //     % orthonormal columns, and d*r has positive real entries on its
+        // //     % diagonal, /unless/ s contains zeros. The latter can only occur if
+        // //     % slice a does not have full column rank, so that the decomposition
+        // //     % is not unique: we make an arbitrary choice in that scenario.
+        // //     % While exact zeros are unlikely, they may occur if, for example,
+        // //     % the slice a contains repeated columns, or columns that are equal
+        // //     % to zero. If an entry should be mathematically zero but is only
+        // //     % close to zero numerically, then it is attributed an arbitrary
+        // //     % sign dictated by the numerical noise: this is also fine.
+
+        // //     s(s == 0) = 1;
+        // for (int i = 0; i < s.size(); ++i)
+        // {
+        //     if (s[i] == 0)
+        //         s[i] == 1;
+        // }
+
+        // //     Q(:, :, k) = bsxfun(@times, q, s.');
+        // //     R(:, :, k) = bsxfun(@times, r, conj(s));
+
+        // for (int i = 0; i < Q.rows(); ++i)
+        //     for (int i = 0; i < Q.rows(); ++i)
+        //     {
+        //         Q = q * s.transpose();
+        //     }
+
+        // // end
+    }
+
+    void SampleSomProblem::QRunique(const SomUtils::VecMatD &A, SomUtils::VecMatD &Q, SomUtils::VecMatD &R) const
+    {
+        // [m, n, N] = size(A);
+        // if m >= n % A (or its slices) has more rows than columns
+        //     Q = zeros(m, n, N, class(A));
+        //     R = zeros(n, n, N, class(A));
+        // else
+        //     Q = zeros(m, m, N, class(A));
+        //     R = zeros(m, n, N, class(A));
+        // end
+
+        int m = A[0].rows();
+        int n = A[0].cols();
+        int N = A.size();
+        if (m >= n)
+        {
+            Q.resize(N, SomUtils::MatD::Zero(m, n));
+            R.resize(N, SomUtils::MatD::Zero(n, n));
+        }
+        else
+        {
+            Q.resize(N, SomUtils::MatD::Zero(m, m));
+            R.resize(N, SomUtils::MatD::Zero(m, n));
+        }
+
+        // for k = 1 : N
+        // ...
+
+        for (int i = 0; i < N; ++i)
+        {
+            ROFL_ASSERT(A[i].rows() == m && A[i].cols() == n)
+            QRunique(A[i], Q[i], R[i]);
+        }
+    }
+
     void SampleSomProblem::stiefelRetractionQR(const SomUtils::VecMatD &x, const SomUtils::VecMatD &e, SomUtils::VecMatD &rxe) const
     {
-        // N = size(x, 3);
-        // p = size(x, 2);
-        // if N > 1
-        //     rxe = zeros(size(x));
-        //     for ii = 1 : N
-        //         x_ii = x( :, :, ii);
-        //         e_ii = e( :, :, ii);
-        //         [ Q, R ] = qr(x_ii + e_ii);
-        //         rxe( :, :, ii) = R;
+        // function Y = retraction_qr(X, U, t)
+        //     % It is necessary to call qr_unique rather than simply qr to ensure
+        //     % this is a retraction, to avoid spurious column sign flips.
+        //     if nargin < 3
+        //         Y = qr_unique(X + U);
+        //     else
+        //         Y = qr_unique(X + t*U);
         //     end
-        // else % rxe = zeros(size(x));
-        //     [ Q, R ] = qr(x + e);
-        //     rxe = R;
         // end
+
+        
     }
 
     void SampleSomProblem::euclRetraction(const SomUtils::MatD &x, const SomUtils::MatD &d, SomUtils::MatD &y, double t) const
@@ -1198,7 +1318,7 @@ namespace ROPTLIB
         y = x + t * d;
     }
 
-    void SampleSomProblem::stiefelRetraction(const SomUtils::MatD &xIn, const SomUtils::MatD &e, SomUtils::MatD &rxe) const
+    void SampleSomProblem::stiefelRetractionPolar(const SomUtils::MatD &xIn, const SomUtils::MatD &e, SomUtils::MatD &rxe) const
     {
 
         // else %     rxe = zeros(size(x));
@@ -1212,7 +1332,7 @@ namespace ROPTLIB
 
         rxe.setZero();
         SomUtils::MatD Ip(SomUtils::MatD::Identity(sz_.p_, sz_.p_));
-        ROFL_VAR3(Ip, e, e.transpose() * e);
+        // ROFL_VAR3(Ip, e, e.transpose() * e);
         SomUtils::MatD sndTerm = (Ip + e.transpose() * e).sqrt().inverse();
         rxe = (xIn + e) * sndTerm;
 
@@ -1220,7 +1340,7 @@ namespace ROPTLIB
         ROFL_ASSERT(((rxe.transpose() * rxe) - SomUtils::MatD::Identity(sz_.d_, sz_.d_)).cwiseAbs().maxCoeff() < 1e-6);
     }
 
-    void SampleSomProblem::stiefelRetraction(const SomUtils::VecMatD &xIn, const SomUtils::VecMatD &e, SomUtils::VecMatD &rxe) const
+    void SampleSomProblem::stiefelRetractionPolar(const SomUtils::VecMatD &xIn, const SomUtils::VecMatD &e, SomUtils::VecMatD &rxe) const
     {
         // N = size(x, 3);
         // p = size(x, 2);
@@ -1237,11 +1357,11 @@ namespace ROPTLIB
 
         for (int i = 0; i < sz_.n_; ++i)
         {
-            stiefelRetraction(xIn[i], e[i], rxe[i]);
+            stiefelRetractionPolar(xIn[i], e[i], rxe[i]);
         }
     }
 
-    void SampleSomProblem::linesearchDummy(double costInit,
+    void SampleSomProblem::linesearchDummy(const double costInit,
                                            const SomUtils::VecMatD &xRin, const SomUtils::MatD &xTin,
                                            const SomUtils::VecMatD &vRin, const SomUtils::MatD &vTin,
                                            SomUtils::VecMatD &Y0R, SomUtils::MatD &Y0T) const
@@ -1251,30 +1371,76 @@ namespace ROPTLIB
         int nrs = xTin.rows();
         SomUtils::SomSize szNext(nrs, sz_.d_, sz_.n_);
 
-        stiefelRetraction(xRin, vRin, Y0R);
+        Y0R = xRin;
+        Y0T = xTin;
+
+        SomUtils::VecMatD Y0Rtry = Y0R;
+        SomUtils::MatD Y0Ttry = Y0T;
+
+        int maxLsSteps = 25;
+        double contractionFactor = 0.5;
+
+        SomUtils::MatD vVec(SomUtils::MatD::Zero(vRin[0].rows() * vRin[0].cols() * vRin.size() + vTin.rows() * vTin.cols(), 1));
+        vectorizeRT(vRin, vTin, vVec);
+
+        double normD = vVec.norm();
+
+        double initialStepsize = normD;
+        double alpha = initialStepsize / normD;
+        double f0 = costInit;
+
+        SomUtils::VecMatD alphaVrIn = vRin;
+        std::for_each(alphaVrIn.begin(), alphaVrIn.end(), [alpha](SomUtils::MatD &x) { //^^^ take argument by reference: LAMBDA FUNCTION
+            // ROFL_VAR1(alpha)
+            x *= alpha;
+        });
+        stiefelRetractionPolar(xRin, alphaVrIn, Y0Rtry);
         // ROFL_VAR1(Y0R[0]);
 
-        euclRetraction(xTin, vTin, Y0T);
+        SomUtils::MatD alphaVtIn = alpha * vTin;
+
+        euclRetraction(xTin, alphaVtIn, Y0Ttry);
         // ROFL_VAR1(Y0T)
 
-        double costAfterLinesearch = costEigen(Y0R, Y0T);
+        double newf = costEigen(Y0Rtry, Y0Ttry);
+        ROFL_VAR2(newf, f0)
 
-        if (costInit < costAfterLinesearch)
+        int costEvaluations = 1;
+
+        while (newf >= f0)
         {
-            auto vRinMinus = vRin;
-            std::for_each(vRinMinus.begin(), vRinMinus.end(), [](SomUtils::MatD &x) { //^^^ take argument by reference: LAMBDA FUNCTION
-                x *= -1;
+            // Reduce the step size,
+            alpha *= contractionFactor;
+
+            // and look closer down the line.
+            alphaVrIn = vRin;
+            // ROFL_VAR1(alpha)
+            std::for_each(alphaVrIn.begin(), alphaVrIn.end(), [alpha](SomUtils::MatD &x) { //^^^ take argument by reference: LAMBDA FUNCTION
+                // ROFL_VAR1(alpha)
+                x *= alpha;
             });
-            stiefelRetraction(xRin, vRinMinus, Y0R);
-            euclRetraction(xTin, -vTin, Y0T);
-            double costAfterNegLinesearch = costEigen(Y0R, Y0T);
-            if (costInit < costAfterNegLinesearch)
-            {
-                ROFL_ASSERT_VAR1(0, "linesearchDummy FAIL!")
-            }
+            alphaVtIn = alpha * vTin;
+
+            stiefelRetractionPolar(xRin, alphaVrIn, Y0Rtry);
+            euclRetraction(xTin, alphaVtIn, Y0Ttry);
+
+            newf = costEigen(Y0Rtry, Y0Ttry);
+
+            ROFL_VAR2(newf, f0)
+
+            costEvaluations++;
+
+            // make sure we don't run out of budget.
+            if (costEvaluations >= maxLsSteps)
+                break;
         }
-        else
-            return;
+
+        if (newf <= f0)
+        {
+            // accept step
+            Y0R = Y0Rtry;
+            Y0T = Y0Ttry;
+        }
     }
 
     ////////////////////////////////////////RECOVERY////////////////////////////////////////
@@ -1786,6 +1952,7 @@ namespace ROPTLIB
                 if (nodesHighDeg(i, 0) != 0)
                     RmanoptOutHighDeg.push_back(RmanoptOut[i]);
             }
+            // ROFL_VAR1("hstack call from here");
             hstack(RmanoptOutHighDeg, RstackedHighDeg);
             RTstackedHighDeg.block(0, 0, nrs, sz_.d_ * numNodesHighDeg) = RstackedHighDeg;
             RTstackedHighDeg.block(0, sz_.d_ * numNodesHighDeg, nrs, numEdges_) = Tedges;

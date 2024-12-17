@@ -8,6 +8,9 @@
 #include <numeric>
 
 #include <eigen3/Eigen/Dense>
+#include <eigen3/Eigen/Sparse>
+#include <eigen3/Eigen/SparseLU>
+#include <eigen3/Eigen/SparseQR>
 #include <unsupported/Eigen/MatrixFunctions>
 
 #include <rofl/common/io.h>
@@ -262,6 +265,13 @@ namespace ROPTLIB
         void vectorizeR(const SomUtils::VecMatD &R, SomUtils::MatD &RvecOut) const;
 
         /**
+         * @brief Return vectorized (following col-major order, like in MATLAB) version of @param R
+         * Followed by vectorized version of @param T
+         * in output reference @param XvecOut
+         */
+        void vectorizeRT(const SomUtils::VecMatD &R, const SomUtils::MatD &T, SomUtils::MatD &XvecOut) const;
+
+        /**
          * @brief Return @param mOut as a copy of @param mIn but with an extra zero-row at the bottom of the matrix
          */
         void catZeroRow(const SomUtils::MatD &mIn, SomUtils::MatD &mOut) const;
@@ -505,6 +515,52 @@ namespace ROPTLIB
         void linesearchArmijoROPTLIB(const Vector &xIn, const SomUtils::SomSize &somSzLocal, Vector &Y0) const;
 
         /**
+         * @brief Thin QR factorization ensuring diagonal of R is real, positive if possible.
+            % If A is a matrix, then Q, R are matrices such that A = QR where Q'*Q = I
+            % and R is upper triangular. If A is real, then so are Q and R.
+            % This is a thin QR factorization in the sense that if A has more rows than
+            % columns, than Q has the same size as A.
+            %
+            % If A has full column rank, then R has positive reals on its diagonal.
+            % Otherwise, it may have zeros on its diagonal.
+            %
+            % This is equivalent to a call to Matlab's qr(A, 0), up to possible
+            % sign/phase changes of the columns of Q and of the rows of R to ensure
+            % the stated properties of the diagonal of R. If A has full column rank,
+            % this decomposition is unique, hence the name of the function.
+            %
+            % If A is a 3D array, then Q, R are also 3D arrays and this function is
+            % applied to each slice separately.
+            % Adapted from Manopt: www.manopt.org.
+
+            2D version
+         */
+        void QRunique(const SomUtils::MatD &A, SomUtils::MatD &Q, SomUtils::MatD &R) const;
+
+        /**
+         * @brief Thin QR factorization ensuring diagonal of R is real, positive if possible.
+            % If A is a matrix, then Q, R are matrices such that A = QR where Q'*Q = I
+            % and R is upper triangular. If A is real, then so are Q and R.
+            % This is a thin QR factorization in the sense that if A has more rows than
+            % columns, than Q has the same size as A.
+            %
+            % If A has full column rank, then R has positive reals on its diagonal.
+            % Otherwise, it may have zeros on its diagonal.
+            %
+            % This is equivalent to a call to Matlab's qr(A, 0), up to possible
+            % sign/phase changes of the columns of Q and of the rows of R to ensure
+            % the stated properties of the diagonal of R. If A has full column rank,
+            % this decomposition is unique, hence the name of the function.
+            %
+            % If A is a 3D array, then Q, R are also 3D arrays and this function is
+            % applied to each slice separately.
+            % Adapted from Manopt: www.manopt.org.
+
+            3D version
+         */
+        void QRunique(const SomUtils::VecMatD &A, SomUtils::VecMatD &Q, SomUtils::VecMatD &R) const;
+
+        /**
          * @brief Stiefel Retraction for 2D manifold from @param xIn towards direction @param e
          * returning new point in reference @param rxe
          * Retraction version based on sqrtm
@@ -524,19 +580,19 @@ namespace ROPTLIB
          * returning new point in reference @param rxe
          * Retraction version based on sqrtm
          */
-        void stiefelRetraction(const SomUtils::MatD &xIn, const SomUtils::MatD &e, SomUtils::MatD &rxe) const;
+        void stiefelRetractionPolar(const SomUtils::MatD &xIn, const SomUtils::MatD &e, SomUtils::MatD &rxe) const;
 
         /**
          * @brief Stiefel Retraction for 3D manifold from @param xIn towards direction @param e
          * returning new point in reference @param rxe
          */
-        void stiefelRetraction(const SomUtils::VecMatD &xIn, const SomUtils::VecMatD &e, SomUtils::VecMatD &rxe) const;
+        void stiefelRetractionPolar(const SomUtils::VecMatD &xIn, const SomUtils::VecMatD &e, SomUtils::VecMatD &rxe) const;
 
         /**
-         * @brief Call stiefelRetraction, euclRetraction on szNext elements @param xRin, @param xTin, @param vRin, @param vTin
+         * @brief Call stiefelRetractionPolar, euclRetraction on szNext elements @param xRin, @param xTin, @param vRin, @param vTin
          * Return new point "Y0" in reference @param Y0R and @param Y0T
          */
-        void linesearchDummy(double costInit,
+        void linesearchDummy(const double costInit,
                              const SomUtils::VecMatD &xRin, const SomUtils::MatD &xTin,
                              const SomUtils::VecMatD &vRin, const SomUtils::MatD &vTin,
                              SomUtils::VecMatD &Y0R, SomUtils::MatD &Y0T) const;

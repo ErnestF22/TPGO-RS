@@ -1134,6 +1134,48 @@ namespace ROPTLIB
         ROFL_ASSERT(fullIdx == RvecOut.rows())
     }
 
+    void SampleSomProblem::vectorizeRT(const SomUtils::VecMatD &R, const SomUtils::MatD &T, SomUtils::MatD &XvecOut) const
+    {
+        // int fullRotsSz = sz_.p_ * sz_.d_ * sz_.n_;
+
+        // for (int i=0; i<fullRotsSz; ++i) {
+        // }
+
+        int n = R.size();
+
+        ROFL_ASSERT(T.cols() == n)
+
+        int fullIdx = 0;
+        for (int i = 0; i < n; ++i)
+        {
+            int ric = R[i].cols();
+            int rir = R[i].rows();
+            for (int j = 0; j < ric; ++j)
+            {
+                for (int k = 0; k < rir; ++k)
+                {
+                    XvecOut(fullIdx, 0) = R[i](k, j);
+                    fullIdx++;
+                    // ROFL_VAR4(i, j, k, fullIdx);
+                }
+            }
+        }
+
+        for (int i = 0; i < T.cols(); ++i)
+        {
+            for (int j = 0; j < T.rows(); ++j)
+            {
+                XvecOut(fullIdx, 0) = T(j, i);
+                fullIdx++;
+                // ROFL_VAR4(i, j, k, fullIdx);
+            }
+        }
+
+        //TODO: more asserts may be added
+
+        ROFL_ASSERT(fullIdx == XvecOut.rows())
+    }
+
     void SampleSomProblem::catZeroRow(const SomUtils::MatD &mIn, SomUtils::MatD &mOut) const
     {
         ROFL_ASSERT(mOut.rows() == mIn.rows() + 1);
