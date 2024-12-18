@@ -3,6 +3,54 @@
 namespace ROPTLIB
 {
     ////////////////////////////////////////RS////////////////////////////////////////
+    bool SampleSomProblem::checkIsStiefelTg(const SomUtils::MatD &m, const SomUtils::MatD &mTg) const
+    {
+        // For any matrix representative $U \in St(n, p)$, the tangent space of $St(n, p)$ at $U$ is represented by
+        // U\transpose \Delta = -\Delta\transpose U
+        double diff = (m.transpose() * mTg + mTg.transpose() * m).cwiseAbs().maxCoeff();
+        if (!(diff >= 0 && diff < 1e-5))
+        {
+            ROFL_VAR1("Check failed here")
+            return false;
+        }
+
+        return true;
+    }
+
+    bool SampleSomProblem::checkIsStiefelTg(const SomUtils::VecMatD &m, const SomUtils::VecMatD &mTg) const
+    {
+        int n = m.size();
+        ROFL_ASSERT(n == mTg.size())
+
+        for (int i = 0; i < n; ++i)
+        {
+            if (!checkIsStiefelTg(m[i], mTg[i]))
+                return false;
+        }
+
+        return true;
+    }
+
+    bool SampleSomProblem::checkIsStiefelTgNorm(const SomUtils::MatD &m, const SomUtils::MatD &mTg) const
+    {
+        // For any matrix representative $U \in St(n, p)$, the tangent space of $St(n, p)$ at $U$ is represented by
+        // U\transpose \Delta = -\Delta\transpose U
+        double diff = (m.transpose() * mTg + mTg.transpose() * m).cwiseAbs().maxCoeff();
+        if (!(diff >= 0 && diff < 1e-5))
+        {
+            ROFL_VAR1("Check failed here")
+            return false;
+        }
+
+        double mOutNorm = mTg.norm();
+        if (!(mOutNorm > 1 - 1e-5 && mOutNorm < 1 + 1e-5, mOutNorm))
+        {
+            ROFL_VAR1("Check failed here")
+            return false;
+        }
+
+        return true;
+    }
 
     void SampleSomProblem::stiefelRandTgNormVector(const SomUtils::MatD &mIn, SomUtils::MatD &mOut) const
     {
@@ -28,13 +76,7 @@ namespace ROPTLIB
         normalizeEucl(tmpProj, mOut);
         // ROFL_VAR1(mOut);
 
-        // For any matrix representative $U \in St(n, p)$, the tangent space of $St(n, p)$ at $U$ is represented by
-        // U\transpose \Delta = -\Delta\transpose U
-
-        double diff = (mIn.transpose() * mOut + mOut.transpose() * mIn).cwiseAbs().maxCoeff();
-        ROFL_ASSERT_VAR1(diff >= 0 && diff < 1e-5, diff);
-        double mOutNorm = mOut.norm();
-        ROFL_ASSERT_VAR1(mOutNorm > 1 - 1e-5 && mOutNorm < 1 + 1e-5, mOutNorm);
+        ROFL_ASSERT(checkIsStiefelTg(mIn, mOut))
     }
 
     void SampleSomProblem::stiefelRandTgNormVector(const SomUtils::VecMatD &mIn, SomUtils::VecMatD &mOut) const
@@ -498,106 +540,106 @@ namespace ROPTLIB
 
     void SampleSomProblem::rsomPimHessianGenprocSmall(double thresh, const SomUtils::VecMatD &R, const SomUtils::MatD &T) const
     {
-        // [Y_star, lambda, v] = rsom_pim_hessian_genproc( ...
-        //     X, problem_struct_next, thr);
-        // disp("v") // %just to remove unused variable warning
-        // disp(v)
-        // if lambda > 0
-        //     disp("R, T eigenvals > 0: exiting staircase")
-        // break;
+        // // [Y_star, lambda, v] = rsom_pim_hessian_genproc( ...
+        // //     X, problem_struct_next, thr);
+        // // disp("v") // %just to remove unused variable warning
+        // // disp(v)
+        // // if lambda > 0
+        // //     disp("R, T eigenvals > 0: exiting staircase")
+        // // break;
 
-        /////////////////////////////////////////////////////
-        // if ~exist('thresh', 'var')
-        //     thresh = 1e-6;
-        // end
+        // /////////////////////////////////////////////////////
+        // // if ~exist('thresh', 'var')
+        // //     thresh = 1e-6;
+        // // end
 
-        // Rnext = cat_zero_rows_3d_array(X.R);
-        // Tnext = cat_zero_row(X.T);
-        // Xnext.R = Rnext;
-        // Xnext.T = Tnext;
-        // rhess_fun_han = @(u) hess_genproc(Xnext,u,problem_struct_next);
-        int staircaseNextStepLevel = T.rows() + 1;
-        ROFL_VAR1(staircaseNextStepLevel);
-        SomUtils::VecMatD Rnext(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
-        catZeroRow3dArray(R, Rnext);
-        SomUtils::MatD Tnext(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
-        catZeroRow(T, Tnext);
+        // // Rnext = cat_zero_rows_3d_array(X.R);
+        // // Tnext = cat_zero_row(X.T);
+        // // Xnext.R = Rnext;
+        // // Xnext.T = Tnext;
+        // // rhess_fun_han = @(u) hess_genproc(Xnext,u,problem_struct_next);
+        // int staircaseNextStepLevel = T.rows() + 1;
+        // ROFL_VAR1(staircaseNextStepLevel);
+        // SomUtils::VecMatD Rnext(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
+        // catZeroRow3dArray(R, Rnext);
+        // SomUtils::MatD Tnext(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
+        // catZeroRow(T, Tnext);
 
-        // stiefel_normalize_han = @(x) x./ (norm(x(:))); //Note: this is basically eucl_normalize_han
+        // // stiefel_normalize_han = @(x) x./ (norm(x(:))); //Note: this is basically eucl_normalize_han
 
-        // u_start.R = stiefel_randTangentNormVector(Rnext);
-        SomUtils::VecMatD RnextTg(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
-        stiefelRandTgNormVector(Rnext, RnextTg);
-        // u_start.R = stiefel_normalize(Rnext, u_start.R);
-        SomUtils::VecMatD RnextTgNorm(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
-        normalizeEucl(RnextTg, RnextTgNorm);
+        // // u_start.R = stiefel_randTangentNormVector(Rnext);
+        // SomUtils::VecMatD RnextTg(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
+        // stiefelRandTgNormVector(Rnext, RnextTg);
+        // // u_start.R = stiefel_normalize(Rnext, u_start.R);
+        // SomUtils::VecMatD RnextTgNorm(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
+        // normalizeEucl(RnextTg, RnextTgNorm);
 
-        // u_start.T = rand(size(Tnext));
-        auto TnextTg = SomUtils::MatD::Random(staircaseNextStepLevel, sz_.n_);
-        // u_start.T = stiefel_normalize_han(u_start.T);
-        SomUtils::MatD TnextTgNorm(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
-        normalizeEucl(TnextTg, TnextTgNorm);
+        // // u_start.T = rand(size(Tnext));
+        // auto TnextTg = SomUtils::MatD::Random(staircaseNextStepLevel, sz_.n_);
+        // // u_start.T = stiefel_normalize_han(u_start.T);
+        // SomUtils::MatD TnextTgNorm(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
+        // normalizeEucl(TnextTg, TnextTgNorm);
 
-        // [lambda_pim, v_pim] = pim_function_genproc(rhess_fun_han, u_start, stiefel_normalize_han, thresh);
-        // disp('Difference between lambda*v_max and H(v_max) should be in the order of the tolerance:')
-        double lambdaPim = 1e+6;
-        SomUtils::VecMatD vPimR(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
-        SomUtils::MatD vPimT(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
+        // // [lambda_pim, v_pim] = pim_function_genproc(rhess_fun_han, u_start, stiefel_normalize_han, thresh);
+        // // disp('Difference between lambda*v_max and H(v_max) should be in the order of the tolerance:')
+        // double lambdaPim = 1e+6;
+        // SomUtils::VecMatD vPimR(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
+        // SomUtils::MatD vPimT(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
 
-        pimFunctionGenproc(Rnext, Tnext, RnextTgNorm, TnextTgNorm, lambdaPim, vPimR, vPimT);
-        std::cout << "Difference between lambda_pim_after_shift*v_pim_after_shift"
-                  << " and H_SH(v_pim_after_shift) should be in the order of the tolerance:" << std::endl;
-        eigencheckHessianGenproc(lambdaPim, Rnext, vPimR, Tnext, vPimT);
+        // pimFunctionGenproc(Rnext, Tnext, RnextTgNorm, TnextTgNorm, lambdaPim, vPimR, vPimT);
+        // std::cout << "Difference between lambda_pim_after_shift*v_pim_after_shift"
+        //           << " and H_SH(v_pim_after_shift) should be in the order of the tolerance:" << std::endl;
+        // eigencheckHessianGenproc(lambdaPim, Rnext, vPimR, Tnext, vPimT);
 
-        // if lambda_pim>0
-        double highestNormEigenval = 1e+6;
-        if (lambdaPim > 0)
-        {
-            std::cout << "lambdaPim " << lambdaPim << std::endl;
-            double mu = 1.1 * lambdaPim;
+        // // if lambda_pim>0
+        // double highestNormEigenval = 1e+6;
+        // if (lambdaPim > 0)
+        // {
+        //     std::cout << "lambdaPim " << lambdaPim << std::endl;
+        //     double mu = 1.1 * lambdaPim;
 
-            //     rhess_shifted_fun_han = @(u) hess_genproc_shifted(Xnext,u,mu,problem_struct_next);
+        //     //     rhess_shifted_fun_han = @(u) hess_genproc_shifted(Xnext,u,mu,problem_struct_next);
 
-            //     // %run shifted power iteration
-            //     u_start_second_iter.R = stiefel_randTangentNormVector(Rnext);
-            //     u_start_second_iter.R = stiefel_normalize(Rnext, u_start_second_iter.R);
-            //     u_start_second_iter.T = rand(size(Tnext));
-            //     u_start_second_iter.T = stiefel_normalize_han(u_start.T);
-            //     [lambda_pim_after_shift, v_pim_after_shift] = pim_function_genproc( ...
-            //         rhess_shifted_fun_han, u_start_second_iter, stiefel_normalize_han, thresh);
-            SomUtils::VecMatD RnextTgShift(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
-            stiefelRandTgNormVector(Rnext, RnextTgShift);
-            SomUtils::VecMatD RnextTgNormShift(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
-            normalizeEucl(RnextTgShift, RnextTgNormShift);
+        //     //     // %run shifted power iteration
+        //     //     u_start_second_iter.R = stiefel_randTangentNormVector(Rnext);
+        //     //     u_start_second_iter.R = stiefel_normalize(Rnext, u_start_second_iter.R);
+        //     //     u_start_second_iter.T = rand(size(Tnext));
+        //     //     u_start_second_iter.T = stiefel_normalize_han(u_start.T);
+        //     //     [lambda_pim_after_shift, v_pim_after_shift] = pim_function_genproc( ...
+        //     //         rhess_shifted_fun_han, u_start_second_iter, stiefel_normalize_han, thresh);
+        //     SomUtils::VecMatD RnextTgShift(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
+        //     stiefelRandTgNormVector(Rnext, RnextTgShift);
+        //     SomUtils::VecMatD RnextTgNormShift(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
+        //     normalizeEucl(RnextTgShift, RnextTgNormShift);
 
-            auto TnextTgShift = SomUtils::MatD::Random(staircaseNextStepLevel, sz_.n_);
-            SomUtils::MatD TnextTgNormShift(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
-            normalizeEucl(TnextTgShift, TnextTgNormShift);
+        //     auto TnextTgShift = SomUtils::MatD::Random(staircaseNextStepLevel, sz_.n_);
+        //     SomUtils::MatD TnextTgNormShift(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
+        //     normalizeEucl(TnextTgShift, TnextTgNormShift);
 
-            SomUtils::VecMatD vPimRshift(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
-            SomUtils::MatD vPimTshift(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
-            double lambdaPimShift = 1e+6; // "after" shift is intended
-            pimFunctionGenprocShifted(Rnext, Tnext, RnextTgNorm, TnextTgNorm, mu, lambdaPimShift, vPimRshift, vPimTshift);
+        //     SomUtils::VecMatD vPimRshift(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
+        //     SomUtils::MatD vPimTshift(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
+        //     double lambdaPimShift = 1e+6; // "after" shift is intended
+        //     pimFunctionGenprocShifted(Rnext, Tnext, RnextTgNorm, TnextTgNorm, mu, lambdaPimShift, vPimRshift, vPimTshift);
 
-            //     disp(['Difference between lambda_pim_after_shift*v_pim_after_shift ' ...
-            //         'and H_SH(v_pim_after_shift) should be in the order of the tolerance:'])
-            //     eigencheck_hessian_genproc(lambda_pim_after_shift, v_pim_after_shift, ...
-            //         rhess_shifted_fun_han);
-            std::cout << "Difference between lambda_pim_after_shift*v_pim_after_shift"
-                      << "and H_SH(v_pim_after_shift) should be in the order of the tolerance:" << std::endl;
-            eigencheckHessianGenprocShifted(lambdaPimShift, Rnext, vPimRshift, Tnext, vPimTshift, mu);
-            highestNormEigenval = lambdaPimShift + mu;
-            std::cout << "Difference between (lambda_pim_after_shift + mu)*v_pim_after_shift"
-                      << "and H_SH(v_pim_after_shift) should be in the order of the tolerance:" << std::endl;
-            eigencheckHessianGenproc(highestNormEigenval, Rnext, vPimRshift, Tnext, vPimTshift, mu);
-            // ROFL_VAR3(highestNormEigenval, vPimRshift[0], vPimTshift);
-            vPimR = vPimRshift;
-            vPimT = vPimTshift;
-        }
-        else
-        {
-            highestNormEigenval = lambdaPim;
-        }
+        //     //     disp(['Difference between lambda_pim_after_shift*v_pim_after_shift ' ...
+        //     //         'and H_SH(v_pim_after_shift) should be in the order of the tolerance:'])
+        //     //     eigencheck_hessian_genproc(lambda_pim_after_shift, v_pim_after_shift, ...
+        //     //         rhess_shifted_fun_han);
+        //     std::cout << "Difference between lambda_pim_after_shift*v_pim_after_shift"
+        //               << "and H_SH(v_pim_after_shift) should be in the order of the tolerance:" << std::endl;
+        //     eigencheckHessianGenprocShifted(lambdaPimShift, Rnext, vPimRshift, Tnext, vPimTshift, mu);
+        //     highestNormEigenval = lambdaPimShift + mu;
+        //     std::cout << "Difference between (lambda_pim_after_shift + mu)*v_pim_after_shift"
+        //               << "and H_SH(v_pim_after_shift) should be in the order of the tolerance:" << std::endl;
+        //     eigencheckHessianGenproc(highestNormEigenval, Rnext, vPimRshift, Tnext, vPimTshift, mu);
+        //     // ROFL_VAR3(highestNormEigenval, vPimRshift[0], vPimTshift);
+        //     vPimR = vPimRshift;
+        //     vPimT = vPimTshift;
+        // }
+        // else
+        // {
+        //     highestNormEigenval = lambdaPim;
+        // }
     }
 
     void SampleSomProblem::rsomPimHessianGenproc(double thresh,
@@ -698,12 +740,14 @@ namespace ROPTLIB
                       << "and H_SH(v_pim_after_shift) should be in the order of the tolerance:" << std::endl;
             eigencheckHessianGenproc(highestNormEigenval, Rnext, vPimRshift, Tnext, vPimTshift, mu);
             // ROFL_VAR3(highestNormEigenval, vPimRshift[0], vPimTshift);
-            vPimR = vPimRshift;
-            vPimT = vPimTshift;
+            // vPimR = vPimRshift;
+            // vPimT = vPimTshift;
         }
         else
         {
             highestNormEigenval = lambdaPim;
+            vPimRshift = vPimR;
+            vPimTshift = vPimT;
         } // SMALL VERSION UP TO HERE!!
 
         //////!!!!/////!!!!
@@ -805,7 +849,7 @@ namespace ROPTLIB
         {
             SomUtils::MatD Y0T(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
             SomUtils::VecMatD Y0R(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
-            linesearchDummy(costCurr_, Rnext, Tnext, vPimR, vPimT, Y0R, Y0T);
+            linesearchDummy(costCurr_, Rnext, Tnext, vPimRshift, vPimTshift, Y0R, Y0T);
             Y0 = ProdManiNext.RandominManifold();
             // ROFL_VAR1(Y0T);
 
@@ -1193,72 +1237,77 @@ namespace ROPTLIB
 
     void SampleSomProblem::QRunique(const SomUtils::MatD &a, SomUtils::MatD &Q, SomUtils::MatD &R) const
     {
-        // int m = a.rows();
-        // int n = a.cols();
+        // [q, r] = qr(A(:, :, k), 0);
 
-        // //     [q, r] = qr(A(:, :, k), 0);
-        // Eigen::HouseholderQR<SomUtils::MatD> qr(a);
-        // qr.compute(SomUtils::MatD::Zero(a.rows(), a.cols()));
-        // auto q = qr.matrixQR();
-        // auto r = qr.;
+        // % [q,r] = QR(a) performs a QR decomposition on m-by-n matrix a such that a = q*r.
+        // The factor r is an m-by-n upper triangular matrix and
+        // q is an m-by-m unitary matrix.
 
-        // // QR decomposition on m-by-n matrix A such that A = Q*R.
-        // ROFL_ASSERT(isEqualFloats(a, q * r))
+        R.setIdentity(); // TODO: add R computation
 
-        // if (m >= n)
-        // {
-        //     // The factor R is an m-by-n upper triangular matrix
-        //     ROFL_ASSERT_VAR3(r.isUpperTriangular() && r.rows() == m && r.cols() == n, r.isUpperTriangular(), r.rows(), r.cols())
+        int m = a.rows();
+        int n = a.cols();
 
-        //     // Q is an m-by-m unitary matrix.
-        //     // ROFL_ASSERT_VAR3(q.isUnitary() && q.rows() == m && q.cols() == m, q.isUnitary(), q.rows(), q.cols())
-        // }
-        // else
-        // {
-        //     // The factor R is an m-by-m upper triangular matrix
-        //     ROFL_ASSERT_VAR3(r.isUpperTriangular() && r.rows() == m && r.cols() == m, r.isUpperTriangular(), r.rows(), r.cols())
+        Eigen::ColPivHouseholderQR<SomUtils::MatD> qr(a);
+        SomUtils::MatD q = qr.matrixQ();
+        Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> r = qr.matrixQR().triangularView<Eigen::Upper>();
 
-        //     // Q is an m-by-n unitary matrix.
-        //     ROFL_ASSERT_VAR2(q.rows() == m && q.cols() == n, q.rows(), q.cols())
-        // }
+        // ROFL_ASSERT_VAR4(isEqualFloats(a, q * r), isEqualFloats(a, q * r), a, q, r);
+        // ROFL_ASSERT(r.isUpperTriangular() && r.rows() == m && r.cols() == n);
+        ROFL_ASSERT(q.isUnitary() && q.rows() == m && q.cols() == m);
 
-        // //     % In the real case, s holds the signs of the diagonal entries of R.
-        // //     % In the complex case, s holds the unit-modulus phases of these
-        // //     % entries. In both cases, d = diag(s) is a unitary matrix, and
-        // //     % its inverse is d* = diag(conj(s)).
-        // //     s = sign(diag(r));
-        // auto diagR = R.diagonal();
-        // auto s = diagR.array().sign();
+        // % In the real case, s holds the signs of the diagonal entries of R.
+        // % In the complex case, s holds the unit-modulus phases of these
+        // % entries. In both cases, d = diag(s) is a unitary matrix, and
+        // % its inverse is d* = diag(conj(s)).
+        // s = sign(diag(r));
 
-        // //     % Since a = qr (with 'a' the slice of A currently being processed),
-        // //     % it is also true that a = (qd)(d*r). By construction, qd still has
-        // //     % orthonormal columns, and d*r has positive real entries on its
-        // //     % diagonal, /unless/ s contains zeros. The latter can only occur if
-        // //     % slice a does not have full column rank, so that the decomposition
-        // //     % is not unique: we make an arbitrary choice in that scenario.
-        // //     % While exact zeros are unlikely, they may occur if, for example,
-        // //     % the slice a contains repeated columns, or columns that are equal
-        // //     % to zero. If an entry should be mathematically zero but is only
-        // //     % close to zero numerically, then it is attributed an arbitrary
-        // //     % sign dictated by the numerical noise: this is also fine.
+        // % Since a = qr (with 'a' the slice of A currently being processed),
+        // % it is also true that a = (qd)(d*r). By construction, qd still has
+        // % orthonormal columns, and d*r has positive real entries on its
+        // % diagonal, /unless/ s contains zeros. The latter can only occur if
+        // % slice a does not have full column rank, so that the decomposition
+        // % is not unique: we make an arbitrary choice in that scenario.
+        // % While exact zeros are unlikely, they may occur if, for example,
+        // % the slice a contains repeated columns, or columns that are equal
+        // % to zero. If an entry should be mathematically zero but is only
+        // % close to zero numerically, then it is attributed an arbitrary
+        // % sign dictated by the numerical noise: this is also fine.
+        // s(s == 0) = 1;
 
-        // //     s(s == 0) = 1;
-        // for (int i = 0; i < s.size(); ++i)
-        // {
-        //     if (s[i] == 0)
-        //         s[i] == 1;
-        // }
+        SomUtils::MatD rDiag = r.diagonal();
+        SomUtils::MatD s = rDiag;
+        for (int i = 0; i < rDiag.size(); ++i)
+        {
+            if (rDiag(i, 0) >= 0)
+                s(i, 0) = 1;
+            else
+                s(i, 0) = -1;
+        }
 
-        // //     Q(:, :, k) = bsxfun(@times, q, s.');
-        // //     R(:, :, k) = bsxfun(@times, r, conj(s));
+        // Q(:, :, k) = bsxfun(@times, q, s.');
+        for (int i = 0; i < Q.rows(); ++i)
+        {
+            for (int j = 0; j < Q.cols(); ++j)
+            {
+                auto sTransp = s.transpose();
+                Q(i, j) = q(i, j) * sTransp(0, j);
+            }
+        }
 
-        // for (int i = 0; i < Q.rows(); ++i)
-        //     for (int i = 0; i < Q.rows(); ++i)
-        //     {
-        //         Q = q * s.transpose();
-        //     }
-
-        // // end
+        // R(:, :, k) = bsxfun(@times, r, conj(s));
+        for (int i = 0; i < R.rows(); ++i)
+        {
+            for (int j = 0; j < R.cols(); ++j)
+            {
+                // TODO: add complex s case
+                // auto sConj = s.conjugate();
+                R(i, j) = R(i, j) * s(i, 0);
+            }
+        }
+        // TODO: add complex s case
+        // ROFL_ASSERT(isEqualFloats(R.imag(), SomUtils::MatD::Zero(R.imag().rows(), R.imag().cols())))
+        // R = R.real();
     }
 
     void SampleSomProblem::QRunique(const SomUtils::VecMatD &A, SomUtils::VecMatD &Q, SomUtils::VecMatD &R) const
@@ -1298,25 +1347,55 @@ namespace ROPTLIB
 
     void SampleSomProblem::stiefelRetractionQR(double t, const SomUtils::VecMatD &x, const SomUtils::VecMatD &e, SomUtils::VecMatD &rxe) const
     {
-        // function Y = retraction_qr(X, U, t)
-        //     % It is necessary to call qr_unique rather than simply qr to ensure
-        //     % this is a retraction, to avoid spurious column sign flips.
-        //     if nargin < 3
-        //         Y = qr_unique(X + U);
-        //     else
-        //         Y = qr_unique(X + t*U);
-        //     end
-        // end
+        // // function Y = retraction_qr(X, U, t)
+        // //     % It is necessary to call qr_unique rather than simply qr to ensure
+        // //     % this is a retraction, to avoid spurious column sign flips.
+        // //     if nargin < 3
+        // //         Y = qr_unique(X + U);
+        // //     else
+        // //         Y = qr_unique(X + t*U);
+        // //     end
+        // // end
 
-        SomUtils::VecMatD rTmp(sz_.n_);
-        SomUtils::VecMatD et = e;
-        std::for_each(et.begin(), et.end(), [t](SomUtils::MatD &x) { //^^^ take argument by reference: LAMBDA FUNCTION
-            // ROFL_VAR1(alpha)
-            x *= t;
-        });
-        SomUtils::VecMatD xetSum (sz_.n_, SomUtils::MatD::Zero(x[0].rows(), x[0].cols()));
-        std::transform (x.begin(), x.end(), et.begin(), xetSum.begin(), std::plus<SomUtils::MatD>());
-        QRunique(xetSum, rxe, rTmp);
+        // SomUtils::VecMatD rTmp(sz_.n_);
+        // SomUtils::VecMatD et = e;
+        // std::for_each(et.begin(), et.end(), [t](SomUtils::MatD &x) { //^^^ take argument by reference: LAMBDA FUNCTION
+        //     // ROFL_VAR1(alpha)
+        //     x *= t;
+        // });
+        // SomUtils::VecMatD xetSum(sz_.n_, SomUtils::MatD::Zero(x[0].rows(), x[0].cols()));
+        // std::transform(x.begin(), x.end(), et.begin(), xetSum.begin(), std::plus<SomUtils::MatD>());
+        // QRunique(xetSum, rxe, rTmp); // rTmp is unused; rxe comes out from Q in QR decomposition and is the function's output
+
+        // ROFL_ASSERT(checkIsOn3dStiefel(rxe))
+    }
+
+    bool SampleSomProblem::checkIsOn3dStiefel(const SomUtils::VecMatD &m) const
+    {
+        int p = m[0].rows();
+        int d = m[0].cols();
+
+        int n = m.size();
+
+        for (int i = 0; i < n; ++i)
+        {
+            ROFL_ASSERT(m[i].rows() == p && m[i].cols() == d)
+
+            // ROFL_VAR1("Calling isEqualFloats()")
+            if (!checkIsOnStiefel(m[i]))
+                return false;
+        }
+        return true;
+    }
+
+    bool SampleSomProblem::checkIsOnStiefel(const SomUtils::MatD &m) const
+    {
+        int p = m.rows();
+        int d = m.cols();
+
+        // ROFL_VAR1("Calling isEqualFloats()")
+
+        return isEqualFloats(m.transpose() * m, SomUtils::MatD::Identity(d, d));
     }
 
     void SampleSomProblem::stiefelRetractionQR(const SomUtils::VecMatD &x, const SomUtils::VecMatD &e, SomUtils::VecMatD &rxe) const
@@ -1331,10 +1410,35 @@ namespace ROPTLIB
         //     end
         // end
 
+        ROFL_ASSERT(checkIsStiefelTg(x, e))
+
         SomUtils::VecMatD rTmp(sz_.n_);
-        SomUtils::VecMatD xeSum (sz_.n_, SomUtils::MatD::Zero(x[0].rows(), x[0].cols()));
-        std::transform (x.begin(), x.end(), e.begin(), xeSum.begin(), std::plus<SomUtils::MatD>());
-        QRunique(xeSum, rxe, rTmp);
+        SomUtils::VecMatD xeSum(sz_.n_, SomUtils::MatD::Zero(x[0].rows(), x[0].cols()));
+        std::transform(x.begin(), x.end(), e.begin(), xeSum.begin(), std::plus<SomUtils::MatD>());
+        QRunique(xeSum, rxe, rTmp); // rTmp is unused; rxe comes out from Q in QR decomposition and is the function's output
+
+        // for (int i = 0; i < sz_.n_; ++i)
+        // {
+        //     ROFL_VAR3(i, xeSum[i], rxe[i])
+        // }
+        ROFL_ASSERT(checkIsOn3dStiefel(rxe))
+
+        for (int i = 0; i < sz_.n_; ++i)
+        {
+            ROFL_VAR2(i, "Equal to matlab stiefel retraction qr?")
+            std::cout << std::endl
+                      << "x[i]" << std::endl;
+            std::cout << std::endl
+                      << x[i] << std::endl;
+            std::cout << std::endl
+                      << "e[i]" << std::endl;
+            std::cout << std::endl
+                      << e[i] << std::endl;
+            std::cout << std::endl
+                      << "rxe[i]" << std::endl;
+            std::cout << std::endl
+                      << rxe[i] << std::endl;
+        }
     }
 
     void SampleSomProblem::euclRetraction(const SomUtils::MatD &x, const SomUtils::MatD &d, SomUtils::MatD &y, double t) const
@@ -1403,16 +1507,18 @@ namespace ROPTLIB
         SomUtils::VecMatD Y0Rtry = Y0R;
         SomUtils::MatD Y0Ttry = Y0T;
 
-        int maxLsSteps = 25;
+        int maxLsSteps = 250;
         double contractionFactor = 0.5;
 
         SomUtils::MatD vVec(SomUtils::MatD::Zero(vRin[0].rows() * vRin[0].cols() * vRin.size() + vTin.rows() * vTin.cols(), 1));
         vectorizeRT(vRin, vTin, vVec);
 
-        double normD = vVec.norm();
+        double dnorm = vVec.norm();
 
-        double initialStepsize = normD;
-        double alpha = initialStepsize / normD;
+        ROFL_VAR1(dnorm);
+
+        double initialStepsize = dnorm;
+        double alpha = initialStepsize / dnorm;
         double f0 = costInit;
 
         SomUtils::VecMatD alphaVrIn = vRin;

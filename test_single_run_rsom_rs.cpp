@@ -100,10 +100,9 @@ void runRsomRS(ROPTLIB::SampleSomProblem &Prob, const ROPTLIB::Vector &startX)
         if (lambda < 0)
         {
             ROFL_VAR1("R, T eigenvals > 0: exiting staircase")
+            staircaseStepSkipped = 0;
             break;
         }
-
-        staircaseStepSkipped = 0;
 
         double costNewStart = ProbNext.f(Y0);
         ROFL_VAR1(costNewStart)

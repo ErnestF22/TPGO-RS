@@ -433,6 +433,21 @@ namespace ROPTLIB
         bool eigencheckHessianGenprocShifted(const double &lambda,
                                              const SomUtils::VecMatD &xR, const SomUtils::VecMatD &uR,
                                              const SomUtils::MatD &xT, const SomUtils::MatD &uT, double mu, double thr = 1e-3) const;
+        /**
+         * @brief Check whether @param mTg is in the tangent space of @param m
+         */
+        bool checkIsStiefelTg(const SomUtils::MatD &m, const SomUtils::MatD &mTg) const;
+
+        /**
+         * @brief Check whether @param mTg is in the tangent space of @param m
+         * 3D Stiefel version
+         */
+        bool checkIsStiefelTg(const SomUtils::VecMatD &m, const SomUtils::VecMatD &mTg) const;
+
+        /**
+         * @brief Check whether @param mTg is in the tangent space of @param m and has norm 1
+         */
+        bool checkIsStiefelTgNorm(const SomUtils::MatD &m, const SomUtils::MatD &mTg) const;
 
         /**
          * @brief Generate a random normalized vector tangent @param mIn on 2D Stiefel manifold
@@ -559,6 +574,16 @@ namespace ROPTLIB
             3D version
          */
         void QRunique(const SomUtils::VecMatD &A, SomUtils::VecMatD &Q, SomUtils::VecMatD &R) const;
+
+        /**
+         * @brief Return whether input @param m is on 3D Stiefel manifold
+         */
+        bool checkIsOn3dStiefel(const SomUtils::VecMatD &m) const;
+
+        /**
+         * @brief Return whether input @param m is on 2D Stiefel manifold
+         */
+        bool checkIsOnStiefel(const SomUtils::MatD &m) const;
 
         /**
          * @brief Stiefel Retraction for 2D manifold from @param xIn towards direction @param e multiplied by @param t
