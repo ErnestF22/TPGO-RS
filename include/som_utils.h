@@ -116,6 +116,12 @@ namespace SomUtils
      */
     void readSingleIntCsv(std::string fname, int& out);
 
+    /**
+     * @brief Read a single double from a csv file and save it to reference param out
+     */
+    void readSingleDoubleCsv(std::string fname, double &out);
+
+
 } // end of namespace SomUtils
 
 #endif /*SOM_UTILS_H_*/

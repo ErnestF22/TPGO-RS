@@ -626,7 +626,8 @@ namespace ROPTLIB
         void linesearchDummy(const double costInit,
                              const SomUtils::VecMatD &xRin, const SomUtils::MatD &xTin,
                              const SomUtils::VecMatD &vRin, const SomUtils::MatD &vTin,
-                             SomUtils::VecMatD &Y0R, SomUtils::MatD &Y0T) const;
+                             SomUtils::VecMatD &Y0R, SomUtils::MatD &Y0T,
+                             bool qr = true) const;
 
         ////////////////////////////////////////RECOVERY////////////////////////////////////////
 
