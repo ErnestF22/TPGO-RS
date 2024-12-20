@@ -1,12 +1,12 @@
 function test_linesearchDummy
 
-costCurr = readmatrix("../build/costCurr.csv");
-Rnext = readmatrix("../build/Rnext.csv");
-Tnext = readmatrix("../build/Tnext.csv");
-vPimRshift = readmatrix("../build/vPimRshift.csv");
-vPimTshift = readmatrix("../build/vPimTshift.csv");
-Y0R = readmatrix("../build/Y0R.csv");
-Y0T = readmatrix("../build/Y0T.csv");
+costCurr = readmatrix("data/lsdummy_debug/costCurr.csv");
+Rnext = readmatrix("data/lsdummy_debug/Rnext.csv");
+Tnext = readmatrix("data/lsdummy_debug/Tnext.csv");
+vPimRshift = readmatrix("data/lsdummy_debug/vPimRshift.csv");
+vPimTshift = readmatrix("data/lsdummy_debug/vPimTshift.csv");
+Y0R = readmatrix("data/lsdummy_debug/Y0R.csv");
+Y0T = readmatrix("data/lsdummy_debug/Y0T.csv");
 
 p = 4;
 d = 3;
