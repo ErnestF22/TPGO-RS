@@ -850,6 +850,100 @@ namespace ROPTLIB
             SomUtils::MatD Y0T(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
             SomUtils::VecMatD Y0R(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
             linesearchDummy(costCurr_, Rnext, Tnext, vPimRshift, vPimTshift, Y0R, Y0T);
+
+            // ls Dummy debug: save on file scope
+            {
+                { // costCurr
+                    std::ofstream outfile;
+
+                    outfile.open("costCurr.csv", std::ios_base::trunc);
+                    outfile << costCurr_;
+                    outfile.close();
+                }
+
+                { // Rnext
+                    std::ofstream outfile;
+
+                    outfile.open("Rnext.csv", std::ios_base::trunc);
+                    if (!outfile.is_open())
+                    {
+                        ROFL_VAR1("Error opening outfile")
+                        ROFL_ASSERT(0);
+                    }
+                    for (int i = 0; i < sz_.n_; ++i)
+                        outfile << Rnext[i].reshaped<Eigen::ColMajor>(Rnext[i].rows() * Rnext[i].cols(), 1) << std::endl;
+                    outfile.close();
+                }
+
+                { // Tnext
+                    std::ofstream outfile;
+
+                    outfile.open("Tnext.csv", std::ios_base::trunc);
+                    if (!outfile.is_open())
+                    {
+                        ROFL_VAR1("Error opening outfile")
+                        ROFL_ASSERT(0);
+                    }
+                    outfile << Tnext.reshaped<Eigen::ColMajor>(Tnext.rows() * Tnext.cols(), 1);
+                    outfile.close();
+                }
+
+                { // vPimRshift
+                    std::ofstream outfile;
+
+                    outfile.open("vPimRshift.csv", std::ios_base::trunc);
+                    if (!outfile.is_open())
+                    {
+                        ROFL_VAR1("Error opening outfile")
+                        ROFL_ASSERT(0);
+                    }
+                    for (int i = 0; i < sz_.n_; ++i)
+                        outfile << vPimRshift[i].reshaped<Eigen::ColMajor>(vPimRshift[i].rows() * vPimRshift[i].cols(), 1) << std::endl;
+                    outfile.close();
+                }
+
+                { // vPimTshift
+                    std::ofstream outfile;
+
+                    outfile.open("vPimTshift.csv", std::ios_base::trunc);
+                    if (!outfile.is_open())
+                    {
+                        ROFL_VAR1("Error opening outfile")
+                        ROFL_ASSERT(0);
+                    }
+                    outfile << vPimTshift.reshaped<Eigen::ColMajor>(vPimTshift.rows() * vPimTshift.cols(), 1);
+                    outfile.close();
+                }
+
+                { // Y0R
+                    std::ofstream outfile;
+
+                    outfile.open("Y0R.csv", std::ios_base::trunc);
+                    if (!outfile.is_open())
+                    {
+                        ROFL_VAR1("Error opening outfile")
+                        ROFL_ASSERT(0);
+                    }
+                    for (int i = 0; i < sz_.n_; ++i)
+                        outfile << Y0R[i].reshaped<Eigen::ColMajor>(Y0R[i].rows() * Y0R[i].cols(), 1) << std::endl;
+                    outfile.close();
+                }
+
+                { // Y0T
+                    std::ofstream outfile;
+
+                    outfile.open("Y0T.csv", std::ios_base::trunc);
+                    if (!outfile.is_open())
+                    {
+                        ROFL_VAR1("Error opening outfile")
+                        ROFL_ASSERT(0);
+                    }
+                    outfile << Y0T.reshaped<Eigen::ColMajor>(Y0T.rows() * Y0T.cols(), 1);
+                    outfile.close();
+                }
+                
+            }
+
             Y0 = ProdManiNext.RandominManifold();
             // ROFL_VAR1(Y0T);
 
@@ -902,8 +996,8 @@ namespace ROPTLIB
                     // ROFL_VAR1("");
                     // TnextROPT.Print("TnextROPT after assignment");
                 }
-                TnextROPT.Print("line 1215");
-                Y0.GetElement(gElemIdx).Print("line 1216");
+                // TnextROPT.Print("line 1215");
+                // Y0.GetElement(gElemIdx).Print("line 1216");
                 TnextROPT.CopyTo(Y0.GetElement(gElemIdx));
             } // end of EigToRopt scope for xIn
         }
@@ -1168,8 +1262,8 @@ namespace ROPTLIB
                     // ROFL_VAR1("");
                     // TnextROPT.Print("TnextROPT after assignment");
                 }
-                TnextROPT.Print("line 1215");
-                Y0.GetElement(gElemIdx).Print("line 1216");
+                // TnextROPT.Print("line 1215");
+                // Y0.GetElement(gElemIdx).Print("line 1216");
                 TnextROPT.CopyTo(Y0.GetElement(gElemIdx));
             } // end of EigToRopt scope for xIn
         }
@@ -1507,7 +1601,7 @@ namespace ROPTLIB
         SomUtils::VecMatD Y0Rtry = Y0R;
         SomUtils::MatD Y0Ttry = Y0T;
 
-        int maxLsSteps = 250;
+        int maxLsSteps = 25;
         double contractionFactor = 0.5;
 
         SomUtils::MatD vVec(SomUtils::MatD::Zero(vRin[0].rows() * vRin[0].cols() * vRin.size() + vTin.rows() * vTin.cols(), 1));
