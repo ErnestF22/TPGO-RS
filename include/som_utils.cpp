@@ -351,4 +351,21 @@ namespace SomUtils
         out = stoi(line);
     }
 
+    void readSingleDoubleCsv(std::string fname, double &out)
+    {
+        std::fstream fout;
+        fout.open(fname, std::ios::in);
+
+        if (!fout.is_open())
+        {
+            std::cerr << "Error opening file!" << std::endl;
+            return;
+        }
+
+        std::string line;
+        getline(fout, line, '\n');
+
+        out = stod(line);
+    }
+
 } // end of namespace SomUtils

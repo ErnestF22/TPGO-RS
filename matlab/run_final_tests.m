@@ -77,11 +77,11 @@ testdata = testNetwork_params(3, N, 'banded', mindeg);
 testdata.mindeg = mindeg;
 testdatas = [testdatas, testdata];
 
-N = 25;
-mindeg = 3;
-testdata = testNetwork_params(3, N, 'banded', mindeg);
-testdata.mindeg = mindeg;
-testdatas = [testdatas, testdata];
+% N = 25;
+% mindeg = 3;
+% testdata = testNetwork_params(3, N, 'banded', mindeg);
+% testdata.mindeg = mindeg;
+% testdatas = [testdatas, testdata];
 
 
 for tdata = testdatas

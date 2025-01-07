@@ -941,7 +941,6 @@ namespace ROPTLIB
                     outfile << Y0T.reshaped<Eigen::ColMajor>(Y0T.rows() * Y0T.cols(), 1);
                     outfile.close();
                 }
-                
             }
 
             Y0 = ProdManiNext.RandominManifold();
@@ -1554,12 +1553,20 @@ namespace ROPTLIB
         ROFL_ASSERT(xIn.rows() == e.rows() && xIn.rows() == rxe.rows())
         ROFL_ASSERT(xIn.cols() == e.cols() && xIn.cols() == rxe.cols())
 
-        rxe.setZero();
-        SomUtils::MatD Ip(SomUtils::MatD::Identity(sz_.p_, sz_.p_));
+        // rxe.setZero();
+        // SomUtils::MatD Ip(SomUtils::MatD::Identity(sz_.p_, sz_.p_));
         // ROFL_VAR3(Ip, e, e.transpose() * e);
-        SomUtils::MatD sndTerm = (Ip + e.transpose() * e).sqrt().inverse();
-        rxe = (xIn + e) * sndTerm;
+        // SomUtils::MatD sndTerm = (Ip + e.transpose() * e).sqrt().inverse();
+        // rxe = (xIn + e) * sndTerm;
 
+        // [u, s, v] = svd(Y(:, :, kk), 'econ'); %#ok
+        // Y(:, :, kk) = u*v';
+
+        Eigen::JacobiSVD<SomUtils::MatD> svd(xIn + e, Eigen::ComputeFullV | Eigen::ComputeThinU); // TODO: ComputeFullV flag can probably be removed
+        auto U = svd.matrixU();
+        auto V = svd.matrixV();
+        // ROFL_VAR3(xIn + e, U, V)
+        rxe = U * V.transpose();
         // Assert check that new element is still on Stiefel
         ROFL_ASSERT(((rxe.transpose() * rxe) - SomUtils::MatD::Identity(sz_.d_, sz_.d_)).cwiseAbs().maxCoeff() < 1e-6);
     }
@@ -1588,7 +1595,8 @@ namespace ROPTLIB
     void SampleSomProblem::linesearchDummy(const double costInit,
                                            const SomUtils::VecMatD &xRin, const SomUtils::MatD &xTin,
                                            const SomUtils::VecMatD &vRin, const SomUtils::MatD &vTin,
-                                           SomUtils::VecMatD &Y0R, SomUtils::MatD &Y0T) const
+                                           SomUtils::VecMatD &Y0R, SomUtils::MatD &Y0T,
+                                           bool qr) const
     {
         ROFL_VAR1("Running linesearchDummy()")
 
@@ -1620,7 +1628,10 @@ namespace ROPTLIB
             // ROFL_VAR1(alpha)
             x *= alpha;
         });
-        stiefelRetractionQR(xRin, alphaVrIn, Y0Rtry);
+        if (qr)
+            stiefelRetractionQR(xRin, alphaVrIn, Y0Rtry);
+        else
+            stiefelRetractionPolar(xRin, alphaVrIn, Y0Rtry);
         // ROFL_VAR1(Y0R[0]);
 
         SomUtils::MatD alphaVtIn = alpha * vTin;
@@ -1647,7 +1658,11 @@ namespace ROPTLIB
             });
             alphaVtIn = alpha * vTin;
 
-            stiefelRetractionQR(xRin, alphaVrIn, Y0Rtry);
+            if (qr)
+                stiefelRetractionQR(xRin, alphaVrIn, Y0Rtry);
+            else
+                stiefelRetractionPolar(xRin, alphaVrIn, Y0Rtry);
+
             euclRetraction(xTin, alphaVtIn, Y0Ttry);
 
             newf = costEigen(Y0Rtry, Y0Ttry);
