@@ -1,4 +1,4 @@
-function test_check_ssom_test_ehess_T_lambda()
+òfunction test_check_ssom_test_ehess_T_lambda()
 problem=test_check_ssom();
 % curve=test_check_ssom_curve(problem);
 
