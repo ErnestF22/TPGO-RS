@@ -29,7 +29,7 @@ curve.ddc=@(t) ddR(t);
 gradf=@(t) problem.rgrad_R(curve.c(t));
 df=@(t) sum(stiefel_metric([],gradf(t),curve.dc(t)));
 % funCheckDer(f,df)
-ehessf = @(t) problem.ssom_ehess_r_lambda(R(t),vR0,T0,vLambda0);
+ehessf = @(t) problem.ssom_ehess_r_lambda(R(t),vR0,T0,lambda0);
 ddf_1 = @(t) stiefel_metric([], ehessf(t), curve.dc(t), 'euclidean');
 ddf_2 = @(t) stiefel_metric([], gradf(t), curve.ddc(t), 'euclidean');
 ddf = @(t) sum(ddf_1(t) + ddf_2(t));    

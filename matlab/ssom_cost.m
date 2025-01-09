@@ -6,7 +6,7 @@ R = X.R;
 
 
 edges = problem_data.edges;
-Tijs_vec = problem_data.Tijs;
+tijs = problem_data.tijs;
 rho = problem_data.rho;
 
 num_edges = size(edges, 1);
@@ -16,13 +16,13 @@ for ee = 1:num_edges
     ii = edges(ee, 1);
     jj = edges(ee, 2);
     lambda_e = lambdas(ee);
-    tij_e = Tijs_vec(:, ee);
+    tij_e = tijs(:, ee);
     T_i = T(:, ii);
     T_j = T(:, jj);
     R_i = R(:, :, ii);
     a = T_i - T_j;
     b = R_i * tij_e;
-    cost_lambda_0_ee = trace(a' * a + 2 * lambda_e * (a' * b) + lambda_e^2 * (b' * b)); 
+    cost_lambda_ee = trace(a' * a + 2 * lambda_e * (a' * b) + lambda_e^2 * (b' * b)); 
     cost_relu_ee = relu_som(ssom_relu_argument(lambda_e));
-    cost_out = cost_out + cost_lambda_0_ee + rho * cost_relu_ee;
+    cost_out = cost_out + cost_lambda_ee + rho * cost_relu_ee;
 end

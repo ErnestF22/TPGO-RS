@@ -1,4 +1,4 @@
-òfunction test_check_ssom_test_ehess_T_lambda()
+function test_check_ssom_test_ehess_T_lambda()
 problem=test_check_ssom();
 % curve=test_check_ssom_curve(problem);
 
@@ -25,10 +25,10 @@ curve.dc=@(t) dT(t);
 curve.ddc=@(t) ddT(t);
 
 % f=@(t) problem.cost(curve.c(t));
-gradf=@(t) problem.egrad_T(curve.c(t));
+gradf=@(t) problem.egrad_T(T0);
 df=@(t) sum(stiefel_metric([],gradf(t),curve.dc(t)));
 % funCheckDer(f,df)
-ehessf = @(t) problem.ssom_ehess_t_lambda(curve.c(t),curve.dc(t),R0, ddLambda(t));
+ehessf = @(t) problem.ssom_ehess_t_lambda(R0, T0, dLambda(t), ddLambda(t));
 ddf_1 = @(t) stiefel_metric([], ehessf(t), curve.dc(t), 'euclidean');
 ddf_2 = @(t) stiefel_metric([], gradf(t), curve.ddc(t), 'euclidean');
 ddf = @(t) sum(ddf_1(t) + ddf_2(t));    

@@ -1,28 +1,27 @@
-function g = ssom_egrad(x, problem_data)
-    lambdas = x.lambda;
-    T = x.T;
-    R = x.R;
-
-    edges = problem_data.edges;
-
-    tijs_scaled = make_tijs_scaled(lambdas, problem_data.Tijs);
-    
+function g = ssom_egrad(X, problem_data)
     %g.R
-    problem_data_R = problem_data;
-    problem_data_R.Tijs = tijs_scaled;
-    [problem_data_R.P, problem_data_R.frct] = ...
-        make_step1_p_fct(T, tijs_scaled, edges);
-    g.R = rsom_egrad_rot_stiefel(R, problem_data_R);
+    g.R = egrad_R(X, problem_data);
     %g.T
-    problem_data_T = problem_data;
-    problem_data_T.Tijs = tijs_scaled;
-    [problem_data_T.LR, problem_data_T.PR, problem_data_T.BR] = ...
-        make_LR_PR_BR_noloops(R, tijs_scaled, edges);
-    g.T = rsom_egrad_transl_stiefel(T, problem_data_T);
+    g.T = egrad_T(X, problem_data);
     %g.lambda
-    problem_data_lambdas = problem_data;
-    problem_data_lambdas.T = T;
-    problem_data_lambdas.R = R;
-    g.lambda = ssom_grad_lambda(lambdas, problem_data_lambdas);
+    g.lambda = ssom_grad_lambda(X, problem_data);
 
 end
+
+function eg=egrad_R(X, problem_data)
+
+tijs_scaled = make_tijs_scaled(X.lambda, problem_data.tijs);
+[P, ~] = make_step1_p_fct(X.T, tijs_scaled, problem_data.edges);
+
+R = X.R;
+d = size(R, 2);
+eg=matUnstackH(P,d);
+end
+
+function g=egrad_T(X,problem_data)
+T = X.T;
+tijs_scaled = make_tijs_scaled(X.lambda, problem_data.tijs);
+[LR, PR, ~] = make_LR_PR_BR_noloops(X.R, tijs_scaled, problem_data.edges);
+g=T*(LR+LR')+(PR)';
+end
+

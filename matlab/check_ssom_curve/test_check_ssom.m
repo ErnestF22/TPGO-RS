@@ -61,10 +61,16 @@ problem_data.ssom_ehess_lambda_lambda=@(x,u,R) ssom_ehess_lambda_lambda(x,u,R,pr
 problem_data.ssom_ehess_T_T=@(x,u) ssom_ehess_T_T(x,u,problem_data);
 problem_data.ssom_rhess_R_R=@(x,u) ssom_rhess_R_R(x,u,problem_data);
 % hessians (others)
-problem_data.ssom_ehess_r_lambda=@(R, Rdot, T, lambdadot) ssom_ehess_r_lambda(R, Rdot, T, lambdadot, problem_data);
-problem_data.ssom_ehess_t_lambda=@(x,u,R,lambdas_dot) ssom_ehess_t_lambda(x,u,R,lambdas_dot,problem_data);
-problem_data.ssom_ehess_lambda_r=@(x,u,T,R,Rdot) ssom_ehess_lambda_r(x, u, T, R, Rdot, problem_data);
-problem_data.ssom_ehess_lambda_t=@(x,u,T,Tdot,R) ssom_ehess_lambda_t(x,u,T,Tdot,R,problem_data);
+problem_data.ssom_ehess_r_lambda= ...
+    @(R, T, lambdas, lambdas_dot) ssom_ehess_r_lambda(R, T, lambdas, lambdas_dot, problem_data);
+problem_data.ssom_ehess_t_lambda= ...
+    @(R, T, lambdas, lambdas_dot) ssom_ehess_t_lambda(R, T, lambdas, lambdas_dot, problem_data);
+problem_data.ssom_ehess_lambda_r=...
+    @(R, Rdot, T, lambdas) ssom_ehess_lambda_r(R, Rdot, T, lambdas, problem_data);
+problem_data.ssom_rhess_lambda_r=...
+    @(R, Rdot, T, lambdas) ssom_rhess_lambda_r(R, Rdot, T, lambdas, problem_data);
+problem_data.ssom_ehess_lambda_t=...
+    @(R, T, Tdot, lambdas) ssom_ehess_lambda_t(R, T, Tdot, lambdas, problem_data);
 
 end %file function
 
@@ -171,7 +177,7 @@ end
 
 end
 
-function h = ssom_ehess_T_T(x, xdot, problem_data)
+function h = ssom_ehess_T_T(~, xdot, problem_data)
 h = xdot*(problem_data.LR' + problem_data.LR);
 end
 
@@ -183,7 +189,7 @@ end
 
 function rhess = ehess2rhess_stiefel(x, xdot, egrad)
 term_1 = multiprod(xdot, ...
-    0.5*multiprod(multitransp(x), egrad) + 0.5*multiprod(multitransp(egrad), x)); 
+    0.5*multiprod(multitransp(x), egrad) + 0.5*multiprod(multitransp(egrad), x));
 term_2 = multiprod(x, ...
     0.5*multiprod(multitransp(xdot), egrad) + 0.5*multiprod(multitransp(egrad), xdot));
 DGf = - term_1 - term_2;
@@ -191,7 +197,7 @@ rhess = stiefel_tangentProj(x, DGf); %ehess_proj = zeros(nrs,d,N)
 end
 
 %% 2
-function h = ssom_ehess_r_lambda(R, Rdot, T, lambdadot, problem_data)
+function h = ssom_ehess_r_lambda(R, T, ~, lambdadot, problem_data)
 
 % h_r_lambda = zeros(size(hrt));
 
@@ -218,13 +224,13 @@ end
 
 
 %% 3
-function h = ssom_ehess_t_lambda(x, ~, R, lambdas_dot, problem_data)
+function h = ssom_ehess_t_lambda(R, T, ~, lambdas_dot, problem_data)
 % h_t_lambda = zeros(size(htr));
 
 edges = problem_data.edges;
 % rho = problem_data.rho;
 
-h = zeros(size(x));
+h = zeros(size(T));
 N = size(R,3);
 num_edges = size(edges, 1);
 for e = 1:num_edges
@@ -242,12 +248,14 @@ for e = 1:num_edges
     h = h + w_ij';
 end
 
+
+
 end
 
 
 
-%% 4
-function h = ssom_ehess_lambda_r(x, xdot, T, R, Rdot, problem_data)
+%% 4 
+function eh = ssom_ehess_lambda_r(R, Rdot, T, lambdas, problem_data)
 % h_lambda_t = zeros(size(h_lambda_lambda));
 
 % x = X.lambda;
@@ -260,13 +268,13 @@ tijs_vec = problem_data.tijs;
 % % d = problem_data.sz(2);
 % N = problem_data.sz(3);
 
-h = zeros(size(x));
+eh = zeros(size(lambdas));
 
 num_edges = size(edges, 1);
 for ee = 1:num_edges
     ii = edges(ee, 1);
     jj = edges(ee, 2);
-    lambda_e = x(ee);
+    lambda_e = lambdas(ee);
     tij = tijs_vec(:, ee);
     T_i = T(:, ii);
     T_j = T(:, jj);
@@ -276,23 +284,35 @@ for ee = 1:num_edges
     bdot = R_i_dot * tij;
     b = R_i * tij;
     e_th_elem = 2 * lambda_e * (bdot' * b + b' * bdot) + 2 * a' * bdot;
-    h(ee) = e_th_elem;
+    eh(ee) = e_th_elem;
 end
+
+end
+
+function h = ssom_rhess_lambda_r(R, Rdot, T, lambdas, problem_data)
+eh = ssom_ehess_lambda_r(R,Rdot,T,lambdas, problem_data);
+
+%HP) H = u
+
+eg = grad_lambda(lambdas, R, T, problem_data);
+h = manopt_stiefel_ehess2rhess(R, eg, eh, Rdot);
+
+
 end
 
 
 %% 5
-function h = ssom_ehess_lambda_t(x, ~, ~, Tdot, R, problem_data)
+function h = ssom_ehess_lambda_t(R, ~,  Tdot, lambdas, problem_data)
 
 % h_lambda_r = zeros(size(h_lambda_lambda));
 
-% x = X.lambda;
-% lambdas_dot = Xdot.lambda;
+% x = X.lambdas;
+% lambdas_dot = Xdot.lambdas;
 edges = problem_data.edges;
 tijs_vec = problem_data.tijs;
 % rho = problem_data.rho;
 
-h = zeros(size(x));
+h = zeros(size(lambdas));
 
 num_edges = size(edges, 1);
 for ee = 1:num_edges
@@ -314,4 +334,9 @@ end
 
 end
 
-
+function rhess = manopt_stiefel_ehess2rhess(X, egrad, ehess, H)
+    XtG = multiprod(multitransp(X), egrad);
+    symXtG = multisym(XtG);
+    HsymXtG = multiprod(H, symXtG);
+    rhess = stiefel_tangentProj(X, ehess - HsymXtG);
+end

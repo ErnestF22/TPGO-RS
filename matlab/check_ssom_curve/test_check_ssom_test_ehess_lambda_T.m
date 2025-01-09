@@ -28,10 +28,10 @@ curve.ddc=@(t) ddLambda(t);
 
 % f=@(t) problem.cost(curve.c(t));
 
-grad_handle = @(t) problem.grad_lambda(dLambda(t), R0, T(t));
+grad_handle = @(t) problem.grad_lambda(lambda0, R0, T(t));
 df=@(t) sum(stiefel_metric([],grad_handle(t),dLambda(t)));
 % funCheckDer(f,df)
-ehessf = @(t) problem.ssom_ehess_lambda_t(dLambda(t), ddLambda(t), dT(t), ddT(t), R0); 
+ehessf = @(t) problem.ssom_ehess_lambda_t(R0, dT(t), ddT(t), lambda0); 
 ddf_1 = @(t) stiefel_metric([], ehessf(t), curve.dc(t), 'euclidean');
 ddf_2 = @(t) stiefel_metric([], grad_handle(t), curve.ddc(t), 'euclidean');
 ddf = @(t) sum(ddf_1(t) + ddf_2(t));    

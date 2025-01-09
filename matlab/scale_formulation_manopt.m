@@ -7,26 +7,38 @@ nrs = 4;
 d = 3;
 N = 5;
 
+sz=[nrs,d,N];
 
-
+%graph random init
 num_edges = 8;
 G = graph(true(N), 'omitselfloops'); % Alternative without self-loops
 p = randperm(numedges(G), num_edges);
 G = graph(G.Edges(p, :));
 edges = table2array(G.Edges);
 
-
-Tijs_vec = 10 * rand(d, num_edges);
-problem_data.Tijs = Tijs_vec;
-problem_data.edges = edges;
+tijs = 10 * rand(d, num_edges);
 
 
+rho = 1.0; %TODO: make this rand() later
+
+% variables random generation/init
 tuple.R = stiefelfactory(nrs, d, N);
 tuple.T = euclideanfactory(nrs, N);
 tuple.lambda = euclideanfactory(num_edges, 1);
 M = productmanifold(tuple);
+% problem.M = M;
+% X = M.rand();
 
-problem_data.rho = 0.0;
+problem_data = struct('sz', sz, 'edges', edges, 'tijs', tijs);
+
+%g.lambda
+% [aL, bL, cL] = makeABClambda(X, problem_data);
+% problem_data.aL = aL; problem_data.bL = bL; problem_data.cL = cL;
+
+problem_data.rho = rho; %ReLU() part should not be needed for Hessian tests
+
+%% output (problem_curve_data) definition
+
 
 problem.M = M;
 problem_data.sz = [nrs, d, N];
@@ -38,8 +50,8 @@ problem.ehess = @(x, u) ssom_ehess_genproc(x, u, problem_data);
 fprintf("\n");
 disp("Gradient check easy");
 X_gradcheck.R = eye3d(nrs, d, N);
-X_gradcheck.T = zeros(nrs, N);
-X_gradcheck.lambda = ones(num_edges, 1);
+X_gradcheck.T = ones(nrs, N);
+X_gradcheck.lambda = zeros(num_edges, 1);
 figure(1)
 checkgradient(problem, X_gradcheck);
 
@@ -91,7 +103,7 @@ function [h] = ssom_ehess_genproc(X, Xdot, problem_data)
     % the most efficient form to execute the computations.
     edges = problem_data.edges;
 
-    tijs_scaled = make_tijs_scaled(lambdas, problem_data.Tijs);
+    tijs_scaled = make_tijs_scaled(lambdas, problem_data.tijs);
     
     %g.R
     problem_data_R = problem_data;
@@ -141,7 +153,7 @@ function h = ssom_ehess_lambda_lambda(X, Xdot, problem_data)
     lambdas = X.lambda;
     % lambdas_dot = Xdot.lambda;
     edges = problem_data.edges;
-    Tijs = problem_data.Tijs;
+    tijs = problem_data.tijs;
     % rho = problem_data.rho;
 
     h = zeros(length(lambdas), 1);
@@ -151,7 +163,7 @@ function h = ssom_ehess_lambda_lambda(X, Xdot, problem_data)
         ii = edges(ee, 1);
         % jj = edges(ee, 2);
         % lambda_e = lambdas(ee);
-        tij_e = Tijs(:, ee);
+        tij_e = tijs(:, ee);
         % T_i = problem_data.T(:, ii);
         % T_j = problem_data.T(:, jj);
         R_i = X.R(:, :, ii);
@@ -169,8 +181,9 @@ function h = ssom_ehess_r_lambda(X, Xdot, problem_data)
     % lambdas = X.lambda;
     lambdas_dot = Xdot.lambda;
     edges = problem_data.edges;
-    % Tijs_scaled = make_tijs_scaled(X.lambdas, problem_data.Tijs);
     % rho = problem_data.rho;
+
+    tijs_scaled = make_tijs_scaled(X.lambda, problem_data.tijs);
 
     W = zeros(size(X.R));
     num_edges = size(edges, 1);
@@ -179,7 +192,7 @@ function h = ssom_ehess_r_lambda(X, Xdot, problem_data)
         jj = edges(e,2); 
         T_i = X.T(:,ii);
         T_j = X.T(:,jj);
-        tij = problem_data.Tijs(:, e);
+        tij = tijs_scaled(:, e);
         lambda_dot_e = lambdas_dot(e);
         w_ij = 2 * (T_i - T_j)*lambda_dot_e*tij';
         W(:,:,ii) = W(:,:,ii) + w_ij;
@@ -194,7 +207,7 @@ function h = ssom_ehess_t_lambda(X, Xdot, problem_data)
 
     lambdas_dot = Xdot.lambda;
     edges = problem_data.edges;
-    % Tijs_scaled = make_tijs_scaled(X.lambdas, problem_data.Tijs);
+    tijs_scaled = make_tijs_scaled(X.lambda, problem_data.tijs);
     % rho = problem_data.rho;
 
     h = zeros(size(X.T));
@@ -210,7 +223,7 @@ function h = ssom_ehess_t_lambda(X, Xdot, problem_data)
         BIJ(ii) = 1;
         BIJ(jj) = -1;
         %
-        tij = problem_data.Tijs(:, e);
+        tij = tijs_scaled(:, e);
         w_ij = BIJ * lambdas_dot(e) * tij' * Ri';
         h = h + w_ij';
     end
@@ -224,7 +237,8 @@ function h = ssom_ehess_lambda_r(X, Xdot, problem_data)
     lambdas = X.lambda;
     % lambdas_dot = Xdot.lambda;
     edges = problem_data.edges;
-    Tijs_vec = problem_data.Tijs;
+    tijs = problem_data.tijs;
+    % tijs_scaled = make_tijs_scaled(X.lambdas, problem_data.tijs);
     % rho = problem_data.rho;
 
     h = zeros(size(lambdas));
@@ -234,7 +248,7 @@ function h = ssom_ehess_lambda_r(X, Xdot, problem_data)
         ii = edges(ee, 1);
         jj = edges(ee, 2);
         lambda_e = lambdas(ee);
-        tij = Tijs_vec(:, ee);
+        tij = tijs(:, ee);
         T_i = X.T(:,ii);
         T_j = X.T(:,jj);
         T_i_dot = Xdot.T(:, ii);
@@ -256,7 +270,7 @@ function h = ssom_ehess_lambda_t(X, Xdot, problem_data)
     lambdas = X.lambda;
     % lambdas_dot = Xdot.lambda;
     edges = problem_data.edges;
-    Tijs_vec = problem_data.Tijs;
+    Tijs_vec = problem_data.tijs;
     % rho = problem_data.rho;
 
     % nrs = problem_data.sz(1);
