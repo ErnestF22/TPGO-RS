@@ -1,104 +1,4 @@
-function scale_formulation_manopt
-
-% importmanopt;
-
-
-nrs = 4;
-d = 3;
-N = 5;
-
-sz=[nrs,d,N];
-
-%graph random init
-num_edges = 8;
-G = graph(true(N), 'omitselfloops'); % Alternative without self-loops
-p = randperm(numedges(G), num_edges);
-G = graph(G.Edges(p, :));
-edges = table2array(G.Edges);
-
-tijs = 10 * rand(d, num_edges);
-
-
-rho = 1.0; %TODO: make this rand() later
-
-% variables random generation/init
-tuple.R = stiefelfactory(nrs, d, N);
-tuple.T = euclideanfactory(nrs, N);
-tuple.lambda = euclideanfactory(num_edges, 1);
-M = productmanifold(tuple);
-% problem.M = M;
-% X = M.rand();
-
-problem_data = struct('sz', sz, 'edges', edges, 'tijs', tijs);
-
-%g.lambda
-% [aL, bL, cL] = makeABClambda(X, problem_data);
-% problem_data.aL = aL; problem_data.bL = bL; problem_data.cL = cL;
-
-problem_data.rho = rho; %ReLU() part should not be needed for Hessian tests
-
-%% output (problem_curve_data) definition
-
-
-problem.M = M;
-problem_data.sz = [nrs, d, N];
-problem.cost = @(x) ssom_cost(x, problem_data);
-% problem.egrad = @(x) ssom_egrad(x, problem_data);
-% problem.ehess = @(x, u) ssom_ehess_genproc(x, u, problem_data);
-problem.grad = @(x) ssom_rgrad(x, problem_data);
-problem.hess = @(x, u) ssom_rhess_genproc(x, u, problem_data);
-
-fprintf("\n");
-disp("Gradient check easy");
-X_gradcheck.R = eye3d(nrs, d, N);
-X_gradcheck.T = ones(nrs, N);
-X_gradcheck.lambda = zeros(num_edges, 1);
-figure(1)
-checkgradient(problem, X_gradcheck);
-
-fprintf("\n");
-disp("Gradient check rand");
-figure(2)
-checkgradient(problem);
-
-close all;
-
-fprintf("\n");
-disp("Hessian check easy");
-% X_gradcheck.R = eye3d(nrs, d, N);
-% X_gradcheck.T = zeros(nrs, N);
-% X_gradcheck.lambda = zeros(num_edges, 1);
-% Xdot_gradcheck.R = eye3d(nrs, d, N);
-% Xdot_gradcheck.T = zeros(nrs, N);
-% Xdot_gradcheck.lambda = zeros(num_edges, 1);
-figure(3)
-X_hesscheck = M.rand();
-Xdot_hesscheck = M.rand();
-X_hesscheck.R = zeros(nrs, d, N);
-Xdot_hesscheck.R = stiefel_randTangentNormVector(X_hesscheck.R);
-% only case this works is with the following T, lambda and R = zeros()
-% X_hesscheck.T = ones(nrs, N);
-% X_hesscheck.lambda = 2 * ones(num_edges, 1);
-checkhessian(problem, X_hesscheck, Xdot_hesscheck);
-
-
-fprintf("\n");
-disp("Hessian check rand");
-checkhessian(problem, X_hesscheck, Xdot_hesscheck);
-
-% problem_data.R_gt = eye3d(nrs, d, N);
-% problem_data.T_gt = zeros(nrs, N);
-% problem_data.lambda_gt = zeros(num_edges, 1);
-
-
-
-% trustregions(problem);
-
-
-end %file function
-
-%%
-function [h] = ssom_ehess_genproc(X, Xdot, problem_data)
+function h = ssom_rhess_genproc(X, Xdot, problem_data)
     R = X.R;
     T = X.T;
     lambdas = X.lambda;
@@ -139,15 +39,16 @@ function [h] = ssom_ehess_genproc(X, Xdot, problem_data)
     h_t_lambda = ssom_ehess_t_lambda(R, T, lambdas, lambdasdot, problem_data);
 
     % h_lambda_r = zeros(size(h_lambda_lambda)); 
-    h_lambda_r = ssom_ehess_lambda_r(X, Xdot, problem_data);
+    h_lambda_r = ssom_rhess_lambda_r(X, Xdot, problem_data);
     
     % h_lambda_t = zeros(size(h_lambda_lambda)); 
     h_lambda_t = ssom_ehess_lambda_t(R, T, Tdot, lambdas, problem_data);
 
-    h.R = ssom_ehess_R_R(R, Rdot, problem_data) + hrt + h_r_lambda;
+    h.R = ssom_rhess_R_R(R, Rdot, problem_data) + hrt + h_r_lambda;
     h.T = ssom_ehess_T_T(T, Tdot, problem_data) + htr + h_t_lambda;
     h.lambda = h_lambda_lambda + h_lambda_r + h_lambda_t;
-end %ehess genproc
+    
+end
 
 function h = ssom_ehess_lambda_lambda(x, xdot, R, problem_data)
 % h_lambda_lambda = zeros(1,1)
@@ -178,8 +79,19 @@ function h = ssom_ehess_T_T(~, xdot, problem_data)
 h = xdot*(problem_data.LR' + problem_data.LR);
 end
 
-function h = ssom_ehess_R_R(x, ~, ~)
-h = zeros(size(x));
+function h = ssom_rhess_R_R(x, xdot, problem_data)
+d = size(x, 2);
+egrad = matUnstackH(problem_data.P,d); %!! ehess2rhess for stiefel manifolds!
+h = ehess2rhess_stiefel(x, xdot, egrad);
+end
+
+function rhess = ehess2rhess_stiefel(x, xdot, egrad)
+term_1 = multiprod(xdot, ...
+    0.5*multiprod(multitransp(x), egrad) + 0.5*multiprod(multitransp(egrad), x));
+term_2 = multiprod(x, ...
+    0.5*multiprod(multitransp(xdot), egrad) + 0.5*multiprod(multitransp(egrad), xdot));
+DGf = - term_1 - term_2;
+rhess = stiefel_tangentProj(x, DGf); %ehess_proj = zeros(nrs,d,N)
 end
 
 %% 2
@@ -241,12 +153,7 @@ end
 
 
 %% 4 
-function eh = ssom_ehess_lambda_r(X, Xdot, problem_data)
-
-R = X.R;
-Rdot = Xdot.R;
-T = X.T;
-lambdas = X.lambda;
+function eh = ssom_ehess_lambda_r(R, Rdot, T, lambdas, problem_data)
 % h_lambda_t = zeros(size(h_lambda_lambda));
 
 % x = X.lambda;
@@ -280,7 +187,20 @@ end
 
 end
 
+function h = ssom_rhess_lambda_r(X, Xdot, problem_data)
+R = X.R;
+Rdot = Xdot.R;
+T = X.T;
+lambdas = X.lambda;
+lambdasdot = Xdot.lambda;
+eh = ssom_ehess_lambda_r(R,Rdot,T,lambdas, problem_data);
 
+%HP) H = u
+
+eg = ssom_grad_lambda(X, problem_data);
+h = manopt_stiefel_ehess2rhess(lambdas, eg, eh, lambdasdot);
+
+end
 
 
 %% 5
@@ -316,38 +236,9 @@ end
 
 end
 
-%% RHESS STUFF
-
-function h = ssom_rhess_lambda_r(X, Xdot, problem_data)
-
-eh = ssom_ehess_lambda_r(X, Xdot, problem_data);
-
-%HP) H = u
-
-eg = ssom_grad_lambda(X, problem_data);
-h = manopt_stiefel_ehess2rhess(lambdas, eg, eh, lambdasdot);
-
-end
-
-
 function rhess = manopt_stiefel_ehess2rhess(X, egrad, ehess, H)
     XtG = multiprod(multitransp(X), egrad);
     symXtG = multisym(XtG);
     HsymXtG = multiprod(H, symXtG);
     rhess = stiefel_tangentProj(X, ehess - HsymXtG);
-end
-
-function h = ssom_rhess_R_R(x, xdot, problem_data)
-d = size(x, 2);
-egrad = matUnstackH(problem_data.P,d); %!! ehess2rhess for stiefel manifolds!
-h = ehess2rhess_stiefel(x, xdot, egrad);
-end
-
-function rhess = ehess2rhess_stiefel(x, xdot, egrad)
-term_1 = multiprod(xdot, ...
-    0.5*multiprod(multitransp(x), egrad) + 0.5*multiprod(multitransp(egrad), x));
-term_2 = multiprod(x, ...
-    0.5*multiprod(multitransp(xdot), egrad) + 0.5*multiprod(multitransp(egrad), xdot));
-DGf = - term_1 - term_2;
-rhess = stiefel_tangentProj(x, DGf); %ehess_proj = zeros(nrs,d,N)
 end
