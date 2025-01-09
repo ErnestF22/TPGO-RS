@@ -1,4 +1,4 @@
-function test_check_ssom_test_ehess_diag()
+function test_check_ssom_test_hess_diag()
 %%
 
 problem=test_check_ssom();
@@ -54,7 +54,7 @@ ddf = @(t) sum(ddf_1(t) + ddf_2(t));
 
 funCheckDer(df,ddf)
 
-%% T T
+%% R R
 curve.c=@(t) R(t);
 curve.dc=@(t) dR(t);
 curve.ddc=@(t) ddR(t);
