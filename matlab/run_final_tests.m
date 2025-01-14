@@ -101,8 +101,8 @@ for tdata = testdatas
     hessian_mode = 'manual';
     initguess_is_available = boolean(0);
     rand_initguess = boolean(1);
-    enable_manopt_icp = boolean(1);
-    enable_procrustes = boolean(1);
+    enable_manopt_icp = boolean(0);
+    enable_procrustes = boolean(0);
     enable_manopt_rs = boolean(1);
     som_params = struct('N', N, 'd', d, 'd_aff', d_aff, ...
         'global_camera_id', global_camera_id, ...

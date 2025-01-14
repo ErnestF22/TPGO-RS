@@ -153,18 +153,18 @@ cost_after_ls = cost_genproc(Y0,problem_struct_next);
 Xnext_vec = [Rnext(:); Tnext(:)];
 Y0_vec = [Y0R(:); Y0T(:)];
 vpas_vec = [vpasR(:); vpasT(:)];
-writematrix(cost_before_ls, '/home/rimlab/workspace/matlab_ws/som/matlab/data/lsdummy_debug/matlab_cost_before_ls.csv')
-writematrix(Rnext, '/home/rimlab/workspace/matlab_ws/som/matlab/data/lsdummy_debug/matlab_Rnext.csv')
-writematrix(Tnext, '/home/rimlab/workspace/matlab_ws/som/matlab/data/lsdummy_debug/matlab_Tnext.csv')
-writematrix(vpasR, '/home/rimlab/workspace/matlab_ws/som/matlab/data/lsdummy_debug/matlab_vpasR.csv')
-writematrix(vpasT, '/home/rimlab/workspace/matlab_ws/som/matlab/data/lsdummy_debug/matlab_vpasT.csv')
-writematrix(Y0R, '/home/rimlab/workspace/matlab_ws/som/matlab/data/lsdummy_debug/matlab_Y0R.csv')
-writematrix(Y0T, '/home/rimlab/workspace/matlab_ws/som/matlab/data/lsdummy_debug/matlab_Y0T.csv')
-writematrix(cost_after_ls, '/home/rimlab/workspace/matlab_ws/som/matlab/data/lsdummy_debug/matlab_cost_after_ls.csv')
+writematrix(cost_before_ls, '/data/lsdummy_debug/matlab_cost_before_ls.csv')
+writematrix(Rnext, '/data/lsdummy_debug/matlab_Rnext.csv')
+writematrix(Tnext, '/data/lsdummy_debug/matlab_Tnext.csv')
+writematrix(vpasR, '/data/lsdummy_debug/matlab_vpasR.csv')
+writematrix(vpasT, '/data/lsdummy_debug/matlab_vpasT.csv')
+writematrix(Y0R, '/data/lsdummy_debug/matlab_Y0R.csv')
+writematrix(Y0T, '/data/lsdummy_debug/matlab_Y0T.csv')
+writematrix(cost_after_ls, '/data/lsdummy_debug/matlab_cost_after_ls.csv')
 
-writematrix(Xnext_vec, '/home/rimlab/workspace/matlab_ws/som/matlab/data/lsdummy_debug/matlab_Xnext_vec.csv')
-writematrix(vpas_vec, '/home/rimlab/workspace/matlab_ws/som/matlab/data/lsdummy_debug/matlab_vpas_vec.csv')
-writematrix(Y0_vec, '/home/rimlab/workspace/matlab_ws/som/matlab/data/lsdummy_debug/matlab_Y0_vec.csv')
+writematrix(Xnext_vec, '/data/lsdummy_debug/matlab_Xnext_vec.csv')
+writematrix(vpas_vec, '/data/lsdummy_debug/matlab_vpas_vec.csv')
+writematrix(Y0_vec, '/data/lsdummy_debug/matlab_Y0_vec.csv')
 
 lambda_pim_out = highest_norm_eigenval;
 v_pim_out = v_pim_after_shift;

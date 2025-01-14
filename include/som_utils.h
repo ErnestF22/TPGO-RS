@@ -42,8 +42,16 @@ namespace SomUtils
 
     /**
      * Read Initguess from csv file in vectorized form (no size checks)
+     * and save it into ROPTLIB vector
+     * TODO: rename it as this method is not necessarily to be used only for reading initguesses
      */
     void readCsvInitguess(std::string fname, ROPTLIB::Vector &csvVec);
+
+    /**
+     * Read Initguess from csv file in vectorized form (no size checks)
+     * and save it into Eigen MatrixXd
+     */
+    void readCsvEigen(std::string fname, SomUtils::MatD &csvEig);
 
     /**
      * Called from readCsvTijs

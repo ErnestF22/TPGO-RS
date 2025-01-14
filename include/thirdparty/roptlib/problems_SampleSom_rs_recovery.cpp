@@ -1438,31 +1438,6 @@ namespace ROPTLIB
         }
     }
 
-    void SampleSomProblem::stiefelRetractionQR(double t, const SomUtils::VecMatD &x, const SomUtils::VecMatD &e, SomUtils::VecMatD &rxe) const
-    {
-        // // function Y = retraction_qr(X, U, t)
-        // //     % It is necessary to call qr_unique rather than simply qr to ensure
-        // //     % this is a retraction, to avoid spurious column sign flips.
-        // //     if nargin < 3
-        // //         Y = qr_unique(X + U);
-        // //     else
-        // //         Y = qr_unique(X + t*U);
-        // //     end
-        // // end
-
-        // SomUtils::VecMatD rTmp(sz_.n_);
-        // SomUtils::VecMatD et = e;
-        // std::for_each(et.begin(), et.end(), [t](SomUtils::MatD &x) { //^^^ take argument by reference: LAMBDA FUNCTION
-        //     // ROFL_VAR1(alpha)
-        //     x *= t;
-        // });
-        // SomUtils::VecMatD xetSum(sz_.n_, SomUtils::MatD::Zero(x[0].rows(), x[0].cols()));
-        // std::transform(x.begin(), x.end(), et.begin(), xetSum.begin(), std::plus<SomUtils::MatD>());
-        // QRunique(xetSum, rxe, rTmp); // rTmp is unused; rxe comes out from Q in QR decomposition and is the function's output
-
-        // ROFL_ASSERT(checkIsOn3dStiefel(rxe))
-    }
-
     bool SampleSomProblem::checkIsOn3dStiefel(const SomUtils::VecMatD &m) const
     {
         int p = m[0].rows();
@@ -1491,7 +1466,7 @@ namespace ROPTLIB
         return isEqualFloats(m.transpose() * m, SomUtils::MatD::Identity(d, d));
     }
 
-    void SampleSomProblem::stiefelRetractionQR(const SomUtils::VecMatD &x, const SomUtils::VecMatD &e, SomUtils::VecMatD &rxe) const
+    void SampleSomProblem::stiefelRetractionQR(const SomUtils::VecMatD &x, const SomUtils::VecMatD &e, SomUtils::VecMatD &rxe, double t) const
     {
         // function Y = retraction_qr(X, U, t)
         //     % It is necessary to call qr_unique rather than simply qr to ensure
@@ -1516,22 +1491,22 @@ namespace ROPTLIB
         // }
         ROFL_ASSERT(checkIsOn3dStiefel(rxe))
 
-        for (int i = 0; i < sz_.n_; ++i)
-        {
-            ROFL_VAR2(i, "Equal to matlab stiefel retraction qr?")
-            std::cout << std::endl
-                      << "x[i]" << std::endl;
-            std::cout << std::endl
-                      << x[i] << std::endl;
-            std::cout << std::endl
-                      << "e[i]" << std::endl;
-            std::cout << std::endl
-                      << e[i] << std::endl;
-            std::cout << std::endl
-                      << "rxe[i]" << std::endl;
-            std::cout << std::endl
-                      << rxe[i] << std::endl;
-        }
+        // for (int i = 0; i < sz_.n_; ++i)
+        // {
+        // ROFL_VAR2(i, "Equal to matlab stiefel retraction qr?")
+        // std::cout << std::endl
+        //           << "x[i]" << std::endl;
+        // std::cout << std::endl
+        //           << x[i] << std::endl;
+        // std::cout << std::endl
+        //           << "e[i]" << std::endl;
+        // std::cout << std::endl
+        //           << e[i] << std::endl;
+        // std::cout << std::endl
+        //           << "rxe[i]" << std::endl;
+        // std::cout << std::endl
+        //           << rxe[i] << std::endl;
+        // }
     }
 
     void SampleSomProblem::euclRetraction(const SomUtils::MatD &x, const SomUtils::MatD &d, SomUtils::MatD &y, double t) const
@@ -1541,7 +1516,7 @@ namespace ROPTLIB
         y = x + t * d;
     }
 
-    void SampleSomProblem::stiefelRetractionPolar(const SomUtils::MatD &xIn, const SomUtils::MatD &e, SomUtils::MatD &rxe) const
+    void SampleSomProblem::stiefelRetractionPolar(const SomUtils::MatD &xIn, const SomUtils::MatD &e, SomUtils::MatD &rxe, double t) const
     {
 
         // else %     rxe = zeros(size(x));
@@ -1571,7 +1546,7 @@ namespace ROPTLIB
         ROFL_ASSERT(((rxe.transpose() * rxe) - SomUtils::MatD::Identity(sz_.d_, sz_.d_)).cwiseAbs().maxCoeff() < 1e-6);
     }
 
-    void SampleSomProblem::stiefelRetractionPolar(const SomUtils::VecMatD &xIn, const SomUtils::VecMatD &e, SomUtils::VecMatD &rxe) const
+    void SampleSomProblem::stiefelRetractionPolar(const SomUtils::VecMatD &xIn, const SomUtils::VecMatD &e, SomUtils::VecMatD &rxe, double t) const
     {
         // N = size(x, 3);
         // p = size(x, 2);

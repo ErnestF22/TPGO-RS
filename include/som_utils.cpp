@@ -69,6 +69,50 @@ namespace SomUtils
         fout.close();
     }
 
+    void readCsvEigen(std::string fname, SomUtils::MatD &csvEig)
+    {
+        std::fstream fout;
+        fout.open(fname, std::ios::in);
+
+        if (!fout.is_open())
+        {
+            std::cerr << "Error opening file!" << std::endl;
+            return;
+        }
+
+        std::string line;
+        // getline(fout, csvVec.header, '\n');
+        // ROFL_VAR1(csvVec.header);
+
+        /////
+        // Vector rgTiVec(sz_.p_, sz_.n_);
+        realdp Grealdp;
+
+        /////
+
+        int j = 0;
+        while (getline(fout, line, '\n'))
+        {
+            // ROFL_VAR1(line);
+
+            // add all the column data
+            // of a row to a vector
+
+            deserializeRow(line, csvEig.data()[j]);
+            j++;
+            // ROFL_VAR2(j, line);
+
+            
+
+            // csvVec.pts.push_back(pt);
+        }
+
+        // rgTiVec.CopyTo(result->GetElement(gElemIdx));
+        // csvVec.Print("csv read result");
+
+        fout.close();
+    }
+
     void deserializeRowTijs(const std::string &row, Eigen::RowVectorXd &tij)
     {
         std::stringstream ss(row);

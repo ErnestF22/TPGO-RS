@@ -586,18 +586,11 @@ namespace ROPTLIB
         bool checkIsOnStiefel(const SomUtils::MatD &m) const;
 
         /**
-         * @brief Stiefel Retraction for 2D manifold from @param xIn towards direction @param e multiplied by @param t
+         * @brief Stiefel Retraction for 3D manifold from @param xIn towards direction @param e multiplied by @param t
          * returning new point in reference @param rxe
          * Retraction version based on QR "unique" decomposition
          */
-        void stiefelRetractionQR(double t, const SomUtils::VecMatD &x, const SomUtils::VecMatD &e, SomUtils::VecMatD &rxe) const;
-
-        /**
-         * @brief Stiefel Retraction for 2D manifold from @param xIn towards direction @param e
-         * returning new point in reference @param rxe
-         * Retraction version based on QR "unique" decomposition
-         */
-        void stiefelRetractionQR(const SomUtils::VecMatD &x, const SomUtils::VecMatD &e, SomUtils::VecMatD &rxe) const;
+        void stiefelRetractionQR(const SomUtils::VecMatD &x, const SomUtils::VecMatD &e, SomUtils::VecMatD &rxe, double t = 1.0) const;
 
         /**
          * @brief Euclidean Retraction for 2D manifold from @param x towards direction @param d with @param t steps (default t = 1.0)
@@ -611,13 +604,13 @@ namespace ROPTLIB
          * returning new point in reference @param rxe
          * Retraction version based on sqrtm
          */
-        void stiefelRetractionPolar(const SomUtils::MatD &xIn, const SomUtils::MatD &e, SomUtils::MatD &rxe) const;
+        void stiefelRetractionPolar(const SomUtils::MatD &xIn, const SomUtils::MatD &e, SomUtils::MatD &rxe, double t = 1.0) const;
 
         /**
          * @brief Stiefel Retraction for 3D manifold from @param xIn towards direction @param e
          * returning new point in reference @param rxe
          */
-        void stiefelRetractionPolar(const SomUtils::VecMatD &xIn, const SomUtils::VecMatD &e, SomUtils::VecMatD &rxe) const;
+        void stiefelRetractionPolar(const SomUtils::VecMatD &xIn, const SomUtils::VecMatD &e, SomUtils::VecMatD &rxe, double t = 1.0) const;
 
         /**
          * @brief Call stiefelRetractionPolar, euclRetraction on szNext elements @param xRin, @param xTin, @param vRin, @param vTin
