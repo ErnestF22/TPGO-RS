@@ -48,6 +48,15 @@ R_manopt_out = X.R;
 
 cost_last = rsom_cost_base(X, problem_data);
 
+% % x_opt_cpp_vec = zeros(d*d*N+d*N, 1);
+% x_opt_cpp_vec = readmatrix("/home/ernest/Desktop/xopt_cpp.csv");
+% 
+% x_opt_cpp.R = reshape(x_opt_cpp_vec(1:d*d*N, 1), d, d, N);
+% x_opt_cpp.T = reshape(x_opt_cpp_vec(d*d*N+1:end, 1), d, N);
+%
+% cost_cpp = rsom_cost_base(x_opt_cpp, problem_data);
+
+
 for staircase_step_idx = r0:d*N+1
     problem_struct_next.sz = [staircase_step_idx, d, N];
     problem_struct_next.Tijs = Tijs;

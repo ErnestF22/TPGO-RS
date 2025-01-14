@@ -94,11 +94,11 @@ for tdata = testdatas
     writematrix(varEdges, ...
         convertStringsToChars(strcat(folder_name, "/edges.csv")), 'Delimiter', ',')
     %tijs
-    varTijs = G2T(tdata.gij);
+    varTijs = G2T(tdata.gijtruth);
     writematrix(varTijs, ...
         convertStringsToChars(strcat(folder_name, "/tijs.csv")), 'Delimiter', ',')
     %gt
-    gt_vec = [vec(G2R(tdata.gi)); vec(G2T(tdata.gi))];
+    gt_vec = [vec(G2R(tdata.gitruth)); vec(G2T(tdata.gitruth))];
     writematrix(gt_vec, convertStringsToChars(strcat(folder_name, "/X_gt.csv")))
     %n
     n = tdata.NNodes;

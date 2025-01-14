@@ -1058,6 +1058,7 @@ namespace ROPTLIB
         std::cout << "Difference between lambda_pim_after_shift*v_pim_after_shift"
                   << " and H_SH(v_pim_after_shift) should be in the order of the tolerance:" << std::endl;
         eigencheckHessianGenproc(lambdaPim, Rnext, vPimR, Tnext, vPimT);
+        ROFL_VAR1(lambdaPim)
 
         // if lambda_pim>0
         double highestNormEigenval = 1e+6;
@@ -1096,13 +1097,18 @@ namespace ROPTLIB
             std::cout << "Difference between lambda_pim_after_shift*v_pim_after_shift"
                       << "and H_SH(v_pim_after_shift) should be in the order of the tolerance:" << std::endl;
             eigencheckHessianGenprocShifted(lambdaPimShift, Rnext, vPimRshift, Tnext, vPimTshift, mu);
+            ROFL_VAR1(lambdaPimShift)
             highestNormEigenval = lambdaPimShift + mu;
             std::cout << "Difference between (lambda_pim_after_shift + mu)*v_pim_after_shift"
                       << "and H_SH(v_pim_after_shift) should be in the order of the tolerance:" << std::endl;
             eigencheckHessianGenproc(highestNormEigenval, Rnext, vPimRshift, Tnext, vPimTshift, mu);
+            ROFL_VAR1(highestNormEigenval)
             // ROFL_VAR3(highestNormEigenval, vPimRshift[0], vPimTshift);
             vPimR = vPimRshift;
             vPimT = vPimTshift;
+            for (int i = 0; i < sz_.n_; ++i)
+                ROFL_VAR2(i, vPimR[i])
+            ROFL_VAR1(vPimT)
         }
         else
         {

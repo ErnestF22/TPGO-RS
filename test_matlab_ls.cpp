@@ -55,6 +55,7 @@ int main(int argc, char **argv)
     ROFL_VAR2(xNextVecEig.rows(), xNextVecEig.cols())
     Prob.getRotations(xNextVecEig, RnextEig);
     Prob.getTranslations(xNextVecEig, TnextEig);
+    ROFL_VAR1(Prob.f(xNext));
 
     // Read vpas from csv
     ROPTLIB::Vector vpas = ProdMani.RandominManifold();
@@ -87,7 +88,7 @@ int main(int argc, char **argv)
 
     double costAfterLS;
     SomUtils::readSingleDoubleCsv("../matlab/data/lsdummy_debug/matlab_cost_after_ls.csv", costAfterLS);
-    
+
     // Run linesearch dummy
     SomUtils::VecMatD Y0R(n, SomUtils::MatD::Zero(p, d));
     SomUtils::MatD Y0T(SomUtils::MatD::Zero(p, n));
@@ -96,4 +97,13 @@ int main(int argc, char **argv)
 
     ROFL_VAR2(costBeforeLS, Prob.costEigen(Y0R, Y0T));
 
+    // Debug also RSOM Pim Hessian Genproc
+    SomUtils::VecMatD Reig(n, SomUtils::MatD::Zero(p, d));
+    for (int i = 0; i < n; ++i)
+        Reig[i] = RnextEig[i].block(0, 0, d, d);
+
+    SomUtils::MatD Teig(SomUtils::MatD::Zero(d, n));
+    Teig = TnextEig.block(0, 0, d, n);
+    ROPTLIB::Vector Y0cpp = ProdMani.RandominManifold();
+    Prob.rsomPimHessianGenproc(1e-6, Reig, Teig, Y0cpp);
 }

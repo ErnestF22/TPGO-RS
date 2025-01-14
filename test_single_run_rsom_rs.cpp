@@ -28,7 +28,7 @@ void runRsomRS(ROPTLIB::SampleSomProblem &Prob, const ROPTLIB::Vector &startX)
     auto Xopt = RTRNewtonSolver->GetXopt();
     auto XoptCost = RTRNewtonSolver->Getfinalfun();
 
-    Prob.CheckGradHessian(Xopt);
+    // Prob.CheckGradHessian(Xopt);
 
     // std::cout << "Prob.GetUseGrad() " << Prob.GetUseGrad() << std::endl;
     // std::cout << "Prob.GetUseHess() " << Prob.GetUseHess() << std::endl;
@@ -37,6 +37,8 @@ void runRsomRS(ROPTLIB::SampleSomProblem &Prob, const ROPTLIB::Vector &startX)
     // Outputs
     Xopt.Print("Xopt");
     std::cout << "XoptCost " << XoptCost << std::endl; // x cost
+
+    
 
     delete RTRNewtonSolver;
 
