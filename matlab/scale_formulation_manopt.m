@@ -231,10 +231,8 @@ for e = 1:num_edges
     %
     tij = problem_data.tijs(:, e);
     w_ij = BIJ * lambdas_dot(e) * tij' * Ri';
-    h = h + w_ij';
+    h = h + 2 * w_ij';
 end
-
-
 
 end
 
