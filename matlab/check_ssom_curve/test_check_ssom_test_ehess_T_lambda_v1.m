@@ -1,46 +1,38 @@
 function test_check_ssom_test_ehess_T_lambda_v1()
-problem=test_check_ssom();
-% curve=test_check_ssom_curve(problem);
 
-% clean problem struct of unwanted members
-problem_data.sz = problem.sz;
-problem_data.edges = problem.edges;
-problem_data.tijs = problem.tijs;
+nrs = 4;
+d = 3;
+N = 5;
 
-problem = [];
+sz=[nrs,d,N];
 
-N = problem_data.sz(3);
-% nrs = problem.sz(1);
-d = problem_data.sz(2);
+%graph random init
+num_edges = 8;
+G = graph(true(N), 'omitselfloops'); % Alternative without self-loops
+p = randperm(numedges(G), num_edges);
+G = graph(G.Edges(p, :));
+edges = table2array(G.Edges);
+
+tijs = 10 * rand(d, num_edges);
+
+rho = 1.0; %TODO: make this rand() later
+
+problem_data = struct('sz', sz, 'edges', edges, 'tijs', tijs, 'rho', rho);
+
 e = size(problem_data.edges,1);
+
+%%
+
+
 
 lambda0=rand(e,1,1);
 vLambda0=rand(e,1,1);
 
-R0 = eye3d(d,d,N); %first d with nrs later
-% vR0 = eye3d(d,d,N);
+R0 = make_rand_stiefel_3d_array(nrs,d,N);
 
-T0 = rand(d,N);
-% vT0 = rand(d,N);
+T0 = rand(nrs,N);
 
 [lambda,dLambda,~,~,~]=real_geodFun(lambda0, vLambda0);
-
-% curve.c=@(t) T(t);
-% curve.dc=@(t) dT(t);
-% curve.ddc=@(t) ddT(t);
-
-% % f=@(t) problem.cost(curve.c(t));
-% gradf=@(t) egrad_T(T0);
-% df=@(t) sum(stiefel_metric([],gradf(t),curve.dc(t)));
-% % funCheckDer(f,df)
-% ehessf = @(t) ssom_ehess_t_lambda(R0, T0, dLambda(t), ddLambda(t));
-% ddf_1 = @(t) stiefel_metric([], ehessf(t), curve.dc(t), 'euclidean');
-% ddf_2 = @(t) stiefel_metric([], gradf(t), curve.ddc(t), 'euclidean');
-% ddf = @(t) sum(ddf_1(t) + ddf_2(t));    
-% 
-% funCheckDer(df,ddf)
-
-%% version with fixed T, geodesic lambda
 
 gradf_T= @(t) egrad_T(R0, T0, lambda(t), problem_data);
 hessf_T_lambda = @(t) ssom_ehess_t_lambda(R0, T0, lambda(t), dLambda(t), problem_data);
