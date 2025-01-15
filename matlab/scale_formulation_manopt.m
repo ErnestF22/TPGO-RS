@@ -43,10 +43,10 @@ problem_data.rho = rho; %ReLU() part should not be needed for Hessian tests
 problem.M = M;
 problem_data.sz = [nrs, d, N];
 problem.cost = @(x) ssom_cost(x, problem_data);
-% problem.egrad = @(x) ssom_egrad(x, problem_data);
-% problem.ehess = @(x, u) ssom_ehess_genproc(x, u, problem_data);
-problem.grad = @(x) ssom_rgrad(x, problem_data);
-problem.hess = @(x, u) ssom_rhess_genproc(x, u, problem_data);
+problem.egrad = @(x) ssom_egrad(x, problem_data);
+problem.ehess = @(x, u) ssom_ehess_genproc(x, u, problem_data);
+% problem.grad = @(x) ssom_rgrad(x, problem_data);
+% problem.hess = @(x, u) ssom_rhess_genproc(x, u, problem_data);
 
 fprintf("\n");
 disp("Gradient check easy");
@@ -74,17 +74,17 @@ disp("Hessian check easy");
 figure(3)
 X_hesscheck = M.rand();
 Xdot_hesscheck = M.rand();
-X_hesscheck.R = zeros(nrs, d, N);
+X_hesscheck.R = eye3d(nrs, d, N);
 Xdot_hesscheck.R = stiefel_randTangentNormVector(X_hesscheck.R);
 % only case this works is with the following T, lambda and R = zeros()
-% X_hesscheck.T = ones(nrs, N);
-% X_hesscheck.lambda = 2 * ones(num_edges, 1);
+X_hesscheck.T = ones(nrs, N);
+X_hesscheck.lambda = 2 * ones(num_edges, 1);
 checkhessian(problem, X_hesscheck, Xdot_hesscheck);
 
 
 fprintf("\n");
 disp("Hessian check rand");
-checkhessian(problem, X_hesscheck, Xdot_hesscheck);
+checkhessian(problem);
 
 % problem_data.R_gt = eye3d(nrs, d, N);
 % problem_data.T_gt = zeros(nrs, N);
@@ -99,54 +99,43 @@ end %file function
 
 %%
 function [h] = ssom_ehess_genproc(X, Xdot, problem_data)
-    R = X.R;
-    T = X.T;
-    lambdas = X.lambda;
-    Rdot = Xdot.R;
-    Tdot = Xdot.T;
-    lambdasdot = Xdot.lambda;
-    
-    % Careful: tangent vectors on the rotation group are represented as
-    % skew symmetric matrices. To obtain the corresponding vectors in
-    % the ambient space, we need a little transformation. This
-    % transformation is typically not needed when we compute the
-    % formulas for the gradient and the Hessian directly in Riemannian
-    % form instead of resorting the egrad2rgrad and ehess2rhess. These
-    % latter tools are convenient for prototyping but are not always
-    % the most efficient form to execute the computations.
-    edges = problem_data.edges;
+R = X.R;
+T = X.T;
+lambdas = X.lambda;
+Rdot = Xdot.R;
+Tdot = Xdot.T;
+lambdasdot = Xdot.lambda;
 
-    tijs_scaled = make_tijs_scaled(lambdas, problem_data.tijs);
-    
-    % problem helpful members
-    [problem_data.P, problem_data.frct] = ...
-        make_step1_p_fct(T, tijs_scaled, edges);
-    %
-    [problem_data.LR, problem_data.PR, problem_data.BR] = ...
-        make_LR_PR_BR_noloops(R, tijs_scaled, edges);
-    %
- 
-    hrt = compute_hrt(X,Xdot,tijs_scaled,edges);
-    htr = compute_htr(X,Xdot,tijs_scaled,edges);
-    
-    % h_lambda_lambda = zeros(size(lambda));
-    h_lambda_lambda = ssom_ehess_lambda_lambda(lambdas, lambdasdot, R, problem_data);
+% Careful: tangent vectors on the rotation group are represented as
+% skew symmetric matrices. To obtain the corresponding vectors in
+% the ambient space, we need a little transformation. This
+% transformation is typically not needed when we compute the
+% formulas for the gradient and the Hessian directly in Riemannian
+% form instead of resorting the egrad2rgrad and ehess2rhess. These
+% latter tools are convenient for prototyping but are not always
+% the most efficient form to execute the computations.
 
-    % h_r_lambda = zeros(size(hrt)); 
-    h_r_lambda = ssom_ehess_r_lambda(R, T, lambdas, lambdasdot, problem_data);
+hrt = ssom_ehess_r_t(R, T, Tdot, lambdas, problem_data);
+htr = ssom_ehess_t_r(R, Rdot, T, lambdas, problem_data);
 
-    % h_t_lambda = zeros(size(htr)); 
-    h_t_lambda = ssom_ehess_t_lambda(R, T, lambdas, lambdasdot, problem_data);
+% h_lambda_lambda = zeros(size(lambda));
+h_lambda_lambda = ssom_ehess_lambda_lambda(lambdas, lambdasdot, R, problem_data);
 
-    % h_lambda_r = zeros(size(h_lambda_lambda)); 
-    h_lambda_r = ssom_ehess_lambda_r(X, Xdot, problem_data);
-    
-    % h_lambda_t = zeros(size(h_lambda_lambda)); 
-    h_lambda_t = ssom_ehess_lambda_t(R, T, Tdot, lambdas, problem_data);
+% h_r_lambda = zeros(size(hrt));
+h_r_lambda = ssom_ehess_r_lambda(R, T, lambdas, lambdasdot, problem_data);
 
-    h.R = ssom_ehess_R_R(R, Rdot, problem_data) + hrt + h_r_lambda;
-    h.T = ssom_ehess_T_T(T, Tdot, problem_data) + htr + h_t_lambda;
-    h.lambda = h_lambda_lambda + h_lambda_r + h_lambda_t;
+% h_t_lambda = zeros(size(htr));
+h_t_lambda = ssom_ehess_t_lambda(R, T, lambdas, lambdasdot, problem_data);
+
+% h_lambda_r = zeros(size(h_lambda_lambda));
+h_lambda_r = ssom_ehess_lambda_r(X, Xdot, problem_data);
+
+% h_lambda_t = zeros(size(h_lambda_lambda));
+h_lambda_t = ssom_ehess_lambda_t(R, T, Tdot, lambdas, problem_data);
+
+h.R = ssom_ehess_R_R(R, Rdot, problem_data) + hrt + h_r_lambda;
+h.T = ssom_ehess_T_T(R, T, Tdot, lambdas, problem_data) + htr + h_t_lambda;
+h.lambda = h_lambda_lambda + h_lambda_r + h_lambda_t;
 end %ehess genproc
 
 function h = ssom_ehess_lambda_lambda(x, xdot, R, problem_data)
@@ -174,38 +163,44 @@ end
 
 end
 
-function h = ssom_ehess_T_T(~, xdot, problem_data)
-h = xdot*(problem_data.LR' + problem_data.LR);
+function h = ssom_ehess_T_T(R, ~, Tdot, lambdas, problem_data)
+tijs_scaled = make_tijs_scaled(lambdas, problem_data.tijs);
+[LR] = make_LR_PR_BR_noloops(R, tijs_scaled, problem_data.edges);
+% gT = T * (problem.LR+problem.LR')+(problem.PR)';
+h = Tdot*(LR' + LR);
 end
 
-function h = ssom_ehess_R_R(x, ~, ~)
-h = zeros(size(x));
+function h = ssom_ehess_R_R(R, ~, ~)
+h = zeros(size(R));
 end
 
 %% 2
-function h = ssom_ehess_r_lambda(R, T, ~, lambdadot, problem_data)
+function h = ssom_ehess_r_lambda(~, T, ~, lambdas_dot, problem_data)
 
-% h_r_lambda = zeros(size(hrt));
+nrs = size(T, 1);
+d = size(problem_data.tijs, 1);
+N = size(T, 2);
 
-% lambdas = X.lambda;
-% lambdas_dot = Xdot.lambda;
-edges = problem_data.edges;
-% rho = problem_data.rho;
+Ph = zeros(nrs, d*N);
 
-W = zeros(size(R));
-num_edges = size(edges, 1);
+tijs_dot_scaled = make_tijs_scaled(lambdas_dot, problem_data.tijs);
+
+idx_col_p = reshape(1:d*N, [], N)';
+
+num_edges = size(problem_data.edges,1);
 for e = 1:num_edges
-    ii = edges(e,1);
-    jj = edges(e,2);
-    T_i = T(:,ii);
-    T_j = T(:,jj);
-    tij = problem_data.tijs(:, e);
-    lambda_dot_e = lambdadot(e);
-    w_ij = 2 * (T_i - T_j)*lambda_dot_e*tij';
-    W(:,:,ii) = W(:,:,ii) + w_ij;
+    ii = problem_data.edges(e,1);
+    jj = problem_data.edges(e,2);
+    T_j = T(:, jj);
+    T_i = T(:, ii);
+    tij_dot = tijs_dot_scaled(:,e);
+    P_e = 2 * (T_i * tij_dot' - T_j * tij_dot');
+    Ph(:, idx_col_p(ii, :)) = ...
+        Ph(:, idx_col_p(ii, :)) + P_e;
 end
-h = stiefel_tangentProj(R, W);
-% h = W;
+
+h=matUnstackH(Ph,d);
+
 end
 
 
@@ -238,7 +233,7 @@ end
 
 
 
-%% 4 
+%% 4
 function eh = ssom_ehess_lambda_r(X, Xdot, problem_data)
 
 R = X.R;
@@ -272,8 +267,10 @@ for ee = 1:num_edges
     a = T_i - T_j;
     bdot = R_i_dot * tij;
     b = R_i * tij;
-    e_th_elem = 2 * lambda_e * (bdot' * b + b' * bdot) + 2 * a' * bdot;
-    eh(ee) = e_th_elem;
+    e_th_elem_half = lambda_e * (bdot' * b) + lambda_e * (b' * bdot)  + ...
+        a' * bdot;
+
+    eh(ee) = 2 * e_th_elem_half;
 end
 
 end
@@ -314,38 +311,71 @@ end
 
 end
 
+function h = ssom_ehess_r_t(~, T, Tdot, lambdas, problem_data)
+nrs = size(T, 1);
+d = size(problem_data.tijs, 1);
+N = size(T, 2);
+
+Ph = zeros(nrs, d*N);
+
+tijs_scaled = make_tijs_scaled(lambdas, problem_data.tijs);
+
+idx_col_p = reshape(1:d*N, [], N)';
+
+num_edges = size(problem_data.edges,1);
+for e = 1:num_edges
+    ii = problem_data.edges(e,1);
+    jj = problem_data.edges(e,2);
+    Tj_dot = Tdot(:, jj);
+    Ti_dot = Tdot(:, ii);
+    tij = tijs_scaled(:,e);
+    P_e = 2 * (Ti_dot * tij' - Tj_dot * tij');
+    Ph(:, idx_col_p(ii, :)) = ...
+        Ph(:, idx_col_p(ii, :)) + P_e;
+end
+
+h=matUnstackH(Ph,d);
+
+end
+
+function h = ssom_ehess_t_r(~, dR, ~, lambdas, problem_data)
+tijs_scaled = make_tijs_scaled(lambdas, problem_data.tijs);
+[~, PR_dot] = make_LR_PR_BR_noloops(dR, tijs_scaled, problem_data.edges);
+h=PR_dot';
+end
+
 %% RHESS STUFF
 
-function h = ssom_rhess_lambda_r(X, Xdot, problem_data)
-
-eh = ssom_ehess_lambda_r(X, Xdot, problem_data);
-
-%HP) H = u
-
-eg = ssom_grad_lambda(X, problem_data);
-h = manopt_stiefel_ehess2rhess(lambdas, eg, eh, lambdasdot);
-
-end
-
-
-function rhess = manopt_stiefel_ehess2rhess(X, egrad, ehess, H)
-    XtG = multiprod(multitransp(X), egrad);
-    symXtG = multisym(XtG);
-    HsymXtG = multiprod(H, symXtG);
-    rhess = stiefel_tangentProj(X, ehess - HsymXtG);
-end
-
-function h = ssom_rhess_R_R(x, xdot, problem_data)
-d = size(x, 2);
-egrad = matUnstackH(problem_data.P,d); %!! ehess2rhess for stiefel manifolds!
-h = ehess2rhess_stiefel(x, xdot, egrad);
-end
-
-function rhess = ehess2rhess_stiefel(x, xdot, egrad)
-term_1 = multiprod(xdot, ...
-    0.5*multiprod(multitransp(x), egrad) + 0.5*multiprod(multitransp(egrad), x));
-term_2 = multiprod(x, ...
-    0.5*multiprod(multitransp(xdot), egrad) + 0.5*multiprod(multitransp(egrad), xdot));
-DGf = - term_1 - term_2;
-rhess = stiefel_tangentProj(x, DGf); %ehess_proj = zeros(nrs,d,N)
-end
+% function h = ssom_rhess_lambda_r(X, Xdot, problem_data)
+% 
+% eh = ssom_ehess_lambda_r(X, Xdot, problem_data);
+% 
+% %HP) H = u
+% 
+% eg = ssom_grad_lambda(X, problem_data);
+% h = manopt_stiefel_ehess2rhess(lambdas, eg, eh, lambdasdot);
+% 
+% end
+% 
+% 
+% function rhess = manopt_stiefel_ehess2rhess(X, egrad, ehess, H)
+% XtG = multiprod(multitransp(X), egrad);
+% symXtG = multisym(XtG);
+% HsymXtG = multiprod(H, symXtG);
+% rhess = stiefel_tangentProj(X, ehess - HsymXtG);
+% end
+% 
+% function h = ssom_rhess_R_R(x, xdot, problem_data)
+% d = size(x, 2);
+% egrad = matUnstackH(problem_data.P,d); %!! ehess2rhess for stiefel manifolds!
+% h = ehess2rhess_stiefel(x, xdot, egrad);
+% end
+% 
+% function rhess = ehess2rhess_stiefel(x, xdot, egrad)
+% term_1 = multiprod(xdot, ...
+%     0.5*multiprod(multitransp(x), egrad) + 0.5*multiprod(multitransp(egrad), x));
+% term_2 = multiprod(x, ...
+%     0.5*multiprod(multitransp(xdot), egrad) + 0.5*multiprod(multitransp(egrad), xdot));
+% DGf = - term_1 - term_2;
+% rhess = stiefel_tangentProj(x, DGf); %ehess_proj = zeros(nrs,d,N)
+% end

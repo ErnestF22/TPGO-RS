@@ -1,4 +1,4 @@
-function test_check_ssom_test_ehess_T_lambda_v1()
+function test_check_ssom_test_ehess_T_R_v1
 
 nrs = 4;
 d = 3;
@@ -24,18 +24,19 @@ e = size(problem_data.edges,1);
 %%
 
 lambda0=rand(e,1,1);
-vLambda0=rand(e,1,1);
+% vLambda0=rand(e,1,1);
 
 R0 = make_rand_stiefel_3d_array(nrs,d,N);
+vR0 = rand(nrs, d, N);
 
 T0 = rand(nrs,N);
 
-[lambda,dLambda,~,~,~]=real_geodFun(lambda0, vLambda0);
+[R,dR,~,~,~]=real_geodFun(R0, vR0);
 
-gradf_T= @(t) egrad_T(R0, T0, lambda(t), problem_data);
-hessf_T_lambda = @(t) ssom_ehess_t_lambda(R0, T0, lambda(t), dLambda(t), problem_data);
+gradf_T= @(t) egrad_T(R(t), T0, lambda0, problem_data);
+hessf_T_R = @(t) ssom_ehess_T_R(R(t), dR(t), T0, lambda0, problem_data);
 
-funCheckDer(gradf_T, hessf_T_lambda)
+funCheckDer(gradf_T, hessf_T_R)
 
 end % file function
 
@@ -46,23 +47,9 @@ tijs_scaled = make_tijs_scaled(lambdas, problem_data.tijs);
 g=T*(LR+LR')+PR';
 end
 
-function h = ssom_ehess_t_lambda(R, T, ~, lambdas_dot, problem_data)
-edges = problem_data.edges;
-
-h = zeros(size(T));
-N = size(R,3);
-num_edges = size(edges, 1);
-for e = 1:num_edges
-    ii = edges(e,1);
-    jj = edges(e,2);
-    Ri = R(:,:,ii);
-    BIJ = zeros(N,1);
-    BIJ(ii) = 1;
-    BIJ(jj) = -1;
-    %
-    tij = problem_data.tijs(:, e);
-    w_ij = BIJ * lambdas_dot(e) * tij' * Ri';
-    h = h +  2 * w_ij'; % w_ij transpose!
-end
+function h = ssom_ehess_T_R(~, dR, ~, lambdas, problem_data)
+tijs_scaled = make_tijs_scaled(lambdas, problem_data.tijs);
+[~, PR_dot] = make_LR_PR_BR_noloops(dR, tijs_scaled, problem_data.edges);
+h=PR_dot';
 end
 
