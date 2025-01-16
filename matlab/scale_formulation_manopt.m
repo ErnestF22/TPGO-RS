@@ -344,41 +344,14 @@ tijs_scaled = make_tijs_scaled(lambdas, problem_data.tijs);
 h=PR_dot';
 end
 
-%% RHESS STUFF
+%% RHESS CONVERSION
 
-% function h = ssom_rhess_lambda_r(X, Xdot, problem_data)
-% 
-% eh = ssom_ehess_lambda_r(X, Xdot, problem_data);
-% 
-% %HP) H = u
-% 
-% eg = ssom_grad_lambda(X, problem_data);
-% h = manopt_stiefel_ehess2rhess(lambdas, eg, eh, lambdasdot);
-% 
-% end
-% 
-% 
 function rhess = manopt_stiefel_ehess2rhess(X, egrad, ehess, H)
 XtG = multiprod(multitransp(X), egrad);
 symXtG = multisym(XtG);
 HsymXtG = multiprod(H, symXtG);
 rhess = stiefel_tangentProj(X, ehess - HsymXtG);
 end
-% 
-% function h = ssom_rhess_R_R(x, xdot, problem_data)
-% d = size(x, 2);
-% egrad = matUnstackH(problem_data.P,d); %!! ehess2rhess for stiefel manifolds!
-% h = ehess2rhess_stiefel(x, xdot, egrad);
-% end
-% 
-% function rhess = ehess2rhess_stiefel(x, xdot, egrad)
-% term_1 = multiprod(xdot, ...
-%     0.5*multiprod(multitransp(x), egrad) + 0.5*multiprod(multitransp(egrad), x));
-% term_2 = multiprod(x, ...
-%     0.5*multiprod(multitransp(xdot), egrad) + 0.5*multiprod(multitransp(egrad), xdot));
-% DGf = - term_1 - term_2;
-% rhess = stiefel_tangentProj(x, DGf); %ehess_proj = zeros(nrs,d,N)
-% end
 
 function g = egrad_R(~, T, lambdas, problem_data)
 nrs = size(T, 1);
