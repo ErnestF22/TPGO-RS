@@ -18,6 +18,7 @@ set(CMAKE_BUILD_TYPE Debug)
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
 
 include_directories(include)
+include_directories(include/thirdparty/qr_unique_sizeless/include_matlab)
 #include_directories(src)
 
 #list(APPEND som_LINK_LIBS boost_iostreams boost_system boost_filesystem)
@@ -117,6 +118,17 @@ include/thirdparty/roptlib/solvers_SolversSMTR.cpp
 include/thirdparty/roptlib/others_Timer.cpp
 )
 
+add_library(qru
+include/thirdparty/qr_unique_sizeless/main.cpp #!!
+include/thirdparty/qr_unique_sizeless/qr_unique.cpp
+include/thirdparty/qr_unique_sizeless/qr_unique_initialize.cpp
+include/thirdparty/qr_unique_sizeless/qr_unique_terminate.cpp
+include/thirdparty/qr_unique_sizeless/qr.cpp
+include/thirdparty/qr_unique_sizeless/diag.cpp
+include/thirdparty/qr_unique_sizeless/xnrm2.cpp
+include/thirdparty/qr_unique_sizeless/rt_nonfinite.cpp
+)
+
 add_executable(test_roptlib_som test_roptlib_som.cpp include/som_utils.cpp)
 target_link_libraries(test_roptlib_som ${rofl_LIBRARIES} roptlib_local m blas lapack boost_iostreams boost_system boost_filesystem)
 
@@ -146,6 +158,9 @@ target_link_libraries(test_check_retraction ${rofl_LIBRARIES} roptlib_local m bl
 
 # add_executable(test_dijkstra_edges test_dijkstra_edges.cpp include/som_utils.cpp)
 # target_link_libraries(test_dijkstra_edges ${rofl_LIBRARIES} roptlib_local m blas lapack boost_iostreams boost_system boost_filesystem)
+
+add_executable(test_qr_retraction test_qr_retraction.cpp include/som_utils.cpp)
+target_link_libraries(test_qr_retraction ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
 
 add_executable(test_single_run_rsom_rs test_single_run_rsom_rs.cpp include/som_utils.cpp)
 target_link_libraries(test_single_run_rsom_rs ${rofl_LIBRARIES} roptlib_local m blas lapack boost_iostreams boost_system boost_filesystem)

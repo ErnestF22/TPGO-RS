@@ -49,3 +49,5 @@ build-release/
 .vscode/
 
 matlab/data/cpp_testdata/
+
+include/thirdparty/qr_unique_sizeless/
