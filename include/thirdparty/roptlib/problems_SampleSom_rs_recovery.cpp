@@ -1334,80 +1334,80 @@ namespace ROPTLIB
     //     // end
     // }
 
-    void SampleSomProblem::QRunique(const SomUtils::MatD &a, SomUtils::MatD &Q, SomUtils::MatD &R) const
-    {
-        // [q, r] = qr(A(:, :, k), 0);
+    // void SampleSomProblem::QRunique(const SomUtils::MatD &a, SomUtils::MatD &Q, SomUtils::MatD &R) const
+    // {
+    //     // [q, r] = qr(A(:, :, k), 0);
 
-        // % [q,r] = QR(a) performs a QR decomposition on m-by-n matrix a such that a = q*r.
-        // The factor r is an m-by-n upper triangular matrix and
-        // q is an m-by-m unitary matrix.
+    //     // % [q,r] = QR(a) performs a QR decomposition on m-by-n matrix a such that a = q*r.
+    //     // The factor r is an m-by-n upper triangular matrix and
+    //     // q is an m-by-m unitary matrix.
 
-        R.setIdentity(); // TODO: add R computation
+    //     R.setIdentity(); // TODO: add R computation
 
-        int m = a.rows();
-        int n = a.cols();
+    //     int m = a.rows();
+    //     int n = a.cols();
 
-        Eigen::ColPivHouseholderQR<SomUtils::MatD> qr(a);
-        SomUtils::MatD q = qr.matrixQ();
-        Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> r = qr.matrixQR().triangularView<Eigen::Upper>();
+    //     Eigen::ColPivHouseholderQR<SomUtils::MatD> qr(a);
+    //     SomUtils::MatD q = qr.matrixQ();
+    //     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> r = qr.matrixQR().triangularView<Eigen::Upper>();
 
-        // ROFL_ASSERT_VAR4(isEqualFloats(a, q * r), isEqualFloats(a, q * r), a, q, r);
-        // ROFL_ASSERT(r.isUpperTriangular() && r.rows() == m && r.cols() == n);
-        ROFL_ASSERT(q.isUnitary() && q.rows() == m && q.cols() == m);
+    //     // ROFL_ASSERT_VAR4(isEqualFloats(a, q * r), isEqualFloats(a, q * r), a, q, r);
+    //     // ROFL_ASSERT(r.isUpperTriangular() && r.rows() == m && r.cols() == n);
+    //     ROFL_ASSERT(q.isUnitary() && q.rows() == m && q.cols() == m);
 
-        // % In the real case, s holds the signs of the diagonal entries of R.
-        // % In the complex case, s holds the unit-modulus phases of these
-        // % entries. In both cases, d = diag(s) is a unitary matrix, and
-        // % its inverse is d* = diag(conj(s)).
-        // s = sign(diag(r));
+    //     // % In the real case, s holds the signs of the diagonal entries of R.
+    //     // % In the complex case, s holds the unit-modulus phases of these
+    //     // % entries. In both cases, d = diag(s) is a unitary matrix, and
+    //     // % its inverse is d* = diag(conj(s)).
+    //     // s = sign(diag(r));
 
-        // % Since a = qr (with 'a' the slice of A currently being processed),
-        // % it is also true that a = (qd)(d*r). By construction, qd still has
-        // % orthonormal columns, and d*r has positive real entries on its
-        // % diagonal, /unless/ s contains zeros. The latter can only occur if
-        // % slice a does not have full column rank, so that the decomposition
-        // % is not unique: we make an arbitrary choice in that scenario.
-        // % While exact zeros are unlikely, they may occur if, for example,
-        // % the slice a contains repeated columns, or columns that are equal
-        // % to zero. If an entry should be mathematically zero but is only
-        // % close to zero numerically, then it is attributed an arbitrary
-        // % sign dictated by the numerical noise: this is also fine.
-        // s(s == 0) = 1;
+    //     // % Since a = qr (with 'a' the slice of A currently being processed),
+    //     // % it is also true that a = (qd)(d*r). By construction, qd still has
+    //     // % orthonormal columns, and d*r has positive real entries on its
+    //     // % diagonal, /unless/ s contains zeros. The latter can only occur if
+    //     // % slice a does not have full column rank, so that the decomposition
+    //     // % is not unique: we make an arbitrary choice in that scenario.
+    //     // % While exact zeros are unlikely, they may occur if, for example,
+    //     // % the slice a contains repeated columns, or columns that are equal
+    //     // % to zero. If an entry should be mathematically zero but is only
+    //     // % close to zero numerically, then it is attributed an arbitrary
+    //     // % sign dictated by the numerical noise: this is also fine.
+    //     // s(s == 0) = 1;
 
-        SomUtils::MatD rDiag = r.diagonal();
-        SomUtils::MatD s = rDiag;
-        for (int i = 0; i < rDiag.size(); ++i)
-        {
-            if (rDiag(i, 0) >= 0)
-                s(i, 0) = 1;
-            else
-                s(i, 0) = -1;
-        }
+    //     SomUtils::MatD rDiag = r.diagonal();
+    //     SomUtils::MatD s = rDiag;
+    //     for (int i = 0; i < rDiag.size(); ++i)
+    //     {
+    //         if (rDiag(i, 0) >= 0)
+    //             s(i, 0) = 1;
+    //         else
+    //             s(i, 0) = -1;
+    //     }
 
-        // Q(:, :, k) = bsxfun(@times, q, s.');
-        for (int i = 0; i < Q.rows(); ++i)
-        {
-            for (int j = 0; j < Q.cols(); ++j)
-            {
-                auto sTransp = s.transpose();
-                Q(i, j) = q(i, j) * sTransp(0, j);
-            }
-        }
+    //     // Q(:, :, k) = bsxfun(@times, q, s.');
+    //     for (int i = 0; i < Q.rows(); ++i)
+    //     {
+    //         for (int j = 0; j < Q.cols(); ++j)
+    //         {
+    //             auto sTransp = s.transpose();
+    //             Q(i, j) = q(i, j) * sTransp(0, j);
+    //         }
+    //     }
 
-        // R(:, :, k) = bsxfun(@times, r, conj(s));
-        for (int i = 0; i < R.rows(); ++i)
-        {
-            for (int j = 0; j < R.cols(); ++j)
-            {
-                // TODO: add complex s case
-                // auto sConj = s.conjugate();
-                R(i, j) = R(i, j) * s(i, 0);
-            }
-        }
-        // TODO: add complex s case
-        // ROFL_ASSERT(isEqualFloats(R.imag(), SomUtils::MatD::Zero(R.imag().rows(), R.imag().cols())))
-        // R = R.real();
-    }
+    //     // R(:, :, k) = bsxfun(@times, r, conj(s));
+    //     for (int i = 0; i < R.rows(); ++i)
+    //     {
+    //         for (int j = 0; j < R.cols(); ++j)
+    //         {
+    //             // TODO: add complex s case
+    //             // auto sConj = s.conjugate();
+    //             R(i, j) = R(i, j) * s(i, 0);
+    //         }
+    //     }
+    //     // TODO: add complex s case
+    //     // ROFL_ASSERT(isEqualFloats(R.imag(), SomUtils::MatD::Zero(R.imag().rows(), R.imag().cols())))
+    //     // R = R.real();
+    // }
 
     void SampleSomProblem::QRunique(const SomUtils::VecMatD &A, SomUtils::VecMatD &Q, SomUtils::VecMatD &R) const
     {
@@ -1440,7 +1440,7 @@ namespace ROPTLIB
         for (int i = 0; i < N; ++i)
         {
             ROFL_ASSERT(A[i].rows() == m && A[i].cols() == n)
-            QRunique(A[i], Q[i], R[i]);
+            main_qr_unique(A[i], Q[i], R[i]);
         }
     }
 
@@ -1488,8 +1488,15 @@ namespace ROPTLIB
 
         SomUtils::VecMatD rTmp(sz_.n_);
         SomUtils::VecMatD xeSum(sz_.n_, SomUtils::MatD::Zero(x[0].rows(), x[0].cols()));
-        std::transform(x.begin(), x.end(), e.begin(), xeSum.begin(), std::plus<SomUtils::MatD>());
+        SomUtils::VecMatD te = e;
+        std::for_each(te.begin(), te.end(), [t](SomUtils::MatD &x) { //^^^ take argument by reference: LAMBDA FUNCTION
+            // ROFL_VAR1(alpha)
+            x *= t;
+        });
+        std::transform(x.begin(), x.end(), te.begin(), xeSum.begin(), std::plus<SomUtils::MatD>());
         QRunique(xeSum, rxe, rTmp); // rTmp is unused; rxe comes out from Q in QR decomposition and is the function's output
+        //!! line above would need main_qr_unique() with sz_.n_ = 1
+
 
         // for (int i = 0; i < sz_.n_; ++i)
         // {

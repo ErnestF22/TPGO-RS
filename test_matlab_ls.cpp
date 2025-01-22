@@ -8,6 +8,8 @@
 #include <filesystem>
 #include <boost/lexical_cast.hpp>
 
+#include "thirdparty/qr_unique_sizeless/main.h"
+
 #include "thirdparty/roptlib/problems_SampleSom.h"
 
 int main(int argc, char **argv)
@@ -97,13 +99,13 @@ int main(int argc, char **argv)
 
     ROFL_VAR2(costBeforeLS, Prob.costEigen(Y0R, Y0T));
 
-    // Debug also RSOM Pim Hessian Genproc
-    SomUtils::VecMatD Reig(n, SomUtils::MatD::Zero(p, d));
-    for (int i = 0; i < n; ++i)
-        Reig[i] = RnextEig[i].block(0, 0, d, d);
+    // Debug also RSOM Pim Hessian Genproc -> seems OK -> commented code below
+    // SomUtils::VecMatD Reig(n, SomUtils::MatD::Zero(p, d));
+    // for (int i = 0; i < n; ++i)
+    //     Reig[i] = RnextEig[i].block(0, 0, d, d);
 
-    SomUtils::MatD Teig(SomUtils::MatD::Zero(d, n));
-    Teig = TnextEig.block(0, 0, d, n);
-    ROPTLIB::Vector Y0cpp = ProdMani.RandominManifold();
-    Prob.rsomPimHessianGenproc(1e-6, Reig, Teig, Y0cpp);
+    // SomUtils::MatD Teig(SomUtils::MatD::Zero(d, n));
+    // Teig = TnextEig.block(0, 0, d, n);
+    // ROPTLIB::Vector Y0cpp = ProdMani.RandominManifold();
+    // Prob.rsomPimHessianGenproc(1e-6, Reig, Teig, Y0cpp);
 }
