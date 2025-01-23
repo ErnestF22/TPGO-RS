@@ -60,7 +60,7 @@ disp("Gradient check rand");
 figure(2)
 checkgradient(problem);
 
-close all;
+% close all;
 
 fprintf("\n");
 disp("Hessian check easy");
@@ -70,6 +70,7 @@ disp("Hessian check easy");
 % Xdot_gradcheck.R = eye3d(nrs, d, N);
 % Xdot_gradcheck.T = zeros(nrs, N);
 % Xdot_gradcheck.lambda = zeros(num_edges, 1);
+
 figure(3)
 X_hesscheck = M.rand();
 Xdot_hesscheck = M.rand();
@@ -82,6 +83,7 @@ checkhessian(problem, X_hesscheck, Xdot_hesscheck);
 
 
 fprintf("\n");
+figure(4)
 disp("Hessian check rand");
 checkhessian(problem);
 
