@@ -133,19 +133,19 @@ add_executable(test_roptlib_som test_roptlib_som.cpp include/som_utils.cpp)
 target_link_libraries(test_roptlib_som ${rofl_LIBRARIES} roptlib_local m blas lapack boost_iostreams boost_system boost_filesystem)
 
 add_executable(test_linesearch_som test_linesearch_som.cpp include/som_utils.cpp)
-target_link_libraries(test_linesearch_som ${rofl_LIBRARIES} roptlib_local m blas lapack boost_iostreams boost_system boost_filesystem)
+target_link_libraries(test_linesearch_som ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
 
 add_executable(test_rsom_pim_hessian_genproc test_rsom_pim_hessian_genproc.cpp include/som_utils.cpp)
-target_link_libraries(test_rsom_pim_hessian_genproc ${rofl_LIBRARIES} roptlib_local m blas lapack boost_iostreams boost_system boost_filesystem)
+target_link_libraries(test_rsom_pim_hessian_genproc ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
 
 add_executable(test_dijkstra_self test_dijkstra_self.cpp include/som_utils.cpp)
-target_link_libraries(test_dijkstra_self ${rofl_LIBRARIES} roptlib_local m blas lapack boost_iostreams boost_system boost_filesystem)
+target_link_libraries(test_dijkstra_self ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
 
 add_executable(test_check_recovery test_check_recovery.cpp include/som_utils.cpp)
-target_link_libraries(test_check_recovery ${rofl_LIBRARIES} roptlib_local m blas lapack boost_iostreams boost_system boost_filesystem)
+target_link_libraries(test_check_recovery ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
 
 add_executable(test_check_retraction test_check_retraction.cpp include/som_utils.cpp)
-target_link_libraries(test_check_retraction ${rofl_LIBRARIES} roptlib_local m blas lapack boost_iostreams boost_system boost_filesystem)
+target_link_libraries(test_check_retraction ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
 
 # add_executable(test_favtutor_graph test_favtutor_graph.cpp include/som_utils.cpp)
 # target_link_libraries(test_favtutor_graph ${rofl_LIBRARIES} roptlib_local m blas lapack boost_iostreams boost_system boost_filesystem)
@@ -163,7 +163,7 @@ add_executable(test_qr_retraction test_qr_retraction.cpp include/som_utils.cpp)
 target_link_libraries(test_qr_retraction ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
 
 add_executable(test_single_run_rsom_rs test_single_run_rsom_rs.cpp include/som_utils.cpp)
-target_link_libraries(test_single_run_rsom_rs ${rofl_LIBRARIES} roptlib_local m blas lapack boost_iostreams boost_system boost_filesystem)
+target_link_libraries(test_single_run_rsom_rs ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
 
 add_executable(test_matlab_ls test_matlab_ls.cpp include/som_utils.cpp)
 target_link_libraries(test_matlab_ls ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)

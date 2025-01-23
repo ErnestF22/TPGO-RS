@@ -108,4 +108,92 @@ int main(int argc, char **argv)
     // Teig = TnextEig.block(0, 0, d, n);
     // ROPTLIB::Vector Y0cpp = ProdMani.RandominManifold();
     // Prob.rsomPimHessianGenproc(1e-6, Reig, Teig, Y0cpp);
+
+    /**
+     * Try optimization starting from 2 points
+     */
+    SomUtils::SomSize somSzNext(4, d, n);
+
+    ROPTLIB::SampleSomProblem ProbNext(somSzNext, Tijs, edges);
+    ROPTLIB::Stiefel mani1next(somSzNext.p_, somSzNext.d_);
+    mani1next.ChooseParamsSet2();
+    ROPTLIB::Euclidean mani2next(somSzNext.p_, somSzNext.n_);
+    ROPTLIB::ProductManifold ProdManiNext(numoftypes, &mani1next, numofmani1, &mani2next, numofmani2);
+    ROPTLIB::Vector Y0 = ProdManiNext.RandominManifold();
+    ProbNext.SetDomain(&ProdManiNext);
+    ProbNext.SetUseGrad(true);
+    ProbNext.SetUseHess(true);
+
+
+    // 2) Eig to ROPT
+    { // EigToRopt scope for Y0
+
+        int rotSz = ProbNext.getRotSz();
+        int translSz = ProbNext.getTranslSz();
+
+        int gElemIdx = 0;
+        // fill result with computed gradient values : R
+        for (int i = 0; i < somSzNext.n_; ++i)
+        {
+            // ROFL_VAR1(gElemIdx);
+            // ROFL_VAR2("\n", rgR[gElemIdx]);
+            // result->GetElement(gElemIdx).SetToIdentity(); // Ri
+            // result->GetElement(gElemIdx).Print("Ri before assignment");
+
+            ROPTLIB::Vector Y0RROPT(somSzNext.p_, somSzNext.d_);
+            // Y0RROPT.Initialize();
+            realdp *GroptlibWriteArray = Y0RROPT.ObtainWriteEntireData();
+            for (int j = 0; j < rotSz; ++j)
+            {
+                // ROFL_VAR2(i, j);
+                // Y0RROPT.Print("Y0RROPT before assignment");
+
+                // ROFL_VAR1(Y0RROPT.GetElement(j, 0));
+
+                GroptlibWriteArray[j] = Y0R[i].reshaped(somSzNext.d_ * somSzNext.p_, 1)(j);
+
+                // ROFL_VAR1("");
+                // Y0RROPT.Print("Y0RROPT after assignment");
+            }
+            Y0RROPT.CopyTo(Y0.GetElement(gElemIdx));
+            // result->GetElement(gElemIdx).Print("Riem. grad Ri after assignment");
+            gElemIdx++;
+        }
+
+        // fill result with computed gradient values : T
+
+        ROPTLIB::Vector Y0TROPT(somSzNext.p_, somSzNext.n_);
+        realdp *GroptlibWriteArray = Y0TROPT.ObtainWriteEntireData();
+        for (int j = 0; j < somSzNext.p_ * somSzNext.n_; ++j)
+        {
+            // Y0TROPT.Print("Y0TROPT before assignment");
+
+            GroptlibWriteArray[j] = Y0T.reshaped(somSzNext.n_ * somSzNext.p_, 1)(j);
+
+            // ROFL_VAR1("");
+            // Y0TROPT.Print("Y0TROPT after assignment");
+        }
+        Y0TROPT.CopyTo(Y0.GetElement(gElemIdx));
+    } // end of EigToRopt scope for Y0
+
+
+    ROPTLIB::RTRNewton *RTRNewtonSolverNext = new ROPTLIB::RTRNewton(&ProbNext, &Y0); // USE INITGUESS HERE!
+    RTRNewtonSolverNext->Verbose = ROPTLIB::ITERRESULT;
+    // RTRNewtonSolverNext->Max_Iteration = 500;
+    // RTRNewtonSolverNext->Max_Inner_Iter = 500;
+    // ROPTLIB::PARAMSMAP solverParams = {std::pair<std::string, double>("Max_Inner_Iter", 10)};
+    // RTRNewtonSolverNext->SetParams(solverParams);
+    RTRNewtonSolverNext->CheckParams();
+
+    // % Solve.
+    // [x, xcost, info, options] = trustregions(problem);
+    RTRNewtonSolverNext->Run();
+    auto XoptNext = RTRNewtonSolverNext->GetXopt();
+    auto XoptNextCost = RTRNewtonSolverNext->Getfinalfun();
+    // Numerically check gradient consistency (optional).
+    // ProbNext.CheckGradHessian(XoptNext);
+
+    double costLast = XoptNextCost;
+
+    ROFL_VAR1(costLast)
 }
