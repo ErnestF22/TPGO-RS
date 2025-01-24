@@ -38,8 +38,6 @@ void runRsomRS(ROPTLIB::SampleSomProblem &Prob, const ROPTLIB::Vector &startX)
     Xopt.Print("Xopt");
     std::cout << "XoptCost " << XoptCost << std::endl; // x cost
 
-    
-
     delete RTRNewtonSolver;
 
     // RS
@@ -64,11 +62,9 @@ void runRsomRS(ROPTLIB::SampleSomProblem &Prob, const ROPTLIB::Vector &startX)
     auto rGt = Prob.Rgt_;
     auto tGt = Prob.Tgt_;
 
-    int staircaseStepSkipped;
 
     for (staircaseStepIdx = r0; staircaseStepIdx <= d * n + 1; ++staircaseStepIdx)
     {
-        staircaseStepSkipped = 1;
         ROFL_VAR1(staircaseStepIdx)
         ROFL_VAR1(costLast)
 
@@ -99,10 +95,10 @@ void runRsomRS(ROPTLIB::SampleSomProblem &Prob, const ROPTLIB::Vector &startX)
         ProbPrev.setCostCurr(costLast);
         ProbPrev.rsomPimHessianGenproc(1e-4, R, T, Y0, lambda, vLambdaR, vLambdaT);
 
-        if (lambda < 0)
+        if (lambda > 0)
         {
             ROFL_VAR1("R, T eigenvals > 0: exiting staircase")
-            staircaseStepSkipped = 0;
+            // staircaseStepSkipped = 0;
             break;
         }
 
@@ -194,7 +190,7 @@ void runRsomRS(ROPTLIB::SampleSomProblem &Prob, const ROPTLIB::Vector &startX)
     // back to SE(d)^N
     SomUtils::VecMatD Rrecovered(n, SomUtils::MatD::Zero(d, d));
     SomUtils::MatD Trecovered(SomUtils::MatD::Zero(d, n));
-    bool recSEDNsuccess = ProbPrev.recoverySEdN(staircaseStepIdx - staircaseStepSkipped + 1,
+    bool recSEDNsuccess = ProbPrev.recoverySEdN(staircaseStepIdx,
                                                 RmanoptOutEig, TmanoptOutEig,
                                                 Rrecovered, Trecovered);
 
@@ -292,6 +288,10 @@ int main(int argc, char **argv)
 
     // Generate startX (random)
     ROPTLIB::Vector startX = ProdMani.RandominManifold();
+
+    bool readInitguess = true;
+    if (readInitguess)
+        SomUtils::readCsvInitguess("../data/X_initguess_test_single_run_rsom_rs.csv", startX);
 
     // RUN RSOM RS
     runRsomRS(Prob, startX);

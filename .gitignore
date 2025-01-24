@@ -50,4 +50,36 @@ build-release/
 
 matlab/data/cpp_testdata/
 
-include/thirdparty/qr_unique_sizeless/
+#include/thirdparty/qr_unique_sizeless/
+
+# Windows default autosave extension
+include/thirdparty/qr_unique_sizeless/include_matlab/*.asv
+
+# OSX / *nix default autosave extension
+include/thirdparty/qr_unique_sizeless/include_matlab/*.m~
+
+# Compiled MEX binaries (all platforms)
+include/thirdparty/qr_unique_sizeless/include_matlab/*.mex*
+
+# Packaged app and toolbox files
+include/thirdparty/qr_unique_sizeless/include_matlab/*.mlappinstall
+include/thirdparty/qr_unique_sizeless/include_matlab/*.mltbx
+
+# Generated helpsearch folders
+include/thirdparty/qr_unique_sizeless/include_matlab/helpsearch*/
+
+# Simulink code generation folders
+include/thirdparty/qr_unique_sizeless/include_matlab/slprj/
+include/thirdparty/qr_unique_sizeless/include_matlab/sccprj/
+
+# Matlab code generation folders
+include/thirdparty/qr_unique_sizeless/include_matlab/codegen/
+
+# Simulink autosave extension
+include/thirdparty/qr_unique_sizeless/include_matlab/*.autosave
+
+# Simulink cache files
+include/thirdparty/qr_unique_sizeless/include_matlab/*.slxc
+
+# Octave session info
+include/thirdparty/qr_unique_sizeless/include_matlab/octave-workspace

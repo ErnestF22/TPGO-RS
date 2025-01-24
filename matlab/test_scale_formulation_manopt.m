@@ -99,7 +99,7 @@ disp(problem_data.lambda_gt)
 
 %% call RS-based optimization function
 
-% ssom_genproc(problem_data)
+ssom_genproc(problem_data)
 
 
 

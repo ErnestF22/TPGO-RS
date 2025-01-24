@@ -15,7 +15,8 @@ Rnext = cat_zero_rows_3d_array(X.R);
 Tnext = cat_zero_row(X.T);
 Xnext.R = Rnext;
 Xnext.T = Tnext;
-rhess_fun_han = @(u) hess_genproc(Xnext,u,problem_struct_next);
+Xnext.lambda = X.lambda;
+rhess_fun_han = @(u) ssom_rhess_genproc(Xnext,u,problem_struct_next);
 
 stiefel_normalize_han = @(x) x./ (norm(x(:))); %Note: this is basically eucl_normalize_han
 
