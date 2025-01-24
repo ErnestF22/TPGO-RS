@@ -129,6 +129,48 @@ namespace SomUtils
      */
     void readSingleDoubleCsv(std::string fname, double &out);
 
+    // function d=rot_distSingle(R1,R2)
+    // switch size(R1,1)
+    //     case 2
+    //         theta1=rot2ToAngle(R1);
+    //         theta2=rot2ToAngle(R2);
+    //         d=abs(modAngle(theta1-theta2));
+    //     case 3
+    //
+    //     otherwise
+    //         error('Not implemented yet')
+    // end
+    // %[d(r1,r2),w] = angleaxis(dc2quat(R1(:,:,r1)'*R2(:,:,r2)));
+    // %d(r1,r2)=acos(max(min((trace(R1(:,:,r1)'*R2(:,:,r2))-1)/2,1),-1));
+    // %d(r1,r2)=-trace(hat(logrot(R1(:,:,r1)'*R2(:,:,r2)))^2)/2;
+
+    /**
+     * Compute the geodesic distance between the rotations R1 and R2 in SO(3)
+     */
+    double rotDistSingle(const Eigen::Matrix3d &R1, const Eigen::Matrix3d &R2);
+
+    /**
+     * Compute the geodesic distance between the rotations R1 and R2 in SO(2)
+     */
+    double rotDistSingle(const Eigen::Matrix2d &R1, const Eigen::Matrix2d &R2);
+
+    // function theta=rot2ToAngle(R)
+    /**
+     * Return angle corresponding to input 2D rotation matrix
+     */
+    double rot2ToAngle(const Eigen::Matrix2d &R);
+
+    // function a=modAngle(a)
+    // a=mod(a+pi,2*pi)-pi;
+    /**
+     * Maps any scalar angle (in radians) to the equivalent between -pi and pi
+     */
+    double modAngle(double a);
+
+    // [tij,lambdaij]=cnormalize(gij(1:3,4));
+    // [tijtruth,lambdaijtruth]=cnormalize(gijtruth(1:3,4));
+    // translErr=acos(max(-1,min(1,tij'*tijtruth)));
+
 } // end of namespace SomUtils
 
 #endif /*SOM_UTILS_H_*/

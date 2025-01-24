@@ -1513,6 +1513,14 @@ namespace ROPTLIB
         ROFL_VAR1(Tout)
 
         ROFL_VAR1(globalRecoverySuccess)
+
+        for (int i = 0; i<n; ++i)
+        {
+            Eigen::Matrix3d ri = Rout[i].block(0,0,d,d);
+            Eigen::Matrix3d rigt = rGt[i].block(0,0,d,d);
+            double rotDistI = SomUtils::rotDistSingle(ri, rigt);
+            ROFL_VAR2(i, rotDistI);
+        }
     }
 
 } // end of namespace ROPTLIB

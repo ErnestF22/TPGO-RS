@@ -410,4 +410,60 @@ namespace SomUtils
         out = stod(line);
     }
 
+    // function d=rot_distSingle(R1,R2)
+    // switch size(R1,1)
+    //     case 2
+    //         theta1=rot2ToAngle(R1);
+    //         theta2=rot2ToAngle(R2);
+    //         d=abs(modAngle(theta1-theta2));
+    //     case 3
+    //
+    //     otherwise
+    //         error('Not implemented yet')
+    // end
+    // %[d(r1,r2),w] = angleaxis(dc2quat(R1(:,:,r1)'*R2(:,:,r2)));
+    // %d(r1,r2)=acos(max(min((trace(R1(:,:,r1)'*R2(:,:,r2))-1)/2,1),-1));
+    // %d(r1,r2)=-trace(hat(logrot(R1(:,:,r1)'*R2(:,:,r2)))^2)/2;
+
+    double rotDistSingle(const Eigen::Matrix3d &R1, const Eigen::Matrix3d &R2)
+    {
+        //         R=R1'*R2;
+        //         s1=R(6)-R(8);
+        //         s2=R(7)-R(3);
+        //         s3=R(2)-R(4);
+        //         d=atan2(sqrt(s1*s1+s2*s2+s3*s3),R(1)+R(5)+R(9)-1);
+        Eigen::Matrix3d R = R1.transpose() * R2;
+        auto Rcolmaj = R.reshaped<Eigen::ColMajor>(9, 1);
+        double s1 = Rcolmaj(5, 0) - Rcolmaj(7, 0);
+        double s2 = Rcolmaj(6, 0) - Rcolmaj(2, 0);
+        double s3 = Rcolmaj(1, 0) - Rcolmaj(3, 0);
+
+        double d = atan2(sqrt(s1 * s1 + s2 * s2 + s3 * s3), Rcolmaj(0, 0) + Rcolmaj(4, 0) + Rcolmaj(8, 0) - 1);
+        return d;
+    }
+
+    double rotDistSingle(const Eigen::Matrix2d &R1, const Eigen::Matrix2d &R2)
+    {
+        double theta1 = rot2ToAngle(R1);
+        double theta2 = rot2ToAngle(R2);
+        double d = abs(modAngle(theta1 - theta2));
+        return d;
+    }
+
+    // function theta=rot2ToAngle(R)
+    double rot2ToAngle(const Eigen::Matrix2d &R)
+    {
+        // theta=atan2(R(2,1)-R(1,2),trace(R));
+        double theta = atan2(R(1, 0) - R(0, 1), R.trace());
+        return theta;
+    }
+
+    double modAngle(double a)
+    {
+        // function a=modAngle(a)
+        // a=mod(a+pi,2*pi)-pi;
+
+        return (std::fmod(a + M_PI, 2 * M_PI)) - M_PI;
+    }
+
 } // end of namespace SomUtils

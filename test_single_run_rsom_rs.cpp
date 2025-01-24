@@ -90,4 +90,7 @@ int main(int argc, char **argv)
     int srcNodeId = 0;
     ROPTLIB::runRsomRS(Prob, startX, srcNodeId); //note: startX is needed (even if random) in ROPTLIB; 
     //ROPTLIB namespace is used even if runRsomRS() is not in SampleSomProblem class, nor in "original" ROPTLIB
+
+
+    
 }
