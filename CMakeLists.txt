@@ -129,8 +129,15 @@ include/thirdparty/qr_unique_sizeless/xnrm2.cpp
 include/thirdparty/qr_unique_sizeless/rt_nonfinite.cpp
 )
 
+#apps
+
+add_executable(run_testnetwork_tests run_testnetwork_tests.cpp include/som_utils.cpp)
+target_link_libraries(run_testnetwork_tests ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
+
+#tests
+
 add_executable(test_roptlib_som test_roptlib_som.cpp include/som_utils.cpp)
-target_link_libraries(test_roptlib_som ${rofl_LIBRARIES} roptlib_local m blas lapack boost_iostreams boost_system boost_filesystem)
+target_link_libraries(test_roptlib_som ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
 
 add_executable(test_linesearch_som test_linesearch_som.cpp include/som_utils.cpp)
 target_link_libraries(test_linesearch_som ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)

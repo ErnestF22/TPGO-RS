@@ -122,13 +122,12 @@ namespace SomUtils
     /**
      * @brief Read a single integer from a csv file and save it to reference param out
      */
-    void readSingleIntCsv(std::string fname, int& out);
+    void readSingleIntCsv(std::string fname, int &out);
 
     /**
      * @brief Read a single double from a csv file and save it to reference param out
      */
     void readSingleDoubleCsv(std::string fname, double &out);
-
 
 } // end of namespace SomUtils
 

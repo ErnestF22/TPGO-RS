@@ -102,8 +102,6 @@ namespace SomUtils
             j++;
             // ROFL_VAR2(j, line);
 
-            
-
             // csvVec.pts.push_back(pt);
         }
 

@@ -509,7 +509,7 @@ namespace ROPTLIB
        * @param armijo (= false by default) indicates whether the linesearch method used is based
        * on ROPTLIB's Armijo-Goldstein (armijo = true) implementation of simply linesearchDummy (armijo = false)
        */
-      void rsomPimHessianGenproc(double thresh,
+      void rsomPimHessianGenprocEigen(double thresh,
                                  const SomUtils::VecMatD &R, const SomUtils::MatD &T,
                                  Vector &Y0, double &lambdaPimOut, SomUtils::VecMatD &vPimRout, SomUtils::MatD &vPimTout,
                                  bool armijo = false) const;
@@ -756,6 +756,11 @@ namespace ROPTLIB
       bool globalize(int src, const SomUtils::VecMatD &Rsedn, const SomUtils::MatD &Tsedn,
                      SomUtils::VecMatD &Rout, SomUtils::MatD &Tout);
    };
+
+   /**
+     * @brief Run an instance of the RSOM problem
+     */
+    void runRsomRS(ROPTLIB::SampleSomProblem &Prob, const ROPTLIB::Vector &startX, int src);
 
 } // end of namespace ROPTLIB
 
