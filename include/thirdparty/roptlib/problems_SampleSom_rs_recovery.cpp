@@ -1733,7 +1733,7 @@ namespace ROPTLIB
 
             Tedges.col(e) = T.col(ii) - T.col(jj);
         }
-        ROFL_VAR2(T, Tedges)
+        // ROFL_VAR2(T, Tedges)
     }
 
     void SampleSomProblem::POCRotateToMinimizeLastEntries(const SomUtils::MatD &x, SomUtils::MatD &Qtransp) const
@@ -2204,12 +2204,12 @@ namespace ROPTLIB
         RTstackedHighDeg.block(0, 0, nrs, sz_.d_ * numNodesHighDeg) = RstackedHighDeg;
         RTstackedHighDeg.block(0, sz_.d_ * numNodesHighDeg, nrs, numEdges_) = Tedges;
 
-        ROFL_VAR1(RTstackedHighDeg)
+        // ROFL_VAR1(RTstackedHighDeg)
 
         SomUtils::MatD QxEdges(SomUtils::MatD::Zero(nrs, nrs));
         POCRotateToMinimizeLastEntries(RTstackedHighDeg, QxEdges);
 
-        ROFL_VAR1(QxEdges)
+        // ROFL_VAR1(QxEdges)
 
         // R_tilde2_edges = multiprod(repmat(Qx_edges, 1, 1, sum(nodes_high_deg)), R_manopt_out( :, :, nodes_high_deg));
         SomUtils::VecMatD Rtilde2edges(numNodesHighDeg, SomUtils::MatD::Zero(nrs, sz_.d_));
@@ -2222,8 +2222,8 @@ namespace ROPTLIB
                 highDegId++;
             }
         }
-        for (int i = 0; i < numNodesHighDeg; ++i)
-            ROFL_VAR1(Rtilde2edges[i])
+        // for (int i = 0; i < numNodesHighDeg; ++i)
+        //     ROFL_VAR1(Rtilde2edges[i])
 
         ROFL_ASSERT(highDegId == numNodesHighDeg)
 
@@ -2244,8 +2244,8 @@ namespace ROPTLIB
         }
         ROFL_ASSERT(highDegId == numNodesHighDeg)
 
-        for (int i = 0; i < sz_.n_; ++i)
-            ROFL_VAR1(Rrecovered[i])
+        // for (int i = 0; i < sz_.n_; ++i)
+        //     ROFL_VAR1(Rrecovered[i])
 
         if (!nodesLowDeg.any())
         {
