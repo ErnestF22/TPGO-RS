@@ -408,6 +408,16 @@ namespace ROPTLIB
        */
       double costCurr_;
 
+      /**
+       * Output of RSOM for R
+       */
+      SomUtils::VecMatD Rout_;
+
+      /**
+       * Output of RSOM for T
+       */
+      SomUtils::MatD Tout_;
+
       ////////////////////////////////////////RS////////////////////////////////////////
 
       /**
@@ -510,9 +520,9 @@ namespace ROPTLIB
        * on ROPTLIB's Armijo-Goldstein (armijo = true) implementation of simply linesearchDummy (armijo = false)
        */
       void rsomPimHessianGenprocEigen(double thresh,
-                                 const SomUtils::VecMatD &R, const SomUtils::MatD &T,
-                                 Vector &Y0, double &lambdaPimOut, SomUtils::VecMatD &vPimRout, SomUtils::MatD &vPimTout,
-                                 bool armijo = false) const;
+                                      const SomUtils::VecMatD &R, const SomUtils::MatD &T,
+                                      Vector &Y0, double &lambdaPimOut, SomUtils::VecMatD &vPimRout, SomUtils::MatD &vPimTout,
+                                      bool armijo = false) const;
 
       /**
        * @brief Power iteration method for R, T (generalized Procrustes) version of the problem
@@ -758,9 +768,18 @@ namespace ROPTLIB
    };
 
    /**
-     * @brief Run an instance of the RSOM problem
-     */
-    void runRsomRS(ROPTLIB::SampleSomProblem &Prob, const ROPTLIB::Vector &startX, int src);
+    * @brief Run an instance of the RSOM problem
+    */
+   void runRsomRS(ROPTLIB::SampleSomProblem &Prob, const ROPTLIB::Vector &startX, int src, SomUtils::VecMatD& Rout, SomUtils::MatD& Tout);
+
+   /**
+    * Saves edge-wise errors in rotErrs, translErrs vectors
+    */
+   void computeErrorsSingleRsom(const Eigen::MatrixXi &edges,
+                                         const SomUtils::VecMatD &R, const SomUtils::MatD &T,
+                                         const SomUtils::VecMatD &Rgt, const SomUtils::MatD &Tgt,
+                                         std::vector<double> &rotErrs, std::vector<double> &translErrs);
+
 
 } // end of namespace ROPTLIB
 

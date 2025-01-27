@@ -167,9 +167,42 @@ namespace SomUtils
      */
     double modAngle(double a);
 
-    // [tij,lambdaij]=cnormalize(gij(1:3,4));
-    // [tijtruth,lambdaijtruth]=cnormalize(gijtruth(1:3,4));
-    // translErr=acos(max(-1,min(1,tij'*tijtruth)));
+    /**
+     * Compute the error between translations T1 and T2 in R^3
+     * // [tij,lambdaij]=cnormalize(gij(1:3,4));
+     * // [tijtruth,lambdaijtruth]=cnormalize(gijtruth(1:3,4));
+     * // translErr=acos(max(-1,min(1,tij'*tijtruth)));
+     * !! this has part of the code for computing scale error!
+     */
+    double translErr(const Eigen::Vector3d &T1, const Eigen::Vector3d &T2);
+
+    /**
+     *  %function [xn,normx] = cnormalize(x,normx)
+     *  %Normalize each column of x. The argument normx represents
+     *  %a vector with the norms of the columns of x.
+     *  %The function does not normalize vectors with norms less than 1e-15.
+     *  !! Here normx is not computed, but instead just passed (useful when input x may be scaled arbitrarily)
+     * */
+    void cnormalizeLambdas(const MatD &x, const Eigen::RowVectorXd &normx, MatD &xn);
+
+    /**
+     *  %function [xn,normx] = cnormalize(x,normx)
+     *  %Normalize each column of x. The argument normx represents
+     *  %a vector with the norms of the columns of x.
+     *  In this version, the norm of each column is also computed and returned as reference.
+     *  %The function does not normalize vectors with norms less than 1e-15.
+     * */
+    void cnormalize(const MatD &x, MatD &xn, MatD &normx);
+
+    /**
+     * Compute the inverse of a rigid body transformation represented as a 4x4 matrix
+     */
+    void invg(const SomUtils::MatD &gIn, SomUtils::MatD &gOut);
+
+    /**
+     * Compute relative pose from two absolute poses
+     */
+    void computeRelativePose(const Eigen::MatrixXd &g1, const Eigen::MatrixXd &g2, Eigen::MatrixXd &pose);
 
 } // end of namespace SomUtils
 

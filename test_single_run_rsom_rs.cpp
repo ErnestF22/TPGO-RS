@@ -10,8 +10,6 @@
 
 #include "thirdparty/roptlib/problems_SampleSom.h"
 
-
-
 int main(int argc, char **argv)
 {
     int d = 3;
@@ -88,9 +86,14 @@ int main(int argc, char **argv)
 
     // RUN RSOM RS
     int srcNodeId = 0;
-    ROPTLIB::runRsomRS(Prob, startX, srcNodeId); //note: startX is needed (even if random) in ROPTLIB; 
-    //ROPTLIB namespace is used even if runRsomRS() is not in SampleSomProblem class, nor in "original" ROPTLIB
+    SomUtils::VecMatD Rout(n, SomUtils::MatD::Identity(d, d));
+    SomUtils::MatD Tout(SomUtils::MatD::Zero(d, n));
+    ROPTLIB::runRsomRS(Prob, startX, srcNodeId, Rout, Tout); // note: startX is needed (even if random) in ROPTLIB;
+    // ROPTLIB namespace is used even if runRsomRS() is not in SampleSomProblem class, nor in "original" ROPTLIB
 
-
-    
+    std::vector<double> rotErrs(numEdges, 1e+6), translErrs(numEdges, 1e+6);
+    ROPTLIB::computeErrorsSingleRsom(edges,
+                                             Rout, Tout,
+                                             RgtEig, TgtEig,
+                                             rotErrs, translErrs);
 }

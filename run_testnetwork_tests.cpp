@@ -45,7 +45,6 @@ int main(int argc, char **argv)
     params.getParam<bool>("readStartingPtFromFile", readStartingPtFromFile, false);
     params.getParam<int>("srcNodeIdx", srcNodeIdx, 0);
 
-
     std::cout << "-------\n"
               << std::endl;
 
@@ -57,8 +56,12 @@ int main(int argc, char **argv)
     for (auto &entry : fs::directory_iterator(folderIn))
         sortedByName.insert(entry.path());
 
+    std::vector<std::vector<std::vector<double>>> rotErrsAll, translErrsAll;
+
     for (const auto &entry : sortedByName)
     {
+        std::vector<std::vector<double>> rotErrs(numTestsPerInstance), translErrs(numTestsPerInstance);
+
         ROFL_VAR1(entry);
         // for (int j = 0; j<numTestsPerInstance; ++j)
         // TODO: repeated tests (e.g., 30) per each test case
@@ -127,22 +130,58 @@ int main(int argc, char **argv)
         // SomUtils::readCsvInitguess("../data/recov_x_manopt_out.csv", xManoptOut);
         // xManoptOut.Print("xManoptOut");
 
-        // Generate startX (random)
-        ROPTLIB::Vector startX = ProdMani.RandominManifold();
+        for (int testjd = 0; testjd < numTestsPerInstance; ++testjd)
+        {
+            // Generate startX (random)
+            ROPTLIB::Vector startX = ProdMani.RandominManifold();
 
-        if (readStartingPtFromFile)
-            SomUtils::readCsvInitguess("../data/X_initguess_test_single_run_rsom_rs.csv", startX);
+            if (readStartingPtFromFile)
+                SomUtils::readCsvInitguess("../data/X_initguess_test_single_run_rsom_rs.csv", startX);
 
-        { //rsom RS execution scope
-            rofl::ScopedTimer runRsomRStimer ("runRsomRS");
+            { // rsom RS execution scope
+                rofl::ScopedTimer runRsomRStimer("runRsomRS");
 
-            // RUN RSOM RS
-            ROPTLIB::runRsomRS(Prob, startX, srcNodeIdx); // note: startX is needed (even if random) in ROPTLIB;
-            // ROPTLIB namespace is used even if runRsomRS() is not in SampleSomProblem class, nor in "original" ROPTLIB
+                // RUN RSOM RS
+                SomUtils::VecMatD Rout(n, SomUtils::MatD::Identity(d, d));
+                SomUtils::MatD Tout(SomUtils::MatD::Zero(d, n));
+                ROPTLIB::runRsomRS(Prob, startX, srcNodeIdx, Rout, Tout); // note: startX is needed (even if random) in ROPTLIB;
+                // ROPTLIB namespace is used even if runRsomRS() is not in SampleSomProblem class, nor in "original" ROPTLIB
 
-            ROFL_VAR1(runRsomRStimer.elapsedTimeMs())
+                std::vector<double> rotErrsTestjd(numEdges, 1e+6), translErrsTestjd(numEdges, 1e+6);
+                ROPTLIB::computeErrorsSingleRsom(edges,
+                                                 Rout, Tout,
+                                                 RgtEig, TgtEig,
+                                                 rotErrsTestjd, translErrsTestjd);
+
+                ROFL_VAR3(entry, testjd, runRsomRStimer.elapsedTimeMs())
+
+                // Finding mean error of current instance-testjd pair
+                double rotMeanErr = std::accumulate(rotErrsTestjd.begin(), rotErrsTestjd.end(), 0) / rotErrsTestjd.size();
+                double translMeanErr = std::accumulate(translErrsTestjd.begin(), translErrsTestjd.end(), 0) / translErrsTestjd.size();
+
+                rotErrs[testjd].resize(numEdges);
+                translErrs[testjd].resize(numEdges);
+
+                rotErrs[testjd] = rotErrsTestjd;
+                translErrs[testjd] = translErrsTestjd;
+            } // end of rsom RS execution scope
+            // break; //testjd loop
         }
-        
+        // break; //entries/instances loop
+        for (int i = 0; i < numTestsPerInstance; ++i)
+        {
+            for (int j = 0; j < numEdges; ++j)
+                ROFL_VAR4(entry, j, rotErrs[i][j], translErrs[i][j]);
+        }
+        rotErrsAll.push_back(rotErrs);
+        translErrsAll.push_back(translErrs);
+    }
+
+    for (int i = 0; i < sortedByName.size(); ++i)
+    {
+        for (int j = 0; j < numTestsPerInstance; ++j)
+            for (int k = 0; k < rotErrsAll[i][j].size(); ++k)
+                ROFL_VAR5(i, j, k, rotErrsAll[i][j][k], translErrsAll[i][j][k]);
     }
 
     return 0;

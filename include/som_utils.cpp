@@ -462,8 +462,105 @@ namespace SomUtils
     {
         // function a=modAngle(a)
         // a=mod(a+pi,2*pi)-pi;
-
         return (std::fmod(a + M_PI, 2 * M_PI)) - M_PI;
+    }
+
+    double translErr(const Eigen::Vector3d &T1, const Eigen::Vector3d &T2)
+    {
+        // [tij,lambdaij]=cnormalize(gij(1:3,4));
+        // [tijtruth,lambdaijtruth]=cnormalize(gijtruth(1:3,4));
+        // translErr=acos(max(-1,min(1,tij'*tijtruth)));
+
+        Eigen::MatrixXd tij(T1.rows(), T1.cols()), tijtruth(T2.rows(), T2.cols());
+        Eigen::MatrixXd lambdaij, lambdaijtruth; // when computing errors these are just scalars
+        cnormalize(T1, tij, lambdaij);           // lambda!
+        cnormalize(T2, tijtruth, lambdaijtruth); // lambda!
+
+        auto tmp = tij.transpose() * tijtruth;
+
+        return acos(std::max<double>(-1, std::min<double>(1, tmp(0, 0))));
+    }
+
+    void cnormalizeLambdas(const MatD &x, const Eigen::RowVectorXd &normx, MatD &xn)
+    {
+        // function [xn,normx] = cnormalize(x,normx)
+        // d = size(x,1);
+        // if ~exist('normx','var')
+        //     normx = sqrt(sum(x.^2,1));
+        // end
+        // xn=zeros(size(x));
+
+        ROFL_ASSERT(normx.cols() == x.cols())
+
+        int r = x.rows();
+        xn.resizeLike(x);
+        xn.setZero();
+
+        // idxNotZero=normx>1e-14;
+        // for k=1:size(x,3)
+        //     xn(:,idxNotZero(1,:,k),k) =  x(:,idxNotZero(1,:,k),k) ./ (repmat(normx(1,idxNotZero(1,:,k),k),d,1));
+        // end
+        for (int i = 0; i < normx.cols(); ++i)
+        {
+            if (normx(0, i) > 1e-14)
+                xn.col(i) = x.col(i) / normx(0, i);
+        }
+    }
+
+    void cnormalize(const MatD &x, MatD &xn, MatD &normx)
+    {
+        // function [xn,normx] = cnormalize(x,normx)
+        // d = size(x,1);
+        // if ~exist('normx','var')
+        //     normx = sqrt(sum(x.^2,1));
+        // end
+        // xn=zeros(size(x));
+
+        ROFL_ASSERT(xn.rows() == x.rows() && xn.cols() == x.cols())
+
+        int r = x.rows();
+        normx.resize(1, x.cols());
+        xn.setZero();
+        normx.setZero();
+
+        // idxNotZero=normx>1e-14;
+        // for k=1:size(x,3)
+        //     xn(:,idxNotZero(1,:,k),k) =  x(:,idxNotZero(1,:,k),k) ./ (repmat(normx(1,idxNotZero(1,:,k),k),d,1));
+        // end
+        for (int i = 0; i < normx.cols(); ++i)
+        {
+            normx(0, i) = x.col(i).norm();
+            if (normx(0, i) > 1e-14)
+                xn.col(i) = x.col(i) / normx(0, i);
+        }
+    }
+
+    void invg(const SomUtils::MatD &gIn, SomUtils::MatD &gOut)
+    {
+        // g1=g;
+        // d=size(g,2)-1;
+        // R=g(1:d,1:d,:);
+        // for ig=1:size(g,3)
+        //     g1(1:d,1:d,ig)=R(:,:,ig)';
+        //     g1(1:d,d+1,ig)=-R(:,:,ig)'*g(1:d,d+1,ig);
+        ROFL_ASSERT(gIn.rows() == 4 && gIn.cols() == 4 && gOut.rows() == 4 && gOut.cols() == 4)
+
+        int d = 3;
+        auto R = gIn.block(0, 0, d, d);
+
+        gOut.block(0, 0, d, d) = R.transpose();
+        gOut.block(0, d, d, 1) = -R.transpose() * gIn.block(0, d, d, 1);
+    }
+
+    void computeRelativePose(const Eigen::MatrixXd &g1, const Eigen::MatrixXd &g2, Eigen::MatrixXd &pose)
+    {
+        // pose.resize(4, 4);
+        // pose.setIdentity();
+
+        SomUtils::MatD g1inv(4, 4);
+        invg(g1, g1inv);
+
+        pose = g1inv * g2;
     }
 
 } // end of namespace SomUtils
