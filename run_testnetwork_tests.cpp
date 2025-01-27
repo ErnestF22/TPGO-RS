@@ -45,11 +45,11 @@ int main(int argc, char **argv)
     params.getParam<bool>("readStartingPtFromFile", readStartingPtFromFile, false);
     params.getParam<int>("srcNodeIdx", srcNodeIdx, 0);
 
-    std::cout << "-------\n"
-              << std::endl;
-
     std::cout << "Params:" << std::endl;
     params.write(std::cout);
+
+    std::cout << "-------\n"
+              << std::endl;
 
     /*************************End of ROFL params reading**************************/
 
