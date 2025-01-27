@@ -1778,7 +1778,7 @@ namespace ROPTLIB
         ROFL_ASSERT_VAR3(found == nodeDeg, nodeId, found, nodeDeg)
 
         ROFL_VAR1("makeTij1j2sEdges END")
-        ROFL_VAR2(Tij1j2, Tij1j2tilde)
+        // ROFL_VAR2(Tij1j2, Tij1j2tilde)
     }
 
     void SampleSomProblem::orthComplement(const SomUtils::MatD &v, SomUtils::MatD &vOrth) const
@@ -2305,15 +2305,15 @@ namespace ROPTLIB
                     SomUtils::MatD Tij1j2(SomUtils::MatD::Zero(sz_.d_, nodeDeg));
                     SomUtils::MatD Tij1j2tilde(SomUtils::MatD::Zero(nrs, nodeDeg));
                     makeTij1j2sEdges(nodeId, nodeDegrees, TdiffsShifted, Tij1j2, Tij1j2tilde);
-                    ROFL_VAR2(Tij1j2, Tij1j2tilde)
+                    // ROFL_VAR2(Tij1j2, Tij1j2tilde)
 
                     // [ RitildeEst1, RitildeEst2, ~, ~] = recoverRitilde(Qx_edges * R_i_tilde2, Tij1j2_tilde);
                     SomUtils::MatD RiTildeEst1(SomUtils::MatD::Zero(nrs, sz_.d_));
                     SomUtils::MatD RiTildeEst2(SomUtils::MatD::Zero(nrs, sz_.d_));
-                    ROFL_VAR2(QxEdges, RiTilde2)
+                    // ROFL_VAR2(QxEdges, RiTilde2)
                     recoverRiTilde(QxEdges * RiTilde2, Tij1j2tilde, RiTildeEst1, RiTildeEst2); // TODO: add possibility of returning "local" Qx
-                    ROFL_VAR2(Tij1j2, Tij1j2tilde)
-                    ROFL_VAR2(RiTildeEst1, RiTildeEst2)
+                    // ROFL_VAR2(Tij1j2, Tij1j2tilde)
+                    // ROFL_VAR2(RiTildeEst1, RiTildeEst2)
 
                     // disp('')
                     std::cout << std::endl; // TODO : how to decide between RitildeEst1, RitildeEst2 ? ? det_RitildeEst1 = det(RitildeEst1(1 : d, :));
