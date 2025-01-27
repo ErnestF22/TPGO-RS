@@ -62,7 +62,7 @@ int main(int argc, char **argv)
     {
         std::vector<std::vector<double>> rotErrs(numTestsPerInstance), translErrs(numTestsPerInstance);
 
-        ROFL_VAR1(entry);
+        // ROFL_VAR1(entry);
         // for (int j = 0; j<numTestsPerInstance; ++j)
         // TODO: repeated tests (e.g., 30) per each test case
 
@@ -132,6 +132,8 @@ int main(int argc, char **argv)
 
         for (int testjd = 0; testjd < numTestsPerInstance; ++testjd)
         {
+            ROFL_VAR3(entry, testjd, "start");
+
             // Generate startX (random)
             ROPTLIB::Vector startX = ProdMani.RandominManifold();
 
