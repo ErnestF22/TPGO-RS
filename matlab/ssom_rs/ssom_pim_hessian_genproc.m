@@ -24,9 +24,11 @@ u_start.R = stiefel_randTangentNormVector(Rnext);
 u_start.R = stiefel_normalize(Rnext, u_start.R);
 u_start.T = rand(size(Tnext));
 u_start.T = stiefel_normalize_han(u_start.T);
-[lambda_pim, v_pim] = pim_function_genproc(rhess_fun_han, u_start, stiefel_normalize_han, thresh);
+u_start.lambda = rand(size(Xnext.lambda));
+u_start.lambda = stiefel_normalize_han(u_start.lambda);
+[lambda_pim, v_pim] = ssom_pim_function_genproc(rhess_fun_han, u_start, stiefel_normalize_han, thresh);
 disp('Difference between lambda*v_max and H(v_max) should be in the order of the tolerance:')
-eigencheck_hessian_genproc(lambda_pim, v_pim, rhess_fun_han);
+ssom_eigencheck_hessian_genproc(lambda_pim, v_pim, rhess_fun_han);
 
 
 
@@ -40,26 +42,28 @@ if lambda_pim>0
     mu = 1.1 * lambda_pim;
 
     rhess_shifted_fun_han = ...
-        @(u) hess_genproc_shifted(Xnext,u,mu,problem_struct_next);
+        @(u) ssom_rhess_genproc_shifted(Xnext,u,mu,problem_struct_next);
             
     %run shifted power iteration
     u_start_second_iter.R = stiefel_randTangentNormVector(Rnext);
     u_start_second_iter.R = stiefel_normalize(Rnext, u_start_second_iter.R);
     u_start_second_iter.T = rand(size(Tnext));
     u_start_second_iter.T = stiefel_normalize_han(u_start.T);
-    [lambda_pim_after_shift, v_pim_after_shift] = pim_function_genproc( ...
+    u_start_second_iter.lambda = rand(size(Xnext.lambda));
+    u_start_second_iter.lambda = stiefel_normalize_han(u_start.lambda);
+    [lambda_pim_after_shift, v_pim_after_shift] = ssom_pim_function_genproc( ...
         rhess_shifted_fun_han, u_start_second_iter, stiefel_normalize_han, thresh);
     
     disp(['Difference between lambda_pim_after_shift*v_pim_after_shift ' ...
         'and H_SH(v_pim_after_shift) should be in the order of the tolerance:'])
-    eigencheck_hessian_genproc(lambda_pim_after_shift, v_pim_after_shift, ...
+    ssom_eigencheck_hessian_genproc(lambda_pim_after_shift, v_pim_after_shift, ...
         rhess_shifted_fun_han);
 
     disp('Checking Eigenvalue shift:')
     disp(['difference between (lambda_pim_after_shift+mu)*v_pim_after_shift ' ...
         'and H(v_pim_after_shift) should be in the order of the tolerance:'])
     highest_norm_eigenval = lambda_pim_after_shift + mu;
-    eigencheck_hessian_genproc(highest_norm_eigenval, v_pim_after_shift, ...
+    ssom_eigencheck_hessian_genproc(highest_norm_eigenval, v_pim_after_shift, ...
         rhess_fun_han);
 else
     v_pim_after_shift = v_pim; %variable name in this case is misleading since shift does not happen at all
@@ -97,12 +101,14 @@ d = problem_struct_next.sz(2);
 N = problem_struct_next.sz(3);
 tuple_next.R = stiefelfactory(nrs_next, d, N);
 tuple_next.T = euclideanfactory(nrs_next, N);
+num_edges = size(problem_struct_next.edges, 1);
+tuple_next.lambda = euclideanfactory(num_edges, 1);
 M = productmanifold(tuple_next);
 step2.M = M;
 step2.sz = [nrs_next, d, N];
-step2.cost = @(x) cost_genproc(x, problem_struct_next);
-step2.grad = @(x) grad_genproc(x, problem_struct_next);
-step2.hess = @(x, u) hess_genproc(x, u, problem_struct_next);
+step2.cost = @(x) ssom_cost(x, problem_struct_next);
+step2.grad = @(x) ssom_rgrad(x, problem_struct_next);
+step2.hess = @(x, u) ssom_rhess_genproc(x, u, problem_struct_next);
 
 
 alphas = linspace(-0.01,0.01,501); %-0.2:0.01:0.2;
@@ -118,12 +124,16 @@ for ii = 1:length(alphas)
     pvt_R = alphas(ii)^2/2* ...
         sum(stiefel_metric( ...
         Rnext,v_pim_after_shift.R, ...
-            hess_genproc_R(Xnext, v_pim_after_shift, problem_struct_next),'canonical'));
+            ssom_hess_genproc_R(Xnext, v_pim_after_shift, problem_struct_next),'canonical'));
     pvt_T = alphas(ii)^2/2* ...
         sum(stiefel_metric( ...
         Tnext,v_pim_after_shift.T, ...
-            hess_genproc_T(Xnext, v_pim_after_shift, problem_struct_next),'euclidean'));
-    plot_vals_taylor(ii) = step2.cost(Xnext) + pvt_R + pvt_T;
+            ssom_hess_genproc_T(Xnext, v_pim_after_shift, problem_struct_next),'euclidean'));
+    pvt_lambdas = alphas(ii)^2/2* ...
+        sum(stiefel_metric( ...
+        Xnext.lambda,v_pim_after_shift.lambda, ...
+            ssom_hess_genproc_lambda(Xnext, v_pim_after_shift, problem_struct_next),'euclidean'));
+    plot_vals_taylor(ii) = step2.cost(Xnext) + pvt_R + pvt_T + pvt_lambdas;
 end
 
 plot(alphas, plot_vals,'b')
@@ -140,33 +150,36 @@ disp("Now performing linesearch...");
 %Note: first output param of linesearch() would be "stepsize"
 
 [~, Y0] = linesearch_decrease(step2, ...
-    Xnext, v_pim_after_shift, cost_genproc(Xnext,problem_struct_next));
+    Xnext, v_pim_after_shift, ssom_cost(Xnext,problem_struct_next));
 
-cost_before_ls = cost_genproc(Xnext,problem_struct_next);
+cost_before_ls = ssom_cost(Xnext,problem_struct_next);
 Rnext = Xnext.R(:);
 Tnext = Xnext.T(:);
+lambdasnext = Xnext.lambda(:);
 vpasR = v_pim_after_shift.R(:);
 vpasT = v_pim_after_shift.T(:);
+vpasLambdas = v_pim_after_shift.lambda(:);
 Y0R = Y0.R(:);
 Y0T = Y0.T(:);
-cost_after_ls = cost_genproc(Y0,problem_struct_next);
+Y0lambda = Y0.lambda(:);
+cost_after_ls = ssom_cost(Y0,problem_struct_next);
 
 Xnext_vec = [Rnext(:); Tnext(:)];
 Y0_vec = [Y0R(:); Y0T(:)];
 vpas_vec = [vpasR(:); vpasT(:)];
-som_matlab_path = string(getenv("HOME")) + "/workspace/matlab_ws/som/matlab";
-writematrix(cost_before_ls, som_matlab_path + "/data/lsdummy_debug/matlab_cost_before_ls.csv")
-writematrix(Rnext, som_matlab_path + "/data/lsdummy_debug/matlab_Rnext.csv")
-writematrix(Tnext, som_matlab_path + "/data/lsdummy_debug/matlab_Tnext.csv")
-writematrix(vpasR, som_matlab_path + "/data/lsdummy_debug/matlab_vpasR.csv")
-writematrix(vpasT, som_matlab_path + "/data/lsdummy_debug/matlab_vpasT.csv")
-writematrix(Y0R, som_matlab_path + "/data/lsdummy_debug/matlab_Y0R.csv")
-writematrix(Y0T, som_matlab_path + "/data/lsdummy_debug/matlab_Y0T.csv")
-writematrix(cost_after_ls, som_matlab_path + "/data/lsdummy_debug/matlab_cost_after_ls.csv")
-
-writematrix(Xnext_vec, som_matlab_path + "/data/lsdummy_debug/matlab_Xnext_vec.csv")
-writematrix(vpas_vec, som_matlab_path + "/data/lsdummy_debug/matlab_vpas_vec.csv")
-writematrix(Y0_vec, som_matlab_path + "/data/lsdummy_debug/matlab_Y0_vec.csv")
+% som_matlab_path = string(getenv("HOME")) + "/workspace/matlab_ws/som/matlab";
+% writematrix(cost_before_ls, som_matlab_path + "/data/lsdummy_debug/matlab_cost_before_ls.csv")
+% writematrix(Rnext, som_matlab_path + "/data/lsdummy_debug/matlab_Rnext.csv")
+% writematrix(Tnext, som_matlab_path + "/data/lsdummy_debug/matlab_Tnext.csv")
+% writematrix(vpasR, som_matlab_path + "/data/lsdummy_debug/matlab_vpasR.csv")
+% writematrix(vpasT, som_matlab_path + "/data/lsdummy_debug/matlab_vpasT.csv")
+% writematrix(Y0R, som_matlab_path + "/data/lsdummy_debug/matlab_Y0R.csv")
+% writematrix(Y0T, som_matlab_path + "/data/lsdummy_debug/matlab_Y0T.csv")
+% writematrix(cost_after_ls, som_matlab_path + "/data/lsdummy_debug/matlab_cost_after_ls.csv")
+% 
+% writematrix(Xnext_vec, som_matlab_path + "/data/lsdummy_debug/matlab_Xnext_vec.csv")
+% writematrix(vpas_vec, som_matlab_path + "/data/lsdummy_debug/matlab_vpas_vec.csv")
+% writematrix(Y0_vec, som_matlab_path + "/data/lsdummy_debug/matlab_Y0_vec.csv")
 
 lambda_pim_out = highest_norm_eigenval;
 v_pim_out = v_pim_after_shift;

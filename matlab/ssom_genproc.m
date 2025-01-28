@@ -25,7 +25,7 @@ M = productmanifold(tuple);
 problem.M = M;
 problem.cost = @(x) ssom_cost(x, problem_data);
 problem.grad = @(x) ssom_rgrad(x, problem_data);
-% problem.hess = @(x, u) hess_genproc(x, u, problem_data);
+problem.hess = @(x, u) ssom_rhess_genproc(x, u, problem_data);
 
 % checkgradient(problem);
 % checkhessian(problem);
@@ -61,6 +61,7 @@ for staircase_step_idx = r0:d*N+1
     problem_data_next.sz = [staircase_step_idx, d, N];
     problem_data_next.tijs = problem_data.tijs;
     problem_data_next.edges = problem_data.edges;
+    problem_data_next.rho = problem_data.rho;
 
     [Y_star, lambda, v] = ssom_pim_hessian_genproc( ...
         X, problem_data_next, thr);
@@ -77,9 +78,9 @@ for staircase_step_idx = r0:d*N+1
     tuple_next.T = euclideanfactory(staircase_step_idx, N);
     M_next = productmanifold(tuple_next);
     problem_next.M = M_next;    
-    problem_next.cost = @(x) cost_genproc(x, problem_data); %!! problem_data is the same
-    problem_next.grad = @(x) grad_genproc(x, problem_data);
-    problem_next.hess = @(x, u) hess_genproc(x, u, problem_data);
+    problem_next.cost = @(x) ssom_cost(x, problem_data); %!! problem_data is the same
+    problem_next.grad = @(x) ssom_rgrad(x, problem_data);
+    problem_next.hess = @(x, u) ssom_rhess_genproc(x, u, problem_data);
 
     
     X = trustregions(problem_next, Y_star);
@@ -89,7 +90,7 @@ for staircase_step_idx = r0:d*N+1
 
     disp("cost_last")
     disp(cost_last)
-    cost_last = rsom_cost_base(X, problem_data_next); 
+    cost_last = ssom_cost(X, problem_data_next); 
     disp("cost_new")
     disp(cost_last)
     
