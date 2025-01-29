@@ -2173,6 +2173,7 @@ namespace ROPTLIB
         // !! In the way recovery on SE(d)^N is formulated now, we have to perform it even if nrs = d
 
         int nrs = staircaseStepIdx - 1;
+        nrs = TmanoptOut.rows();
         int lowDeg = 2; // TODO: not necessarily 2 in more complex graph cases (?)
 
         Eigen::ArrayXi nodeDegrees(Eigen::ArrayXi::Zero(sz_.n_));
@@ -2208,7 +2209,7 @@ namespace ROPTLIB
             if (nodesHighDeg(i, 0) != 0)
                 RmanoptOutHighDeg.push_back(RmanoptOut[i]);
         }
-        // ROFL_VAR1("hstack call from here");
+        ROFL_VAR1("hstack call from here");
         hstack(RmanoptOutHighDeg, RstackedHighDeg);
         RTstackedHighDeg.block(0, 0, nrs, sz_.d_ * numNodesHighDeg) = RstackedHighDeg;
         RTstackedHighDeg.block(0, sz_.d_ * numNodesHighDeg, nrs, numEdges_) = Tedges;
@@ -2280,7 +2281,7 @@ namespace ROPTLIB
 
                     SomUtils::MatD Xgt(SomUtils::MatD::Zero(sz_.d_, sz_.d_ * sz_.n_ + sz_.d_ * sz_.n_));
                     SomUtils::MatD RgtSt(SomUtils::MatD::Zero(sz_.d_, sz_.d_ * sz_.n_));
-                    // ROFL_VAR1("hstack call from here");
+                    ROFL_VAR1("hstack call from here");
                     hstack(Rgt_, RgtSt);
                     ROFL_VAR1(RgtSt);
 
@@ -2294,7 +2295,7 @@ namespace ROPTLIB
 
                     SomUtils::MatD XmanoptOut(SomUtils::MatD::Zero(nrs, sz_.d_ * sz_.n_ + sz_.d_ * sz_.n_));
                     SomUtils::MatD RmanoptOutSt(SomUtils::MatD::Zero(nrs, sz_.d_ * sz_.n_));
-                    // ROFL_VAR1("hstack call from here");
+                    ROFL_VAR1("hstack call from here");
                     hstack(RmanoptOut, RmanoptOutSt);
                     ROFL_VAR1(RmanoptOutSt);
 
@@ -2394,7 +2395,7 @@ namespace ROPTLIB
         // disp(cost_out)
         SomUtils::MatD Xrecovered(SomUtils::MatD::Zero(sz_.d_, sz_.d_ * sz_.n_ + sz_.d_ * sz_.n_));
         SomUtils::MatD RrecoveredSt(SomUtils::MatD::Zero(sz_.d_, sz_.d_ * sz_.n_));
-        // ROFL_VAR1("hstack call from here");
+        ROFL_VAR1("hstack call from here");
         hstack(Rrecovered, RrecoveredSt);
         ROFL_VAR1(RrecoveredSt);
         Xrecovered.block(0, 0, sz_.d_, RrecoveredSt.cols()) = RrecoveredSt;
@@ -2512,7 +2513,7 @@ namespace ROPTLIB
         // disp(cost_out_global)
         SomUtils::MatD Xout(SomUtils::MatD::Zero(sz_.d_, sz_.d_ * sz_.n_ + sz_.d_ * sz_.n_));
         SomUtils::MatD RoutSt(SomUtils::MatD::Zero(sz_.d_, sz_.d_ * sz_.n_));
-        // ROFL_VAR1("hstack call from here");
+        ROFL_VAR1("hstack call from here");
         hstack(RrecoveredGlobal, RoutSt);
         ROFL_VAR1(RoutSt);
         Xout.block(0, 0, sz_.d_, RoutSt.cols()) = RoutSt;

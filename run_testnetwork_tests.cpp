@@ -62,6 +62,17 @@ int main(int argc, char **argv)
     std::vector<std::vector<double>> execTimesAll;
     std::vector<std::vector<double>> staircaseStepOutIdxAll;
 
+    // declaring ofstreams
+    std::ofstream rotErrsOfstream;
+    std::ofstream translErrsOfstream;
+    std::ofstream execTimesOfstream;
+    std::ofstream staircaseStepOutIdxOfstream;
+    std::ofstream rotErrsMeanOfstream;
+    std::ofstream translErrsMeanOfstream;
+    std::ofstream execTimesMeanOfstream;
+
+    std::string folderAppendNameStamped = SomUtils::generateStampedString("", "");
+
     for (const auto &entry : sortedByName)
     {
         std::vector<std::vector<double>> rotErrs(numTestsPerInstance), translErrs(numTestsPerInstance);
@@ -168,36 +179,52 @@ int main(int argc, char **argv)
             "n" + boost::lexical_cast<std::string, int>(n) +
             "_mindeg" + boost::lexical_cast<std::string, int>(mindeg) +
             "_noise00"; // TODO: make noise param reading automated
-        std::string folderAppendNameStamped = SomUtils::generateStampedString(folderAppendName + "_", "/");
-        fs::create_directory(resultsBasePath + folderAppendNameStamped);
+        fs::create_directory(resultsBasePath + folderAppendName + "_" + folderAppendNameStamped + "/");
 
         // 1
-        std::string rotErrsFilename = resultsBasePath + folderAppendNameStamped + folderAppendName + "_rot_errors.txt";
-        std::ofstream rotErrsOfstream;
+        std::string rotErrsFilename = resultsBasePath + folderAppendName + "_" + folderAppendNameStamped + "/" + folderAppendName + "_rot_errors.txt";
+
+        if (rotErrsOfstream.is_open())
+        {
+            rotErrsOfstream.close();
+            rotErrsOfstream.clear(); // clear flags
+        }
         rotErrsOfstream.open(rotErrsFilename);
         if (!rotErrsOfstream)
         {
             ROFL_ERR("Error opening output file")
             ROFL_ASSERT(0)
         }
-        std::string translErrsFilename = resultsBasePath + folderAppendNameStamped + folderAppendName + "_transl_errors.txt";
-        std::ofstream translErrsOfstream;
+        std::string translErrsFilename = resultsBasePath + folderAppendName + "_" + folderAppendNameStamped + "/" + folderAppendName + "_transl_errors.txt";
+        if (translErrsOfstream.is_open())
+        {
+            translErrsOfstream.close();
+            translErrsOfstream.clear(); // clear flags
+        }
         translErrsOfstream.open(translErrsFilename);
         if (!translErrsOfstream)
         {
             ROFL_ERR("Error opening output file")
             ROFL_ASSERT(0)
         }
-        std::string execTimesFilename = resultsBasePath + folderAppendNameStamped + folderAppendName + "_exec_times.txt";
-        std::ofstream execTimesOfstream;
+        std::string execTimesFilename = resultsBasePath + folderAppendName + "_" + folderAppendNameStamped + "/" + folderAppendName + "_exec_times.txt";
+        if (execTimesOfstream.is_open())
+        {
+            execTimesOfstream.close();
+            execTimesOfstream.clear(); // clear flags
+        }
         execTimesOfstream.open(execTimesFilename);
         if (!execTimesOfstream)
         {
             ROFL_ERR("Error opening output file")
             ROFL_ASSERT(0)
         }
-        std::string staircaseStepOutIdxFilename = resultsBasePath + folderAppendNameStamped + folderAppendName + "_last_rs_step.txt";
-        std::ofstream staircaseStepOutIdxOfstream;
+        std::string staircaseStepOutIdxFilename = resultsBasePath + folderAppendName + "_" + folderAppendNameStamped + "/" + folderAppendName + "_last_rs_step.txt";
+        if (staircaseStepOutIdxOfstream.is_open())
+        {
+            staircaseStepOutIdxOfstream.close();
+            staircaseStepOutIdxOfstream.clear(); // clear flags
+        }
         staircaseStepOutIdxOfstream.open(staircaseStepOutIdxFilename);
         if (!staircaseStepOutIdxOfstream)
         {
@@ -205,24 +232,36 @@ int main(int argc, char **argv)
             ROFL_ASSERT(0)
         }
         // means
-        std::string rotErrsMeanFilename = resultsBasePath + folderAppendNameStamped + folderAppendName + "_rot_errors_mean.txt";
-        std::ofstream rotErrsMeanOfstream;
+        std::string rotErrsMeanFilename = resultsBasePath + folderAppendName + "_" + folderAppendNameStamped + "/" + folderAppendName + "_rot_errors_mean.txt";
+        if (rotErrsMeanOfstream.is_open())
+        {
+            rotErrsMeanOfstream.close();
+            rotErrsMeanOfstream.clear(); // clear flags
+        }
         rotErrsMeanOfstream.open(rotErrsMeanFilename);
         if (!rotErrsMeanOfstream)
         {
             ROFL_ERR("Error opening output file")
             ROFL_ASSERT(0)
         }
-        std::string translErrsMeanFilename = resultsBasePath + folderAppendNameStamped + folderAppendName + "_transl_errors_mean.txt";
-        std::ofstream translErrsMeanOfstream;
+        std::string translErrsMeanFilename = resultsBasePath + folderAppendName + "_" + folderAppendNameStamped + "/" + folderAppendName + "_transl_errors_mean.txt";
+        if (translErrsMeanOfstream.is_open())
+        {
+            translErrsMeanOfstream.close();
+            translErrsMeanOfstream.clear(); // clear flags
+        }
         translErrsMeanOfstream.open(translErrsMeanFilename);
         if (!translErrsMeanOfstream)
         {
             ROFL_ERR("Error opening output file")
             ROFL_ASSERT(0)
         }
-        std::string execTimesMeanFilename = resultsBasePath + folderAppendNameStamped + folderAppendName + "_exec_times_mean.txt";
-        std::ofstream execTimesMeanOfstream;
+        std::string execTimesMeanFilename = resultsBasePath + folderAppendName + "_" + folderAppendNameStamped + "/" + folderAppendName + "_exec_times_mean.txt";
+        if (execTimesMeanOfstream.is_open())
+        {
+            execTimesMeanOfstream.close();
+            execTimesMeanOfstream.clear(); // clear flags
+        }
         execTimesMeanOfstream.open(execTimesMeanFilename);
         if (!execTimesMeanOfstream)
         {
@@ -311,13 +350,15 @@ int main(int argc, char **argv)
         execTimesAll.push_back(execTimes);
 
         // output 3
-        rotErrsOfstream.close();
-        translErrsOfstream.close();
-        execTimesOfstream.close();
-        rotErrsMeanOfstream.close();
-        translErrsMeanOfstream.close();
-        execTimesMeanOfstream.close();
     }
+
+    rotErrsOfstream.close();
+    translErrsOfstream.close();
+    execTimesOfstream.close();
+    staircaseStepOutIdxOfstream.close();
+    rotErrsMeanOfstream.close();
+    translErrsMeanOfstream.close();
+    execTimesMeanOfstream.close();
 
     // for (int i = 0; i < sortedByName.size(); ++i)
     // {
