@@ -72,11 +72,19 @@ int main(int argc, char **argv)
         // TODO: repeated tests (e.g., 30) per each test case
 
         int n;
-        SomUtils::readSingleIntCsv(entry.string() + "/n.csv", n);
+        if (!SomUtils::readSingleIntCsv(entry.string() + "/n.csv", n))
+        {
+            ROFL_ERR("Error opening file")
+            ROFL_ASSERT(0)
+        }
 
         int numEdges;
 
-        SomUtils::readSingleIntCsv(entry.string() + "/e.csv", numEdges);
+        if (!SomUtils::readSingleIntCsv(entry.string() + "/e.csv", numEdges))
+        {
+            ROFL_ERR("Error opening file")
+            ROFL_ASSERT(0)
+        }
 
         ROFL_VAR2(n, numEdges); // n = 10, numEdges = 48
 
@@ -84,8 +92,16 @@ int main(int argc, char **argv)
         SomUtils::MatD Tijs(d, numEdges);
         Eigen::MatrixXi edges(numEdges, 2);
 
-        SomUtils::readMatlabCsvTijs(entry.string() + "/tijs.csv", Tijs, d, numEdges);
-        SomUtils::readMatlabCsvEdges(entry.string() + "/edges.csv", edges);
+        if (!SomUtils::readMatlabCsvTijs(entry.string() + "/tijs.csv", Tijs, d, numEdges))
+        {
+            ROFL_ERR("Error opening file")
+            ROFL_ASSERT(0)
+        }
+        if (!SomUtils::readMatlabCsvEdges(entry.string() + "/edges.csv", edges))
+        {
+            ROFL_ERR("Error opening file")
+            ROFL_ASSERT(0)
+        }
 
         ROFL_VAR1(Tijs)
         ROFL_VAR1(edges)
@@ -102,7 +118,11 @@ int main(int argc, char **argv)
 
         // Read GT from csv
         ROPTLIB::Vector xGt = ProdMani.RandominManifold();
-        SomUtils::readCsvInitguess(entry.string() + "/X_gt.csv", xGt);
+        if (!SomUtils::readCsvInitguess(entry.string() + "/X_gt.csv", xGt))
+        {
+            ROFL_ERR("Error opening file")
+            ROFL_ASSERT(0)
+        }
         xGt.Print("xGt");
         // ROPT to Eig (GT)
         SomUtils::MatD XgtVecEig(SomUtils::MatD::Zero(d * d * n + d * n, 1));
@@ -155,25 +175,60 @@ int main(int argc, char **argv)
         std::string rotErrsFilename = resultsBasePath + folderAppendNameStamped + folderAppendName + "_rot_errors.txt";
         std::ofstream rotErrsOfstream;
         rotErrsOfstream.open(rotErrsFilename);
+        if (!rotErrsOfstream)
+        {
+            ROFL_ERR("Error opening output file")
+            ROFL_ASSERT(0)
+        }
         std::string translErrsFilename = resultsBasePath + folderAppendNameStamped + folderAppendName + "_transl_errors.txt";
         std::ofstream translErrsOfstream;
         translErrsOfstream.open(translErrsFilename);
+        if (!translErrsOfstream)
+        {
+            ROFL_ERR("Error opening output file")
+            ROFL_ASSERT(0)
+        }
         std::string execTimesFilename = resultsBasePath + folderAppendNameStamped + folderAppendName + "_exec_times.txt";
         std::ofstream execTimesOfstream;
         execTimesOfstream.open(execTimesFilename);
+        if (!execTimesOfstream)
+        {
+            ROFL_ERR("Error opening output file")
+            ROFL_ASSERT(0)
+        }
         std::string staircaseStepOutIdxFilename = resultsBasePath + folderAppendNameStamped + folderAppendName + "_last_rs_step.txt";
         std::ofstream staircaseStepOutIdxOfstream;
         staircaseStepOutIdxOfstream.open(staircaseStepOutIdxFilename);
+        if (!staircaseStepOutIdxOfstream)
+        {
+            ROFL_ERR("Error opening output file")
+            ROFL_ASSERT(0)
+        }
         // means
         std::string rotErrsMeanFilename = resultsBasePath + folderAppendNameStamped + folderAppendName + "_rot_errors_mean.txt";
         std::ofstream rotErrsMeanOfstream;
         rotErrsMeanOfstream.open(rotErrsMeanFilename);
+        if (!rotErrsMeanOfstream)
+        {
+            ROFL_ERR("Error opening output file")
+            ROFL_ASSERT(0)
+        }
         std::string translErrsMeanFilename = resultsBasePath + folderAppendNameStamped + folderAppendName + "_transl_errors_mean.txt";
         std::ofstream translErrsMeanOfstream;
         translErrsMeanOfstream.open(translErrsMeanFilename);
+        if (!translErrsMeanOfstream)
+        {
+            ROFL_ERR("Error opening output file")
+            ROFL_ASSERT(0)
+        }
         std::string execTimesMeanFilename = resultsBasePath + folderAppendNameStamped + folderAppendName + "_exec_times_mean.txt";
         std::ofstream execTimesMeanOfstream;
         execTimesMeanOfstream.open(execTimesMeanFilename);
+        if (!execTimesMeanOfstream)
+        {
+            ROFL_ERR("Error opening output file")
+            ROFL_ASSERT(0)
+        }
 
         for (int testjd = 0; testjd < numTestsPerInstance; ++testjd)
         {
@@ -183,7 +238,11 @@ int main(int argc, char **argv)
             ROPTLIB::Vector startX = ProdMani.RandominManifold();
 
             if (readStartingPtFromFile)
-                SomUtils::readCsvInitguess("../data/X_initguess_test_single_run_rsom_rs.csv", startX);
+                if (!SomUtils::readCsvInitguess("../data/X_initguess_test_single_run_rsom_rs.csv", startX))
+                {
+                    ROFL_ERR("Error opening file")
+                    ROFL_ASSERT(0)
+                }
 
             startX.Print("startX");
 
@@ -233,7 +292,6 @@ int main(int argc, char **argv)
             execTimesOfstream << execTimes[i] << std::endl;
             staircaseStepOutIdxOfstream << "i " + std::to_string(i) << std::endl;
             staircaseStepOutIdxOfstream << staircaseStepOutIdx[i] << std::endl;
-
 
             // Finding mean error of current instance-testjd pair
             double rotMeanErr = std::accumulate(rotErrs[i].begin(), rotErrs[i].end(), 0) / rotErrs[i].size();

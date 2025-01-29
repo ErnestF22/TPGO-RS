@@ -46,14 +46,16 @@ namespace SomUtils
      * Read Initguess from csv file in vectorized form (no size checks)
      * and save it into ROPTLIB vector
      * TODO: rename it as this method is not necessarily to be used only for reading initguesses
+     * Return success boolean
      */
-    void readCsvInitguess(std::string fname, ROPTLIB::Vector &csvVec);
+    bool readCsvInitguess(std::string fname, ROPTLIB::Vector &csvVec);
 
     /**
      * Read Initguess from csv file in vectorized form (no size checks)
      * and save it into Eigen MatrixXd
+     * Return success boolean
      */
-    void readCsvEigen(std::string fname, SomUtils::MatD &csvEig);
+    bool readCsvEigen(std::string fname, SomUtils::MatD &csvEig);
 
     /**
      * Called from readCsvTijs
@@ -65,7 +67,7 @@ namespace SomUtils
      * Need numEdges
      * d is unused ATM but might be needed for more complex cases
      */
-    void readCsvTijs(std::string fname, Eigen::MatrixXd &Tijs, int d, int numEdges);
+    bool readCsvTijs(std::string fname, Eigen::MatrixXd &Tijs, int d, int numEdges);
 
     /**
      * Called from readCsvEdges
@@ -75,7 +77,7 @@ namespace SomUtils
     /**
      * Read Edges from rows in csv files (no size checks)
      */
-    void readCsvEdges(std::string fname, Eigen::MatrixXi &edges);
+    bool readCsvEdges(std::string fname, Eigen::MatrixXi &edges);
 
     // template <typename M>
     // M load_csv(const std::string &path)
@@ -113,23 +115,27 @@ namespace SomUtils
 
     /**
      * @brief No spaces after comma delimiter
+     * Return success boolean
      */
-    void readMatlabCsvEdges(std::string fname, Eigen::MatrixXi &edges);
+    bool readMatlabCsvEdges(std::string fname, Eigen::MatrixXi &edges);
 
     /**
      * @brief No spaces after comma delimiter
+     * Return success boolean
      */
-    void readMatlabCsvTijs(std::string fname, Eigen::MatrixXd &Tijs, int d, int numEdges);
+    bool readMatlabCsvTijs(std::string fname, Eigen::MatrixXd &Tijs, int d, int numEdges);
 
     /**
      * @brief Read a single integer from a csv file and save it to reference param out
+     * Return success boolean
      */
-    void readSingleIntCsv(std::string fname, int &out);
+    bool readSingleIntCsv(std::string fname, int &out);
 
     /**
      * @brief Read a single double from a csv file and save it to reference param out
+     * Return success boolean
      */
-    void readSingleDoubleCsv(std::string fname, double &out);
+    bool readSingleDoubleCsv(std::string fname, double &out);
 
     // function d=rot_distSingle(R1,R2)
     // switch size(R1,1)

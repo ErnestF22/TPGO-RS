@@ -26,7 +26,7 @@ namespace SomUtils
         // ROFL_VAR1(pt.transpose());
     }
 
-    void readCsvInitguess(std::string fname, ROPTLIB::Vector &csvVec)
+    bool readCsvInitguess(std::string fname, ROPTLIB::Vector &csvVec)
     {
         std::fstream fout;
         fout.open(fname, std::ios::in);
@@ -34,7 +34,7 @@ namespace SomUtils
         if (!fout.is_open())
         {
             std::cerr << "Error opening file!" << std::endl;
-            return;
+            return false;
         }
 
         std::string line;
@@ -67,9 +67,10 @@ namespace SomUtils
         // csvVec.Print("csv read result");
 
         fout.close();
+        return true;
     }
 
-    void readCsvEigen(std::string fname, SomUtils::MatD &csvEig)
+    bool readCsvEigen(std::string fname, SomUtils::MatD &csvEig)
     {
         std::fstream fout;
         fout.open(fname, std::ios::in);
@@ -77,7 +78,7 @@ namespace SomUtils
         if (!fout.is_open())
         {
             std::cerr << "Error opening file!" << std::endl;
-            return;
+            return false;
         }
 
         std::string line;
@@ -109,6 +110,7 @@ namespace SomUtils
         // csvVec.Print("csv read result");
 
         fout.close();
+        return true;
     }
 
     void deserializeRowTijs(const std::string &row, Eigen::RowVectorXd &tij)
@@ -132,7 +134,7 @@ namespace SomUtils
         }
     }
 
-    void readCsvTijs(std::string fname, Eigen::MatrixXd &Tijs, int d, int numEdges)
+    bool readCsvTijs(std::string fname, Eigen::MatrixXd &Tijs, int d, int numEdges)
     {
         std::fstream fout;
         fout.open(fname, std::ios::in);
@@ -140,7 +142,7 @@ namespace SomUtils
         if (!fout.is_open())
         {
             std::cerr << "Error opening file!" << std::endl;
-            return;
+            return false;
         }
 
         std::string line;
@@ -171,6 +173,7 @@ namespace SomUtils
         // csvVec.Print("csv read result");
 
         fout.close();
+        return true;
     }
 
     void deserializeRowEdges(const std::string &row, Eigen::Vector2i &edgeI)
@@ -194,7 +197,7 @@ namespace SomUtils
         }
     }
 
-    void readCsvEdges(std::string fname, Eigen::MatrixXi &edges)
+    bool readCsvEdges(std::string fname, Eigen::MatrixXi &edges)
     {
         std::fstream fout;
         fout.open(fname, std::ios::in);
@@ -202,7 +205,7 @@ namespace SomUtils
         if (!fout.is_open())
         {
             std::cerr << "Error opening file!" << std::endl;
-            return;
+            return false;
         }
 
         std::string line;
@@ -232,6 +235,7 @@ namespace SomUtils
         // csvVec.Print("csv read result");
 
         fout.close();
+        return true;
     }
 
     double LinesearchInput(integer iter, const ROPTLIB::Variable &x1, const ROPTLIB::Vector &exeta1, realdp initialstepsize, realdp initialslope, const ROPTLIB::Problem *prob, const ROPTLIB::Solvers *solver)
@@ -292,7 +296,7 @@ namespace SomUtils
         }
     }
 
-    void readMatlabCsvTijs(std::string fname, Eigen::MatrixXd &Tijs, int d, int numEdges)
+    bool readMatlabCsvTijs(std::string fname, Eigen::MatrixXd &Tijs, int d, int numEdges)
     {
         std::fstream fout;
         fout.open(fname, std::ios::in);
@@ -300,7 +304,7 @@ namespace SomUtils
         if (!fout.is_open())
         {
             std::cerr << "Error opening file!" << std::endl;
-            return;
+            return false;
         }
 
         std::string line;
@@ -332,9 +336,10 @@ namespace SomUtils
         }
 
         fout.close();
+        return true;
     }
 
-    void readMatlabCsvEdges(std::string fname, Eigen::MatrixXi &edges)
+    bool readMatlabCsvEdges(std::string fname, Eigen::MatrixXi &edges)
     {
         std::fstream fout;
         fout.open(fname, std::ios::in);
@@ -342,7 +347,7 @@ namespace SomUtils
         if (!fout.is_open())
         {
             std::cerr << "Error opening file!" << std::endl;
-            return;
+            return false;
         }
 
         std::string line;
@@ -374,9 +379,10 @@ namespace SomUtils
         }
 
         fout.close();
+        return true;
     }
 
-    void readSingleIntCsv(std::string fname, int &out)
+    bool readSingleIntCsv(std::string fname, int &out)
     {
         std::fstream fout;
         fout.open(fname, std::ios::in);
@@ -384,16 +390,18 @@ namespace SomUtils
         if (!fout.is_open())
         {
             std::cerr << "Error opening file!" << std::endl;
-            return;
+            return false;
         }
 
         std::string line;
         getline(fout, line, '\n');
 
         out = stoi(line);
+
+        return true;
     }
 
-    void readSingleDoubleCsv(std::string fname, double &out)
+    bool readSingleDoubleCsv(std::string fname, double &out)
     {
         std::fstream fout;
         fout.open(fname, std::ios::in);
@@ -401,13 +409,14 @@ namespace SomUtils
         if (!fout.is_open())
         {
             std::cerr << "Error opening file!" << std::endl;
-            return;
+            return false;
         }
 
         std::string line;
         getline(fout, line, '\n');
 
         out = stod(line);
+        return true;
     }
 
     // function d=rot_distSingle(R1,R2)

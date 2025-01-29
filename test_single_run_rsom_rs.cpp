@@ -14,11 +14,19 @@ int main(int argc, char **argv)
 {
     int d = 3;
     int n;
-    SomUtils::readSingleIntCsv("../matlab/data/cpp_testdata/tdata_n10_mindeg3/n.csv", n);
+    if (!SomUtils::readSingleIntCsv("../matlab/data/cpp_testdata/tdata_n10_mindeg3/n.csv", n))
+    {
+        ROFL_ERR("Error opening file")
+        ROFL_ASSERT(0)
+    }
 
     int numEdges;
 
-    SomUtils::readSingleIntCsv("../matlab/data/cpp_testdata/tdata_n10_mindeg3/e.csv", numEdges);
+    if (!SomUtils::readSingleIntCsv("../matlab/data/cpp_testdata/tdata_n10_mindeg3/e.csv", numEdges))
+    {
+        ROFL_ERR("Error opening file")
+        ROFL_ASSERT(0)
+    }
 
     ROFL_VAR2(n, numEdges); // n = 10, numEdges = 48
 
@@ -26,8 +34,16 @@ int main(int argc, char **argv)
     SomUtils::MatD Tijs(d, numEdges);
     Eigen::MatrixXi edges(numEdges, 2);
 
-    SomUtils::readMatlabCsvTijs("../matlab/data/cpp_testdata/tdata_n10_mindeg3/tijs.csv", Tijs, d, numEdges);
-    SomUtils::readMatlabCsvEdges("../matlab/data/cpp_testdata/tdata_n10_mindeg3/edges.csv", edges);
+    if (!SomUtils::readMatlabCsvTijs("../matlab/data/cpp_testdata/tdata_n10_mindeg3/tijs.csv", Tijs, d, numEdges))
+    {
+        ROFL_ERR("Error opening file")
+        ROFL_ASSERT(0)
+    }
+    if (!SomUtils::readMatlabCsvEdges("../matlab/data/cpp_testdata/tdata_n10_mindeg3/edges.csv", edges))
+    {
+        ROFL_ERR("Error opening file")
+        ROFL_ASSERT(0)
+    }
 
     ROFL_VAR1(Tijs)
     ROFL_VAR1(edges)
@@ -44,7 +60,12 @@ int main(int argc, char **argv)
 
     // Read GT from csv
     ROPTLIB::Vector xGt = ProdMani.RandominManifold();
-    SomUtils::readCsvInitguess("../matlab/data/cpp_testdata/tdata_n10_mindeg3/X_gt.csv", xGt);
+    if (!SomUtils::readCsvInitguess("../matlab/data/cpp_testdata/tdata_n10_mindeg3/X_gt.csv", xGt))
+    {
+        ROFL_ERR("Error opening file")
+        ROFL_ASSERT(0)
+    }
+
     xGt.Print("xGt");
     // ROPT to Eig (GT)
     SomUtils::MatD XgtVecEig(SomUtils::MatD::Zero(d * d * n + d * n, 1));
@@ -82,18 +103,23 @@ int main(int argc, char **argv)
 
     bool readInitguess = true;
     if (readInitguess)
-        SomUtils::readCsvInitguess("../data/X_initguess_test_single_run_rsom_rs.csv", startX);
+        if (!SomUtils::readCsvInitguess("../data/X_initguess_test_single_run_rsom_rs.csv", startX))
+        {
+            ROFL_ERR("Error opening file")
+            ROFL_ASSERT(0)
+        }
 
     // RUN RSOM RS
     int srcNodeId = 0;
     SomUtils::VecMatD Rout(n, SomUtils::MatD::Identity(d, d));
     SomUtils::MatD Tout(SomUtils::MatD::Zero(d, n));
-    ROPTLIB::runRsomRS(Prob, startX, srcNodeId, Rout, Tout); // note: startX is needed (even if random) in ROPTLIB;
+    int lastStaircaseStep;
+    ROPTLIB::runRsomRS(Prob, startX, srcNodeId, Rout, Tout, lastStaircaseStep); // note: startX is needed (even if random) in ROPTLIB;
     // ROPTLIB namespace is used even if runRsomRS() is not in SampleSomProblem class, nor in "original" ROPTLIB
 
     std::vector<double> rotErrs(numEdges, 1e+6), translErrs(numEdges, 1e+6);
     ROPTLIB::computeErrorsSingleRsom(edges,
-                                             Rout, Tout,
-                                             RgtEig, TgtEig,
-                                             rotErrs, translErrs);
+                                     Rout, Tout,
+                                     RgtEig, TgtEig,
+                                     rotErrs, translErrs);
 }
