@@ -45,6 +45,8 @@ octave-workspace
 build/
 build-release/
 
+# results default folder
+results/
 
 .vscode/
 

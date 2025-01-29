@@ -770,16 +770,18 @@ namespace ROPTLIB
    /**
     * @brief Run an instance of the RSOM problem
     */
-   void runRsomRS(ROPTLIB::SampleSomProblem &Prob, const ROPTLIB::Vector &startX, int src, SomUtils::VecMatD& Rout, SomUtils::MatD& Tout);
+   void runRsomRS(ROPTLIB::SampleSomProblem &Prob, const ROPTLIB::Vector &startX,
+                  int src,
+                  SomUtils::VecMatD &Rout, SomUtils::MatD &Tout,
+                  int &staircaseStepIdx);
 
    /**
     * Saves edge-wise errors in rotErrs, translErrs vectors
     */
    void computeErrorsSingleRsom(const Eigen::MatrixXi &edges,
-                                         const SomUtils::VecMatD &R, const SomUtils::MatD &T,
-                                         const SomUtils::VecMatD &Rgt, const SomUtils::MatD &Tgt,
-                                         std::vector<double> &rotErrs, std::vector<double> &translErrs);
-
+                                const SomUtils::VecMatD &R, const SomUtils::MatD &T,
+                                const SomUtils::VecMatD &Rgt, const SomUtils::MatD &Tgt,
+                                std::vector<double> &rotErrs, std::vector<double> &translErrs);
 
 } // end of namespace ROPTLIB
 

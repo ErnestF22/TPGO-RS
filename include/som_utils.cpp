@@ -563,4 +563,14 @@ namespace SomUtils
         pose = g1inv * g2;
     }
 
+    std::string generateStampedString(const std::string prefix, const std::string postfix)
+    {
+        boost::posix_time::ptime now = boost::posix_time::microsec_clock::local_time();
+        std::ostringstream formatter;
+        std::string formatstring = prefix + "%Y%m%d_%H%M_%S" + postfix;
+        formatter.imbue(std::locale(std::cout.getloc(), new boost::posix_time::time_facet(formatstring.c_str())));
+        formatter << now;
+        return formatter.str();
+    }
+
 } // end of namespace SomUtils

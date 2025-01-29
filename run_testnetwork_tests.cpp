@@ -28,6 +28,7 @@ int main(int argc, char **argv)
     int numTestsPerInstance;
     bool readStartingPtFromFile;
     int srcNodeIdx;
+    std::string resultsBasePath;
 
     rofl::ParamMap params;
 
@@ -43,6 +44,7 @@ int main(int argc, char **argv)
     params.getParam<int>("d", d, 3);
     params.getParam<int>("numTestsPerInstance", numTestsPerInstance, 30);
     params.getParam<bool>("readStartingPtFromFile", readStartingPtFromFile, false);
+    params.getParam<std::string>("resultsBasePath", resultsBasePath, "../results/");
     params.getParam<int>("srcNodeIdx", srcNodeIdx, 0);
 
     std::cout << "Params:" << std::endl;
@@ -57,10 +59,13 @@ int main(int argc, char **argv)
         sortedByName.insert(entry.path());
 
     std::vector<std::vector<std::vector<double>>> rotErrsAll, translErrsAll;
+    std::vector<std::vector<double>> execTimesAll;
+    std::vector<std::vector<double>> staircaseStepOutIdxAll;
 
     for (const auto &entry : sortedByName)
     {
         std::vector<std::vector<double>> rotErrs(numTestsPerInstance), translErrs(numTestsPerInstance);
+        std::vector<double> execTimes(numTestsPerInstance), staircaseStepOutIdx(numTestsPerInstance);
 
         // ROFL_VAR1(entry);
         // for (int j = 0; j<numTestsPerInstance; ++j)
@@ -130,6 +135,46 @@ int main(int argc, char **argv)
         // SomUtils::readCsvInitguess("../data/recov_x_manopt_out.csv", xManoptOut);
         // xManoptOut.Print("xManoptOut");
 
+        if (!fs::exists(resultsBasePath))
+            fs::create_directory(resultsBasePath);
+
+        int pos = entry.string().find("mindeg");
+        std::string mindegStr = entry.string().substr(pos + 6, 1); // mindeg has 6 characters
+        ROFL_VAR1(mindegStr);
+        int mindeg = boost::lexical_cast<int, std::string>(mindegStr);
+        ROFL_VAR1(mindeg)
+
+        std::string folderAppendName =
+            "n" + boost::lexical_cast<std::string, int>(n) +
+            "_mindeg" + boost::lexical_cast<std::string, int>(mindeg) +
+            "_noise00"; // TODO: make noise param reading automated
+        std::string folderAppendNameStamped = SomUtils::generateStampedString(folderAppendName, "/");
+        fs::create_directory(resultsBasePath + folderAppendNameStamped);
+
+        // 1
+        std::string rotErrsFilename = resultsBasePath + folderAppendNameStamped + folderAppendName + "_rot_errors.txt";
+        std::ofstream rotErrsOfstream;
+        rotErrsOfstream.open(rotErrsFilename);
+        std::string translErrsFilename = resultsBasePath + folderAppendNameStamped + folderAppendName + "_transl_errors.txt";
+        std::ofstream translErrsOfstream;
+        translErrsOfstream.open(translErrsFilename);
+        std::string execTimesFilename = resultsBasePath + folderAppendNameStamped + folderAppendName + "_exec_times.txt";
+        std::ofstream execTimesOfstream;
+        execTimesOfstream.open(execTimesFilename);
+        std::string staircaseStepOutIdxFilename = resultsBasePath + folderAppendNameStamped + folderAppendName + "_last_rs_step.txt";
+        std::ofstream staircaseStepOutIdxOfstream;
+        staircaseStepOutIdxOfstream.open(staircaseStepOutIdxFilename);
+        // means
+        std::string rotErrsMeanFilename = resultsBasePath + folderAppendNameStamped + folderAppendName + "_rot_errors_mean.txt";
+        std::ofstream rotErrsMeanOfstream;
+        rotErrsMeanOfstream.open(rotErrsMeanFilename);
+        std::string translErrsMeanFilename = resultsBasePath + folderAppendNameStamped + folderAppendName + "_transl_errors_mean.txt";
+        std::ofstream translErrsMeanOfstream;
+        translErrsMeanOfstream.open(translErrsMeanFilename);
+        std::string execTimesMeanFilename = resultsBasePath + folderAppendNameStamped + folderAppendName + "_exec_times_mean.txt";
+        std::ofstream execTimesMeanOfstream;
+        execTimesMeanOfstream.open(execTimesMeanFilename);
+
         for (int testjd = 0; testjd < numTestsPerInstance; ++testjd)
         {
             ROFL_VAR3(entry, testjd, "start");
@@ -140,13 +185,16 @@ int main(int argc, char **argv)
             if (readStartingPtFromFile)
                 SomUtils::readCsvInitguess("../data/X_initguess_test_single_run_rsom_rs.csv", startX);
 
+            startX.Print("startX");
+
             { // rsom RS execution scope
                 rofl::ScopedTimer runRsomRStimer("runRsomRS");
 
                 // RUN RSOM RS
                 SomUtils::VecMatD Rout(n, SomUtils::MatD::Identity(d, d));
                 SomUtils::MatD Tout(SomUtils::MatD::Zero(d, n));
-                ROPTLIB::runRsomRS(Prob, startX, srcNodeIdx, Rout, Tout); // note: startX is needed (even if random) in ROPTLIB;
+                int staircaseStepIdxOutIJ;
+                ROPTLIB::runRsomRS(Prob, startX, srcNodeIdx, Rout, Tout, staircaseStepIdxOutIJ); // note: startX is needed (even if random) in ROPTLIB;
                 // ROPTLIB namespace is used even if runRsomRS() is not in SampleSomProblem class, nor in "original" ROPTLIB
 
                 std::vector<double> rotErrsTestjd(numEdges, 1e+6), translErrsTestjd(numEdges, 1e+6);
@@ -155,17 +203,17 @@ int main(int argc, char **argv)
                                                  RgtEig, TgtEig,
                                                  rotErrsTestjd, translErrsTestjd);
 
-                ROFL_VAR3(entry, testjd, runRsomRStimer.elapsedTimeMs())
-
-                // Finding mean error of current instance-testjd pair
-                double rotMeanErr = std::accumulate(rotErrsTestjd.begin(), rotErrsTestjd.end(), 0) / rotErrsTestjd.size();
-                double translMeanErr = std::accumulate(translErrsTestjd.begin(), translErrsTestjd.end(), 0) / translErrsTestjd.size();
+                double execTimeIJ = runRsomRStimer.elapsedTimeMs();
+                ROFL_VAR3(entry, testjd, execTimeIJ)
 
                 rotErrs[testjd].resize(numEdges);
                 translErrs[testjd].resize(numEdges);
 
                 rotErrs[testjd] = rotErrsTestjd;
                 translErrs[testjd] = translErrsTestjd;
+
+                execTimes[testjd] = execTimeIJ;
+                staircaseStepOutIdx[testjd] = staircaseStepIdxOutIJ;
             } // end of rsom RS execution scope
             // break; //testjd loop
         }
@@ -173,18 +221,52 @@ int main(int argc, char **argv)
         for (int i = 0; i < numTestsPerInstance; ++i)
         {
             for (int j = 0; j < numEdges; ++j)
-                ROFL_VAR4(entry, j, rotErrs[i][j], translErrs[i][j]);
+            {
+                // output 2
+                // ROFL_VAR4(entry, j, rotErrs[i][j], translErrs[i][j]);
+                rotErrsOfstream << "i " + std::to_string(i) + " j " << std::to_string(j) << std::endl;
+                rotErrsOfstream << rotErrs[i][j] << std::endl;
+                translErrsOfstream << "i " + std::to_string(i) + " j " << std::to_string(j) << std::endl;
+                translErrsOfstream << translErrs[i][j] << std::endl;
+            }
+            execTimesOfstream << "i " + std::to_string(i) << std::endl;
+            execTimesOfstream << execTimes[i] << std::endl;
+            staircaseStepOutIdxOfstream << "i " + std::to_string(i) << std::endl;
+            staircaseStepOutIdxOfstream << staircaseStepOutIdx[i] << std::endl;
+
+
+            // Finding mean error of current instance-testjd pair
+            double rotMeanErr = std::accumulate(rotErrs[i].begin(), rotErrs[i].end(), 0) / rotErrs[i].size();
+            double translMeanErr = std::accumulate(translErrs[i].begin(), translErrs[i].end(), 0) / translErrs[i].size();
+            rotErrsMeanOfstream << "i " + std::to_string(i) << std::endl;
+            rotErrsMeanOfstream << rotMeanErr << std::endl;
+            translErrsMeanOfstream << "i " + std::to_string(i) << std::endl;
+            translErrsMeanOfstream << translMeanErr << std::endl;
         }
+
+        double exectimeMean = std::accumulate(execTimes.begin(), execTimes.end(), 0) / execTimes.size();
+        // execTimesMeanOfstream << "i " + std::to_string(i) << std::endl;
+        execTimesMeanOfstream << exectimeMean << std::endl;
+
         rotErrsAll.push_back(rotErrs);
         translErrsAll.push_back(translErrs);
+        execTimesAll.push_back(execTimes);
+
+        // output 3
+        rotErrsOfstream.close();
+        translErrsOfstream.close();
+        execTimesOfstream.close();
+        rotErrsMeanOfstream.close();
+        translErrsMeanOfstream.close();
+        execTimesMeanOfstream.close();
     }
 
-    for (int i = 0; i < sortedByName.size(); ++i)
-    {
-        for (int j = 0; j < numTestsPerInstance; ++j)
-            for (int k = 0; k < rotErrsAll[i][j].size(); ++k)
-                ROFL_VAR5(i, j, k, rotErrsAll[i][j][k], translErrsAll[i][j][k]);
-    }
+    // for (int i = 0; i < sortedByName.size(); ++i)
+    // {
+    //     for (int j = 0; j < numTestsPerInstance; ++j)
+    //         for (int k = 0; k < rotErrsAll[i][j].size(); ++k)
+    //             ROFL_VAR5(i, j, k, rotErrsAll[i][j][k], translErrsAll[i][j][k]);
+    // }
 
     return 0;
 }

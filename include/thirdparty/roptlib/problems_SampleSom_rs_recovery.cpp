@@ -1845,8 +1845,8 @@ namespace ROPTLIB
     {
         // Q=fliplr(orthComplement(v));
         SomUtils::MatD ocv = SomUtils::MatD::Zero(4, 2);
-        SomUtils::MatD Q = SomUtils::MatD::Zero(4, 2);
         orthComplement(v, ocv);
+        SomUtils::MatD Q = SomUtils::MatD::Zero(ocv.rows(), ocv.cols());
         fliplr(ocv, Q);
         ROFL_VAR1("align2d first part")
         ROFL_VAR3(v, ocv, Q)
@@ -1854,6 +1854,7 @@ namespace ROPTLIB
         // Qx=flipud(orthCompleteBasis(Q)');
         SomUtils::MatD ocb = SomUtils::MatD::Zero(4, 4);
         orthCompleteBasis(Q, ocb);
+        Qx.resize(ocb.cols(), ocb.rows()); // NOT an error!!
         flipud(ocb.transpose(), Qx);
         ROFL_VAR1("align2d second part")
         ROFL_VAR2(ocb, Qx)
@@ -1884,13 +1885,21 @@ namespace ROPTLIB
 
         // Qx = align2d(Tijtilde);
         SomUtils::MatD Qx(SomUtils::MatD::Zero(sz_.p_, sz_.p_));
-        align2d(Tijtilde, Qx);
+        align2d(Tijtilde, Qx); // !! resizing of Qx happens inside align2d()
 
         // QxRitilde2Bot = Qx(3 : 4, :) * Ritilde2;
+        ROFL_VAR2(Qx, RiTilde2)
+        if (RiTilde2.rows() != Qx.cols() || Qx.rows() < 4)
+        {
+            ROFL_VAR1(".block() error avoided")
+            RiTildeEst1 = RiTilde2;
+            RiTildeEst2 = -RiTilde2;
+            return;
+        }
         auto QxRiTilde2bot = Qx.block(2, 0, 2, Qx.cols()) * RiTilde2;
 
         // [ U, ~, ~] = svd(QxRitilde2Bot, 'econ');
-        Eigen::JacobiSVD<SomUtils::MatD> svd(QxRiTilde2bot, Eigen::ComputeThinU); // TODO: ComputeFullV flag can probably be removed
+        Eigen::JacobiSVD<SomUtils::MatD> svd(QxRiTilde2bot, Eigen::ComputeThinU);
         auto U = svd.matrixU();
 
         // c = U( :, 2);

@@ -12,6 +12,8 @@
 
 #include <eigen3/Eigen/Dense>
 
+#include <boost/date_time/posix_time/posix_time.hpp>
+
 #include "thirdparty/roptlib/manifolds_Element.h"
 #include "thirdparty/roptlib/problems_Problem.h"
 #include "thirdparty/roptlib/solvers_Solvers.h"
@@ -203,6 +205,11 @@ namespace SomUtils
      * Compute relative pose from two absolute poses
      */
     void computeRelativePose(const Eigen::MatrixXd &g1, const Eigen::MatrixXd &g2, Eigen::MatrixXd &pose);
+
+    /**
+     * Generate and return a string containing current timestamp
+     */
+    std::string generateStampedString(const std::string prefix, const std::string postfix);
 
 } // end of namespace SomUtils
 

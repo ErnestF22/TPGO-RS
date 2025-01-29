@@ -1306,7 +1306,7 @@ namespace ROPTLIB
         costCurr_ = cc;
     }
 
-    void runRsomRS(ROPTLIB::SampleSomProblem &Prob, const ROPTLIB::Vector &startX, int src, SomUtils::VecMatD &Rout, SomUtils::MatD &Tout)
+    void runRsomRS(ROPTLIB::SampleSomProblem &Prob, const ROPTLIB::Vector &startX, int src, SomUtils::VecMatD &Rout, SomUtils::MatD &Tout, int& staircaseStepIdx)
     {
         // output the parameters of the manifold of domain
         ROPTLIB::RTRNewton *RTRNewtonSolver = new ROPTLIB::RTRNewton(&Prob, &startX); // USE INITGUESS HERE!
@@ -1351,7 +1351,7 @@ namespace ROPTLIB
 
         double costLast = XoptCost;
         auto ProbPrev = Prob;
-        int staircaseStepIdx;
+        // int staircaseStepIdx;
         SomUtils::VecMatD RmanoptOutEig(n, SomUtils::MatD::Zero(d, d));
         SomUtils::MatD TmanoptOutEig(SomUtils::MatD::Zero(d, n));
 
