@@ -168,7 +168,7 @@ int main(int argc, char **argv)
             "n" + boost::lexical_cast<std::string, int>(n) +
             "_mindeg" + boost::lexical_cast<std::string, int>(mindeg) +
             "_noise00"; // TODO: make noise param reading automated
-        std::string folderAppendNameStamped = SomUtils::generateStampedString(folderAppendName, "/");
+        std::string folderAppendNameStamped = SomUtils::generateStampedString(folderAppendName + "_", "/");
         fs::create_directory(resultsBasePath + folderAppendNameStamped);
 
         // 1
