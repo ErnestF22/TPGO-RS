@@ -94,6 +94,7 @@ end
 problem_data.R_gt = G2R(testdata.gitruth);
 problem_data.T_gt = G2T(testdata.gitruth);
 problem_data.lambda_gt = testdata.lambdaijtruth;
+problem_data.E = testdata.E;
 
 disp("problem_data.lambda_gt")
 disp(problem_data.lambda_gt)
@@ -101,9 +102,18 @@ disp(problem_data.lambda_gt)
 
 %% call RS-based optimization function
 
-ssom_genproc(problem_data)
+transf_gt = testdata.gitruth;
+lambdas_gt = testdata.lambdaijtruth;
+[transf_ssom, lambdas_ssom_out, rs_success_bool, cost_ssom_out] = ...
+    ssom_genproc(problem_data, transf_gt, lambdas_gt);
 
-
-
+disp("transf_ssom")
+disp(transf_ssom)
+disp("lambdas_ssom_out")
+disp(lambdas_ssom_out)
+% disp("rs_success_bool")
+% disp(rs_success_bool)
+disp("cost_ssom_out")
+disp(cost_ssom_out)
 
 end %file function
