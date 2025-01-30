@@ -144,7 +144,7 @@ testdata.gi = transf_ssom;
 [rotation_error_ssom,translation_error_ssom,...
     scale_ratios_ssom,transl_err_norm_ssom] = ...
     testNetworkComputeErrors(testdata);
-
+scale_ratios_ssom = (lambdas_ssom_out ./ transp(testdata.lambdaijtruth));
 
 end %function
 

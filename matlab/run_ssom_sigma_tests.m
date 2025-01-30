@@ -125,7 +125,8 @@ for ii = 1:size(sigmas,1)
     ssom_rot_errs(ii) = mean(ssom_rot_errs_per_sigma,"all");
     ssom_transl_errs(ii) = mean(ssom_transl_errs_per_sigma,"all");
     ssom_exec_times(ii) = mean(ssom_exec_times_per_sigma);
-    ssom_scale_ratios(ii) = mean(ssom_scale_ratios_per_sigma, "all");
+    ssom_scale_ratios(ii) = abs(max(ssom_scale_ratios_per_sigma, [], "all") - ...
+        min(ssom_scale_ratios_per_sigma, [], "all"));
     ssom_transl_errs_norm(ii) = mean(ssom_transl_errs_norm_per_sigma, "all");
 
 end    
