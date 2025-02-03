@@ -363,7 +363,7 @@ int main(int argc, char **argv)
                     // ROFL_VAR4(entry, j, rotErrs[i][j], translErrs[i][j]);
                     rotErrsOfstream << "testjd " + std::to_string(testjd) + " k " << std::to_string(k) << std::endl;
                     rotErrsOfstream << rotErrs[testjd][k] << std::endl;
-                    translErrsOfstream << "testjd " + std::to_string(testjd) + " k" << std::to_string(k) << std::endl;
+                    translErrsOfstream << "testjd " + std::to_string(testjd) + " k " << std::to_string(k) << std::endl;
                     translErrsOfstream << translErrs[testjd][k] << std::endl;
                     ROFL_VAR2(rotErrs[testjd][k], translErrs[testjd][k])
                 }
