@@ -1306,7 +1306,7 @@ namespace ROPTLIB
         costCurr_ = cc;
     }
 
-    void runRsomRS(ROPTLIB::SampleSomProblem &Prob, const ROPTLIB::Vector &startX, int src, SomUtils::VecMatD &Rout, SomUtils::MatD &Tout, int& staircaseStepIdx)
+    double runRsomRS(ROPTLIB::SampleSomProblem &Prob, const ROPTLIB::Vector &startX, int src, SomUtils::VecMatD &Rout, SomUtils::MatD &Tout, int& staircaseStepIdx)
     {
         // output the parameters of the manifold of domain
         ROPTLIB::RTRNewton *RTRNewtonSolver = new ROPTLIB::RTRNewton(&Prob, &startX); // USE INITGUESS HERE!
@@ -1507,6 +1507,8 @@ namespace ROPTLIB
         bool globalRecoverySuccess = ProbPrev.globalize(src, Rrecovered, Trecovered,
                                                         Rout, Tout);
         ROFL_VAR1(globalRecoverySuccess)
+
+        return costLast;
     }
 
     void computeErrorsSingleRsom(const Eigen::MatrixXi &edges,

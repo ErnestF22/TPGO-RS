@@ -770,7 +770,7 @@ namespace ROPTLIB
    /**
     * @brief Run an instance of the RSOM problem
     */
-   void runRsomRS(ROPTLIB::SampleSomProblem &Prob, const ROPTLIB::Vector &startX,
+   double runRsomRS(ROPTLIB::SampleSomProblem &Prob, const ROPTLIB::Vector &startX,
                   int src,
                   SomUtils::VecMatD &Rout, SomUtils::MatD &Tout,
                   int &staircaseStepIdx);
