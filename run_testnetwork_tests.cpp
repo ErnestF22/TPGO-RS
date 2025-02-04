@@ -333,7 +333,7 @@ int main(int argc, char **argv)
                     std::ofstream tijsofs(fstr + "_tijs.txt");
                     tijsofs << Tijs;
                     std::ofstream edgesofs(fstr + "_edges.txt");
-                    edges << edges;
+                    edgesofs << edges;
                     std::ofstream startxofs(fstr + "_startx.txt");
                     SomUtils::MatD startXeig(SomUtils::MatD::Zero(d * d * n + d * n, 1));
                     Prob.RoptToEig(startX, startXeig);

@@ -1306,8 +1306,11 @@ namespace ROPTLIB
         costCurr_ = cc;
     }
 
-    double runRsomRS(ROPTLIB::SampleSomProblem &Prob, const ROPTLIB::Vector &startX, int src, SomUtils::VecMatD &Rout, SomUtils::MatD &Tout, int& staircaseStepIdx)
+    double runRsomRS(ROPTLIB::SampleSomProblem &Prob, const ROPTLIB::Vector &startX, int src, SomUtils::VecMatD &Rout, SomUtils::MatD &Tout, int &staircaseStepIdx)
     {
+        ROFL_VAR1("Start of runRsomRS()")
+        ROFL_VAR1(Prob.costEigen(Prob.Rgt_, Prob.Tgt_));
+
         // output the parameters of the manifold of domain
         ROPTLIB::RTRNewton *RTRNewtonSolver = new ROPTLIB::RTRNewton(&Prob, &startX); // USE INITGUESS HERE!
         RTRNewtonSolver->Verbose = ROPTLIB::ITERRESULT;
@@ -1365,8 +1368,12 @@ namespace ROPTLIB
 
             SomUtils::VecMatD R(n, SomUtils::MatD::Zero(staircaseStepIdx - 1, d));
             SomUtils::MatD T(SomUtils::MatD::Zero(staircaseStepIdx - 1, n));
-            Prob.getRotations(XoptEigVec, R);
-            Prob.getTranslations(XoptEigVec, T);
+            {
+                SomUtils::SomSize somSzScope(staircaseStepIdx - 1, d, n); // TODO: improve getRotations() and getTranslations() and avoid local scope
+                ROPTLIB::SampleSomProblem ProbScope(somSzScope, Prob.Tijs_, Prob.edges_);
+                ProbScope.getRotations(XoptEigVec, R);
+                ProbScope.getTranslations(XoptEigVec, T);
+            }
 
             // SomUtils::VecMatD Rnext(n, SomUtils::MatD::Zero(staircaseStepIdx, d));
             // SomUtils::MatD Tnext(SomUtils::MatD::Zero(staircaseStepIdx, n));
@@ -1423,7 +1430,7 @@ namespace ROPTLIB
             // [x, xcost, info, options] = trustregions(problem);
             RTRNewtonSolverNext->Run();
             auto XoptNext = RTRNewtonSolverNext->GetXopt();
-            auto XoptNextCost = RTRNewtonSolverNext->Getfinalfun();
+            realdp XoptNextCost = RTRNewtonSolverNext->Getfinalfun();
             // Numerically check gradient consistency (optional).
             ProbNext.CheckGradHessian(XoptNext);
 
@@ -1450,8 +1457,6 @@ namespace ROPTLIB
             ProbNext.RoptToEig(XoptNext, XoptEigVec);
             ROFL_VAR1(XoptEigVec.transpose())
 
-            delete RTRNewtonSolverNext;
-
             ProbPrev = ProbNext;
 
             // save output
@@ -1477,7 +1482,9 @@ namespace ROPTLIB
                 break;
             }
 
-            break; // TODO: For now, just 1 RS step allowed -> remove it later after fixing linesearch
+            delete RTRNewtonSolverNext;
+
+            // break; // TODO: For now, just 1 RS step allowed -> remove it later after fixing linesearch
         }
 
         // Recovery procedure
@@ -1512,9 +1519,9 @@ namespace ROPTLIB
     }
 
     void computeErrorsSingleRsom(const Eigen::MatrixXi &edges,
-                                         const SomUtils::VecMatD &R, const SomUtils::MatD &T,
-                                         const SomUtils::VecMatD &Rgt, const SomUtils::MatD &Tgt,
-                                         std::vector<double> &rotErrs, std::vector<double> &translErrs)
+                                 const SomUtils::VecMatD &R, const SomUtils::MatD &T,
+                                 const SomUtils::VecMatD &Rgt, const SomUtils::MatD &Tgt,
+                                 std::vector<double> &rotErrs, std::vector<double> &translErrs)
     {
         // Compute errors
         ROFL_VAR1("Printing R, T out")
@@ -1541,43 +1548,40 @@ namespace ROPTLIB
             Eigen::Vector3d tjgt = Tgt.col(j);
 
             Eigen::Matrix4d transfI(Eigen::Matrix4d::Identity());
-            transfI.block(0,0,d,d) = ri;
-            transfI.block(0,d,d,1) = ti;
+            transfI.block(0, 0, d, d) = ri;
+            transfI.block(0, d, d, 1) = ti;
             Eigen::Matrix4d transfJ(Eigen::Matrix4d::Identity());
-            transfJ.block(0,0,d,d) = rj;
-            transfJ.block(0,d,d,1) = tj;
+            transfJ.block(0, 0, d, d) = rj;
+            transfJ.block(0, d, d, 1) = tj;
 
             Eigen::Matrix4d transfIgt(Eigen::Matrix4d::Identity());
-            transfIgt.block(0,0,d,d) = rigt;
-            transfIgt.block(0,d,d,1) = tigt;
+            transfIgt.block(0, 0, d, d) = rigt;
+            transfIgt.block(0, d, d, 1) = tigt;
             Eigen::Matrix4d transfJgt(Eigen::Matrix4d::Identity());
-            transfJgt.block(0,0,d,d) = rjgt;
-            transfJgt.block(0,d,d,1) = tjgt;
+            transfJgt.block(0, 0, d, d) = rjgt;
+            transfJgt.block(0, d, d, 1) = tjgt;
 
-            Eigen::MatrixXd p(Eigen::MatrixXd::Identity(d+1, d+1));
+            Eigen::MatrixXd p(Eigen::MatrixXd::Identity(d + 1, d + 1));
             SomUtils::computeRelativePose(transfI, transfJ, p);
 
-            Eigen::MatrixXd pGt(Eigen::MatrixXd::Identity(d+1, d+1));
+            Eigen::MatrixXd pGt(Eigen::MatrixXd::Identity(d + 1, d + 1));
             SomUtils::computeRelativePose(transfIgt, transfJgt, pGt);
 
-            Eigen::Matrix3d pR = p.block(0,0,d,d);
-            Eigen::Matrix3d pRgt = pGt.block(0,0,d,d);
+            Eigen::Matrix3d pR = p.block(0, 0, d, d);
+            Eigen::Matrix3d pRgt = pGt.block(0, 0, d, d);
 
             double rotDistEdge = SomUtils::rotDistSingle(pR, pRgt);
             ROFL_VAR2(e, rotDistEdge);
-            
-            Eigen::Vector3d pT = p.block(0,d,d,1);
-            Eigen::Vector3d pTgt = pGt.block(0,d,d,1);
+
+            Eigen::Vector3d pT = p.block(0, d, d, 1);
+            Eigen::Vector3d pTgt = pGt.block(0, d, d, 1);
 
             double translDistEdge = SomUtils::translErr(ti, tigt);
             ROFL_VAR2(e, translDistEdge);
 
             rotErrs[e] = rotDistEdge;
             translErrs[e] = translDistEdge;
-
         }
     }
-
-    
 
 } // end of namespace ROPTLIB

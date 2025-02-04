@@ -332,7 +332,7 @@ namespace ROPTLIB
         // end
         SomUtils::MatD uRprevHst(SomUtils::MatD::Zero(staircaseLevel, sz_.d_ * sz_.n_));
         SomUtils::MatD uTprev(SomUtils::MatD::Zero(staircaseLevel, sz_.n_));
-        while (iterationNum < 2500) // && iterativeChange < 1e-3
+        while (iterationNum < 20000) // && iterativeChange < 1e-3
         {
             // ROFL_VAR1(iterationNum);
             iterationNum++;
@@ -465,7 +465,7 @@ namespace ROPTLIB
         // end
         SomUtils::MatD uRprevHst(SomUtils::MatD::Zero(staircaseLevel, sz_.d_ * sz_.n_));
         SomUtils::MatD uTprev(SomUtils::MatD::Zero(staircaseLevel, sz_.n_));
-        while (iterationNum < 2500) // && iterativeChange < 1e-3
+        while (iterationNum < 20000) // && iterativeChange < 1e-3
         {
             iterationNum++;
             uRprevHst = uRhStacked;
