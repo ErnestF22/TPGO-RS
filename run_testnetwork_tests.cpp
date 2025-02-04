@@ -328,12 +328,13 @@ int main(int argc, char **argv)
                 // costOut = 1.0f;
                 if (!isEqualDoubles(costOut, 0.0f))
                 {
+                    auto fstr = resultsBasePath + folderAppendName + "_" + folderAppendNameStamped + "/" + folderAppendName + "_j" + std::to_string(testjd);
                     ROFL_VAR1(costOut)
-                    std::ofstream tijsofs(resultsBasePath + folderAppendName + "_" + folderAppendNameStamped + "/" + folderAppendName + "_tijs.txt");
+                    std::ofstream tijsofs(fstr + "_tijs.txt");
                     tijsofs << Tijs;
-                    std::ofstream edgesofs(resultsBasePath + folderAppendName + "_" + folderAppendNameStamped + "/" + folderAppendName + "_edges.txt");
+                    std::ofstream edgesofs(fstr + "_edges.txt");
                     edges << edges;
-                    std::ofstream startxofs(resultsBasePath + folderAppendName + "_" + folderAppendNameStamped + "/" + folderAppendName + "_startx.txt");
+                    std::ofstream startxofs(fstr + "_startx.txt");
                     SomUtils::MatD startXeig(SomUtils::MatD::Zero(d * d * n + d * n, 1));
                     Prob.RoptToEig(startX, startXeig);
                     startxofs << startXeig;
