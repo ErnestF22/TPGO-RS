@@ -60,7 +60,7 @@ int main(int argc, char **argv)
     SomUtils::MatD Tijs(d, numEdges);
     Eigen::MatrixXi edges(numEdges, 2);
 
-    if (!SomUtils::readMatlabCsvTijs(basepath + "tijs.txt", Tijs, d, numEdges))
+    if (!SomUtils::readMatlabCsvTijs("../matlab/data/cpp_testdata/tdata_n5_mindeg3/tijs.csv", Tijs, d, numEdges))
     {
         ROFL_ERR("Error opening file " + basepath + "tijs.txt")
         ROFL_ASSERT(0)

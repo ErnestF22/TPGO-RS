@@ -330,7 +330,10 @@ namespace SomUtils
             Eigen::VectorXd rowI(numEdges, 1);
 
             for (int idx = 0; idx < result.size(); ++idx)
+            {
+                // ROFL_VAR1(result[idx])
                 rowI(idx, 0) = stod(result[idx]);
+            }
             Tijs.row(j) = rowI;
             j++;
         }
