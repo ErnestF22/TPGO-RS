@@ -51,6 +51,7 @@ results/
 .vscode/
 
 matlab/data/cpp_testdata/
+matlab/data/cpp_testdata_noisy/
 
 #include/thirdparty/qr_unique_sizeless/
 

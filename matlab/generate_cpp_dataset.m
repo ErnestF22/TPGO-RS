@@ -5,6 +5,9 @@ close all;
 % 1a) PW TRANSLATION DATA INPUT: R, T are the gt, Tijs_nois are the input data
 testdatas = [];
 
+d = 3;
+mu = 0.0;
+
 N = 5;
 mindeg = 2;
 testdata = testNetwork_params(3, N, 'banded', mindeg);
@@ -83,29 +86,41 @@ testdata = testNetwork_params(3, N, 'banded', mindeg);
 testdata.mindeg = mindeg;
 testdatas = [testdatas, testdata];
 
-
+sigmas = readmatrix("data/sigmas.txt");
 for tdata = testdatas
-    folder_name = strcat("data/cpp_testdata/", ...
-         "tdata_n", string(tdata.NNodes), "_mindeg", string(tdata.mindeg));
-    [status, msg, msgID] = mkdir(folder_name);
-    %edges
-    % save('poc2degree_data/R_gt.mat', "R_globalframe")
-    varEdges = tdata.E;
-    writematrix(varEdges, ...
-        convertStringsToChars(strcat(folder_name, "/edges.csv")), 'Delimiter', ',')
-    %tijs
-    varTijs = G2T(tdata.gijtruth);
-    writematrix(varTijs, ...
-        convertStringsToChars(strcat(folder_name, "/tijs.csv")), 'Delimiter', ',')
-    %gt
-    gt_vec = [vec(G2R(tdata.gitruth)); vec(G2T(tdata.gitruth))];
-    writematrix(gt_vec, convertStringsToChars(strcat(folder_name, "/X_gt.csv")))
-    %n
-    n = tdata.NNodes;
-    writematrix(n, convertStringsToChars(strcat(folder_name, "/n.csv")))
-    %num edges
-    e = tdata.NEdges;
-    writematrix(e, convertStringsToChars(strcat(folder_name, "/e.csv")))
-
+    for s = 1:length(sigmas)
+        sigma = sigmas(s);
+        folder_name = strcat("data/cpp_testdata_noisy/", ...
+             "tdata_n", string(tdata.NNodes), ...
+             "_mindeg", string(tdata.mindeg), ...
+             "_sigma", sprintf( '%02d', sigma*10 ));
+        [status, msg, msgID] = mkdir(folder_name);
+        %edges
+        % save('poc2degree_data/R_gt.mat', "R_globalframe")
+        varEdges = tdata.E;
+        writematrix(varEdges, ...
+            convertStringsToChars(strcat(folder_name, "/edges.csv")), 'Delimiter', ',')
+        %tijs
+        Tijs = G2T(tdata.gijtruth);
+        Tijs_nois = Tijs + sigma*randn(size(Tijs)) + ...
+                mu * ones(size(Tijs));
+        writematrix(Tijs_nois, ...
+            convertStringsToChars(strcat(folder_name, "/tijs.csv")), 'Delimiter', ',')
+        %gt
+        gt_vec = [vec(G2R(tdata.gitruth)); vec(G2T(tdata.gitruth))];
+        writematrix(gt_vec, convertStringsToChars(strcat(folder_name, "/Xgt.csv")))
+        %n
+        n = tdata.NNodes;
+        writematrix(n, convertStringsToChars(strcat(folder_name, "/n.csv")))
+        %num edges
+        e = tdata.NEdges;
+        writematrix(e, convertStringsToChars(strcat(folder_name, "/e.csv")))
+        %
+        R_initguess = randrot_som(d, testdata.NNodes);
+        transl_initguess = 10 * rand(d, testdata.NNodes);
+        % transf_initguess = RT2G(R_initguess, transl_initguess);
+        transf_initguess_vec = [R_initguess(:); transl_initguess(:)];
+        writematrix(transf_initguess_vec, convertStringsToChars(strcat(folder_name, "/startX.csv")))
+    end
 end
 
