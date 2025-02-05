@@ -106,6 +106,8 @@ for tdata = testdatas
                 mu * ones(size(Tijs));
         writematrix(Tijs_nois, ...
             convertStringsToChars(strcat(folder_name, "/tijs.csv")), 'Delimiter', ',')
+        writematrix(Tijs, ...
+            convertStringsToChars(strcat(folder_name, "/tijs_truth.csv")), 'Delimiter', ',')
         %gt
         gt_vec = [vec(G2R(tdata.gitruth)); vec(G2T(tdata.gitruth))];
         writematrix(gt_vec, convertStringsToChars(strcat(folder_name, "/Xgt.csv")))
@@ -116,8 +118,8 @@ for tdata = testdatas
         e = tdata.NEdges;
         writematrix(e, convertStringsToChars(strcat(folder_name, "/e.csv")))
         %
-        R_initguess = randrot_som(d, testdata.NNodes);
-        transl_initguess = 10 * rand(d, testdata.NNodes);
+        R_initguess = randrot_som(d, tdata.NNodes);
+        transl_initguess = 10 * rand(d, tdata.NNodes);
         % transf_initguess = RT2G(R_initguess, transl_initguess);
         transf_initguess_vec = [R_initguess(:); transl_initguess(:)];
         writematrix(transf_initguess_vec, convertStringsToChars(strcat(folder_name, "/startX.csv")))

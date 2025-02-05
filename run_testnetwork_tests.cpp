@@ -145,7 +145,7 @@ int main(int argc, char **argv)
 
         // Read GT from csv
         ROPTLIB::Vector xGt = ProdMani.RandominManifold();
-        if (!SomUtils::readCsvInitguess(entry.string() + "/X_gt.csv", xGt))
+        if (!SomUtils::readCsvInitguess(entry.string() + "/Xgt.csv", xGt))
         {
             ROFL_ERR("Error opening file")
             ROFL_ASSERT(0)
@@ -191,19 +191,16 @@ int main(int argc, char **argv)
         int mindeg = boost::lexical_cast<int, std::string>(mindegStr);
         ROFL_VAR1(mindeg)
 
-        // if (n != 5 || mindeg != 2)
-        // {
-        //     numInstances = 1;
-        //     // ROFL_VAR1()
-        //     continue;
-        // }
+        int pos2 = entry.string().find("sigma");
+        std::string sigmaStr = entry.string().substr(pos2 + 5, 2); // sigma has 5 characters
+        ROFL_VAR1(sigmaStr);
 
         ROFL_VAR2(n, mindeg)
 
         std::string folderAppendName =
             "n" + boost::lexical_cast<std::string, int>(n) +
             "_mindeg" + boost::lexical_cast<std::string, int>(mindeg) +
-            "_noise00"; // TODO: make noise param reading automated
+            "_sigma" + sigmaStr; // TODO: make noise param reading automated
         fs::create_directory(resultsBasePath + folderAppendName + "_" + folderAppendNameStamped + "/");
 
         // 1
@@ -305,9 +302,10 @@ int main(int argc, char **argv)
 
             // Generate startX (random)
             ROPTLIB::Vector startX = ProdMani.RandominManifold();
+            // startX.Initialization(numoftypes, &mani1, numofmani1, &mani2, numofmani2);
 
             if (readStartingPtFromFile)
-                if (!SomUtils::readCsvInitguess("../data/X_initguess_test_single_run_rsom_rs.csv", startX))
+                if (!SomUtils::readCsvInitguess(entry.string() + "/startX.csv", startX))
                 {
                     ROFL_ERR("Error opening file")
                     ROFL_ASSERT(0)
@@ -385,6 +383,7 @@ int main(int argc, char **argv)
                 double execTimeMean = stlVectorMean(execTimes);
             } // end of rsom RS execution scope
             // break; //testjd loop
+            // startX.Delete();
         } // end of for testjd = 0 : numTestsPerInstance
         // break; //entries/instances loop
         for (int j = 0; j < numTestsPerInstance; ++j)
@@ -420,8 +419,13 @@ int main(int argc, char **argv)
     {
         for (int j = 0; j < numTestsPerInstance; ++j)
         {
-            for (int k = 0; k < rotErrsAll[i][j].size(); ++k)
-                ROFL_VAR5(i, j, k, rotErrsAll[i][j][k], translErrsAll[i][j][k]);
+            if (!rotErrsAll.empty())
+            {
+                for (int k = 0; k < rotErrsAll[i][j].size(); ++k)
+                    ROFL_VAR5(i, j, k, rotErrsAll[i][j][k], translErrsAll[i][j][k]);
+            }
+            else
+                continue;
 
             ROFL_VAR3(stlVectorMean(rotErrsAll[i][j]), stlVectorMean(translErrsAll[i][j]), stlVectorMean(execTimesAll[i]));
         }
