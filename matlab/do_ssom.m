@@ -139,12 +139,25 @@ testdata.gi = transf_procrustes;
 [rotation_error_procrustes,translation_error_procrustes] = testNetworkComputeErrors(testdata);
 
 testdata.gi = transf_ssom;
+testdata.lambdaij = lambdas_ssom_out;
 %TODO: change this back to what it should be after correcting PIM, 
 %Stiefel -> SO(d) conversion
 [rotation_error_ssom,translation_error_ssom,...
     scale_ratios_ssom,transl_err_norm_ssom] = ...
     testNetworkComputeErrors(testdata);
 scale_ratios_ssom = (lambdas_ssom_out ./ transp(testdata.lambdaijtruth));
+
+testNetworkDisplay(testdata);
+hold on;
+testNetworkDisplay(testdata, 'Estimated', 'member', 'gi');
+hold off;
+
+%rtron code
+testdata=rmfield(testdata,'X')
+testNetworkDisplay(testdata);
+hold on;
+testNetworkDisplay(testdata,'member','gi','scale',5)
+hold off;
 
 end %function
 

@@ -8,7 +8,7 @@ mindeg = 3;
 % 1a) PW TRANSLATION DATA INPUT: R, T are the gt, Tijs_nois are the input data
 testdata = testNetwork_params(3, N, 'banded', mindeg); %4 would be the default
 
-testdata.rho = 1.0;
+testdata.rho = 100000.0;
 
 % %som = ShapeOfMotion('testNetwork_params.csv'); %params reading is done directly in constructor
 % %copy the list below from the properties list
@@ -29,7 +29,6 @@ rand_initguess = boolean(0);
 enable_manopt_icp = boolean(0);
 enable_procrustes = boolean(0);
 enable_ssom = boolean(1);
-rho = 1.0;
 som_params = struct('N', N, 'd', d, 'd_aff', d_aff, ...
     'global_camera_id', global_camera_id, ...
     'num_tests_per_sigma', num_tests_per_sigma, 'transf_end_thresh', transf_end_thresh, ...
@@ -41,8 +40,7 @@ som_params = struct('N', N, 'd', d, 'd_aff', d_aff, ...
     'rand_initguess', rand_initguess, ...
     'enable_manopt_icp', enable_manopt_icp, ...
     'enable_procrustes', enable_procrustes, ...
-    'enable_ssom', enable_ssom, ...
-    'rho', rho);
+    'enable_ssom', enable_ssom);
 
 % 0b) Noise PARAMS
 %NOTE: sigmas, mus can be seen as couples for each test
