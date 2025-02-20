@@ -111,6 +111,8 @@ public:
 
         // transl_out = A\(-b);
         Tcurr_ = A.colPivHouseholderQr().solve(-b);
+        Tcurr_.resize(sz_.d_, sz_.n_); // HP) this resize does the intended job
+        // ROFL_VAR1(Tcurr_)
     }
 
     void makeMN(const SomUtils::MatD &T, SomUtils::MatD &Mmat, SomUtils::MatD &Nmat)
@@ -148,9 +150,9 @@ public:
         {
             int ii = edges_(e, 0) - 1;
             int jj = edges_(e, 1) - 1;
-            A.block(sz_.d_ * e, sz_.d_ * ii, sz_.d_, sz_.d_) = Rgf[ii].transpose();
-            A.block(sz_.d_ * e, sz_.d_ * jj, sz_.d_, sz_.d_) = -Rgf[ii].transpose();
-            b.block(sz_.d_ * e, 0, sz_.d_, 1) = Tijs_.col(e);
+            A.block(sz_.d_ * e, sz_.d_ * ii, sz_.d_, sz_.d_) = Rgf[ii].transpose();  // HP) copilot made the indices correct
+            A.block(sz_.d_ * e, sz_.d_ * jj, sz_.d_, sz_.d_) = -Rgf[ii].transpose(); // HP) copilot made the indices correct
+            b.block(sz_.d_ * e, 0, sz_.d_, 1) = Tijs_.col(e);                        // HP) copilot made the indices correct
         }
     }
 
@@ -182,12 +184,15 @@ public:
             stepOne(Tcurr_);
             stepTwo(Rcurr_);
 
-            ROFL_VAR3(Tcurr_, Tcurr_.rows(), Tcurr_.cols())
             for (int i = 0; i < sz_.n_; ++i)
             {
                 ROFL_VAR1(Rcurr_[i])
             }
+            ROFL_VAR3(Tcurr_, Tcurr_.rows(), Tcurr_.cols())
+
             double normDiff = norm(Rprev, Tprev, Rcurr_, Tcurr_);
+
+            ROFL_VAR1(normDiff)
 
             Rprev = Rcurr_;
             Tprev = Tcurr_;
@@ -208,11 +213,11 @@ public:
 
         int n = R.size();
 
-        for (int i = 0; i < n; ++i)
-        {
-            ROFL_VAR1(R[i])
-            ROFL_VAR1(T.col(i))
-        }
+        // for (int i = 0; i < n; ++i)
+        // {
+        //     ROFL_VAR1(R[i])
+        //     ROFL_VAR1(T.col(i))
+        // }
         ROFL_ASSERT(T.cols() == n)
 
         int fullIdx = 0;

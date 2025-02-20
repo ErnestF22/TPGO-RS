@@ -10,6 +10,25 @@
 
 namespace fs = std::filesystem;
 
+void readCsvVecEigen(const std::string &filenameIn, Eigen::MatrixXd &out)
+{
+    std::string line;
+    std::ifstream fileIn(filenameIn);
+    if (!fileIn.is_open())
+    {
+        ROFL_ERR("Error opening file")
+        ROFL_ASSERT(0)
+    }
+    int ctr = 0;
+    while (std::getline(fileIn, line))
+    {
+        // ROFL_VAR1(line);
+        double val = std::stod(line);
+        out(ctr, 0) = val;
+        ctr++;
+    }
+}
+
 int main(int argc, char **argv)
 {
 
@@ -87,28 +106,33 @@ int main(int argc, char **argv)
     ROFL_VAR1(Tijs)
     ROFL_VAR1(edges)
 
-    //gt
-    // Read GT from csv
-    // ROPTLIB::Vector xGt = ProdMani.RandominManifold();
-    // if (!SomUtils::readCsvInitguess(entry.string() + "/Xgt.csv", xGt))
-    // {
-    //     ROFL_ERR("Error opening file")
-    //     ROFL_ASSERT(0)
-    // }
-    // xGt.Print("xGt");
-    // // ROPT to Eig (GT)
-    // SomUtils::MatD XgtVecEig(SomUtils::MatD::Zero(d * d * n + d * n, 1));
-    // SomUtils::VecMatD RgtEig(n, SomUtils::MatD::Zero(d, d));
-    // SomUtils::MatD TgtEig(SomUtils::MatD::Zero(d, n));
-    // Prob.RoptToEig(xGt, XgtVecEig);
-    // Prob.getRotations(XgtVecEig, RgtEig);
-    // Prob.getTranslations(XgtVecEig, TgtEig);
-    // Prob.setGt(RgtEig, TgtEig);
+    // gt
+    //  Read GT from csv
+    //  ROPTLIB::Vector xGt = ProdMani.RandominManifold();
+    //  if (!SomUtils::readCsvInitguess(entry.string() + "/Xgt.csv", xGt))
+    //  {
+    //      ROFL_ERR("Error opening file")
+    //      ROFL_ASSERT(0)
+    //  }
+    //  xGt.Print("xGt");
+    //  // ROPT to Eig (GT)
+    //  SomUtils::MatD XgtVecEig(SomUtils::MatD::Zero(d * d * n + d * n, 1));
+    //  SomUtils::VecMatD RgtEig(n, SomUtils::MatD::Zero(d, d));
+    //  SomUtils::MatD TgtEig(SomUtils::MatD::Zero(d, n));
+    //  Prob.RoptToEig(xGt, XgtVecEig);
+    //  Prob.getRotations(XgtVecEig, RgtEig);
+    //  Prob.getTranslations(XgtVecEig, TgtEig);
+    //  Prob.setGt(RgtEig, TgtEig);
 
-    //method initialization and run
+    // method initialization and run
     SomProcrustes sp(somSzD, Tijs, edges);
 
-    SomUtils::MatD Tstart = SomUtils::MatD::Random(somSzD.d_, somSzD.n_);
+    SomUtils::MatD Xstart = SomUtils::MatD::Random(somSzD.d_ * somSzD.d_ * somSzD.n_ + somSzD.d_ * somSzD.n_, 1);
+    readCsvVecEigen(folderIn + "/X_gt.csv", Xstart);
+    SomUtils::MatD Tstart = SomUtils::MatD::Random(somSzD.d_ * somSzD.n_, 1);
+    Tstart = Xstart.block(somSzD.d_ * somSzD.d_ * somSzD.n_, 0, somSzD.d_ * somSzD.n_, 1);
+    Tstart.resize(somSzD.d_, somSzD.n_);
+    ROFL_VAR1(Tstart)
     sp.setTcurr(Tstart);
 
     sp.run();
