@@ -31,6 +31,9 @@ public:
         src_ = 0; // TODO: src_ VS src (for sure in globalize, maybe also in other places)
 
         costCurr_ = 1e+10;
+
+        transfEndThresh_ = 1e-3;
+        maxNumIterations_ = 10;
     }
 
     /**
@@ -56,6 +59,9 @@ public:
         src_ = 0; // TODO: src_ VS src (for sure in globalize, maybe also in other places)
 
         costCurr_ = 1e+10;
+
+        transfEndThresh_ = 1e-3;
+        maxNumIterations_ = 10;
     }
 
     ~SomProcrustes() {}
@@ -104,7 +110,7 @@ public:
         makeAb(R, A, b);
 
         // transl_out = A\(-b);
-        Tcurr_ = -A.colPivHouseholderQr().solve(b);
+        Tcurr_ = A.colPivHouseholderQr().solve(-b);
     }
 
     void makeMN(const SomUtils::MatD &T, SomUtils::MatD &Mmat, SomUtils::MatD &Nmat)
@@ -150,11 +156,130 @@ public:
 
     void run()
     {
-        stepOne(Tcurr_);
-        stepTwo(Rcurr_);
-
         /*iterate!*/
+        // num_iterations = 0;
+        // %COORD DESC - step 3: iterate until convergence
+        // while (norm(transf_prev - transf_curr)>= transf_end_thresh && num_iterations<max_icp_iterations)
+        // %     rot_prev =  rot_curr;
+        // %     transl_prev = transl_curr;
+        //     transf_prev = transf_curr;
+
+        //     rot_curr = som_stepone_procrustes(T_globalframe_nois, Tijs_vec, edges, params);
+
+        //     %COORD DESC - step 2
+        //     transl_curr = som_steptwo_procrustes(rot_curr, T_globalframe_nois, Tijs_vec, edges, params);
+        //     % T = reshape(T, d, []);
+
+        //     transf_curr = make_transf(rot_curr,transl_curr);
+        // end
+        SomUtils::MatD Tprev = SomUtils::MatD::Zero(sz_.d_, sz_.n_);
+        SomUtils::VecMatD Rprev(sz_.n_, SomUtils::MatD::Zero(sz_.d_, sz_.d_));
+        double normDiff = 1e+10;
+        int numIterations = 0;
+        do
+        {
+            ROFL_VAR2("Iteration SOM Procrustes run()", numIterations)
+            stepOne(Tcurr_);
+            stepTwo(Rcurr_);
+
+            ROFL_VAR3(Tcurr_, Tcurr_.rows(), Tcurr_.cols())
+            for (int i = 0; i < sz_.n_; ++i)
+            {
+                ROFL_VAR1(Rcurr_[i])
+            }
+            double normDiff = norm(Rprev, Tprev, Rcurr_, Tcurr_);
+
+            Rprev = Rcurr_;
+            Tprev = Tcurr_;
+
+            numIterations++;
+        } while (normDiff >= transfEndThresh_ && numIterations < maxNumIterations_);
+
+        Rout_ = Rcurr_;
+        Tout_ = Tcurr_;
     }
+
+    void vectorizeRT(const SomUtils::VecMatD &R, const SomUtils::MatD &T, SomUtils::MatD &XvecOut) const
+    {
+        // int fullRotsSz = sz_.p_ * sz_.d_ * sz_.n_;
+
+        // for (int i=0; i<fullRotsSz; ++i) {
+        // }
+
+        int n = R.size();
+
+        for (int i = 0; i < n; ++i)
+        {
+            ROFL_VAR1(R[i])
+            ROFL_VAR1(T.col(i))
+        }
+        ROFL_ASSERT(T.cols() == n)
+
+        int fullIdx = 0;
+        for (int i = 0; i < n; ++i)
+        {
+            int ric = R[i].cols();
+            int rir = R[i].rows();
+            for (int j = 0; j < ric; ++j)
+            {
+                for (int k = 0; k < rir; ++k)
+                {
+                    XvecOut(fullIdx, 0) = R[i](k, j);
+                    fullIdx++;
+                    // ROFL_VAR4(i, j, k, fullIdx);
+                }
+            }
+        }
+
+        for (int i = 0; i < T.cols(); ++i)
+        {
+            for (int j = 0; j < T.rows(); ++j)
+            {
+                XvecOut(fullIdx, 0) = T(j, i);
+                fullIdx++;
+                // ROFL_VAR4(i, j, k, fullIdx);
+            }
+        }
+
+        // TODO: more asserts may be added
+
+        ROFL_ASSERT(fullIdx == XvecOut.rows())
+    }
+
+    double norm(const SomUtils::VecMatD &R1, const SomUtils::MatD &T1, const SomUtils::VecMatD &R2, const SomUtils::MatD &T2)
+    {
+        SomUtils::MatD X1(sz_.d_ * sz_.d_ * sz_.n_ + sz_.d_ * sz_.n_, 1);
+        vectorizeRT(R1, T1, X1);
+        SomUtils::MatD X2(sz_.d_ * sz_.d_ * sz_.n_ + sz_.d_ * sz_.n_, 1);
+        vectorizeRT(R2, T2, X2);
+        return (X1 - X2).norm();
+    }
+
+    double norm(const SomUtils::VecMatD &R, const SomUtils::MatD &T)
+    {
+        SomUtils::MatD X(sz_.d_ * sz_.d_ * sz_.n_ + sz_.d_ * sz_.n_, 1);
+        vectorizeRT(R, T, X);
+        return X.norm();
+    }
+
+    void setTcurr(const SomUtils::MatD &Tcurr)
+    {
+        Tcurr_ = Tcurr;
+    }
+
+    SomUtils::MatD getTout()
+    {
+        return Tout_;
+    }
+
+    SomUtils::VecMatD getRout()
+    {
+        return Rout_;
+    }
+
+    /**
+     * CLASS MEMBERS
+     */
 
     /**
      * Struct that contains problem size info
@@ -223,6 +348,16 @@ public:
      * Output of RSOM for T
      */
     SomUtils::MatD Tout_;
+
+    /**
+     * Threshold for early stopping
+     */
+    double transfEndThresh_;
+
+    /**
+     * Maximum number of iterations
+     */
+    int maxNumIterations_;
 };
 
 #endif /*SOM_PROCRUSTES_H_*/

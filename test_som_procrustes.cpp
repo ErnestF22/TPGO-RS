@@ -87,9 +87,40 @@ int main(int argc, char **argv)
     ROFL_VAR1(Tijs)
     ROFL_VAR1(edges)
 
+    //gt
+    // Read GT from csv
+    // ROPTLIB::Vector xGt = ProdMani.RandominManifold();
+    // if (!SomUtils::readCsvInitguess(entry.string() + "/Xgt.csv", xGt))
+    // {
+    //     ROFL_ERR("Error opening file")
+    //     ROFL_ASSERT(0)
+    // }
+    // xGt.Print("xGt");
+    // // ROPT to Eig (GT)
+    // SomUtils::MatD XgtVecEig(SomUtils::MatD::Zero(d * d * n + d * n, 1));
+    // SomUtils::VecMatD RgtEig(n, SomUtils::MatD::Zero(d, d));
+    // SomUtils::MatD TgtEig(SomUtils::MatD::Zero(d, n));
+    // Prob.RoptToEig(xGt, XgtVecEig);
+    // Prob.getRotations(XgtVecEig, RgtEig);
+    // Prob.getTranslations(XgtVecEig, TgtEig);
+    // Prob.setGt(RgtEig, TgtEig);
+
+    //method initialization and run
     SomProcrustes sp(somSzD, Tijs, edges);
 
+    SomUtils::MatD Tstart = SomUtils::MatD::Random(somSzD.d_, somSzD.n_);
+    sp.setTcurr(Tstart);
+
     sp.run();
+
+    SomUtils::MatD Tout = sp.getTout();
+    SomUtils::VecMatD Rout = sp.getRout();
+
+    for (int i = 0; i < n; ++i)
+    {
+        ROFL_VAR2(i, Rout[i]);
+    }
+    ROFL_VAR1(Tout);
 
     return 0;
 }
