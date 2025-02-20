@@ -1,4 +1,4 @@
-function [Mmat, Nmat] = make_M_N(T_globalframe, Tijs_vec, edges, N)
+function [Mmat, Nmat] = make_M_N(T_globalframe, Tijs_vec, edges, ~)
 %MAKE_M_N function that computes M, N matrices.
 %Inputs can be noisy
 

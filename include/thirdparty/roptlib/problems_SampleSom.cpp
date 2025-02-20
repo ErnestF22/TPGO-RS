@@ -32,6 +32,8 @@ namespace ROPTLIB
         Tgt_ = SomUtils::MatD::Zero(sz_.d_, sz_.n_);
 
         src_ = 0;
+
+        costCurr_ = 1e+10;
     }
 
     SampleSomProblem::~SampleSomProblem() {};

@@ -24,14 +24,14 @@ function R = som_stepone_procrustes(T_globalframe_nois, Tijs_vec, edges, params)
 
     for ii = 1:N
         M_i = get_Mi_from_Mmat(Mmat, edges, ii, d, N);
-        N_i = -get_Ni_from_Mmat(Nmat, edges, ii, d, N);
+        N_i = -get_Ni_from_Nmat(Nmat, edges, ii, d, N);
         %compute R_ii
         [U,~,V] = svd(M_i*(N_i)'); % ~ would be S
         %when d=3 -> quasi_diag = diag(1,1,det(U*V')
         R_ii = U * diag([1,1,det(U*V')]) * V';
         
 
-        %fiil retval matrix with R_ii at corresponding index
+        %fill retval matrix with R_ii at corresponding index
         R(:,:,ii) = R_ii';    
     end    
 

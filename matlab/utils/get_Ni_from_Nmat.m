@@ -1,5 +1,5 @@
-function n_i = get_Ni_from_Mmat(Nmat, edges, idx, d, N)
-%GET_MI_FROM_MMAT Function that returns the M_i matrix used during
+function n_i = get_Ni_from_Nmat(Nmat, edges, idx, d, N)
+%GET_NI_FROM_NMAT Function that returns the N_i matrix used during
 %Procrustes rotation estimation;
 %idx notation is used instead of i, because of the usual problem with
 %complex numbers
