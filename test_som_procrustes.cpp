@@ -6,6 +6,9 @@
 #include <rofl/common/param_map.h>
 #include <rofl/common/profiler.h>
 
+// #include "include/thirdparty/qr_unique_sizeless/include_matlab/lapack.h"
+// #include "include/thirdparty/qr_unique_sizeless/include_matlab/lapacke.h"
+
 #include "som_procrustes.h"
 
 namespace fs = std::filesystem;
@@ -41,6 +44,7 @@ int main(int argc, char **argv)
     bool readStartingPtFromFile;
     int srcNodeIdx;
     std::string resultsBasePath;
+    std::string fileTstart;
 
     rofl::ParamMap params;
 
@@ -51,13 +55,15 @@ int main(int argc, char **argv)
     // Output mode (quat or aa)
     params.getParam<std::string>(
         "in", folderIn,
-        std::string("../matlab/data/cpp_testdata/data_no_noise/tdata_n5_mindeg3"));
+        std::string("../matlab/data/cpp_testdata/tdata_n5_mindeg3"));
 
     params.getParam<int>("d", d, 3);
     params.getParam<int>("numTestsPerInstance", numTestsPerInstance, 30);
     params.getParam<bool>("readStartingPtFromFile", readStartingPtFromFile, false);
     params.getParam<std::string>("resultsBasePath", resultsBasePath, "../results_procrustes/");
     params.getParam<int>("srcNodeIdx", srcNodeIdx, 0);
+    params.getParam<std::string>("fileTstart", fileTstart, "../data/procrustes_t_start.csv");
+
 
     std::cout << "Params:" << std::endl;
     params.write(std::cout);

@@ -6,19 +6,19 @@ function transf_out = som_procrustes(T_globalframe_nois, Tijs_vec, edges, params
 %copy params
 N = params.N;
 d = params.d;
-d_aff = params.d_aff;
-global_camera_id = params.global_camera_id;
-num_tests_per_sigma = params.num_tests_per_sigma;
+% d_aff = params.d_aff;
+% global_camera_id = params.global_camera_id;
+% num_tests_per_sigma = params.num_tests_per_sigma;
 transf_end_thresh = params.transf_end_thresh;
 max_icp_iterations = params.max_icp_iterations;
-num_edges_full = params.num_edges_full;
-num_edges = params.num_edges;
+% num_edges_full = params.num_edges_full;
+% num_edges = params.num_edges;
 procrustes_mode = params.procrustes_mode;
 initguess_is_available = params.initguess_is_available;
 rand_initguess = params.rand_initguess;
 
 
-Tijs_mat = tijs_vec_2_tijs_mat(Tijs_vec, edges, N);
+% Tijs_mat = tijs_vec_2_tijs_mat(Tijs_vec, edges, N);
 
 if ~initguess_is_available
     T_globalframe_nois = 10 * rand(d,N);

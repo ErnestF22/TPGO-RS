@@ -176,7 +176,7 @@ add_executable(test_single_run_rsom_rs test_single_run_rsom_rs.cpp include/som_u
 target_link_libraries(test_single_run_rsom_rs ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
 
 add_executable(test_som_procrustes test_som_procrustes.cpp include/som_utils.cpp)
-target_link_libraries(test_som_procrustes ${rofl_LIBRARIES} boost_system boost_filesystem)
+target_link_libraries(test_som_procrustes ${rofl_LIBRARIES} lapack blas boost_system boost_filesystem)
 
 add_executable(test_matlab_ls test_matlab_ls.cpp include/som_utils.cpp)
 target_link_libraries(test_matlab_ls ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)

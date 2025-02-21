@@ -2,6 +2,7 @@
 #define SOM_PROCRUSTES_H_
 
 #include "som_utils.h"
+#include "thirdparty/roptlib/cwrapper/lapack/dgesv.h"
 
 class SomProcrustes
 {
@@ -110,7 +111,26 @@ public:
         makeAb(R, A, b);
 
         // transl_out = A\(-b);
-        Tcurr_ = A.colPivHouseholderQr().solve(-b);
+        int ar = A.rows();
+        integer n[] = {ar};
+        int br = b.rows();
+        integer nrhs[] = {br};
+        int ac = A.cols();
+        integer lda[] = {ac};
+        int bc = b.cols();
+        integer ldb[] = {bc};
+        int *ipiv, *info;
+        dgesv_(n, nrhs, A.data(), lda, ipiv, b.data(), ldb, info);
+        /* Check for the exact singularity */
+        if (info[0] > 0)
+        {
+            printf("The diagonal element of the triangular factor of A,\n");
+            printf("U(%i,%i) is zero, so that A is singular;\n", info[0], info[0]);
+            printf("the solution could not be computed.\n");
+            exit(1);
+        }
+        ROFL_VAR2(A, b)
+        Tcurr_ = A.fullPivLu().solve(-b);
         Tcurr_.resize(sz_.d_, sz_.n_); // HP) this resize does the intended job
         // ROFL_VAR1(Tcurr_)
     }
@@ -177,10 +197,10 @@ public:
         SomUtils::MatD Tprev = SomUtils::MatD::Zero(sz_.d_, sz_.n_);
         SomUtils::VecMatD Rprev(sz_.n_, SomUtils::MatD::Zero(sz_.d_, sz_.d_));
         double normDiff = 1e+10;
-        int numIterations = 0;
+        int numIter = 0;
         do
         {
-            ROFL_VAR2("Iteration SOM Procrustes run()", numIterations)
+            ROFL_VAR2("Iteration SOM Procrustes run()", numIter)
             stepOne(Tcurr_);
             stepTwo(Rcurr_);
 
@@ -193,12 +213,13 @@ public:
             double normDiff = norm(Rprev, Tprev, Rcurr_, Tcurr_);
 
             ROFL_VAR1(normDiff)
+            ROFL_VAR1("----------------------------------------------------------\n")
 
             Rprev = Rcurr_;
             Tprev = Tcurr_;
 
-            numIterations++;
-        } while (normDiff >= transfEndThresh_ && numIterations < maxNumIterations_);
+            numIter++;
+        } while (normDiff >= transfEndThresh_ && numIter < maxNumIterations_);
 
         Rout_ = Rcurr_;
         Tout_ = Tcurr_;
