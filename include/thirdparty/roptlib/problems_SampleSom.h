@@ -768,12 +768,17 @@ namespace ROPTLIB
    };
 
    /**
-    * @brief Run an instance of the RSOM problem
+    * @brief Solve an instance of the RSOM problem using ICP-based method
+    */
+   double runRsomICP(ROPTLIB::SampleSomProblem &Prob, const ROPTLIB::Vector &startX, int src, SomUtils::VecMatD &Rout, SomUtils::MatD &Tout);
+
+   /**
+    * @brief Solve an instance of the RSOM problem using RS
     */
    double runRsomRS(ROPTLIB::SampleSomProblem &Prob, const ROPTLIB::Vector &startX,
-                  int src,
-                  SomUtils::VecMatD &Rout, SomUtils::MatD &Tout,
-                  int &staircaseStepIdx);
+                    int src,
+                    SomUtils::VecMatD &Rout, SomUtils::MatD &Tout,
+                    int &staircaseStepIdx);
 
    /**
     * Saves edge-wise errors in rotErrs, translErrs vectors

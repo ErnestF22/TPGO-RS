@@ -82,6 +82,7 @@ include/thirdparty/roptlib/problems_Problem.cpp
 include/thirdparty/roptlib/problems_ProdStieSumBrockett.cpp
 include/thirdparty/roptlib/problems_SampleSom.cpp #som
 include/thirdparty/roptlib/problems_SampleSom_rs_recovery.cpp #som
+include/thirdparty/roptlib/problems_SampleSomICP.cpp #som
 include/thirdparty/roptlib/problems_SFRQLyapunov.cpp
 include/thirdparty/roptlib/problems_SPDKarcherMean.cpp
 include/thirdparty/roptlib/problems_SphereConvexHull.cpp
@@ -174,6 +175,9 @@ target_link_libraries(test_qr_retraction ${rofl_LIBRARIES} roptlib_local qru m b
 
 add_executable(test_single_run_rsom_rs test_single_run_rsom_rs.cpp include/som_utils.cpp)
 target_link_libraries(test_single_run_rsom_rs ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
+
+add_executable(test_rsom_icp test_rsom_icp.cpp include/som_utils.cpp)
+target_link_libraries(test_rsom_icp ${rofl_LIBRARIES} roptlib_local qru m lapack blas boost_iostreams boost_system boost_filesystem)
 
 add_executable(test_som_procrustes test_som_procrustes.cpp include/som_utils.cpp)
 target_link_libraries(test_som_procrustes ${rofl_LIBRARIES} lapack blas boost_system boost_filesystem)

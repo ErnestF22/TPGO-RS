@@ -113,10 +113,8 @@ int main(int argc, char **argv)
     int srcNodeId = 0;
     SomUtils::VecMatD Rout(n, SomUtils::MatD::Identity(d, d));
     SomUtils::MatD Tout(SomUtils::MatD::Zero(d, n));
-    int lastStaircaseStep;
-    double costOut = ROPTLIB::runRsomRS(Prob, startX, srcNodeId, Rout, Tout, lastStaircaseStep); // note: startX is needed (even if random) in ROPTLIB;
+    ROPTLIB::runRsomICP(Prob, startX, srcNodeId, Rout, Tout); // note: startX is needed (even if random) in ROPTLIB;
     // ROPTLIB namespace is used even if runRsomRS() is not in SampleSomProblem class, nor in "original" ROPTLIB
-    ROFL_VAR1(costOut)
 
     std::vector<double> rotErrs(numEdges, 1e+6), translErrs(numEdges, 1e+6);
     ROPTLIB::computeErrorsSingleRsom(edges,
@@ -124,5 +122,5 @@ int main(int argc, char **argv)
                                      RgtEig, TgtEig,
                                      rotErrs, translErrs);
 
-    return 0;                                     
+    return 0;
 }
