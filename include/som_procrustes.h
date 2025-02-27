@@ -67,6 +67,24 @@ public:
 
     ~SomProcrustes() {}
 
+    void getMiFromMmat(const SomUtils::MatD& Mmat, SomUtils::MatD& Mi, int idx)
+    {
+        // for edge_id = 1:size(edges, 1)
+        //     if edges(edge_id, 1) == idx
+        //         jj = edges(edge_id, 2);
+        //         m_i(:, jj) = Mmat(:, edge_id);
+        //     end
+        // end
+        for (int edgeIdx = 0; edgeIdx < numEdges_; ++edgeIdx)
+        {
+            if (edges_(edgeIdx, 0) - 1 == idx)
+            {
+                int jj = edges_(edgeIdx, 1) - 1;
+                Mi.col(jj) = Mmat.col(edgeIdx);
+            }
+        }
+    }
+
     void stepOne(const SomUtils::MatD &T)
     {
         // make M_i, N_i matrices
@@ -89,8 +107,13 @@ public:
 
         for (int i = 0; i < sz_.n_; ++i)
         {
-            SomUtils::MatD Mi = Mmat.block(0, i, sz_.d_, 1);
-            SomUtils::MatD Ni = -Nmat.block(0, i, sz_.d_, 1);
+            SomUtils::MatD Mi = SomUtils::MatD::Zero(sz_.d_, sz_.n_);
+            SomUtils::MatD Ni = SomUtils::MatD::Zero(sz_.d_, sz_.n_);
+            getMiFromMmat(Mmat, Mi, i);
+            getMiFromMmat(Nmat, Ni, i);
+            Ni *= -1;
+            ROFL_VAR2(i, Mi)
+            ROFL_VAR2(i, Ni)
             Eigen::JacobiSVD<SomUtils::MatD> svd(Mi * Ni.transpose(), Eigen::ComputeFullU | Eigen::ComputeFullV);
             SomUtils::MatD U = svd.matrixU();
             SomUtils::MatD V = svd.matrixV();
@@ -111,26 +134,27 @@ public:
         makeAb(R, A, b);
 
         // transl_out = A\(-b);
-        int ar = A.rows();
-        integer n[] = {ar};
-        int br = b.rows();
-        integer nrhs[] = {br};
-        int ac = A.cols();
-        integer lda[] = {ac};
-        int bc = b.cols();
-        integer ldb[] = {bc};
-        int *ipiv, *info;
-        dgesv_(n, nrhs, A.data(), lda, ipiv, b.data(), ldb, info);
-        /* Check for the exact singularity */
-        if (info[0] > 0)
-        {
-            printf("The diagonal element of the triangular factor of A,\n");
-            printf("U(%i,%i) is zero, so that A is singular;\n", info[0], info[0]);
-            printf("the solution could not be computed.\n");
-            exit(1);
-        }
+        // int ar = A.rows();
+        // integer n[] = {ar};
+        // int br = b.rows();
+        // integer nrhs[] = {br};
+        // int ac = A.cols();
+        // integer lda[] = {ac};
+        // int bc = b.cols();
+        // integer ldb[] = {bc};
+        // int *ipiv, *info;
+        // dgesv_(n, nrhs, A.data(), lda, ipiv, b.data(), ldb, info);
+        // /* Check for the exact singularity */
+        // if (info[0] > 0)
+        // {
+        //     printf("The diagonal element of the triangular factor of A,\n");
+        //     printf("U(%i,%i) is zero, so that A is singular;\n", info[0], info[0]);
+        //     printf("the solution could not be computed.\n");
+        //     exit(1);
+        // }
         ROFL_VAR2(A, b)
         Tcurr_ = A.fullPivLu().solve(-b);
+        ROFL_VAR4(A, b, Tcurr_, A * Tcurr_ + b)
         Tcurr_.resize(sz_.d_, sz_.n_); // HP) this resize does the intended job
         // ROFL_VAR1(Tcurr_)
     }
@@ -150,6 +174,8 @@ public:
             Mmat.col(e) = Tijs_.col(e);
             Nmat.col(e) = T.col(ii) - T.col(jj);
         }
+
+        // ROFL_VAR2(Mmat, Nmat)
     }
 
     void makeAb(const SomUtils::VecMatD &Rgf, SomUtils::MatD &A, SomUtils::MatD &b)
@@ -174,6 +200,8 @@ public:
             A.block(sz_.d_ * e, sz_.d_ * jj, sz_.d_, sz_.d_) = -Rgf[ii].transpose(); // HP) copilot made the indices correct
             b.block(sz_.d_ * e, 0, sz_.d_, 1) = Tijs_.col(e);                        // HP) copilot made the indices correct
         }
+
+        ROFL_VAR2(A, b.transpose())
     }
 
     void run()
@@ -210,7 +238,7 @@ public:
             }
             ROFL_VAR3(Tcurr_, Tcurr_.rows(), Tcurr_.cols())
 
-            double normDiff = norm(Rprev, Tprev, Rcurr_, Tcurr_);
+            normDiff = norm(Rprev, Tprev, Rcurr_, Tcurr_);
 
             ROFL_VAR1(normDiff)
             ROFL_VAR1("----------------------------------------------------------\n")

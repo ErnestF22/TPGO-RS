@@ -46,6 +46,7 @@ disp(cost_gt)
 
 
 % X = trustregions(problem, X_gt);
+options.maxiter = 200;
 
 X_initguess.R = G2R(transf_initguess);
 X_initguess.T = G2T(transf_initguess);
@@ -53,65 +54,68 @@ X_initguess.lambda = lambdas_initguess;
 cost_initguess = ssom_cost(X_initguess, problem_data);
 disp("cost_initguess")
 disp(cost_initguess)
-X = trustregions(problem, X_initguess);
+X = trustregions(problem, X_initguess, options);
 T_manopt_out = X.T;
 R_manopt_out = X.R;
 lambdas_manopt_out = X.lambda;
 
 
-% cost_last = ssom_cost(X, problem_data);
+cost_last = ssom_cost(X, problem_data);
+r0 = d+1;
+thr = 1e-5;
 
-% % x_opt_cpp_vec = zeros(d*d*N+d*N, 1);
+% x_opt_cpp_vec = zeros(d*d*N+d*N, 1);
 % x_opt_cpp_vec = readmatrix("/home/ernest/Desktop/xopt_cpp.csv");
 % 
 % x_opt_cpp.R = reshape(x_opt_cpp_vec(1:d*d*N, 1), d, d, N);
 % x_opt_cpp.T = reshape(x_opt_cpp_vec(d*d*N+1:end, 1), d, N);
-%
+% 
 % cost_cpp = ssom_cost(x_opt_cpp, problem_data);
 
 
-% for staircase_step_idx = r0:d*N+1
-%     problem_data_next.sz = [staircase_step_idx, d, N];
-%     problem_data_next.tijs = problem_data.tijs;
-%     problem_data_next.edges = problem_data.edges;
-%     problem_data_next.rho = problem_data.rho;
-% 
-%     [Y_star, lambda, v] = ssom_pim_hessian_genproc( ...
-%         X, problem_data_next, thr);
-%     disp("v") %just to remove unused variable warning
-%     disp(v)
-% 
-%     if lambda > 0
-%         disp("R, T eigenvals > 0: exiting staircase")
-%         break;
-%     end
-% 
-%     % next optimization iteration
-%     tuple_next.R = stiefelfactory(staircase_step_idx, d, N);
-%     tuple_next.T = euclideanfactory(staircase_step_idx, N);
-%     M_next = productmanifold(tuple_next);
-%     problem_next.M = M_next;    
-%     problem_next.cost = @(x) ssom_cost(x, problem_data); %!! problem_data is the same
-%     problem_next.grad = @(x) ssom_rgrad(x, problem_data);
-%     problem_next.hess = @(x, u) ssom_rhess_genproc(x, u, problem_data);
-% 
-% 
-%     X = trustregions(problem_next, Y_star);
-%     T_manopt_out = X.T;
-%     R_manopt_out = X.R;
-%     lambdas_manopt_out = X.lambda;
-% 
-%     disp("cost_last")
-%     disp(cost_last)
-%     cost_last = ssom_cost(X, problem_data_next); 
-%     disp("cost_new")
-%     disp(cost_last)
-% 
-%     if rank(matStackH(Y_star.R))<staircase_step_idx
-%         break;
-%     end
-% 
-% end
+for staircase_step_idx = r0:d*N+1
+    problem_data_next.sz = [staircase_step_idx, d, N];
+    problem_data_next.tijs = problem_data.tijs;
+    problem_data_next.edges = problem_data.edges;
+    problem_data_next.rho = problem_data.rho;
+
+    [Y_star, lambda, v] = ssom_pim_hessian_genproc( ...
+        X, problem_data_next, thr);
+    disp("v") %just to remove unused variable warning
+    disp(v)
+
+    if lambda > 0
+        disp("R, T eigenvals > 0: exiting staircase")
+        break;
+    end
+
+    % next optimization iteration
+    tuple_next.R = stiefelfactory(staircase_step_idx, d, N);
+    tuple_next.T = euclideanfactory(staircase_step_idx, N);
+    tuple_next.lambda = euclideanfactory(num_edges, 1);
+    M_next = productmanifold(tuple_next);
+    problem_next.M = M_next;    
+    problem_next.cost = @(x) ssom_cost(x, problem_data); %!! problem_data is the same
+    problem_next.grad = @(x) ssom_rgrad(x, problem_data);
+    problem_next.hess = @(x, u) ssom_rhess_genproc(x, u, problem_data);
+
+
+    X = trustregions(problem_next, Y_star, options);
+    T_manopt_out = X.T;
+    R_manopt_out = X.R;
+    lambdas_manopt_out = X.lambda;
+
+    disp("cost_last")
+    disp(cost_last)
+    cost_last = ssom_cost(X, problem_data_next); 
+    disp("cost_new")
+    disp(cost_last)
+
+    if rank(matStackH(Y_star.R))<staircase_step_idx
+        break;
+    end
+
+end
 
 X_manopt_out.R = R_manopt_out;
 X_manopt_out.T = T_manopt_out;
