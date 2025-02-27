@@ -770,7 +770,9 @@ namespace ROPTLIB
    /**
     * @brief Solve an instance of the RSOM problem using ICP-based method
     */
-   double runRsomICP(ROPTLIB::SampleSomProblem &Prob, const ROPTLIB::Vector &startX, int src, SomUtils::VecMatD &Rout, SomUtils::MatD &Tout);
+   double runRsomICP(ROPTLIB::SampleSomProblem &Prob, const ROPTLIB::Vector &startX, 
+      int src, SomUtils::VecMatD &Rout, SomUtils::MatD &Tout,
+      int numMaxIter = 20, double stopThr = 1e-3);
 
    /**
     * @brief Solve an instance of the RSOM problem using RS

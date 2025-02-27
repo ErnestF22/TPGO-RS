@@ -3,7 +3,7 @@
 namespace ROPTLIB
 {
 
-    double runRsomICP(SampleSomProblem &Prob, const Vector &startX, int src, SomUtils::VecMatD &Rout, SomUtils::MatD &Tout)
+    double runRsomICP(SampleSomProblem &Prob, const Vector &startX, int src, SomUtils::VecMatD &Rout, SomUtils::MatD &Tout, int numMaxIter, double stopThr)
     {
         ROFL_VAR1("Start of runRsomRS()")
         ROFL_VAR1(Prob.costEigen(Prob.Rgt_, Prob.Tgt_));
@@ -60,10 +60,10 @@ namespace ROPTLIB
         auto XoptPrev = Xopt;
         SomUtils::MatD XoptPrevEigVec(SomUtils::MatD::Zero(d * d * n + d * n, 1));
 
-        for (int i = 0; i < 20; ++i) // TODO: make 20 a parameter
+        for (int i = 0; i < numMaxIter; ++i)
         {
             ROFL_VAR1(i)
-            if (diffPrevCurr < 1e-3) // TODO: make 1e-3 a parameter
+            if (diffPrevCurr < stopThr) // TODO: make 1e-3 a parameter
             {
                 Prob.RoptToEig(XoptPrev, XoptPrevEigVec);
                 break;
