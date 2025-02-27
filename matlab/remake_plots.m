@@ -2,7 +2,7 @@ function remake_plots
 
 close all;
 
-ws_filename = "_n9_mindeg3.mat";
+ws_filename = "_n9_mindeg2.mat";
 
 load(ws_filename, "results");
 load(ws_filename, "sigmas");
@@ -94,7 +94,7 @@ y_transl_procrustes_mindeg2 = zeros(5,4);
 y_transl_rs_mindeg2 = zeros(5,4);
 
 
-ns = [5 6 7 8 9];
+ns = [9];
 for n = ns
     idx = n-4;
     % mindeg 3
@@ -130,6 +130,7 @@ for n = ns
 
 end
 
+%%
 sigmas(end) = [];
 
 for s = 1:length(sigmas)

@@ -59,11 +59,11 @@ testdatas = [];
 % testdata.mindeg = mindeg;
 % testdatas = [testdatas, testdata];
 % 
-% N = 9;
-% mindeg = 3;
-% testdata = testNetwork_params(3, N, 'banded', mindeg);
-% testdata.mindeg = mindeg;
-% testdatas = [testdatas, testdata];
+N = 9;
+mindeg = 3;
+testdata = testNetwork_params(3, N, 'banded', mindeg);
+testdata.mindeg = mindeg;
+testdatas = [testdatas, testdata];
 % 
 % % N = 10;
 % % mindeg = 2;
@@ -71,11 +71,11 @@ testdatas = [];
 % % testdata.mindeg = mindeg;
 % % testdatas = [testdatas, testdata];
 
-N = 10;
-mindeg = 3;
-testdata = testNetwork_params(3, N, 'banded', mindeg);
-testdata.mindeg = mindeg;
-testdatas = [testdatas, testdata];
+% N = 10;
+% mindeg = 3;
+% testdata = testNetwork_params(3, N, 'banded', mindeg);
+% testdata.mindeg = mindeg;
+% testdatas = [testdatas, testdata];
 
 % N = 25;
 % mindeg = 3;
@@ -101,9 +101,9 @@ for tdata = testdatas
     hessian_mode = 'manual';
     initguess_is_available = boolean(0);
     rand_initguess = boolean(1);
-    enable_manopt_icp = boolean(0);
+    enable_manopt_icp = boolean(1);
     enable_procrustes = boolean(1);
-    enable_manopt_rs = boolean(0);
+    enable_manopt_rs = boolean(1);
     som_params = struct('N', N, 'd', d, 'd_aff', d_aff, ...
         'global_camera_id', global_camera_id, ...
         'num_tests_per_sigma', num_tests_per_sigma, 'transf_end_thresh', transf_end_thresh, ...
@@ -256,14 +256,14 @@ for tdata = testdatas
 
     figure("Name", "rot errors"); %figure 1
     plot (sigmas, results.manopt_sep_rot_errs, 'r.', ...
-        "DisplayName", "SOM-ICP mean rot error", 'markersize', 15);
+        "DisplayName", "TPGO-ICP mean rot error", 'markersize', 15);
     hold on
     xlabel('sigma')
     % ylabel('[°]')
     plot (sigmas, results.procrustes_rot_errs, 'bs', ...
-        "DisplayName", "SOM-PROCRUSTES mean rot error", 'markersize', 15)
+        "DisplayName", "TPGO-PROCRUSTES mean rot error", 'markersize', 15)
     plot (sigmas, results.manopt_rs_rot_errs, 'g+', ...
-        "DisplayName", "SOM-RS mean rot error", 'markersize', 15);
+        "DisplayName", "TPGO-RS mean rot error", 'markersize', 15);
     legend;
     rot_fig_name = convertStringsToChars(strcat("rot_errors", test_str));
     savefigure(rot_fig_name,'epsc',[3 4])
@@ -271,14 +271,14 @@ for tdata = testdatas
 
     figure("Name", "transl errors"); %figure 2
     plot (sigmas, results.manopt_sep_transl_errs, 'r.', ...
-        "DisplayName", "SOM-ICP mean transl error", 'markersize', 10)
+        "DisplayName", "TPGO-ICP mean transl error", 'markersize', 10)
     hold on
     xlabel('sigma')
     % ylabel('[m]')
     plot (sigmas, results.procrustes_transl_errs, 'bs', ...
-        "DisplayName", "SOM-PROCRUSTES mean transl error", 'markersize', 10)
+        "DisplayName", "TPGO-PROCRUSTES mean transl error", 'markersize', 10)
     plot (sigmas, results.manopt_rs_transl_errs, 'g+', ...
-        "DisplayName", "SOM-RS mean transl error", 'markersize', 10)
+        "DisplayName", "TPGO-RS mean transl error", 'markersize', 10)
     legend;
     transl_fig_name = convertStringsToChars(strcat('transl_errors', test_str));
     savefigure(transl_fig_name,'epsc',[3 4])
@@ -286,14 +286,14 @@ for tdata = testdatas
 
     figure("Name", "execution times"); %figure 3
     plot (sigmas, results.manopt_sep_exec_times, 'r.', ...
-        "DisplayName", "SOM-ICP mean exec time", 'markersize', 15)
+        "DisplayName", "TPGO-ICP mean exec time", 'markersize', 15)
     hold on
     xlabel('sigma')
     ylabel('[s]')
     plot (sigmas, results.procrustes_exec_times, 'bs', ...
-        "DisplayName", "SOM-PROCRUSTES mean exec time", 'markersize', 10)
+        "DisplayName", "TPGO-PROCRUSTES mean exec time", 'markersize', 10)
     plot (sigmas, results.manopt_rs_exec_times, 'g+', ...
-        "DisplayName", "SOM-RS mean exec time", 'markersize', 15)
+        "DisplayName", "TPGO-RS mean exec time", 'markersize', 15)
     legend
     exectimes_fig_name = convertStringsToChars(strcat('exec_times', test_str));
     savefigure(exectimes_fig_name,'epsc',[3 4])
