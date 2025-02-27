@@ -147,16 +147,30 @@ testdata.lambdaij = lambdas_ssom_out;
     testNetworkComputeErrors(testdata);
 scale_ratios_ssom = (lambdas_ssom_out ./ transp(testdata.lambdaijtruth));
 
-testNetworkDisplay(testdata);
-hold on;
-testNetworkDisplay(testdata, 'Estimated', 'member', 'gi');
-hold off;
+
+
+% testNetworkDisplay(testdata);
+% hold on;
+% testNetworkDisplay(testdata, 'Estimated', 'member', 'gi');
+% hold off;
 
 %rtron code
-testdata=rmfield(testdata,'X')
-testNetworkDisplay(testdata);
+testdata=rmfield(testdata,'X');
+testNetworkDisplay(testdata); %'Color1','red'
 hold on;
-testNetworkDisplay(testdata,'member','gi','scale',5)
+red=[65535	8567	0]/65535;
+opts_draw_camera={'Color1',red,'Color2',red}
+testNetworkDisplay(testdata,'member','gi','scale', 5.9, 'optionsDrawCamera', opts_draw_camera)
+hold off;
+
+testNetworkCompensate(testdata)
+
+% testdata=rmfield(testdata,'X');
+testNetworkDisplay(testdata); %'Color1','red'
+hold on;
+red=[65535	8567	0]/65535;
+opts_draw_camera={'Color1',red,'Color2',red}
+testNetworkDisplay(testdata,'member','gi','scale', 5.9, 'optionsDrawCamera', opts_draw_camera)
 hold off;
 
 end %function

@@ -3,7 +3,7 @@ clear;
 close all;
 
 % 1a) PW TRANSLATION DATA INPUT: R, T are the gt, Tijs_nois are the input data
-testdata = testNetwork_som(3); %4 would be the default
+testdata = testNetwork_params(3, 5, 'banded', 3); %4 would be the default
 
 % %som = ShapeOfMotion('testNetwork_params.csv'); %params reading is done directly in constructor
 % %copy the list below from the properties list
@@ -20,10 +20,10 @@ procrustes_mode = 'som';
 riem_grad_mode = 'manual'; %'auto' or 'manual'
 hessian_mode = 'manual'; 
 initguess_is_available = boolean(0);
-rand_initguess = boolean(1);
+rand_initguess = boolean(0);
 enable_manopt_icp = boolean(0);
-enable_procrustes = boolean(0);
-enable_manopt_rs = boolean(1);
+enable_procrustes = boolean(1);
+enable_manopt_rs = boolean(0);
 som_params = struct('N', N, 'd', d, 'd_aff', d_aff, ...
     'global_camera_id', global_camera_id, ...
     'num_tests_per_sigma', num_tests_per_sigma, 'transf_end_thresh', transf_end_thresh, ...
@@ -48,6 +48,8 @@ sigmas = 0.0;
 
 node_degrees = sum(testdata.A, 2);
 som_params.node_degrees = node_degrees;
+som_params.R_gt = G2R(testdata.gitruth);
+som_params.T_gt = G2T(testdata.gitruth);
 
 %If reading from file does not work and want to try a single noise_params
 %struct, uncomment the following line
