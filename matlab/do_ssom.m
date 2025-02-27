@@ -154,24 +154,28 @@ scale_ratios_ssom = (lambdas_ssom_out ./ transp(testdata.lambdaijtruth));
 % testNetworkDisplay(testdata, 'Estimated', 'member', 'gi');
 % hold off;
 
-%rtron code
-testdata=rmfield(testdata,'X');
-testNetworkDisplay(testdata); %'Color1','red'
-hold on;
-red=[65535	8567	0]/65535;
-opts_draw_camera={'Color1',red,'Color2',red}
-testNetworkDisplay(testdata,'member','gi','scale', 5.9, 'optionsDrawCamera', opts_draw_camera)
-hold off;
-
-testNetworkCompensate(testdata)
-
+%
+testdata_comp = testNetworkCompensate(testdata);
 % testdata=rmfield(testdata,'X');
-testNetworkDisplay(testdata); %'Color1','red'
+% testNetworkDisplay(testdata); %'Color1','red'
 hold on;
 red=[65535	8567	0]/65535;
-opts_draw_camera={'Color1',red,'Color2',red}
-testNetworkDisplay(testdata,'member','gi','scale', 5.9, 'optionsDrawCamera', opts_draw_camera)
+opts_draw_camera={'Color1',red,'Color2',red};
+testNetworkDisplay(testdata_comp,'member','gi','optionsDrawCamera', opts_draw_camera)
+green=[15934	35723	14392]/65535/0.6;           %camera color
+opts_draw_camera={'Color1',green,'Color2',green};  %options to pass to drawCamera
+testNetworkDisplay(testdata_comp,'member','gitruth', 'optionsDrawCamera', opts_draw_camera)
 hold off;
+
+
+
+% % testdata=rmfield(testdata,'X');
+% testNetworkDisplay(testdata); %'Color1','red'
+% hold on;
+% red=[65535	8567	0]/65535;
+% opts_draw_camera={'Color1',red,'Color2',red};
+% testNetworkDisplay(testdata,'member','gi','scale', 5.9, 'optionsDrawCamera', opts_draw_camera)
+% hold off;
 
 end %function
 
