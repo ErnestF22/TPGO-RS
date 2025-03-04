@@ -146,16 +146,6 @@ namespace ROPTLIB
       void RoptToEig(Vector x, SomUtils::MatD &xEigen) const;
 
       /**
-       * Vertically stack input vector
-       */
-      void vstack(const SomUtils::VecMatD &in, SomUtils::MatD &out) const;
-
-      /**
-       * Horizontally stack input vector
-       */
-      void hstack(const SomUtils::VecMatD &in, SomUtils::MatD &out) const;
-
-      /**
        * Get i-th Rotation from ROPTLIB variable x
        */
       void getRi(const Variable &x, SomUtils::MatD &rOut, int i) const;
@@ -236,21 +226,6 @@ namespace ROPTLIB
       int getTranslSz() const;
 
       /**
-       * Project Hin onto tangent space at Y (3D Stiefel)
-       */
-      void stiefelTangentProj(const SomUtils::VecMatD &Y, const SomUtils::VecMatD &Hin, SomUtils::VecMatD &Hout) const;
-
-      /**
-       * Project Hin onto tangent space at Y (single Stiefel matrix)
-       */
-      void stiefelTangentProj(const SomUtils::MatD &Y, const SomUtils::MatD &Hin, SomUtils::MatD &Hout) const;
-
-      /**
-       * Extract symmetric part of input (square) matrix
-       */
-      void extractSymmetricPart(const SomUtils::MatD &in, SomUtils::MatD &out) const;
-
-      /**
        * @brief Return vectorized (following col-major order, like in MATLAB) version of @param R
        * in output reference @param RvecOut
        */
@@ -264,28 +239,6 @@ namespace ROPTLIB
       void vectorizeRT(const SomUtils::VecMatD &R, const SomUtils::MatD &T, SomUtils::MatD &XvecOut) const;
 
       /**
-       * @brief Return @param mOut as a copy of @param mIn but with an extra zero-row at the bottom of the matrix
-       */
-      void catZeroRow(const SomUtils::MatD &mIn, SomUtils::MatD &mOut) const;
-
-      /**
-       * @brief 3D version of catZeroRow where catZeroRow is applied to each pair of elements
-       * in @param muIn, @param muOut
-       */
-      void catZeroRow3dArray(const SomUtils::VecMatD &mIn, SomUtils::VecMatD &mOut) const;
-
-      /**
-       * @brief Normalize @param mIn matrix in 2D Euclidean space
-       * returning the normalized output in reference @param mOut
-       */
-      void normalizeEucl(const SomUtils::MatD &mIn, SomUtils::MatD &mOut) const;
-
-      /**
-       * @brief Apply 2D version of normalizeEucl to each pair of elements in @param mIn, @param mOut
-       */
-      void normalizeEucl(const SomUtils::VecMatD &mIn, SomUtils::VecMatD &mOut) const;
-
-      /**
        * @brief Convert ROPTLIB Vector input @param x on Stiefel manifold into output reference @param xEigen
        */
       void RoptToEigStiefel(Vector x, SomUtils::MatD &xEigen) const;
@@ -295,25 +248,6 @@ namespace ROPTLIB
        * and return it in reference @param adjMat
        */
       void makeAdjMatFromEdges(Eigen::MatrixXi &adjMat) const;
-
-      /**
-       * @brief Return whether floating point elements matrices @param a, @param b are equal
-       * up to a difference of @param thr
-       * @return true is they are equal, @return false otherwise
-       */
-      bool isEqualFloats(const SomUtils::MatD &a, const SomUtils::MatD &b, double thr = 1e-5) const;
-
-      /**
-       * @brief 3D version of isEqualFloats() comparing all element pairs in @param a and @param b
-       * @return true if they are all equal, @return false if at least one pair is not (floaty-)equal
-       */
-      bool isEqualFloats(const SomUtils::VecMatD &a, const SomUtils::VecMatD &b, double thr = 1e-5) const;
-
-      /**
-       * @brief Compute determinants of each element in input @param a3d
-       * and return them in output reference vector @param dets
-       */
-      void multidet(const SomUtils::VecMatD &a3d, std::vector<double> &dets) const;
 
       /**
        * @brief Set the Rgt_ (i.e., rotation ground truth) object equal to input @param R
@@ -760,9 +694,9 @@ namespace ROPTLIB
    /**
     * @brief Solve an instance of the RSOM problem using ICP-based method
     */
-   double runRsomICP(ROPTLIB::SampleSomProblem &Prob, const ROPTLIB::Vector &startX, 
-      int src, SomUtils::VecMatD &Rout, SomUtils::MatD &Tout,
-      int numMaxIter = 20, double stopThr = 1e-3);
+   double runRsomICP(ROPTLIB::SampleSomProblem &Prob, const ROPTLIB::Vector &startX,
+                     int src, SomUtils::VecMatD &Rout, SomUtils::MatD &Tout,
+                     int numMaxIter = 20, double stopThr = 1e-3);
 
    /**
     * @brief Solve an instance of the RSOM problem using RS
@@ -771,14 +705,6 @@ namespace ROPTLIB
                     int src,
                     SomUtils::VecMatD &Rout, SomUtils::MatD &Tout,
                     int &staircaseStepIdx);
-
-   /**
-    * Saves edge-wise errors in rotErrs, translErrs vectors
-    */
-   void computeErrorsSingleRsom(const Eigen::MatrixXi &edges,
-                                const SomUtils::VecMatD &R, const SomUtils::MatD &T,
-                                const SomUtils::VecMatD &Rgt, const SomUtils::MatD &Tgt,
-                                std::vector<double> &rotErrs, std::vector<double> &translErrs);
 
 } // end of namespace ROPTLIB
 

@@ -126,10 +126,10 @@ void testSomSample(SomUtils::SomSize somSz, SomUtils::MatD &Tijs, Eigen::MatrixX
 
     // // 1) cat zero rows on R, T
     // SomUtils::VecMatD Rnext(szNext.n_, SomUtils::MatD::Zero(szNext.p_, szNext.d_));
-    // Prob.catZeroRow3dArray(R, Rnext); // does the same job as ProbNext.catZeroRow3dArray()
+    // SomUtils::catZeroRow3dArray(R, Rnext); // does the same job as ProbNext.catZeroRow3dArray()
 
     // SomUtils::MatD Tnext(SomUtils::MatD::Zero(szNext.p_, szNext.n_));
-    // Prob.catZeroRow(T, Tnext); // does the same job as ProbNext.catZeroRow()
+    // SomUtils::catZeroRow(T, Tnext); // does the same job as ProbNext.catZeroRow()
 
     // SampleSomProblem ProbNext(szNext, Tijs, edges);
     // ProbNext.SetDomain(&ProdMani);

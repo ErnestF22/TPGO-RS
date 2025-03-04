@@ -605,6 +605,34 @@ namespace SomUtils
         }
     }
 
+    void vstack(const SomUtils::VecMatD &in, SomUtils::MatD &out)
+    {
+        ROFL_ASSERT(out.cols() == in[0].cols() && out.rows() == in[0].rows() * in.size());
+
+        // out has same number of columns, whereas number of rows is the product of the size of the other 2 dimensions
+
+        int rowJump = in[0].rows();
+        for (int i = 0; i < in.size(); ++i)
+        {
+            out.block(rowJump * i, 0, rowJump, out.cols()) = in[i];
+        }
+    }
+
+    void hstack(const SomUtils::VecMatD &in, SomUtils::MatD &out)
+    {
+        // out has same number of columns, whereas number of rows is the product of the size of the other 2 dimensions
+
+        ROFL_ASSERT_VAR5(out.rows() == in[0].rows() && out.cols() == in[0].cols() * in.size(),
+                         out.rows(), out.cols(), in[0].rows(), in[0].cols(), in.size());
+
+        int colJump = in[0].cols();
+        for (int i = 0; i < in.size(); ++i)
+        {
+            // ROFL_VAR2(out.block(0, colJump * i, out.rows(), colJump), in[i]);
+            out.block(0, colJump * i, out.rows(), colJump) = in[i];
+        }
+    }
+
     void unStackH(const SomUtils::MatD &in, SomUtils::VecMatD &out, int colsOut)
     {
         int n = (int)in.cols() / colsOut;
@@ -639,6 +667,204 @@ namespace SomUtils
         {
             out[i] = in.block(rowsOut * i, 0, rowsOut, fixedSz);
             ROFL_ASSERT(out[i].cols() == in.cols())
+        }
+    }
+
+    void stiefelTangentProj(const SomUtils::VecMatD &Y, const SomUtils::VecMatD &Hin, SomUtils::VecMatD &Hout)
+    {
+        int n = Hin.size();
+        ROFL_ASSERT_VAR2(Y.size() == n, Y.size(), n);
+
+        SomUtils::MatD tmp = Y[0].transpose() * Hin[0];
+        Hout.clear();
+        Hout.resize(n, SomUtils::MatD::Zero(tmp.rows(), tmp.cols()));
+
+        for (int i = 0; i < n; ++i)
+        {
+            stiefelTangentProj(Y[i], Hin[i], Hout[i]);
+        }
+    }
+
+    void stiefelTangentProj(const SomUtils::MatD &Y, const SomUtils::MatD &Hin, SomUtils::MatD &Hout)
+    {
+        SomUtils::MatD tmp = Y.transpose() * Hin;
+
+        ROFL_ASSERT(tmp.rows() == tmp.cols()); // kind of useless as the check is performed also in extractSymmetricPart()
+
+        SomUtils::MatD sympart(SomUtils::MatD::Zero(tmp.rows(), tmp.cols()));
+        extractSymmetricPart(Y.transpose() * Hin, sympart);
+        Hout = Hin - Y * sympart;
+    }
+
+    void extractSymmetricPart(const SomUtils::MatD &in, SomUtils::MatD &out)
+    {
+        ROFL_ASSERT(in.rows() == in.cols());
+        out = 0.5 * (in + in.transpose());
+    }
+
+    void catZeroRow(const SomUtils::MatD &mIn, SomUtils::MatD &mOut)
+    {
+        ROFL_ASSERT(mOut.rows() == mIn.rows() + 1);
+        ROFL_ASSERT(mOut.cols() == mIn.cols());
+
+        mOut.setZero();
+        mOut.block(0, 0, mIn.rows(), mIn.cols()) = mIn;
+    }
+
+    void catZeroRow3dArray(const SomUtils::VecMatD &mIn, SomUtils::VecMatD &mOut)
+    {
+        ROFL_ASSERT(mIn.size() == mOut.size())
+
+        int n = mIn.size();
+        for (int i = 0; i < n; ++i)
+        {
+            catZeroRow(mIn[i], mOut[i]);
+        }
+    }
+
+    bool isEqualFloats(const SomUtils::MatD &a, const SomUtils::MatD &b, double thr)
+    {
+        ROFL_ASSERT(a.rows() == b.rows() && a.cols() == b.cols())
+
+        double val = (a - b).cwiseAbs().maxCoeff();
+
+        if (val > thr)
+            return false;
+
+        return true;
+    }
+
+    bool isEqualFloats(const SomUtils::VecMatD &a, const SomUtils::VecMatD &b, double thr)
+    {
+        int n = a.size();
+        ROFL_ASSERT(n == b.size())
+        bool retval = true;
+        for (int i = 0; i < n; ++i)
+        {
+            if (!isEqualFloats(a, b, thr))
+                return false;
+        }
+        return true;
+    }
+
+    bool isEqualDoubles(double a, double b, double thr)
+    {
+        return abs(a - b) < thr;
+    }
+
+    void multidet(const SomUtils::VecMatD &a3d, std::vector<double> &dets)
+    {
+        int n = a3d.size();
+        dets.clear();
+        dets.assign(n, 0.0);
+        ROFL_ASSERT(n == dets.size())
+
+        for (int i = 0; i < n; ++i)
+            dets[i] = a3d[i].determinant();
+    }
+
+    void normalizeEucl(const SomUtils::MatD &mIn, SomUtils::MatD &mOut)
+    {
+        ROFL_ASSERT(mIn.rows() == mOut.rows() && mIn.cols() == mOut.cols())
+
+        mOut = mIn;
+        double normF = mIn.norm(); // TODO: maybe use .normalized() directly?
+
+        mOut /= normF;
+        // ROFL_VAR3(mIn, normF, mOut);
+    }
+
+    void normalizeEucl(const SomUtils::VecMatD &mIn, SomUtils::VecMatD &mOut)
+    {
+        ROFL_ASSERT(mIn.size() == mOut.size())
+        std::for_each(mOut.begin(), mOut.end(), [](SomUtils::MatD &x) { //^^^ take argument by reference: LAMBDA FUNCTION
+            x.setZero();
+        });
+
+        int n = mIn.size();
+        for (int i = 0; i < n; ++i)
+            normalizeEucl(mIn[i], mOut[i]);
+    }
+
+    double stlVecDoublesMean(const std::vector<double> &v)
+    {
+        int sz = v.size();
+        double total = 0.0;
+        for (int i = 0; i < sz; ++i)
+        {
+            total += v[i];
+        }
+        return total / sz;
+    }
+
+    /**
+     * Compute errors of a single run of RSOM methods (RS, ICP, Procrustes)
+     * and return them in the rotErrs and translErrs vectors (reference params).
+     */
+    void computeErrorsSingleRsom(const Eigen::MatrixXi &edges,
+                                 const SomUtils::VecMatD &R, const SomUtils::MatD &T,
+                                 const SomUtils::VecMatD &Rgt, const SomUtils::MatD &Tgt,
+                                 std::vector<double> &rotErrs, std::vector<double> &translErrs)
+    {
+        // Compute errors
+        ROFL_VAR1("Printing R, T out")
+        for (auto &m : R)
+            ROFL_VAR1(m)
+        ROFL_VAR1(T)
+
+        int n = R.size();
+        int d = R[0].cols();
+        int numEdges = edges.rows();
+
+        for (int e = 0; e < numEdges; ++e)
+        {
+            int i = edges(e, 0) - 1;
+            int j = edges(e, 1) - 1;
+
+            Eigen::Matrix3d ri = R[i].block(0, 0, d, d);
+            Eigen::Matrix3d rigt = Rgt[i].block(0, 0, d, d);
+            Eigen::Matrix3d rj = R[j].block(0, 0, d, d);
+            Eigen::Matrix3d rjgt = Rgt[j].block(0, 0, d, d);
+            Eigen::Vector3d ti = T.col(i);
+            Eigen::Vector3d tigt = Tgt.col(i);
+            Eigen::Vector3d tj = T.col(j);
+            Eigen::Vector3d tjgt = Tgt.col(j);
+
+            Eigen::Matrix4d transfI(Eigen::Matrix4d::Identity());
+            transfI.block(0, 0, d, d) = ri;
+            transfI.block(0, d, d, 1) = ti;
+            Eigen::Matrix4d transfJ(Eigen::Matrix4d::Identity());
+            transfJ.block(0, 0, d, d) = rj;
+            transfJ.block(0, d, d, 1) = tj;
+
+            Eigen::Matrix4d transfIgt(Eigen::Matrix4d::Identity());
+            transfIgt.block(0, 0, d, d) = rigt;
+            transfIgt.block(0, d, d, 1) = tigt;
+            Eigen::Matrix4d transfJgt(Eigen::Matrix4d::Identity());
+            transfJgt.block(0, 0, d, d) = rjgt;
+            transfJgt.block(0, d, d, 1) = tjgt;
+
+            Eigen::MatrixXd p(Eigen::MatrixXd::Identity(d + 1, d + 1));
+            SomUtils::computeRelativePose(transfI, transfJ, p);
+
+            Eigen::MatrixXd pGt(Eigen::MatrixXd::Identity(d + 1, d + 1));
+            SomUtils::computeRelativePose(transfIgt, transfJgt, pGt);
+
+            Eigen::Matrix3d pR = p.block(0, 0, d, d);
+            Eigen::Matrix3d pRgt = pGt.block(0, 0, d, d);
+
+            double rotDistEdge = SomUtils::rotDistSingle(pR, pRgt);
+            ROFL_VAR2(e, rotDistEdge);
+
+            Eigen::Vector3d pT = p.block(0, d, d, 1);
+            Eigen::Vector3d pTgt = pGt.block(0, d, d, 1);
+
+            double translDistEdge = SomUtils::translErr(ti, tigt);
+            ROFL_VAR2(ti.transpose(), tigt.transpose());
+            ROFL_VAR2(e, translDistEdge);
+
+            rotErrs[e] = rotDistEdge;
+            translErrs[e] = translDistEdge;
         }
     }
 

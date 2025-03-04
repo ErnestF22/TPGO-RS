@@ -145,7 +145,7 @@ int main(int argc, char **argv)
     // ROPTLIB namespace is used even if runRsomRS() is not in SampleSomProblem class, nor in "original" ROPTLIB
 
     std::vector<double> rotErrs(numEdges, 1e+6), translErrs(numEdges, 1e+6);
-    ROPTLIB::computeErrorsSingleRsom(edges,
+    SomUtils::computeErrorsSingleRsom(edges,
                                      Rout, Tout,
                                      RgtEig, TgtEig,
                                      rotErrs, translErrs);

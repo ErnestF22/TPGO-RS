@@ -14,73 +14,6 @@
 
 namespace fs = std::filesystem;
 
-void computeErrorsSingleRsom(const Eigen::MatrixXi &edges,
-                             const SomUtils::VecMatD &R, const SomUtils::MatD &T,
-                             const SomUtils::VecMatD &Rgt, const SomUtils::MatD &Tgt,
-                             std::vector<double> &rotErrs, std::vector<double> &translErrs)
-{
-    // Compute errors
-    ROFL_VAR1("Printing R, T out")
-    for (auto &m : R)
-        ROFL_VAR1(m)
-    ROFL_VAR1(T)
-
-    int n = R.size();
-    int d = R[0].cols();
-    int numEdges = edges.rows();
-
-    for (int e = 0; e < numEdges; ++e)
-    {
-        int i = edges(e, 0) - 1;
-        int j = edges(e, 1) - 1;
-
-        Eigen::Matrix3d ri = R[i].block(0, 0, d, d);
-        Eigen::Matrix3d rigt = Rgt[i].block(0, 0, d, d);
-        Eigen::Matrix3d rj = R[j].block(0, 0, d, d);
-        Eigen::Matrix3d rjgt = Rgt[j].block(0, 0, d, d);
-        Eigen::Vector3d ti = T.col(i);
-        Eigen::Vector3d tigt = Tgt.col(i);
-        Eigen::Vector3d tj = T.col(j);
-        Eigen::Vector3d tjgt = Tgt.col(j);
-
-        Eigen::Matrix4d transfI(Eigen::Matrix4d::Identity());
-        transfI.block(0, 0, d, d) = ri;
-        transfI.block(0, d, d, 1) = ti;
-        Eigen::Matrix4d transfJ(Eigen::Matrix4d::Identity());
-        transfJ.block(0, 0, d, d) = rj;
-        transfJ.block(0, d, d, 1) = tj;
-
-        Eigen::Matrix4d transfIgt(Eigen::Matrix4d::Identity());
-        transfIgt.block(0, 0, d, d) = rigt;
-        transfIgt.block(0, d, d, 1) = tigt;
-        Eigen::Matrix4d transfJgt(Eigen::Matrix4d::Identity());
-        transfJgt.block(0, 0, d, d) = rjgt;
-        transfJgt.block(0, d, d, 1) = tjgt;
-
-        Eigen::MatrixXd p(Eigen::MatrixXd::Identity(d + 1, d + 1));
-        SomUtils::computeRelativePose(transfI, transfJ, p);
-
-        Eigen::MatrixXd pGt(Eigen::MatrixXd::Identity(d + 1, d + 1));
-        SomUtils::computeRelativePose(transfIgt, transfJgt, pGt);
-
-        Eigen::Matrix3d pR = p.block(0, 0, d, d);
-        Eigen::Matrix3d pRgt = pGt.block(0, 0, d, d);
-
-        double rotDistEdge = SomUtils::rotDistSingle(pR, pRgt);
-        ROFL_VAR2(e, rotDistEdge);
-
-        Eigen::Vector3d pT = p.block(0, d, d, 1);
-        Eigen::Vector3d pTgt = pGt.block(0, d, d, 1);
-
-        double translDistEdge = SomUtils::translErr(ti, tigt);
-        ROFL_VAR2(ti.transpose(), tigt.transpose());
-        ROFL_VAR2(e, translDistEdge);
-
-        rotErrs[e] = rotDistEdge;
-        translErrs[e] = translDistEdge;
-    }
-}
-
 int main(int argc, char **argv)
 {
 
@@ -212,7 +145,7 @@ int main(int argc, char **argv)
     }
 
     std::vector<double> rotErrs(numEdges, 1e+6), translErrs(numEdges, 1e+6);
-    computeErrorsSingleRsom(edges,
+    SomUtils::computeErrorsSingleRsom(edges,
                             Rout, Tout,
                             Rgt, Tgt,
                             rotErrs, translErrs);

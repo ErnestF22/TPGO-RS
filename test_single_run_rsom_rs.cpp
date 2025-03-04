@@ -119,7 +119,7 @@ int main(int argc, char **argv)
     ROFL_VAR1(costOut)
 
     std::vector<double> rotErrs(numEdges, 1e+6), translErrs(numEdges, 1e+6);
-    ROPTLIB::computeErrorsSingleRsom(edges,
+    SomUtils::computeErrorsSingleRsom(edges,
                                      Rout, Tout,
                                      RgtEig, TgtEig,
                                      rotErrs, translErrs);

@@ -70,10 +70,10 @@ namespace ROPTLIB
         SomUtils::MatD tmpEig = tmpEigVec.reshaped<Eigen::RowMajor>(r, c);
         // ROFL_VAR1(tmpEig);
         SomUtils::MatD tmpProj(SomUtils::MatD::Zero(r, c));
-        stiefelTangentProj(mIn, tmpEig, tmpProj);
+        SomUtils::stiefelTangentProj(mIn, tmpEig, tmpProj);
         // ROFL_VAR1(tmpProj);
 
-        normalizeEucl(tmpProj, mOut);
+        SomUtils::normalizeEucl(tmpProj, mOut);
         // ROFL_VAR1(mOut);
 
         ROFL_ASSERT(checkIsStiefelTg(mIn, mOut))
@@ -302,7 +302,7 @@ namespace ROPTLIB
 
         SomUtils::MatD uRhStacked(SomUtils::MatD::Zero(staircaseLevel, sz_.d_ * sz_.n_));
         // ROFL_VAR1("hstack call from here");
-        hstack(uR, uRhStacked);
+        SomUtils::hstack(uR, uRhStacked);
         // ROFL_VAR1(uRhStacked);
 
         SomUtils::MatD uTcopy = uT; // useful for keeping const in function params
@@ -373,7 +373,7 @@ namespace ROPTLIB
             uTcopy = -uTout;
 
             // 7
-            hstack(uRunstackedOutTmp, uRhStacked);
+            SomUtils::hstack(uRunstackedOutTmp, uRhStacked);
             // ROFL_VAR1("hstack call from here");
             uFullHst.block(0, 0, staircaseLevel, uRhStacked.cols()) = uRhStacked;
             uFullHst.block(0, uRhStacked.cols(), staircaseLevel, sz_.n_) = uTcopy;
@@ -439,7 +439,7 @@ namespace ROPTLIB
 
         SomUtils::MatD uRhStacked(SomUtils::MatD::Zero(staircaseLevel, sz_.d_ * sz_.n_));
         // ROFL_VAR1("hstack call from here");
-        hstack(uR, uRhStacked);
+        SomUtils::hstack(uR, uRhStacked);
 
         SomUtils::MatD uTcopy = uT; // useful for keeping const in function params
 
@@ -492,7 +492,7 @@ namespace ROPTLIB
             uTcopy = -uTout;
 
             // ROFL_VAR1("hstack call from here");
-            hstack(uRunstackedOutTmp, uRhStacked);
+            SomUtils::hstack(uRunstackedOutTmp, uRhStacked);
             uFullHst.block(0, 0, staircaseLevel, uRhStacked.cols()) = uRhStacked;
             uFullHst.block(0, uRhStacked.cols(), staircaseLevel, sz_.n_) = uTcopy;
 
@@ -572,13 +572,13 @@ namespace ROPTLIB
         // stiefelRandTgNormVector(Rnext, RnextTg);
         // // u_start.R = stiefel_normalize(Rnext, u_start.R);
         // SomUtils::VecMatD RnextTgNorm(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
-        // normalizeEucl(RnextTg, RnextTgNorm);
+        // SomUtils::normalizeEucl(RnextTg, RnextTgNorm);
 
         // // u_start.T = rand(size(Tnext));
         // auto TnextTg = SomUtils::MatD::Random(staircaseNextStepLevel, sz_.n_);
         // // u_start.T = stiefel_normalize_han(u_start.T);
         // SomUtils::MatD TnextTgNorm(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
-        // normalizeEucl(TnextTg, TnextTgNorm);
+        // SomUtils::normalizeEucl(TnextTg, TnextTgNorm);
 
         // // [lambda_pim, v_pim] = pim_function_genproc(rhess_fun_han, u_start, stiefel_normalize_han, thresh);
         // // disp('Difference between lambda*v_max and H(v_max) should be in the order of the tolerance:')
@@ -610,11 +610,11 @@ namespace ROPTLIB
         //     SomUtils::VecMatD RnextTgShift(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
         //     stiefelRandTgNormVector(Rnext, RnextTgShift);
         //     SomUtils::VecMatD RnextTgNormShift(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
-        //     normalizeEucl(RnextTgShift, RnextTgNormShift);
+        //     SomUtils::normalizeEucl(RnextTgShift, RnextTgNormShift);
 
         //     auto TnextTgShift = SomUtils::MatD::Random(staircaseNextStepLevel, sz_.n_);
         //     SomUtils::MatD TnextTgNormShift(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
-        //     normalizeEucl(TnextTgShift, TnextTgNormShift);
+        //     SomUtils::normalizeEucl(TnextTgShift, TnextTgNormShift);
 
         //     SomUtils::VecMatD vPimRshift(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
         //     SomUtils::MatD vPimTshift(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
@@ -668,9 +668,9 @@ namespace ROPTLIB
         int staircaseNextStepLevel = T.rows() + 1;
         ROFL_VAR1(staircaseNextStepLevel);
         SomUtils::VecMatD Rnext(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
-        catZeroRow3dArray(R, Rnext);
+        SomUtils::catZeroRow3dArray(R, Rnext);
         SomUtils::MatD Tnext(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
-        catZeroRow(T, Tnext);
+        SomUtils::catZeroRow(T, Tnext);
 
         // stiefel_normalize_han = @(x) x./ (norm(x(:))); //Note: this is basically eucl_normalize_han
 
@@ -679,13 +679,13 @@ namespace ROPTLIB
         stiefelRandTgNormVector(Rnext, RnextTg);
         // u_start.R = stiefel_normalize(Rnext, u_start.R);
         SomUtils::VecMatD RnextTgNorm(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
-        normalizeEucl(RnextTg, RnextTgNorm);
+        SomUtils::normalizeEucl(RnextTg, RnextTgNorm);
 
         // u_start.T = rand(size(Tnext));
         auto TnextTg = SomUtils::MatD::Random(staircaseNextStepLevel, sz_.n_);
         // u_start.T = stiefel_normalize_han(u_start.T);
         SomUtils::MatD TnextTgNorm(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
-        normalizeEucl(TnextTg, TnextTgNorm);
+        SomUtils::normalizeEucl(TnextTg, TnextTgNorm);
 
         // [lambda_pim, v_pim] = pim_function_genproc(rhess_fun_han, u_start, stiefel_normalize_han, thresh);
         // disp('Difference between lambda*v_max and H(v_max) should be in the order of the tolerance:')
@@ -719,11 +719,11 @@ namespace ROPTLIB
             SomUtils::VecMatD RnextTgShift(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
             stiefelRandTgNormVector(Rnext, RnextTgShift);
             SomUtils::VecMatD RnextTgNormShift(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
-            normalizeEucl(RnextTgShift, RnextTgNormShift);
+            SomUtils::normalizeEucl(RnextTgShift, RnextTgNormShift);
 
             auto TnextTgShift = SomUtils::MatD::Random(staircaseNextStepLevel, sz_.n_);
             SomUtils::MatD TnextTgNormShift(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
-            normalizeEucl(TnextTgShift, TnextTgNormShift);
+            SomUtils::normalizeEucl(TnextTgShift, TnextTgNormShift);
 
             double lambdaPimShift = 1e+6; // "after" shift is intended
             pimFunctionGenprocShifted(Rnext, Tnext, RnextTgNorm, TnextTgNorm, mu, lambdaPimShift, vPimRshift, vPimTshift);
@@ -1038,9 +1038,9 @@ namespace ROPTLIB
         int staircaseNextStepLevel = T.rows() + 1;
         ROFL_VAR1(staircaseNextStepLevel);
         SomUtils::VecMatD Rnext(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
-        catZeroRow3dArray(R, Rnext);
+        SomUtils::catZeroRow3dArray(R, Rnext);
         SomUtils::MatD Tnext(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
-        catZeroRow(T, Tnext);
+        SomUtils::catZeroRow(T, Tnext);
 
         // stiefel_normalize_han = @(x) x./ (norm(x(:))); //Note: this is basically eucl_normalize_han
 
@@ -1049,13 +1049,13 @@ namespace ROPTLIB
         stiefelRandTgNormVector(Rnext, RnextTg);
         // u_start.R = stiefel_normalize(Rnext, u_start.R);
         SomUtils::VecMatD RnextTgNorm(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
-        normalizeEucl(RnextTg, RnextTgNorm);
+        SomUtils::normalizeEucl(RnextTg, RnextTgNorm);
 
         // u_start.T = rand(size(Tnext));
         auto TnextTg = SomUtils::MatD::Random(staircaseNextStepLevel, sz_.n_);
         // u_start.T = stiefel_normalize_han(u_start.T);
         SomUtils::MatD TnextTgNorm(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
-        normalizeEucl(TnextTg, TnextTgNorm);
+        SomUtils::normalizeEucl(TnextTg, TnextTgNorm);
 
         // [lambda_pim, v_pim] = pim_function_genproc(rhess_fun_han, u_start, stiefel_normalize_han, thresh);
         // disp('Difference between lambda*v_max and H(v_max) should be in the order of the tolerance:')
@@ -1088,11 +1088,11 @@ namespace ROPTLIB
             SomUtils::VecMatD RnextTgShift(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
             stiefelRandTgNormVector(Rnext, RnextTgShift);
             SomUtils::VecMatD RnextTgNormShift(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
-            normalizeEucl(RnextTgShift, RnextTgNormShift);
+            SomUtils::normalizeEucl(RnextTgShift, RnextTgNormShift);
 
             auto TnextTgShift = SomUtils::MatD::Random(staircaseNextStepLevel, sz_.n_);
             SomUtils::MatD TnextTgNormShift(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
-            normalizeEucl(TnextTgShift, TnextTgNormShift);
+            SomUtils::normalizeEucl(TnextTgShift, TnextTgNormShift);
 
             SomUtils::VecMatD vPimRshift(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
             SomUtils::MatD vPimTshift(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
@@ -1369,7 +1369,7 @@ namespace ROPTLIB
     //     SomUtils::MatD q = qr.matrixQ();
     //     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> r = qr.matrixQR().triangularView<Eigen::Upper>();
 
-    //     // ROFL_ASSERT_VAR4(isEqualFloats(a, q * r), isEqualFloats(a, q * r), a, q, r);
+    //     // ROFL_ASSERT_VAR4(SomUtils::isEqualFloats(a, q * r), SomUtils::isEqualFloats(a, q * r), a, q, r);
     //     // ROFL_ASSERT(r.isUpperTriangular() && r.rows() == m && r.cols() == n);
     //     ROFL_ASSERT(q.isUnitary() && q.rows() == m && q.cols() == m);
 
@@ -1423,7 +1423,7 @@ namespace ROPTLIB
     //         }
     //     }
     //     // TODO: add complex s case
-    //     // ROFL_ASSERT(isEqualFloats(R.imag(), SomUtils::MatD::Zero(R.imag().rows(), R.imag().cols())))
+    //     // ROFL_ASSERT(SomUtils::isEqualFloats(R.imag(), SomUtils::MatD::Zero(R.imag().rows(), R.imag().cols())))
     //     // R = R.real();
     // }
 
@@ -1473,7 +1473,7 @@ namespace ROPTLIB
         {
             ROFL_ASSERT(m[i].rows() == p && m[i].cols() == d)
 
-            // ROFL_VAR1("Calling isEqualFloats()")
+            // ROFL_VAR1("Calling SomUtils::isEqualFloats()")
             if (!checkIsOnStiefel(m[i]))
                 return false;
         }
@@ -1485,9 +1485,9 @@ namespace ROPTLIB
         int p = m.rows();
         int d = m.cols();
 
-        // ROFL_VAR1("Calling isEqualFloats()")
+        // ROFL_VAR1("Calling SomUtils::isEqualFloats()")
 
-        return isEqualFloats(m.transpose() * m, SomUtils::MatD::Identity(d, d));
+        return SomUtils::isEqualFloats(m.transpose() * m, SomUtils::MatD::Identity(d, d));
     }
 
     void SampleSomProblem::stiefelRetractionQR(const SomUtils::VecMatD &x, const SomUtils::VecMatD &e, SomUtils::VecMatD &rxe, double t) const
@@ -2210,7 +2210,7 @@ namespace ROPTLIB
                 RmanoptOutHighDeg.push_back(RmanoptOut[i]);
         }
         ROFL_VAR1("hstack call from here");
-        hstack(RmanoptOutHighDeg, RstackedHighDeg);
+        SomUtils::hstack(RmanoptOutHighDeg, RstackedHighDeg);
         RTstackedHighDeg.block(0, 0, nrs, sz_.d_ * numNodesHighDeg) = RstackedHighDeg;
         RTstackedHighDeg.block(0, sz_.d_ * numNodesHighDeg, nrs, numEdges_) = Tedges;
 
@@ -2282,7 +2282,7 @@ namespace ROPTLIB
                     SomUtils::MatD Xgt(SomUtils::MatD::Zero(sz_.d_, sz_.d_ * sz_.n_ + sz_.d_ * sz_.n_));
                     SomUtils::MatD RgtSt(SomUtils::MatD::Zero(sz_.d_, sz_.d_ * sz_.n_));
                     ROFL_VAR1("hstack call from here");
-                    hstack(Rgt_, RgtSt);
+                    SomUtils::hstack(Rgt_, RgtSt);
                     ROFL_VAR1(RgtSt);
 
                     Xgt.block(0, 0, sz_.d_, RgtSt.cols()) = RgtSt;
@@ -2296,7 +2296,7 @@ namespace ROPTLIB
                     SomUtils::MatD XmanoptOut(SomUtils::MatD::Zero(nrs, sz_.d_ * sz_.n_ + sz_.d_ * sz_.n_));
                     SomUtils::MatD RmanoptOutSt(SomUtils::MatD::Zero(nrs, sz_.d_ * sz_.n_));
                     ROFL_VAR1("hstack call from here");
-                    hstack(RmanoptOut, RmanoptOutSt);
+                    SomUtils::hstack(RmanoptOut, RmanoptOutSt);
                     ROFL_VAR1(RmanoptOutSt);
 
                     XmanoptOut.block(0, 0, nrs, RmanoptOutSt.cols()) = RmanoptOutSt;
@@ -2396,7 +2396,7 @@ namespace ROPTLIB
         SomUtils::MatD Xrecovered(SomUtils::MatD::Zero(sz_.d_, sz_.d_ * sz_.n_ + sz_.d_ * sz_.n_));
         SomUtils::MatD RrecoveredSt(SomUtils::MatD::Zero(sz_.d_, sz_.d_ * sz_.n_));
         ROFL_VAR1("hstack call from here");
-        hstack(Rrecovered, RrecoveredSt);
+        SomUtils::hstack(Rrecovered, RrecoveredSt);
         ROFL_VAR1(RrecoveredSt);
         Xrecovered.block(0, 0, sz_.d_, RrecoveredSt.cols()) = RrecoveredSt;
         Xrecovered.block(0, RrecoveredSt.cols(), sz_.d_, Trecovered.cols()) = Trecovered;
@@ -2433,7 +2433,7 @@ namespace ROPTLIB
         // disp([matStackH(X_gt.R); matStackH(R_recovered_global)]);
         for (int i = 0; i < sz_.n_; ++i)
         {
-            ROFL_VAR4(i, Rgt_[i], RrecoveredGlobal[i], isEqualFloats(Rgt_[i], RrecoveredGlobal[i]))
+            ROFL_VAR4(i, Rgt_[i], RrecoveredGlobal[i], SomUtils::isEqualFloats(Rgt_[i], RrecoveredGlobal[i]))
         }
 
         // T_global = R_global * T_recovered(:,1) - X_gt.T(:,1); %!!
@@ -2474,7 +2474,7 @@ namespace ROPTLIB
             //     if (~is_equal_floats(R_gt_i, R_recov_i_global))
             // %         error("rot found NOT equal")
             //         fprintf("ERROR in recovery: R_GLOBAL\n");
-            if (!isEqualFloats(RgtI, RrecovIglobal))
+            if (!SomUtils::isEqualFloats(RgtI, RrecovIglobal))
             {
                 ROFL_VAR1("ERROR in recovery: R_GLOBAL")
                 rsRecoverySuccess_ = false;
@@ -2491,11 +2491,11 @@ namespace ROPTLIB
 
             //     disp("is_equal_floats(T_gt_i, T_recov_i_global)")
             //     disp(is_equal_floats(T_gt_i, T_recov_i_global))
-            ROFL_VAR1(isEqualFloats(TgtI, TrecovIglobal))
+            ROFL_VAR1(SomUtils::isEqualFloats(TgtI, TrecovIglobal))
             //     if (~is_equal_floats(T_gt_i, T_recov_i_global))
             // %         error("transl found NOT equal")
             //         fprintf("ERROR in recovery: T_GLOBAL\n");
-            if (!isEqualFloats(TgtI, TrecovIglobal, 1e-3))
+            if (!SomUtils::isEqualFloats(TgtI, TrecovIglobal, 1e-3))
             {
                 ROFL_VAR1("ERROR in recovery: T_GLOBAL")
                 rsRecoverySuccess_ = false;
@@ -2514,7 +2514,7 @@ namespace ROPTLIB
         SomUtils::MatD Xout(SomUtils::MatD::Zero(sz_.d_, sz_.d_ * sz_.n_ + sz_.d_ * sz_.n_));
         SomUtils::MatD RoutSt(SomUtils::MatD::Zero(sz_.d_, sz_.d_ * sz_.n_));
         ROFL_VAR1("hstack call from here");
-        hstack(RrecoveredGlobal, RoutSt);
+        SomUtils::hstack(RrecoveredGlobal, RoutSt);
         ROFL_VAR1(RoutSt);
         Xout.block(0, 0, sz_.d_, RoutSt.cols()) = RoutSt;
         Xout.block(0, RoutSt.cols(), sz_.d_, Tout.cols()) = TrecoveredGlobal;
@@ -2529,13 +2529,13 @@ namespace ROPTLIB
         std::vector<double> multidetRrecovered, multidetRrecoveredGlobal;
         // disp('multidet(R_recovered)')
         // disp(multidet(R_recovered))
-        multidet(Rsedn, multidetRrecovered);
+        SomUtils::multidet(Rsedn, multidetRrecovered);
         for (int i = 0; i < sz_.n_; ++i)
             ROFL_VAR2(i, multidetRrecovered[i]);
 
         // disp('multidet(R_recovered_global)')
         // disp(multidet(R_recovered_global))
-        multidet(Rout, multidetRrecoveredGlobal);
+        SomUtils::multidet(Rout, multidetRrecoveredGlobal);
         for (int i = 0; i < sz_.n_; ++i)
             ROFL_VAR2(i, multidetRrecoveredGlobal[i]);
 

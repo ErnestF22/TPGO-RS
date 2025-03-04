@@ -223,6 +223,16 @@ namespace SomUtils
     void readCsvVecEigen(const std::string &filenameIn, Eigen::MatrixXd &out);
 
     /**
+     * Vertically stack input vector
+     */
+    void vstack(const SomUtils::VecMatD &in, SomUtils::MatD &out);
+
+    /**
+     * Horizontally stack input vector
+     */
+    void hstack(const SomUtils::VecMatD &in, SomUtils::MatD &out);
+
+    /**
      * Unstack a vertically stacked "3D" array
      */
     void unStackV(const SomUtils::MatD &in, SomUtils::VecMatD &out, int rowsOut = 3);
@@ -231,6 +241,79 @@ namespace SomUtils
      * Unstack a horizontally stacked "3D" array
      */
     void unStackH(const SomUtils::MatD &in, SomUtils::VecMatD &out, int colsOut = 3);
+
+    /**
+     * Project Hin onto tangent space at Y (3D Stiefel)
+     */
+    void stiefelTangentProj(const SomUtils::VecMatD &Y, const SomUtils::VecMatD &Hin, SomUtils::VecMatD &Hout);
+
+    /**
+     * Project Hin onto tangent space at Y (single Stiefel matrix)
+     */
+    void stiefelTangentProj(const SomUtils::MatD &Y, const SomUtils::MatD &Hin, SomUtils::MatD &Hout);
+
+    /**
+     * Extract symmetric part of input (square) matrix
+     */
+    void extractSymmetricPart(const SomUtils::MatD &in, SomUtils::MatD &out);
+
+    /**
+     * @brief Return @param mOut as a copy of @param mIn but with an extra zero-row at the bottom of the matrix
+     */
+    void catZeroRow(const SomUtils::MatD &mIn, SomUtils::MatD &mOut);
+
+    /**
+     * @brief 3D version of catZeroRow where catZeroRow is applied to each pair of elements
+     * in @param muIn, @param muOut
+     */
+    void catZeroRow3dArray(const SomUtils::VecMatD &mIn, SomUtils::VecMatD &mOut);
+
+    /**
+     * @brief Return whether floating point elements matrices @param a, @param b are equal
+     * up to a difference of @param thr
+     * @return true is they are equal, @return false otherwise
+     */
+    bool isEqualFloats(const SomUtils::MatD &a, const SomUtils::MatD &b, double thr = 1e-5);
+
+    /**
+     * @brief 3D version of isEqualFloats() comparing all element pairs in @param a and @param b
+     * @return true if they are all equal, @return false if at least one pair is not (floaty-)equal
+     */
+    bool isEqualFloats(const SomUtils::VecMatD &a, const SomUtils::VecMatD &b, double thr = 1e-5);
+
+    /**
+     * @brief Return whether double-precision floating point inputs @param a, @param b are equal
+     * up to a difference of @param thr
+     * @return true is they are equal, @return false otherwise
+     */
+    bool isEqualDoubles(double a, double b, double thr = 1e-6);
+
+    /**
+     * @brief Compute determinants of each element in input @param a3d
+     * and return them in output reference vector @param dets
+     */
+    void multidet(const SomUtils::VecMatD &a3d, std::vector<double> &dets);
+
+    /**
+     * @brief Normalize @param mIn matrix in 2D Euclidean space
+     * returning the normalized output in reference @param mOut
+     */
+    void normalizeEucl(const SomUtils::MatD &mIn, SomUtils::MatD &mOut);
+
+    /**
+     * @brief Apply 2D version of normalizeEucl to each pair of elements in @param mIn, @param mOut
+     */
+    void normalizeEucl(const SomUtils::VecMatD &mIn, SomUtils::VecMatD &mOut);
+
+    /**
+     * Return mean of input vector of doubles @param v
+     */
+    double stlVecDoublesMean(const std::vector<double> &v);
+
+    void computeErrorsSingleRsom(const Eigen::MatrixXi &edges,
+        const SomUtils::VecMatD &R, const SomUtils::MatD &T,
+        const SomUtils::VecMatD &Rgt, const SomUtils::MatD &Tgt,
+        std::vector<double> &rotErrs, std::vector<double> &translErrs);
 
 } // end of namespace SomUtils
 

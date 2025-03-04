@@ -16,23 +16,9 @@
 
 #include "thirdparty/roptlib/problems_SampleSom.h"
 
+#include "som_utils.h"
+
 namespace fs = std::filesystem;
-
-double stlVectorMean(const std::vector<double> &v)
-{
-    int sz = v.size();
-    double total = 0.0;
-    for (int i = 0; i < sz; ++i)
-    {
-        total += v[i];
-    }
-    return total / sz;
-}
-
-bool isEqualDoubles(double a, double b, double thr = 1e-6)
-{
-    return abs(a - b) < thr;
-}
 
 int main(int argc, char **argv)
 {
@@ -324,7 +310,7 @@ int main(int argc, char **argv)
                 // ROPTLIB namespace is used even if runRsomRS() is not in SampleSomProblem class, nor in "original" ROPTLIB
 
                 // costOut = 1.0f;
-                if (!isEqualDoubles(costOut, 0.0f))
+                if (!SomUtils::isEqualDoubles(costOut, 0.0f))
                 {
                     auto fstr = resultsBasePath + folderAppendName + "_" + folderAppendNameStamped + "/" + folderAppendName + "_j" + std::to_string(testjd);
                     ROFL_VAR1(costOut)
@@ -339,7 +325,7 @@ int main(int argc, char **argv)
                 }
 
                 std::vector<double> rotErrsTestjd(numEdges, 1e+6), translErrsTestjd(numEdges, 1e+6);
-                ROPTLIB::computeErrorsSingleRsom(edges,
+                SomUtils::computeErrorsSingleRsom(edges,
                                                  Rout, Tout,
                                                  RgtEig, TgtEig,
                                                  rotErrsTestjd, translErrsTestjd);
@@ -372,15 +358,15 @@ int main(int argc, char **argv)
                 staircaseStepOutIdxOfstream << staircaseStepOutIdx[testjd] << std::endl;
 
                 // Finding mean error of current instance-testjd pair
-                double rotMeanErr = stlVectorMean(rotErrs[testjd]);
-                double translMeanErr = stlVectorMean(translErrs[testjd]);
+                double rotMeanErr = SomUtils::stlVecDoublesMean(rotErrs[testjd]);
+                double translMeanErr = SomUtils::stlVecDoublesMean(translErrs[testjd]);
                 rotErrsMeanOfstream << "j " + std::to_string(testjd) << std::endl;
                 rotErrsMeanOfstream << rotMeanErr << std::endl;
                 translErrsMeanOfstream << "j " + std::to_string(testjd) << std::endl;
                 translErrsMeanOfstream << translMeanErr << std::endl;
                 ROFL_VAR2(rotMeanErr, translMeanErr)
 
-                double execTimeMean = stlVectorMean(execTimes);
+                double execTimeMean = SomUtils::stlVecDoublesMean(execTimes);
             } // end of rsom RS execution scope
             // break; //testjd loop
             // startX.Delete();
@@ -427,7 +413,7 @@ int main(int argc, char **argv)
             else
                 continue;
 
-            ROFL_VAR3(stlVectorMean(rotErrsAll[i][j]), stlVectorMean(translErrsAll[i][j]), stlVectorMean(execTimesAll[i]));
+            ROFL_VAR3(SomUtils::stlVecDoublesMean(rotErrsAll[i][j]), SomUtils::stlVecDoublesMean(translErrsAll[i][j]), SomUtils::stlVecDoublesMean(execTimesAll[i]));
         }
     }
 

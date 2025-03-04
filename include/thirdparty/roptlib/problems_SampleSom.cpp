@@ -515,7 +515,7 @@ namespace ROPTLIB
         SomUtils::VecMatD egR;
         egradR(P, egR);
 
-        stiefelTangentProj(R, egR, rgR);
+        SomUtils::stiefelTangentProj(R, egR, rgR);
     }
 
     void SampleSomProblem::egradT(const SomUtils::MatD &T, const SomUtils::MatD &Lr, const SomUtils::MatD &Pr, SomUtils::MatD &egT) const
@@ -718,34 +718,6 @@ namespace ROPTLIB
         const realdp *xArr = xT.ObtainWriteEntireData();
         for (int i = 0; i < totSz; ++i)
             xEigen(i) = xArr[i];
-    }
-
-    void SampleSomProblem::vstack(const SomUtils::VecMatD &in, SomUtils::MatD &out) const
-    {
-        ROFL_ASSERT(out.cols() == in[0].cols() && out.rows() == in[0].rows() * in.size());
-
-        // out has same number of columns, whereas number of rows is the product of the size of the other 2 dimensions
-
-        int rowJump = in[0].rows();
-        for (int i = 0; i < in.size(); ++i)
-        {
-            out.block(rowJump * i, 0, rowJump, out.cols()) = in[i];
-        }
-    }
-
-    void SampleSomProblem::hstack(const SomUtils::VecMatD &in, SomUtils::MatD &out) const
-    {
-        // out has same number of columns, whereas number of rows is the product of the size of the other 2 dimensions
-
-        ROFL_ASSERT_VAR5(out.rows() == in[0].rows() && out.cols() == in[0].cols() * in.size(),
-                         out.rows(), out.cols(), in[0].rows(), in[0].cols(), in.size());
-
-        int colJump = in[0].cols();
-        for (int i = 0; i < in.size(); ++i)
-        {
-            // ROFL_VAR2(out.block(0, colJump * i, out.rows(), colJump), in[i]);
-            out.block(0, colJump * i, out.rows(), colJump) = in[i];
-        }
     }
 
     void SampleSomProblem::getRi(const Variable &x, SomUtils::MatD &rOut, int i) const
@@ -966,7 +938,7 @@ namespace ROPTLIB
         std::for_each(hRR.begin(), hRR.end(), [](SomUtils::MatD &x) { //^^^ take argument by reference
             x.setZero();
         });
-        stiefelTangentProj(xR, DGf, hRR);
+        SomUtils::stiefelTangentProj(xR, DGf, hRR);
         // for (int i = 0; i < sz_.n_; ++i)
         // {
         //     ROFL_VAR2(i, hRR[i]);
@@ -1001,7 +973,7 @@ namespace ROPTLIB
             x.setZero();
         });
 
-        stiefelTangentProj(xR, W, hrt);
+        SomUtils::stiefelTangentProj(xR, W, hrt);
         // ROFL_VAR1(uT);
         // for (int i = 0; i < sz_.n_; ++i)
         // {
@@ -1039,37 +1011,6 @@ namespace ROPTLIB
     int SampleSomProblem::getTranslSz() const
     {
         return sz_.p_;
-    }
-
-    void SampleSomProblem::stiefelTangentProj(const SomUtils::VecMatD &Y, const SomUtils::VecMatD &Hin, SomUtils::VecMatD &Hout) const
-    {
-        ROFL_ASSERT_VAR1(Y.size() == sz_.n_, Y.size());
-
-        SomUtils::MatD tmp = Y[0].transpose() * Hin[0];
-        Hout.clear();
-        Hout.resize(sz_.n_, SomUtils::MatD::Zero(tmp.rows(), tmp.cols()));
-
-        for (int i = 0; i < sz_.n_; ++i)
-        {
-            stiefelTangentProj(Y[i], Hin[i], Hout[i]);
-        }
-    }
-
-    void SampleSomProblem::stiefelTangentProj(const SomUtils::MatD &Y, const SomUtils::MatD &Hin, SomUtils::MatD &Hout) const
-    {
-        SomUtils::MatD tmp = Y.transpose() * Hin;
-
-        ROFL_ASSERT(tmp.rows() == tmp.cols()); // kind of useless as the check is performed also in extractSymmetricPart()
-
-        SomUtils::MatD sympart(SomUtils::MatD::Zero(tmp.rows(), tmp.cols()));
-        extractSymmetricPart(Y.transpose() * Hin, sympart);
-        Hout = Hin - Y * sympart;
-    }
-
-    void SampleSomProblem::extractSymmetricPart(const SomUtils::MatD &in, SomUtils::MatD &out) const
-    {
-        ROFL_ASSERT(in.rows() == in.cols());
-        out = 0.5 * (in + in.transpose());
     }
 
     void SampleSomProblem::vectorizeR(const SomUtils::VecMatD &R, SomUtils::MatD &RvecOut) const
@@ -1141,49 +1082,6 @@ namespace ROPTLIB
         ROFL_ASSERT(fullIdx == XvecOut.rows())
     }
 
-    void SampleSomProblem::catZeroRow(const SomUtils::MatD &mIn, SomUtils::MatD &mOut) const
-    {
-        ROFL_ASSERT(mOut.rows() == mIn.rows() + 1);
-        ROFL_ASSERT(mOut.cols() == mIn.cols());
-
-        mOut.setZero();
-        mOut.block(0, 0, mIn.rows(), mIn.cols()) = mIn;
-    }
-
-    void SampleSomProblem::catZeroRow3dArray(const SomUtils::VecMatD &mIn, SomUtils::VecMatD &mOut) const
-    {
-        ROFL_ASSERT(mIn.size() == mOut.size())
-
-        int n = mIn.size();
-        for (int i = 0; i < n; ++i)
-        {
-            catZeroRow(mIn[i], mOut[i]);
-        }
-    }
-
-    void SampleSomProblem::normalizeEucl(const SomUtils::MatD &mIn, SomUtils::MatD &mOut) const
-    {
-        ROFL_ASSERT(mIn.rows() == mOut.rows() && mIn.cols() == mOut.cols())
-
-        mOut = mIn;
-        double normF = mIn.norm(); // TODO: maybe use .normalized() directly?
-
-        mOut /= normF;
-        // ROFL_VAR3(mIn, normF, mOut);
-    }
-
-    void SampleSomProblem::normalizeEucl(const SomUtils::VecMatD &mIn, SomUtils::VecMatD &mOut) const
-    {
-        ROFL_ASSERT(mIn.size() == mOut.size())
-        std::for_each(mOut.begin(), mOut.end(), [](SomUtils::MatD &x) { //^^^ take argument by reference: LAMBDA FUNCTION
-            x.setZero();
-        });
-
-        int n = mIn.size();
-        for (int i = 0; i < n; ++i)
-            normalizeEucl(mIn[i], mOut[i]);
-    }
-
     void SampleSomProblem::RoptToEigStiefel(Vector x, SomUtils::MatD &xEigen) const
     {
         Vector xT = x.GetTranspose(); // Eigen ADV init is row-major!!
@@ -1207,42 +1105,6 @@ namespace ROPTLIB
             int jj = edges_(k, 1) - 1;
             adjMat(ii, jj) = 1;
         }
-    }
-
-    bool SampleSomProblem::isEqualFloats(const SomUtils::MatD &a, const SomUtils::MatD &b, double thr) const
-    {
-        ROFL_ASSERT(a.rows() == b.rows() && a.cols() == b.cols())
-
-        double val = (a - b).cwiseAbs().maxCoeff();
-
-        if (val > thr)
-            return false;
-
-        return true;
-    }
-
-    bool SampleSomProblem::isEqualFloats(const SomUtils::VecMatD &a, const SomUtils::VecMatD &b, double thr) const
-    {
-        int n = a.size();
-        ROFL_ASSERT(n == b.size())
-        bool retval = true;
-        for (int i = 0; i < n; ++i)
-        {
-            if (!isEqualFloats(a, b, thr))
-                return false;
-        }
-        return true;
-    }
-
-    void SampleSomProblem::multidet(const SomUtils::VecMatD &a3d, std::vector<double> &dets) const
-    {
-        int n = a3d.size();
-        dets.clear();
-        dets.assign(n, 0.0);
-        ROFL_ASSERT(n == dets.size())
-
-        for (int i = 0; i < n; ++i)
-            dets[i] = a3d[i].determinant();
     }
 
     void SampleSomProblem::setGtR(const SomUtils::VecMatD &R)
@@ -1437,7 +1299,7 @@ namespace ROPTLIB
             // Rank stopping condition
             ROFL_VAR1(staircaseStepIdx)
             SomUtils::MatD XoutRhSt(SomUtils::MatD::Zero(staircaseStepIdx, d * n));
-            ProbNext.hstack(RmanoptOutEig, XoutRhSt);
+            SomUtils::hstack(RmanoptOutEig, XoutRhSt);
             Eigen::FullPivLU<SomUtils::MatD> luDecomp(XoutRhSt);
             auto rank = luDecomp.rank();
             if (rank < staircaseStepIdx)
@@ -1481,72 +1343,6 @@ namespace ROPTLIB
         ROFL_VAR1(globalRecoverySuccess)
 
         return costLast;
-    }
-
-    void computeErrorsSingleRsom(const Eigen::MatrixXi &edges,
-                                 const SomUtils::VecMatD &R, const SomUtils::MatD &T,
-                                 const SomUtils::VecMatD &Rgt, const SomUtils::MatD &Tgt,
-                                 std::vector<double> &rotErrs, std::vector<double> &translErrs)
-    {
-        // Compute errors
-        ROFL_VAR1("Printing R, T out")
-        for (auto &m : R)
-            ROFL_VAR1(m)
-        ROFL_VAR1(T)
-
-        int n = R.size();
-        int d = R[0].cols();
-        int numEdges = edges.rows();
-
-        for (int e = 0; e < numEdges; ++e)
-        {
-            int i = edges(e, 0) - 1;
-            int j = edges(e, 1) - 1;
-
-            Eigen::Matrix3d ri = R[i].block(0, 0, d, d);
-            Eigen::Matrix3d rigt = Rgt[i].block(0, 0, d, d);
-            Eigen::Matrix3d rj = R[j].block(0, 0, d, d);
-            Eigen::Matrix3d rjgt = Rgt[j].block(0, 0, d, d);
-            Eigen::Vector3d ti = T.col(i);
-            Eigen::Vector3d tigt = Tgt.col(i);
-            Eigen::Vector3d tj = T.col(j);
-            Eigen::Vector3d tjgt = Tgt.col(j);
-
-            Eigen::Matrix4d transfI(Eigen::Matrix4d::Identity());
-            transfI.block(0, 0, d, d) = ri;
-            transfI.block(0, d, d, 1) = ti;
-            Eigen::Matrix4d transfJ(Eigen::Matrix4d::Identity());
-            transfJ.block(0, 0, d, d) = rj;
-            transfJ.block(0, d, d, 1) = tj;
-
-            Eigen::Matrix4d transfIgt(Eigen::Matrix4d::Identity());
-            transfIgt.block(0, 0, d, d) = rigt;
-            transfIgt.block(0, d, d, 1) = tigt;
-            Eigen::Matrix4d transfJgt(Eigen::Matrix4d::Identity());
-            transfJgt.block(0, 0, d, d) = rjgt;
-            transfJgt.block(0, d, d, 1) = tjgt;
-
-            Eigen::MatrixXd p(Eigen::MatrixXd::Identity(d + 1, d + 1));
-            SomUtils::computeRelativePose(transfI, transfJ, p);
-
-            Eigen::MatrixXd pGt(Eigen::MatrixXd::Identity(d + 1, d + 1));
-            SomUtils::computeRelativePose(transfIgt, transfJgt, pGt);
-
-            Eigen::Matrix3d pR = p.block(0, 0, d, d);
-            Eigen::Matrix3d pRgt = pGt.block(0, 0, d, d);
-
-            double rotDistEdge = SomUtils::rotDistSingle(pR, pRgt);
-            ROFL_VAR2(e, rotDistEdge);
-
-            Eigen::Vector3d pT = p.block(0, d, d, 1);
-            Eigen::Vector3d pTgt = pGt.block(0, d, d, 1);
-
-            double translDistEdge = SomUtils::translErr(ti, tigt);
-            ROFL_VAR2(e, translDistEdge);
-
-            rotErrs[e] = rotDistEdge;
-            translErrs[e] = translDistEdge;
-        }
     }
 
 } // end of namespace ROPTLIB
