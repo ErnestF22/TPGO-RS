@@ -16,7 +16,6 @@ namespace fs = std::filesystem;
 
 int main(int argc, char **argv)
 {
-
     std::string filenameCfg;
     std::string folderIn;
     std::set<fs::path> sortedByName;
@@ -138,17 +137,21 @@ int main(int argc, char **argv)
     SomUtils::MatD Tout = sp.getTout();
     SomUtils::VecMatD Rout = sp.getRout();
 
+    ROFL_VAR1("---------------------Now printing output and GT information--------------------------\n")
+
     for (int i = 0; i < n; ++i)
     {
         ROFL_VAR3(i, Rout[i], Rgt[i]);
         ROFL_VAR2(Tout.col(i).transpose(), Tgt.col(i).transpose());
     }
 
+    ROFL_VAR1("---------------------Now computing errors--------------------------\n")
+
     std::vector<double> rotErrs(numEdges, 1e+6), translErrs(numEdges, 1e+6);
     SomUtils::computeErrorsSingleRsom(edges,
-                            Rout, Tout,
-                            Rgt, Tgt,
-                            rotErrs, translErrs);
+                                      Rout, Tout,
+                                      Rgt, Tgt,
+                                      rotErrs, translErrs);
 
     return 0;
 }

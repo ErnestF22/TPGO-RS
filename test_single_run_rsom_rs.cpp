@@ -6,23 +6,60 @@
 #include <eigen3/Eigen/Geometry>
 
 #include <filesystem>
+#include <set>
 #include <boost/lexical_cast.hpp>
 
 #include "thirdparty/roptlib/problems_SampleSom.h"
 
+#include <rofl/common/param_map.h>
+
+namespace fs = std::filesystem;
+
 int main(int argc, char **argv)
 {
-    int d = 3;
+
+    std::string filenameCfg;
+    std::string folderIn;
+    std::set<fs::path> sortedByName;
+
+    int d;
+    // int numTestsPerInstance;
+    bool readStartingPtFromFile;
+    int srcNodeIdx;
+
+    rofl::ParamMap params;
+
+    params.read(argc, argv);
+    params.getParam<std::string>("cfg", filenameCfg, std::string(""));
+    params.read(filenameCfg);
+    params.read(argc, argv);
+    // Output mode (quat or aa)
+    params.getParam<std::string>(
+        "in", folderIn,
+        std::string("../matlab/data/cpp_testdata_noisy/tdata_n5_mindeg3_sigma00/"));
+
+    params.getParam<int>("d", d, 3);
+    // params.getParam<int>("numTestsPerInstance", numTestsPerInstance, 30);
+    params.getParam<bool>("readStartingPtFromFile", readStartingPtFromFile, true);
+    params.getParam<int>("srcNodeIdx", srcNodeIdx, 0);
+
+    std::cout << "Params:" << std::endl;
+    params.write(std::cout);
+
+    std::cout << "-------\n"
+              << std::endl;
+
+    /*************************End of ROFL params reading**************************/
+
     int n;
-    if (!SomUtils::readSingleIntCsv("../matlab/data/cpp_testdata/data_no_noise/tdata_n10_mindeg3/n.csv", n))
+    if (!SomUtils::readSingleIntCsv(folderIn + "n.csv", n))
     {
         ROFL_ERR("Error opening file")
         ROFL_ASSERT(0)
     }
 
     int numEdges;
-
-    if (!SomUtils::readSingleIntCsv("../matlab/data/cpp_testdata/data_no_noise/tdata_n10_mindeg3/e.csv", numEdges))
+    if (!SomUtils::readSingleIntCsv(folderIn + "e.csv", numEdges))
     {
         ROFL_ERR("Error opening file")
         ROFL_ASSERT(0)
@@ -34,12 +71,12 @@ int main(int argc, char **argv)
     SomUtils::MatD Tijs(d, numEdges);
     Eigen::MatrixXi edges(numEdges, 2);
 
-    if (!SomUtils::readMatlabCsvTijs("../matlab/data/cpp_testdata/data_no_noise/tdata_n10_mindeg3/tijs.csv", Tijs, d, numEdges))
+    if (!SomUtils::readMatlabCsvTijs(folderIn + "tijs.csv", Tijs, d, numEdges))
     {
         ROFL_ERR("Error opening file")
         ROFL_ASSERT(0)
     }
-    if (!SomUtils::readMatlabCsvEdges("../matlab/data/cpp_testdata/data_no_noise/tdata_n10_mindeg3/edges.csv", edges))
+    if (!SomUtils::readMatlabCsvEdges(folderIn + "edges.csv", edges))
     {
         ROFL_ERR("Error opening file")
         ROFL_ASSERT(0)
@@ -60,7 +97,7 @@ int main(int argc, char **argv)
 
     // Read GT from csv
     ROPTLIB::Vector xGt = ProdMani.RandominManifold();
-    if (!SomUtils::readCsvInitguess("../matlab/data/cpp_testdata/data_no_noise/tdata_n10_mindeg3/X_gt.csv", xGt))
+    if (!SomUtils::readCsvInitguess(folderIn + "Xgt.csv", xGt))
     {
         ROFL_ERR("Error opening file")
         ROFL_ASSERT(0)
@@ -101,9 +138,8 @@ int main(int argc, char **argv)
     // Generate startX (random)
     ROPTLIB::Vector startX = ProdMani.RandominManifold();
 
-    bool readInitguess = true;
-    if (readInitguess)
-        if (!SomUtils::readCsvInitguess("../data/X_initguess_test_single_run_rsom_rs.csv", startX))
+    if (readStartingPtFromFile)
+        if (!SomUtils::readCsvInitguess(folderIn + "startX.csv", startX))
         {
             ROFL_ERR("Error opening file")
             ROFL_ASSERT(0)
@@ -120,9 +156,9 @@ int main(int argc, char **argv)
 
     std::vector<double> rotErrs(numEdges, 1e+6), translErrs(numEdges, 1e+6);
     SomUtils::computeErrorsSingleRsom(edges,
-                                     Rout, Tout,
-                                     RgtEig, TgtEig,
-                                     rotErrs, translErrs);
+                                      Rout, Tout,
+                                      RgtEig, TgtEig,
+                                      rotErrs, translErrs);
 
-    return 0;                                     
+    return 0;
 }

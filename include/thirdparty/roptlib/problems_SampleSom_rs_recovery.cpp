@@ -2302,7 +2302,7 @@ namespace ROPTLIB
                     XmanoptOut.block(0, 0, nrs, RmanoptOutSt.cols()) = RmanoptOutSt;
                     XmanoptOut.block(0, RmanoptOutSt.cols(), nrs, TmanoptOut.cols()) = TmanoptOut;
 
-                    double costManoptOutput = costEigen(RmanoptOut, TmanoptOut); // TOCHECK: is costEigen actually defined for this kind of input?
+                    double costManoptOutput = costEigen(RmanoptOut, TmanoptOut);
 
                     // disp("cost_manopt_output")
                     // disp(cost_manopt_output)
@@ -2407,6 +2407,8 @@ namespace ROPTLIB
         for (int i = 0; i < sz_.n_; ++i)
         {
             ROFL_VAR3(i, Rgt_[i], Rrecovered[i])
+            ROFL_VAR2(i, Tgt_.col(i).transpose())
+            ROFL_VAR2(TmanoptOut.col(i).transpose(), Trecovered.col(i).transpose())
         }
         return rsRecoverySuccess_;
     }
@@ -2487,7 +2489,7 @@ namespace ROPTLIB
             auto TrecovIglobal = TrecoveredGlobal.col(i);
             //     disp("[X_gt.T, T_recovered]");
             //     disp([T_gt_i, T_recov_i_global]);
-            ROFL_VAR2(TgtI.transpose(), TrecovIglobal.transpose());
+            ROFL_VAR4(i, TgtI.transpose(), Tsedn.col(i).transpose(), TrecovIglobal.transpose());
 
             //     disp("is_equal_floats(T_gt_i, T_recov_i_global)")
             //     disp(is_equal_floats(T_gt_i, T_recov_i_global))

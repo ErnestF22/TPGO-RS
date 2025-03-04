@@ -797,10 +797,6 @@ namespace SomUtils
         return total / sz;
     }
 
-    /**
-     * Compute errors of a single run of RSOM methods (RS, ICP, Procrustes)
-     * and return them in the rotErrs and translErrs vectors (reference params).
-     */
     void computeErrorsSingleRsom(const Eigen::MatrixXi &edges,
                                  const SomUtils::VecMatD &R, const SomUtils::MatD &T,
                                  const SomUtils::VecMatD &Rgt, const SomUtils::MatD &Tgt,
@@ -860,7 +856,7 @@ namespace SomUtils
             Eigen::Vector3d pTgt = pGt.block(0, d, d, 1);
 
             double translDistEdge = SomUtils::translErr(ti, tigt);
-            ROFL_VAR2(ti.transpose(), tigt.transpose());
+            // ROFL_VAR2(ti.transpose(), tigt.transpose());
             ROFL_VAR2(e, translDistEdge);
 
             rotErrs[e] = rotDistEdge;

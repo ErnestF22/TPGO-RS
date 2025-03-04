@@ -310,10 +310,14 @@ namespace SomUtils
      */
     double stlVecDoublesMean(const std::vector<double> &v);
 
+    /**
+     * Compute errors of a single run of RSOM methods (RS, ICP, Procrustes)
+     * and return them in the rotErrs and translErrs vectors (reference params).
+     */
     void computeErrorsSingleRsom(const Eigen::MatrixXi &edges,
-        const SomUtils::VecMatD &R, const SomUtils::MatD &T,
-        const SomUtils::VecMatD &Rgt, const SomUtils::MatD &Tgt,
-        std::vector<double> &rotErrs, std::vector<double> &translErrs);
+                                 const SomUtils::VecMatD &R, const SomUtils::MatD &T,
+                                 const SomUtils::VecMatD &Rgt, const SomUtils::MatD &Tgt,
+                                 std::vector<double> &rotErrs, std::vector<double> &translErrs);
 
 } // end of namespace SomUtils
 

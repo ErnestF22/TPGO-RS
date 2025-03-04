@@ -19,6 +19,8 @@ int main(int argc, char **argv)
 
     std::string baseFolder;
     int d;
+    int srcNodeIdx;
+    bool readStartingPtFromFile;
 
     rofl::ParamMap params;
 
@@ -32,6 +34,8 @@ int main(int argc, char **argv)
         std::string("../matlab/data/cpp_testdata_noisy/tdata_n10_mindeg3_sigma00/"));
 
     params.getParam<int>("d", d, 3);
+    params.getParam<int>("srcNodeIdx", srcNodeIdx, 0);
+    params.getParam<bool>("readStartingPtFromFile", readStartingPtFromFile, true);
 
     std::cout << "Params:" << std::endl;
     params.write(std::cout);
@@ -129,8 +133,7 @@ int main(int argc, char **argv)
     // Generate startX (random)
     ROPTLIB::Vector startX = ProdMani.RandominManifold();
 
-    bool readInitguess = true;
-    if (readInitguess)
+    if (readStartingPtFromFile)
         if (!SomUtils::readCsvInitguess(baseFolder + "startX.csv", startX))
         {
             ROFL_ERR("Error opening file")
@@ -138,17 +141,26 @@ int main(int argc, char **argv)
         }
 
     // RUN RSOM RS
-    int srcNodeId = 0;
     SomUtils::VecMatD Rout(n, SomUtils::MatD::Identity(d, d));
     SomUtils::MatD Tout(SomUtils::MatD::Zero(d, n));
-    ROPTLIB::runRsomICP(Prob, startX, srcNodeId, Rout, Tout); // note: startX is needed (even if random) in ROPTLIB;
+    ROPTLIB::runRsomICP(Prob, startX, srcNodeIdx, Rout, Tout); // note: startX is needed (even if random) in ROPTLIB;
     // ROPTLIB namespace is used even if runRsomRS() is not in SampleSomProblem class, nor in "original" ROPTLIB
+
+    ROFL_VAR1("---------------------Now printing output and GT information--------------------------\n")
+
+    for (int i = 0; i < n; ++i)
+    {
+        ROFL_VAR3(i, Rout[i], RgtEig[i]);
+        ROFL_VAR2(Tout.col(i).transpose(), TgtEig.col(i).transpose());
+    }
+
+    ROFL_VAR1("---------------------Now computing errors--------------------------\n")
 
     std::vector<double> rotErrs(numEdges, 1e+6), translErrs(numEdges, 1e+6);
     SomUtils::computeErrorsSingleRsom(edges,
-                                     Rout, Tout,
-                                     RgtEig, TgtEig,
-                                     rotErrs, translErrs);
+                                      Rout, Tout,
+                                      RgtEig, TgtEig,
+                                      rotErrs, translErrs);
 
     return 0;
 }

@@ -5,6 +5,9 @@ namespace ROPTLIB
 
     double runRsomICP(SampleSomProblem &Prob, const Vector &startX, int src, SomUtils::VecMatD &Rout, SomUtils::MatD &Tout, int numMaxIter, double stopThr)
     {
+        int d = Prob.sz_.d_;
+        int n = Prob.sz_.n_;
+
         ROFL_VAR1("Start of runRsomRS()")
         ROFL_VAR1(Prob.costEigen(Prob.Rgt_, Prob.Tgt_));
 
@@ -32,18 +35,11 @@ namespace ROPTLIB
 
         // Outputs
         Xopt.Print("Xopt");
-        std::cout << "XoptCost " << XoptCost << std::endl; // x cost
+        std::cout << "XoptCost " << XoptCost << std::endl; // xopt cost
 
         delete RTRNewtonSolver;
 
-        // RS
-        int d = Prob.sz_.d_;
-        int n = Prob.sz_.n_;
-        int r0 = d + 1;
-
-        integer numoftypes = 2; // 2 i.e. (3D) Stiefel + Euclidean
-        integer numofmani1 = n; // num of Stiefel manifolds
-        integer numofmani2 = 1;
+        // ICP
 
         SomUtils::MatD XoptEigVec(SomUtils::MatD::Zero(d * d * n + d * n, 1));
         Prob.RoptToEig(Xopt, XoptEigVec);
@@ -65,6 +61,7 @@ namespace ROPTLIB
             ROFL_VAR1(i)
             if (diffPrevCurr < stopThr) // TODO: make 1e-3 a parameter
             {
+                ROFL_VAR1("diffPrevCurr < stopThr -> stopping condition reached")
                 Prob.RoptToEig(XoptPrev, XoptPrevEigVec);
                 break;
             }
@@ -102,9 +99,21 @@ namespace ROPTLIB
 
         Rout.resize(n, SomUtils::MatD::Zero(d, d));
         Tout.resize(d, n);
+
+        ROFL_VAR1(Prob.costEigen(Rlocal, Tlocal));
+
+        SomUtils::VecMatD Rrecovered(n, SomUtils::MatD::Zero(d, d));
+        SomUtils::MatD Trecovered(SomUtils::MatD::Zero(d, n));
+        bool recSEdn = Prob.recoverySEdN(d + 1,
+                                         Rlocal, Tlocal,
+                                         Rrecovered, Trecovered);
+        ROFL_VAR1(recSEdn)
+        ROFL_VAR1(Prob.costEigen(Rrecovered, Trecovered));
+
         bool globalRecoverySuccess = Prob.globalize(src, Rlocal, Tlocal,
                                                     Rout, Tout);
         ROFL_VAR1(globalRecoverySuccess)
+        ROFL_VAR1(Prob.costEigen(Rout, Tout));
 
         return costLast;
     }
