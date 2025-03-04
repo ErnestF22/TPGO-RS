@@ -98,7 +98,7 @@ int main(int argc, char **argv)
     SomUtils::VecMatD newxRpolarMlab(n, SomUtils::MatD::Zero(p, d));
     SomUtils::MatD newxRpolarMlabHst(SomUtils::MatD::Zero(p, d * n));
     SomUtils::readCsvEigen("../matlab/data/retraction_debug/matlab_newxRpolar.csv", newxRpolarMlabHst);
-    Prob.unStackH(newxRpolarMlabHst, newxRpolarMlab);
+    SomUtils::unStackH(newxRpolarMlabHst, newxRpolarMlab);
     Prob.stiefelRetractionPolar(REig, dREig, newxCppR, alpha);
     for (int i = 0; i < n; ++i)
         ROFL_VAR3(i, newxRpolarMlab[i], newxMlabREig[i])

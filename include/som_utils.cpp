@@ -585,4 +585,61 @@ namespace SomUtils
         return formatter.str();
     }
 
+    void readCsvVecEigen(const std::string &filenameIn, Eigen::MatrixXd &out)
+    {
+        std::string line;
+        std::ifstream fileIn(filenameIn);
+        if (!fileIn.is_open())
+        {
+            ROFL_ERR("Error opening file")
+            ROFL_VAR1(filenameIn)
+            ROFL_ASSERT(0)
+        }
+        int ctr = 0;
+        while (std::getline(fileIn, line))
+        {
+            // ROFL_VAR1(line);
+            double val = std::stod(line);
+            out(ctr, 0) = val;
+            ctr++;
+        }
+    }
+
+    void unStackH(const SomUtils::MatD &in, SomUtils::VecMatD &out, int colsOut)
+    {
+        int n = (int)in.cols() / colsOut;
+
+        int fixedSz = in.rows(); // size that does not change in the 3D->2D transition (here, number of rows)
+
+        ROFL_ASSERT(n * colsOut == in.cols());
+
+        out.clear();
+        out.resize(n, SomUtils::MatD::Zero(in.rows(), colsOut));
+
+        for (int i = 0; i < n; ++i)
+        {
+            out[i] = in.block(0, colsOut * i, fixedSz, colsOut);
+            ROFL_ASSERT(out[i].rows() == in.rows())
+        }
+    }
+
+    void unStackV(const SomUtils::MatD &in, SomUtils::VecMatD &out, int rowsOut)
+    {
+        int n = (int)in.rows() / rowsOut;
+
+        int fixedSz = rowsOut; // size that does not change in the 3D->2D transition (here, number of columns)
+
+        // ROFL_VAR3(n, rowsOut, in.rows());
+        ROFL_ASSERT(n * rowsOut == in.rows());
+
+        out.clear();
+        out.resize(n, SomUtils::MatD::Zero(rowsOut, in.cols()));
+
+        for (int i = 0; i < n; ++i)
+        {
+            out[i] = in.block(rowsOut * i, 0, rowsOut, fixedSz);
+            ROFL_ASSERT(out[i].cols() == in.cols())
+        }
+    }
+
 } // end of namespace SomUtils

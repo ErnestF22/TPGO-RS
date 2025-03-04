@@ -217,6 +217,21 @@ namespace SomUtils
      */
     std::string generateStampedString(const std::string prefix, const std::string postfix);
 
+    /**
+     * Read a csv file with a single column and save it to reference @param out
+     */
+    void readCsvVecEigen(const std::string &filenameIn, Eigen::MatrixXd &out);
+
+    /**
+     * Unstack a vertically stacked "3D" array
+     */
+    void unStackV(const SomUtils::MatD &in, SomUtils::VecMatD &out, int rowsOut = 3);
+
+    /**
+     * Unstack a horizontally stacked "3D" array
+     */
+    void unStackH(const SomUtils::MatD &in, SomUtils::VecMatD &out, int colsOut = 3);
+
 } // end of namespace SomUtils
 
 #endif /*SOM_UTILS_H_*/

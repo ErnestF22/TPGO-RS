@@ -67,6 +67,7 @@ public:
 
     ~SomProcrustes() {}
 
+private:
     void getMiFromMmat(const SomUtils::MatD &Mmat, SomUtils::MatD &Mi, int idx)
     {
         // for edge_id = 1:size(edges, 1)
@@ -180,6 +181,7 @@ public:
         // ROFL_VAR2(Mmat, Nmat)
     }
 
+public:
     void makeAb(const SomUtils::VecMatD &Rgf, SomUtils::MatD &A, SomUtils::MatD &b)
     {
         // idxEdges=reshape(1:d*num_edges,d,num_edges);
@@ -205,7 +207,6 @@ public:
 
         ROFL_VAR2(A, b.transpose())
     }
-
     void run()
     {
         /*iterate!*/
@@ -270,6 +271,32 @@ public:
         Tout_ = Tcurr_;
     }
 
+    void setTstart(const SomUtils::MatD &Tstart)
+    {
+        Tcurr_ = Tstart;
+    }
+
+    void setRgt(const SomUtils::VecMatD &Rgt)
+    {
+        Rgt_ = Rgt;
+    }
+
+    void setTgt(const SomUtils::MatD &Tgt)
+    {
+        Tgt_ = Tgt;
+    }
+
+    SomUtils::MatD getTout()
+    {
+        return Tout_;
+    }
+
+    SomUtils::VecMatD getRout()
+    {
+        return Rout_;
+    }
+
+private:
     void vectorizeRT(const SomUtils::VecMatD &R, const SomUtils::MatD &T, SomUtils::MatD &XvecOut) const
     {
         // int fullRotsSz = sz_.p_ * sz_.d_ * sz_.n_;
@@ -336,16 +363,6 @@ public:
     void setTcurr(const SomUtils::MatD &Tcurr)
     {
         Tcurr_ = Tcurr;
-    }
-
-    SomUtils::MatD getTout()
-    {
-        return Tout_;
-    }
-
-    SomUtils::VecMatD getRout()
-    {
-        return Rout_;
     }
 
     /**

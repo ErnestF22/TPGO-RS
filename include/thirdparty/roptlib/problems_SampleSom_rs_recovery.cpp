@@ -359,7 +359,7 @@ namespace ROPTLIB
             uTcopy /= normRT;
 
             SomUtils::VecMatD uRunstackedTmp(sz_.n_, SomUtils::MatD::Zero(staircaseLevel, sz_.d_));
-            unStackH(uRhStacked, uRunstackedTmp);
+            SomUtils::unStackH(uRhStacked, uRunstackedTmp);
 
             // 5
             SomUtils::VecMatD uRunstackedOutTmp(sz_.n_, SomUtils::MatD::Zero(staircaseLevel, sz_.d_));
@@ -396,7 +396,7 @@ namespace ROPTLIB
         // 3
         // f_x_max = f(x_max);
         SomUtils::VecMatD uRunstacked(sz_.n_, SomUtils::MatD::Zero(staircaseLevel, sz_.d_));
-        unStackH(uRhStacked / normRTmax, uRunstacked, sz_.d_);
+        SomUtils::unStackH(uRhStacked / normRTmax, uRunstacked, sz_.d_);
         SomUtils::VecMatD fxRunstackedOut(sz_.n_, SomUtils::MatD::Zero(staircaseLevel, sz_.d_));
 
         SomUtils::MatD uTout1(SomUtils::MatD::Zero(staircaseLevel, sz_.n_));
@@ -416,7 +416,7 @@ namespace ROPTLIB
         // 5
         // full_xmax = [ matStackH(x_max.R), x_max.T ];
         auto uFullRhSt = uFullHst.block(0, 0, staircaseLevel, sz_.d_ * sz_.n_);
-        unStackH(uFullRhSt, uOutR, sz_.d_);
+        SomUtils::unStackH(uFullRhSt, uOutR, sz_.d_);
         uOutT = uFullHst.block(0, sz_.d_ * sz_.n_, staircaseLevel, sz_.n_);
 
         // 6
@@ -480,7 +480,7 @@ namespace ROPTLIB
             uTcopy /= normRT;
 
             SomUtils::VecMatD uRunstackedTmp(sz_.n_, SomUtils::MatD::Zero(staircaseLevel, sz_.d_));
-            unStackH(uRhStacked, uRunstackedTmp);
+            SomUtils::unStackH(uRhStacked, uRunstackedTmp);
 
             SomUtils::VecMatD uRunstackedOutTmp(sz_.n_, SomUtils::MatD::Zero(staircaseLevel, sz_.d_));
             SomUtils::MatD uTout(SomUtils::MatD::Zero(staircaseLevel, sz_.n_));
@@ -510,7 +510,7 @@ namespace ROPTLIB
 
         // f_x_max = f(x_max);
         SomUtils::VecMatD uRunstacked(sz_.n_, SomUtils::MatD::Zero(staircaseLevel, sz_.d_));
-        unStackH(uRhStacked / normRTmax, uRunstacked, sz_.d_);
+        SomUtils::unStackH(uRhStacked / normRTmax, uRunstacked, sz_.d_);
         SomUtils::VecMatD fxRunstackedOut(sz_.n_, SomUtils::MatD::Zero(staircaseLevel, sz_.d_));
 
         SomUtils::MatD uTout1(SomUtils::MatD::Zero(staircaseLevel, sz_.n_));
@@ -531,7 +531,7 @@ namespace ROPTLIB
 
         // full_xmax = [ matStackH(x_max.R), x_max.T ];
         auto uFullRhSt = uFullHst.block(0, 0, staircaseLevel, sz_.d_ * sz_.n_);
-        unStackH(uFullRhSt, uOutR, sz_.d_);
+        SomUtils::unStackH(uFullRhSt, uOutR, sz_.d_);
         uOutT = uFullHst.block(0, sz_.d_ * sz_.n_, staircaseLevel, sz_.n_);
 
         // lambda_max = lambda_max / sum(stiefel_metric([], full_xmax( :), full_xmax( :)));

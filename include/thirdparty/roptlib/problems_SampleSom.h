@@ -156,16 +156,6 @@ namespace ROPTLIB
       void hstack(const SomUtils::VecMatD &in, SomUtils::MatD &out) const;
 
       /**
-       * Unstack a vertically stacked "3D" array
-       */
-      void unStackV(const SomUtils::MatD &in, SomUtils::VecMatD &out, int rowsOut = 3) const;
-
-      /**
-       * Unstack a horizontally stacked "3D" array
-       */
-      void unStackH(const SomUtils::MatD &in, SomUtils::VecMatD &out, int colsOut = 3) const;
-
-      /**
        * Get i-th Rotation from ROPTLIB variable x
        */
       void getRi(const Variable &x, SomUtils::MatD &rOut, int i) const;

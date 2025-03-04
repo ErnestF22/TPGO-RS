@@ -10,46 +10,9 @@
 // #include "include/thirdparty/qr_unique_sizeless/include_matlab/lapacke.h"
 
 #include "som_procrustes.h"
+#include "som_utils.h"
 
 namespace fs = std::filesystem;
-
-void readCsvVecEigen(const std::string &filenameIn, Eigen::MatrixXd &out)
-{
-    std::string line;
-    std::ifstream fileIn(filenameIn);
-    if (!fileIn.is_open())
-    {
-        ROFL_ERR("Error opening file")
-        ROFL_VAR1(filenameIn)
-        ROFL_ASSERT(0)
-    }
-    int ctr = 0;
-    while (std::getline(fileIn, line))
-    {
-        // ROFL_VAR1(line);
-        double val = std::stod(line);
-        out(ctr, 0) = val;
-        ctr++;
-    }
-}
-
-void unStackH(const SomUtils::MatD &in, SomUtils::VecMatD &out, int colsOut)
-{
-    int n = (int)in.cols() / colsOut;
-
-    int fixedSz = in.rows(); // size that does not change in the 3D->2D transition (here, number of rows)
-
-    ROFL_ASSERT(n * colsOut == in.cols());
-
-    out.clear();
-    out.resize(n, SomUtils::MatD::Zero(in.rows(), colsOut));
-
-    for (int i = 0; i < n; ++i)
-    {
-        out[i] = in.block(0, colsOut * i, fixedSz, colsOut);
-        ROFL_ASSERT(out[i].rows() == in.rows())
-    }
-}
 
 void computeErrorsSingleRsom(const Eigen::MatrixXi &edges,
                              const SomUtils::VecMatD &R, const SomUtils::MatD &T,
@@ -219,12 +182,12 @@ int main(int argc, char **argv)
     SomProcrustes sp(somSzD, Tijs, edges);
 
     SomUtils::MatD Xgt = SomUtils::MatD::Random(somSzD.d_ * somSzD.d_ * somSzD.n_ + somSzD.d_ * somSzD.n_, 1);
-    readCsvVecEigen(folderIn + "/Xgt.csv", Xgt);
+    SomUtils::readCsvVecEigen(folderIn + "/Xgt.csv", Xgt);
     std::vector<SomUtils::MatD> Rgt(somSzD.n_, SomUtils::MatD::Identity(somSzD.d_, somSzD.d_));
     SomUtils::MatD RgtVec(SomUtils::MatD::Zero(somSzD.d_ * somSzD.d_ * somSzD.n_, 1));
     RgtVec = Xgt.block(0, 0, somSzD.d_ * somSzD.d_ * somSzD.n_, 1);
     SomUtils::MatD RgtHst = RgtVec.reshaped<Eigen::ColMajor>(somSzD.d_, somSzD.d_ * somSzD.n_);
-    unStackH(RgtHst, Rgt, somSzD.d_);
+    SomUtils::unStackH(RgtHst, Rgt, somSzD.d_);
 
     SomUtils::MatD Tgt = SomUtils::MatD::Random(somSzD.d_ * somSzD.n_, 1);
     Tgt = Xgt.block(somSzD.d_ * somSzD.d_ * somSzD.n_, 0, somSzD.d_ * somSzD.n_, 1);
@@ -232,10 +195,10 @@ int main(int argc, char **argv)
     ROFL_VAR1(Tgt)
 
     auto Tstart = Tgt; // change this for testing a more realistic case
-    sp.setTcurr(Tstart);
+    sp.setTstart(Tstart);
 
-    sp.Tgt_ = Tgt; //TODO: add proper setter
-    sp.Rgt_ = Rgt; //TODO: add proper setter
+    sp.setTgt(Tgt); // TODO: add proper setter
+    sp.setRgt(Rgt); // TODO: add proper setter
 
     sp.run();
 
