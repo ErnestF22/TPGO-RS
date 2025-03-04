@@ -95,12 +95,12 @@ namespace ROPTLIB
         Prob.getRotations(XoptPrevEigVec, Rlocal); // TODO: improve getRotations() and getTranslations() and stop using them as class methods
         Prob.getTranslations(XoptPrevEigVec, Tlocal);
 
-        ROFL_VAR1("Running globalization procedure")
-
         Rout.resize(n, SomUtils::MatD::Zero(d, d));
         Tout.resize(d, n);
 
         ROFL_VAR1(Prob.costEigen(Rlocal, Tlocal));
+
+        ROFL_VAR1("Solving relative gauge ambiguity")
 
         SomUtils::VecMatD Rrecovered(n, SomUtils::MatD::Zero(d, d));
         SomUtils::MatD Trecovered(SomUtils::MatD::Zero(d, n));
@@ -110,7 +110,9 @@ namespace ROPTLIB
         ROFL_VAR1(recSEdn)
         ROFL_VAR1(Prob.costEigen(Rrecovered, Trecovered));
 
-        bool globalRecoverySuccess = Prob.globalize(src, Rlocal, Tlocal,
+        ROFL_VAR1("Running globalization procedure")
+
+        bool globalRecoverySuccess = Prob.globalize(src, Rrecovered, Trecovered,
                                                     Rout, Tout);
         ROFL_VAR1(globalRecoverySuccess)
         ROFL_VAR1(Prob.costEigen(Rout, Tout));
