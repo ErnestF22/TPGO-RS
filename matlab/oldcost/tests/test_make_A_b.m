@@ -43,3 +43,23 @@ disp(max(max(abs(A-A_nl))))
 disp(max(max(abs(b-b_nl))))
 
 
+%%
+resetRands(0);
+R2 = rand(size(R_truth));
+resetRands(0);
+T2 = rand(size(T_globalframe));
+resetRands(0);
+Tijs2 = rand(size(Tijs_vec));
+
+
+[A, b] = make_A_b(R2, T2, Tijs2, edges, som_params);
+
+[A_nl, b_nl] = make_A_b_noloops(R2, T2, Tijs2, edges, som_params);
+
+A = remove_quasi_zeros(A);
+b = remove_quasi_zeros(b);
+A_nl = remove_quasi_zeros(A_nl);
+b_nl = remove_quasi_zeros(b_nl);
+
+disp(max(max(abs(A-A_nl))))
+disp(max(max(abs(b-b_nl))))

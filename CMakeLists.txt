@@ -179,6 +179,9 @@ target_link_libraries(test_single_run_rsom_rs ${rofl_LIBRARIES} roptlib_local qr
 add_executable(test_rsom_icp test_rsom_icp.cpp include/som_utils.cpp)
 target_link_libraries(test_rsom_icp ${rofl_LIBRARIES} roptlib_local qru m lapack blas boost_iostreams boost_system boost_filesystem)
 
+add_executable(test_make_Ab test_make_Ab.cpp include/som_utils.cpp)
+target_link_libraries(test_make_Ab ${rofl_LIBRARIES} lapack blas boost_system boost_filesystem)
+
 add_executable(test_som_procrustes test_som_procrustes.cpp include/som_utils.cpp)
 target_link_libraries(test_som_procrustes ${rofl_LIBRARIES} lapack blas boost_system boost_filesystem)
 

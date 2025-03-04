@@ -183,12 +183,12 @@ int main(int argc, char **argv)
     SomUtils::MatD Tijs(d, numEdges);
     Eigen::MatrixXi edges(numEdges, 2);
 
-    if (!SomUtils::readMatlabCsvTijs(folderIn + "/tijs.csv", Tijs, d, numEdges))
+    if (!SomUtils::readMatlabCsvTijs(folderIn + "/Tijs2.csv", Tijs, d, numEdges))
     {
         ROFL_ERR("Error opening file")
         ROFL_ASSERT(0)
     }
-    if (!SomUtils::readMatlabCsvEdges(folderIn + "/edges.csv", edges))
+    if (!SomUtils::readMatlabCsvEdges(folderIn + "/edges2.csv", edges))
     {
         ROFL_ERR("Error opening file")
         ROFL_ASSERT(0)
@@ -219,7 +219,7 @@ int main(int argc, char **argv)
     SomProcrustes sp(somSzD, Tijs, edges);
 
     SomUtils::MatD Xgt = SomUtils::MatD::Random(somSzD.d_ * somSzD.d_ * somSzD.n_ + somSzD.d_ * somSzD.n_, 1);
-    readCsvVecEigen(folderIn + "/Xgt.csv", Xgt);
+    readCsvVecEigen(folderIn + "/X2.csv", Xgt);
     std::vector<SomUtils::MatD> Rgt(somSzD.n_, SomUtils::MatD::Identity(somSzD.d_, somSzD.d_));
     SomUtils::MatD RgtVec(SomUtils::MatD::Zero(somSzD.d_ * somSzD.d_ * somSzD.n_, 1));
     RgtVec = Xgt.block(0, 0, somSzD.d_ * somSzD.d_ * somSzD.n_, 1);
@@ -234,25 +234,26 @@ int main(int argc, char **argv)
     auto Tstart = Tgt; // change this for testing a more realistic case
     sp.setTcurr(Tstart);
 
-    sp.Tgt_ = Tgt; //TODO: add proper setter
-    sp.Rgt_ = Rgt; //TODO: add proper setter
+    SomUtils::MatD A = SomUtils::MatD::Zero(somSzD.d_ * numEdges, somSzD.d_ * somSzD.n_);
+    // b=zeros(d*num_edges, 1);
+    SomUtils::MatD b = SomUtils::MatD::Zero(somSzD.d_ * numEdges, 1);
 
-    sp.run();
+    sp.makeAb(Rgt, A, b);
 
-    SomUtils::MatD Tout = sp.getTout();
-    SomUtils::VecMatD Rout = sp.getRout();
+    SomUtils::MatD Amatlab = SomUtils::MatD::Random(somSzD.d_ * numEdges * somSzD.d_ * somSzD.n_, 1);
+    SomUtils::MatD bmatlab = SomUtils::MatD::Zero(somSzD.d_ * numEdges, 1);
+    readCsvVecEigen(folderIn + "/A_matlab.csv", Amatlab);
+    readCsvVecEigen(folderIn + "/b_matlab.csv", bmatlab);
+    // Amatlab.resize(somSzD.d_ * numEdges, somSzD.d_ * somSzD.n_);
 
-    for (int i = 0; i < n; ++i)
-    {
-        ROFL_VAR3(i, Rout[i], Rgt[i]);
-        ROFL_VAR2(Tout.col(i).transpose(), Tgt.col(i).transpose());
-    }
+    std::cout << "A: " << std::endl;
+    for (int i = 0; i< Amatlab.rows(); ++i)
+        std::cout << A.reshaped<Eigen::ColMajor>(A.rows() * A.cols(), 1)(i,0) << "\t" << Amatlab(i,0) << std::endl;
+    std::cout << "b: " << std::endl;
+    for (int i = 0; i< bmatlab.rows(); ++i)
+        std::cout << b.reshaped<Eigen::ColMajor>(b.rows() * b.cols(), 1)(i,0) << "\t" << bmatlab(i,0) << std::endl;
 
-    std::vector<double> rotErrs(numEdges, 1e+6), translErrs(numEdges, 1e+6);
-    computeErrorsSingleRsom(edges,
-                            Rout, Tout,
-                            Rgt, Tgt,
-                            rotErrs, translErrs);
+    ROFL_VAR2((A.reshaped<Eigen::ColMajor>(A.rows() * A.cols(), 1) - Amatlab).norm(), (b.reshaped<Eigen::ColMajor>(b.rows() * b.cols(), 1) - bmatlab).norm());
 
     return 0;
 }

@@ -67,7 +67,7 @@ public:
 
     ~SomProcrustes() {}
 
-    void getMiFromMmat(const SomUtils::MatD& Mmat, SomUtils::MatD& Mi, int idx)
+    void getMiFromMmat(const SomUtils::MatD &Mmat, SomUtils::MatD &Mi, int idx)
     {
         // for edge_id = 1:size(edges, 1)
         //     if edges(edge_id, 1) == idx
@@ -112,8 +112,8 @@ public:
             getMiFromMmat(Mmat, Mi, i);
             getMiFromMmat(Nmat, Ni, i);
             Ni *= -1;
-            ROFL_VAR2(i, Mi)
-            ROFL_VAR2(i, Ni)
+            // ROFL_VAR2(i, Mi)
+            // ROFL_VAR2(i, Ni)
             Eigen::JacobiSVD<SomUtils::MatD> svd(Mi * Ni.transpose(), Eigen::ComputeFullU | Eigen::ComputeFullV);
             SomUtils::MatD U = svd.matrixU();
             SomUtils::MatD V = svd.matrixV();
@@ -153,10 +153,12 @@ public:
         //     exit(1);
         // }
         ROFL_VAR2(A, b)
-        Tcurr_ = A.fullPivLu().solve(-b);
-        ROFL_VAR4(A, b, Tcurr_, A * Tcurr_ + b)
-        Tcurr_.resize(sz_.d_, sz_.n_); // HP) this resize does the intended job
+        SomUtils::MatD TcurrVec = A.colPivHouseholderQr().solve(-b);
+        // ROFL_VAR3(A, b, TcurrVec)
+        // ROFL_VAR2("Residuals:", A * TcurrVec + b)
+        Tcurr_ = TcurrVec.reshaped<Eigen::ColMajor>(sz_.d_, sz_.n_); // HP) this resize does the intended job
         // ROFL_VAR1(Tcurr_)
+        ROFL_VAR1(Tgt_)
     }
 
     void makeMN(const SomUtils::MatD &T, SomUtils::MatD &Mmat, SomUtils::MatD &Nmat)
@@ -232,11 +234,26 @@ public:
             stepOne(Tcurr_);
             stepTwo(Rcurr_);
 
+            int src = 0;
+
+            auto Rglobal = Rcurr_[src] * Rgt_[src].transpose();
+            auto Tglobal = Rglobal * Tcurr_.col(src) - Tgt_.col(src);
+            // ROFL_VAR4(Rglobal, (Rglobal * Tsedn.col(src)).transpose(), Tsedn.col(src).transpose(), Tgt_.col(src).transpose());
+            // ROFL_VAR2(Tglobal.transpose(), Tsedn.col(src).transpose());
+            // ROFL_VAR3(Rglobal.transpose(), Tcurr_, Tglobal)
+            SomUtils::MatD TglobalRepmat(SomUtils::MatD::Zero(sz_.d_, sz_.n_));
+            for (int i = 0; i < sz_.n_; ++i)
+            {
+                TglobalRepmat.col(i) = Tglobal; // TODO: maybe use some other adv init
+            }
+            auto TrecoveredGlobal = Rglobal.transpose() * Tcurr_ - TglobalRepmat;
+            Tcurr_ = TrecoveredGlobal;
+            ROFL_VAR3(Tcurr_, Tcurr_.rows(), Tcurr_.cols())
+
             for (int i = 0; i < sz_.n_; ++i)
             {
                 ROFL_VAR1(Rcurr_[i])
             }
-            ROFL_VAR3(Tcurr_, Tcurr_.rows(), Tcurr_.cols())
 
             normDiff = norm(Rprev, Tprev, Rcurr_, Tcurr_);
 
