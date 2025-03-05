@@ -48,6 +48,7 @@ build-release/
 # results default folder
 results/
 results_procrustes/
+results_icp/
 
 
 .vscode/

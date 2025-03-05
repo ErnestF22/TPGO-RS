@@ -45,8 +45,8 @@ int main(int argc, char **argv)
 
     params.getParam<int>("d", d, 3);
     params.getParam<int>("numTestsPerInstance", numTestsPerInstance, 30);
-    params.getParam<bool>("readStartingPtFromFile", readStartingPtFromFile, false);
-    params.getParam<std::string>("resultsBasePath", resultsBasePath, "../results/");
+    params.getParam<bool>("readStartingPtFromFile", readStartingPtFromFile, true);
+    params.getParam<std::string>("resultsBasePath", resultsBasePath, "../results_icp/");
     params.getParam<int>("srcNodeIdx", srcNodeIdx, 0);
 
     std::cout << "Params:" << std::endl;
@@ -62,13 +62,11 @@ int main(int argc, char **argv)
 
     std::vector<std::vector<std::vector<double>>> rotErrsAll, translErrsAll;
     std::vector<std::vector<double>> execTimesAll;
-    std::vector<std::vector<double>> staircaseStepOutIdxAll;
 
     // declaring ofstreams
     std::ofstream rotErrsOfstream;
     std::ofstream translErrsOfstream;
     std::ofstream execTimesOfstream;
-    std::ofstream staircaseStepOutIdxOfstream;
     std::ofstream rotErrsMeanOfstream;
     std::ofstream translErrsMeanOfstream;
     std::ofstream execTimesMeanOfstream;
@@ -227,18 +225,7 @@ int main(int argc, char **argv)
             ROFL_ERR("Error opening output file")
             ROFL_ASSERT(0)
         }
-        std::string staircaseStepOutIdxFilename = resultsBasePath + folderAppendName + "_" + folderAppendNameStamped + "/" + folderAppendName + "_last_rs_step.txt";
-        if (staircaseStepOutIdxOfstream.is_open())
-        {
-            staircaseStepOutIdxOfstream.close();
-            staircaseStepOutIdxOfstream.clear(); // clear flags
-        }
-        staircaseStepOutIdxOfstream.open(staircaseStepOutIdxFilename);
-        if (!staircaseStepOutIdxOfstream)
-        {
-            ROFL_ERR("Error opening output file")
-            ROFL_ASSERT(0)
-        }
+        
         // means
         std::string rotErrsMeanFilename = resultsBasePath + folderAppendName + "_" + folderAppendNameStamped + "/" + folderAppendName + "_rot_errors_mean.txt";
         if (rotErrsMeanOfstream.is_open())
@@ -280,7 +267,7 @@ int main(int argc, char **argv)
         // Declare and init error metrics (for each instances)
         double rotMeanErr = 1e+6, translMeanErr = 1e+6, execTimeMean = 1e+6;
         std::vector<std::vector<double>> rotErrs(numTestsPerInstance), translErrs(numTestsPerInstance);
-        std::vector<double> execTimes(numTestsPerInstance), staircaseStepOutIdx(numTestsPerInstance);
+        std::vector<double> execTimes(numTestsPerInstance);
 
         for (int testjd = 0; testjd < numTestsPerInstance; ++testjd)
         {
@@ -305,12 +292,11 @@ int main(int argc, char **argv)
                 // RUN RSOM RS
                 SomUtils::VecMatD Rout(n, SomUtils::MatD::Identity(d, d));
                 SomUtils::MatD Tout(SomUtils::MatD::Zero(d, n));
-                int staircaseStepIdxOutIJ;
-                double costOut = ROPTLIB::runRsomRS(Prob, startX, srcNodeIdx, Rout, Tout, staircaseStepIdxOutIJ); // note: startX is needed (even if random) in ROPTLIB;
+                double costOut = ROPTLIB::runRsomICP(Prob, startX, srcNodeIdx, Rout, Tout); // note: startX is needed (even if random) in ROPTLIB;
                 // ROPTLIB namespace is used even if runRsomRS() is not in SampleSomProblem class, nor in "original" ROPTLIB
 
                 // costOut = 1.0f;
-                if (!SomUtils::isEqualDoubles(costOut, 0.0f))
+                if (!SomUtils::isEqualDoubles(costOut, 0.0f) && sigmaStr == "00" && testjd == 0)
                 {
                     auto fstr = resultsBasePath + folderAppendName + "_" + folderAppendNameStamped + "/" + folderAppendName + "_j" + std::to_string(testjd);
                     ROFL_VAR1(costOut)
@@ -340,7 +326,6 @@ int main(int argc, char **argv)
                 translErrs[testjd] = translErrsTestjd;
 
                 execTimes[testjd] = execTimeIJ;
-                staircaseStepOutIdx[testjd] = staircaseStepIdxOutIJ;
 
                 for (int k = 0; k < numEdges; ++k)
                 {
@@ -354,8 +339,6 @@ int main(int argc, char **argv)
                 }
                 execTimesOfstream << "j " + std::to_string(testjd) << std::endl;
                 execTimesOfstream << execTimes[testjd] << std::endl;
-                staircaseStepOutIdxOfstream << "j " + std::to_string(testjd) << std::endl;
-                staircaseStepOutIdxOfstream << staircaseStepOutIdx[testjd] << std::endl;
 
                 // Finding mean error of current instance-testjd pair
                 rotMeanErr = SomUtils::stlVecDoublesMean(rotErrs[testjd]);
@@ -396,7 +379,6 @@ int main(int argc, char **argv)
     rotErrsOfstream.close();
     translErrsOfstream.close();
     execTimesOfstream.close();
-    staircaseStepOutIdxOfstream.close();
     rotErrsMeanOfstream.close();
     translErrsMeanOfstream.close();
     execTimesMeanOfstream.close();
