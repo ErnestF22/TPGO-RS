@@ -60,6 +60,17 @@ public:
     void run();
 
     /**
+     * Getter for costCurr_ object
+     */
+    double getCost() const;
+
+    /**
+     * @brief Compute and return cost (as double) with Eigen inputs
+     * i.e., p x d x n @param Reigen and p x n @param Teigen
+     */
+    double costEigen(const SomUtils::VecMatD &Reigen, const SomUtils::MatD &Teigen) const;
+
+    /**
      * Set Tstart_ before running stepOne for the first time
      */
     void setTstart(const SomUtils::MatD &Tstart);

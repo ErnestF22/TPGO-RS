@@ -238,6 +238,39 @@ void SomProcrustes::run()
 
     Rout_ = Rcurr_;
     Tout_ = Tcurr_;
+
+    costCurr_ = costEigen(Rcurr_, Tcurr_);
+}
+
+double SomProcrustes::getCost() const
+{
+    return costCurr_;
+}
+
+double SomProcrustes::costEigen(const SomUtils::VecMatD &Reigen, const SomUtils::MatD &Teigen) const
+{
+    double cost = 0.0f;
+    for (int e = 0; e < numEdges_; ++e)
+    {
+        int i = edges_(e, 0) - 1; // !! -1
+        int j = edges_(e, 1) - 1; // !! -1
+
+        auto Ri = Reigen[i];
+        auto Ti = Teigen.col(i);
+        auto Tj = Teigen.col(j);
+
+        SomUtils::VecD tij(SomUtils::VecD::Zero(sz_.d_));
+        tij = Tijs_.col(e);
+
+        // ROFL_VAR3(i, j, e);
+        // ROFL_VAR4(Ri, tij.transpose(), Ti.transpose(), Tj.transpose());
+
+        double costEsq = (Ri * tij - Tj + Ti).squaredNorm(); // TODO: use squaredNorm() here directly
+        // ROFL_VAR1(costE);
+
+        cost += costEsq;
+    }
+    return cost;
 }
 
 void SomProcrustes::setTstart(const SomUtils::MatD &Tstart)

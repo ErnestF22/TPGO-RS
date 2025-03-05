@@ -585,7 +585,7 @@ namespace SomUtils
         return formatter.str();
     }
 
-    void readCsvVecEigen(const std::string &filenameIn, Eigen::MatrixXd &out)
+    bool readCsvVecEigen(const std::string &filenameIn, Eigen::MatrixXd &out)
     {
         std::string line;
         std::ifstream fileIn(filenameIn);
@@ -593,7 +593,7 @@ namespace SomUtils
         {
             ROFL_ERR("Error opening file")
             ROFL_VAR1(filenameIn)
-            ROFL_ASSERT(0)
+            return false;
         }
         int ctr = 0;
         while (std::getline(fileIn, line))
@@ -603,6 +603,7 @@ namespace SomUtils
             out(ctr, 0) = val;
             ctr++;
         }
+        return true;
     }
 
     void vstack(const SomUtils::VecMatD &in, SomUtils::MatD &out)

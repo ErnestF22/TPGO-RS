@@ -47,6 +47,8 @@ build-release/
 
 # results default folder
 results/
+results_procrustes/
+
 
 .vscode/
 

@@ -220,7 +220,7 @@ namespace SomUtils
     /**
      * Read a csv file with a single column and save it to reference @param out
      */
-    void readCsvVecEigen(const std::string &filenameIn, Eigen::MatrixXd &out);
+    bool readCsvVecEigen(const std::string &filenameIn, Eigen::MatrixXd &out);
 
     /**
      * Vertically stack input vector
