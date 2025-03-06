@@ -1,8 +1,8 @@
-function check_ssom_recovery_formulation
+function check_ssom_recovery_formulation_lowdeg
 
-load('data/ssom_recovery/ws1.mat', 'X_manopt_out')
-load('data/ssom_recovery/ws1.mat', 'problem_data')
-load('data/ssom_recovery/ws1.mat', 'N')
+load('data/ssom_recovery/ws2.mat', 'X_manopt_out')
+load('data/ssom_recovery/ws2.mat', 'problem_data')
+load('data/ssom_recovery/ws2.mat', 'N')
 
 R = X_manopt_out.R;
 T = X_manopt_out.T;
@@ -47,14 +47,12 @@ disp(max(abs(R_tilde2_edges(d+1:end, :)), [], "all"))
 R_recovered = zeros(d,d,N);
 R_recovered(:,:,nodes_high_deg) = R_tilde2_edges(1:d,:,:);
 
+T_recovered = zeros(d,d,N);
+
 if ~any(nodes_low_deg)
-    disp('No nodes low deg!')
-    T_diffs_shifted = Qx_edges * T_diffs; %this has last row to 0
-    disp("max(abs(T_diffs_shifted(d+1:end, :)), [], ""all"")")
-    disp(max(abs(T_diffs_shifted(d+1:end, :)), [], "all"))
-    T_recovered = edge_diffs_2_T(T_diffs_shifted(1:d,:), edges, N);
+    disp("See other test case for that!")
 else
-    disp("Need another test case for that")
+    
 end
 
 disp("R_recovered")

@@ -217,6 +217,8 @@ disp(cost_manopt_out)
 %     lambdas_recovered = lambdas_manopt_out;
 % end
 
+save("ws2.mat")
+
 R_recovered = R_manopt_out;
 T_recovered = T_manopt_out;
 lambdas_recovered = lambdas_manopt_out;

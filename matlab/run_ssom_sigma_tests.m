@@ -3,7 +3,7 @@ clear;
 close all;
 
 N = 5;
-mindeg = 3;
+mindeg = 2;
 
 % 1a) PW TRANSLATION DATA INPUT: R, T are the gt, Tijs_nois are the input data
 testdata = testNetwork_params(3, N, 'banded', mindeg); %4 would be the default
@@ -16,7 +16,7 @@ N = testdata.NNodes;
 d = 3;
 d_aff = d+1;
 global_camera_id = 1;
-num_tests_per_sigma = 30;
+num_tests_per_sigma = 5;
 transf_end_thresh = 1;
 max_icp_iterations = 10;
 num_edges_full = N*N;
@@ -24,8 +24,8 @@ num_edges = testdata.NEdges;
 procrustes_mode = 'som';
 riem_grad_mode = 'manual'; %'auto' or 'manual'
 hessian_mode = 'manual'; 
-initguess_is_available = boolean(1);
-rand_initguess = boolean(0);
+initguess_is_available = boolean(0);
+rand_initguess = boolean(1);
 enable_manopt_icp = boolean(0);
 enable_procrustes = boolean(0);
 enable_ssom = boolean(1);
@@ -48,7 +48,7 @@ sigmas = readmatrix("data/sigmas.txt"); %sigma = stdev, sigma.^2 = variance
 mus = readmatrix("data/mus.txt"); %OBS. generally, mus can be d-dimensional; here, we just assume them as scalar (i.e. a d-dimensional vector with all coordinates equal)
 
 % sigmas = sigmas(4);
-% sigmas = 0.0;
+sigmas = 0.0;
 % mus = mus(2);
 
 node_degrees = sum(testdata.A, 2);
