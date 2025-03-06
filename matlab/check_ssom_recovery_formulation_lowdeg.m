@@ -65,7 +65,7 @@ else
         if node_deg == low_deg           
 
             fprintf("Running recoverRitilde() on node %g\n", node_id);
-            R_i = R(:,:,node_id);
+            Ri_tilde2 = R(:,:,node_id);
 
             cost_manopt_output = ssom_cost(X_manopt_out, problem_data_next); 
             disp("cost_manopt_output")
@@ -77,25 +77,26 @@ else
             problem_data_local.node_degrees = node_degrees;
             [a, b] = ssom_make_tij1j2s_edges(node_id, ...
                 T_diffs, lambdas, tijs, edges, problem_data_local);
+
             %% (27), (28)
             disp("[R(:,:,node_id) * a, b]")
             disp([R(:,:,node_id) * a, b])
             disp("Checking (27), (28) -> residual should be 0")
             disp("max(abs(R(:,:,node_id) * a - b), [], ""all"")")
-            disp(max(abs(R_i * a - b), [], "all"))
+            disp(max(abs(Ri_tilde2 * a - b), [], "all"))
 
             %% (29)
-            Qy = POCRotateToMinimizeLastEntries(b);
-            c = Qy * b;
-            disp("c")
-            disp(c)
+            Qx = POCRotateToMinimizeLastEntries(b);
+            cc = Qx * b;
+            disp("cc")
+            disp(cc)
 
             disp("Checking (29) -> residual should be 0")
-            disp("max(abs(c(d:end, :)), [], ""all"")")
-            disp(max(abs(c(d:end, :)), [], "all"))
+            disp("max(abs(cc(d:end, :)), [], ""all"")")
+            disp(max(abs(cc(d:end, :)), [], "all"))
 
             %% (30)
-            dd = Qy * R_i * a;
+            dd = Qx * Ri_tilde2 * a;
 
             disp("dd")
             disp(dd)
@@ -131,15 +132,51 @@ else
             % 
             % %% (33)
             % Qx = make_rand_stiefel_3d_array(p, p, 1);
-            % lhs_32 = Qb * Qy * R_i * a;
+            % lhs_32 = Qb * Qx * Ri_tilde2 * a;
             % rhs_32 = Qx * b;
             % 
             % disp("Checking (32) -> residual should be 0")
             % 
             % disp("max(abs(lhs31(d:end, :)), [], ""all"")")
             % disp(max(abs(lhs31(d:end, :)), [], "all"))
+            
+            Qxtransp = Qx';
+            Qbot = Qxtransp(d+1:end, :);
+            mathcalR = Qx * Ri_tilde2;
+            Rbot = mathcalR(d:end, :);
+            Qbotright = Qbot(:, d:end);
 
-            %% (34)
+            Qbotleft = Qbot(:, 1:2); %supposedly leads to null term
+            Rtop = mathcalR(1:2, :); %supposedly leads to null term
+
+            supposedly_zero_without_lemma = ...
+                Qbotleft * Rtop + Qbotright * Rb' * Rbot; %supposedly null 
+
+            disp("max(abs(supposedly_zero_without_lemma), [], ""all"")")
+            disp(max(abs(supposedly_zero_without_lemma), [], "all"))
+    
+            supposedly_zero_applying_lemma = Qbotright * Rb' * Rbot; %supposedly null
+
+            disp("max(abs(supposedly_zero_applying_lemma), [], ""all"")")
+            disp(max(abs(supposedly_zero_applying_lemma), [], "all"))
+
+            %% (38)
+
+            % Rb = ssom_procrustesRb()
+
+            % Qx' * blkdiag(eye(2), Rb') * Qx * Ri_tilde2
+
+            
+            %% ssom_recoverRitilde()
+
+            % [RitildeEst1,RitildeEst2,~,~] = ...
+            %         ssom_recoverRitilde(Qx_edges * Ri_tilde2 , Qx * b);
+            % 
+            % 
+            % disp("RitildeEst1")
+            % disp(RitildeEst1)
+            % disp("RitildeEst2")
+            % disp(RitildeEst2)
 
 
         end
@@ -155,3 +192,9 @@ end
 
 end %file function
     
+function RbEst=ssom_procrustesRb(c,q)
+[U,~,V]=svd(c*q');
+tmp = eye(size(U));
+tmp(end,end) = det(U*V');
+RbEst=U*tmp*V';
+end

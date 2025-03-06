@@ -22,8 +22,8 @@ hessian_mode = 'manual';
 initguess_is_available = boolean(1);
 rand_initguess = boolean(0);
 enable_manopt_icp = boolean(0);
-enable_procrustes = boolean(1);
-enable_manopt_rs = boolean(0);
+enable_procrustes = boolean(0);
+enable_manopt_rs = boolean(1);
 som_params = struct('N', N, 'd', d, 'd_aff', d_aff, ...
     'global_camera_id', global_camera_id, ...
     'num_tests_per_sigma', num_tests_per_sigma, 'transf_end_thresh', transf_end_thresh, ...
