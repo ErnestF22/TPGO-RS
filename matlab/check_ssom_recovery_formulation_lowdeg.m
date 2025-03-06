@@ -2,13 +2,16 @@ function check_ssom_recovery_formulation_lowdeg
 
 load('data/ssom_recovery/ws2.mat', 'X_manopt_out')
 load('data/ssom_recovery/ws2.mat', 'problem_data')
+load('data/ssom_recovery/ws2.mat', 'problem_data_next')
 load('data/ssom_recovery/ws2.mat', 'N')
 
 R = X_manopt_out.R;
 T = X_manopt_out.T;
+lambdas = X_manopt_out.lambda;
 edges = problem_data.E;
+tijs = problem_data.tijs;
 
-% p = size(R,1);
+p = size(R,1);
 d = size(R,2);
 
 node_degrees = sum(problem_data.A, 2);
@@ -23,12 +26,12 @@ T_diffs = make_T_edges(T,edges);
 Y_stack = [matStackH(R(:,:,nodes_high_deg)), T_diffs];
 
 %% (25)
-Qy = svd(Y_stack * Y_stack'); %last p-d rows are indeed 0
-disp("Qy")
-disp(Qy)
+Qy_25 = svd(Y_stack * Y_stack'); %last p-d rows are indeed 0
+disp("Qy_25")
+disp(Qy_25)
 
 disp("max(abs(Qy(d+1:end, :)), [], ""all"")")
-disp(max(abs(Qy(d+1:end, :)), [], "all"))
+disp(max(abs(Qy_25(d+1:end, :)), [], "all"))
 
 %% (26)
 % T_diffs_shifted = Qy' * T_diffs
@@ -52,13 +55,101 @@ T_recovered = zeros(d,d,N);
 if ~any(nodes_low_deg)
     disp("See other test case for that!")
 else
+    for node_id = 1:length(node_degrees)
+        node_deg = node_degrees(node_id);        
+
+        if (node_id > 1)
+            break; %TODO: remove this early break later
+        end
+
+        if node_deg == low_deg           
+
+            fprintf("Running recoverRitilde() on node %g\n", node_id);
+            R_i = R(:,:,node_id);
+
+            cost_manopt_output = ssom_cost(X_manopt_out, problem_data_next); 
+            disp("cost_manopt_output")
+            disp(cost_manopt_output)
     
+
+            problem_data_local = problem_data;
+            problem_data_local.d = problem_data.sz(2);
+            problem_data_local.node_degrees = node_degrees;
+            [a, b] = ssom_make_tij1j2s_edges(node_id, ...
+                T_diffs, lambdas, tijs, edges, problem_data_local);
+            %% (27), (28)
+            disp("[R(:,:,node_id) * a, b]")
+            disp([R(:,:,node_id) * a, b])
+            disp("Checking (27), (28) -> residual should be 0")
+            disp("max(abs(R(:,:,node_id) * a - b), [], ""all"")")
+            disp(max(abs(R_i * a - b), [], "all"))
+
+            %% (29)
+            Qy = POCRotateToMinimizeLastEntries(b);
+            c = Qy * b;
+            disp("c")
+            disp(c)
+
+            disp("Checking (29) -> residual should be 0")
+            disp("max(abs(c(d:end, :)), [], ""all"")")
+            disp(max(abs(c(d:end, :)), [], "all"))
+
+            %% (30)
+            dd = Qy * R_i * a;
+
+            disp("dd")
+            disp(dd)
+
+            disp("Checking (30) -> residual should be 0")
+
+            disp("max(abs(dd(d:end, :)), [], ""all"")")
+            disp(max(abs(dd(d:end, :)), [], "all"))
+
+            %% (31)
+            Rb = make_rand_stiefel_3d_array(p-low_deg, p-low_deg, 1);
+            Qb = blkdiag(eye(low_deg), Rb);
+
+            lhs31 = Qb * dd;
+
+            disp("lhs31")
+            disp(lhs31)
+
+            disp("Checking (31) -> residual should be 0")
+            
+            disp("max(abs(lhs31(d:end, :)), [], ""all"")")
+            disp(max(abs(lhs31(d:end, :)), [], "all"))
+
+            % %% (32)
+            % Qx = make_rand_stiefel_3d_array(p, p, 1);
+            % lhs_32 = Qb * dd;
+            % rhs_32 = Qx * b;
+            % 
+            % disp("Checking (32) -> residual should be 0")
+            % 
+            % disp("max(abs(lhs32(d:end, :)), [], ""all"")")
+            % disp(max(abs(lhs_32 - rhs_32), [], "all"))
+            % 
+            % %% (33)
+            % Qx = make_rand_stiefel_3d_array(p, p, 1);
+            % lhs_32 = Qb * Qy * R_i * a;
+            % rhs_32 = Qx * b;
+            % 
+            % disp("Checking (32) -> residual should be 0")
+            % 
+            % disp("max(abs(lhs31(d:end, :)), [], ""all"")")
+            % disp(max(abs(lhs31(d:end, :)), [], "all"))
+
+            %% (34)
+
+
+        end
+    end
 end
 
-disp("R_recovered")
-disp(R_recovered)
-disp("T_recovered")
-disp(T_recovered)
+% disp("R_recovered")
+% disp(R_recovered)
+% disp("T_recovered")
+% disp(T_recovered)
 
 
 
