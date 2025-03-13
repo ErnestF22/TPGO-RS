@@ -1,4 +1,6 @@
 function RbEst=procrustesRb(c,q)
 [U,~,V]=svd(c*q');
-RbEst=U*diag([1 det(U*V')])*V';
+diagmat = eye(size(U,1));
+diagmat(end, end) = det(U*V');
+RbEst=U*diagmat*V';
 end
