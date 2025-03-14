@@ -101,76 +101,146 @@ else
             %% (27), (28)
             disp("[R(:,:,node_id) * a *Lambda_rec, b]")
             disp([R(:,:,node_id) * a*Lambda_rec, b])
-            disp("Checking (27), (28) -> residual should be 0")
+            disp("Checking (27), (28) -> diff between lhs and rhs should be 0")
             disp("max(abs(R(:,:,node_id) * a*Lambda_rec - b), [], ""all"")")
             disp(max(abs(Ri_tilde2 * a*Lambda_rec - b), [], "all"))
 
             %% (29)
-            Qy = POCRotateToMinimizeLastEntries(b);
-            cc = Qy * b;
+            Qx = POCRotateToMinimizeLastEntries(b);
+            cc = Qx * b;
             disp("cc")
             disp(cc)
 
-            disp("Checking (29) -> residual should be 0")
+            disp("Checking (29) -> last (p-d) rows should be 0")
             disp("max(abs(cc(d:end, :)), [], ""all"")")
             disp(max(abs(cc(d:end, :)), [], "all"))
 
+            
+            [RitildeEst1,RitildeEst2,Qx,Rb] = ...
+                ssom_recoverRitilde(Qx_edges * Ri_tilde2,b);
+
             %% (30)
-            dd = Qy * Ri_tilde2 * a * Lambda_rec;
+
+            lhs_30 = Qx * b;
+
+            disp("Checking (30) -> last (p-2) rows should be 0")
+            disp("max(abs(lhs_30(d:end, :)), [], ""all"")")
+            disp(max(abs(lhs_30(d:end, :)), [], "all"))
+
+            %% (31a) -> RitildeEst1
+            dd = Qx * RitildeEst1 * a * Lambda_rec;
 
             disp("dd")
             disp(dd)
 
-            disp("Checking (30) -> residual should be 0")
+            disp("Checking (31a) -> last (p-2) rows should be 0")
 
             disp("max(abs(dd(d:end, :)), [], ""all"")")
             disp(max(abs(dd(d:end, :)), [], "all"))
 
-            %% (31)
-            Rb = make_rand_stiefel_3d_array(p-low_deg, p-low_deg, 1);
+            %% (31b) -> RitildeEst2
+            dd = Qx * RitildeEst2 * a * Lambda_rec;
+
+            disp("dd")
+            disp(dd)
+
+            disp("Checking (31b) -> last (p-2) rows should be 0")
+
+            disp("max(abs(dd(d:end, :)), [], ""all"")")
+            disp(max(abs(dd(d:end, :)), [], "all"))
+
+            %% (32)
             Qb = blkdiag(eye(low_deg), Rb);
 
-            lhs31 = Qb * dd;
+            lhs32 = Qb * dd;
 
-            disp("lhs31")
-            disp(lhs31)
+            disp("lhs32")
+            disp(lhs32)
 
-            disp("Checking (31) -> residual should be 0")
+            disp("Checking (32) -> last (p-2) rows should be 0")
             
-            disp("max(abs(lhs31(d:end, :)), [], ""all"")")
-            disp(max(abs(lhs31(d:end, :)), [], "all"))
-
-            % %% (32)
-            [RitildeEst1,RitildeEst2,Qx,Rb] = ...
-                ssom_recoverRitilde(Qy * Ri_tilde2,b);
-            lhs_32 = Qb * dd;
-            rhs_32 = Qx * b;
-
-            disp("Checking (32) -> residual should be 0")
-
             disp("max(abs(lhs32(d:end, :)), [], ""all"")")
-            disp(max(abs(lhs_32 - rhs_32), [], "all"))
-            % 
-            % %% (33)
-            % Qx = make_rand_stiefel_3d_array(p, p, 1);
-            % lhs_32 = Qb * Qx * Ri_tilde2 * a;
-            % rhs_32 = Qx * b;
-            % 
-            % disp("Checking (32) -> residual should be 0")
-            % 
-            % disp("max(abs(lhs31(d:end, :)), [], ""all"")")
-            % disp(max(abs(lhs31(d:end, :)), [], "all"))
-            
-            
-            Qxtransp = Qx';
-            Qbot = Qxtransp(d+1:end, :);
-            % mathcalR = Qy * Ri_tilde2;
-            mathcalR = Qx * Ri_tilde2;
-            Rbot = mathcalR(d:end, :);
-            Qbotright = Qbot(:, d:end);
+            disp(max(abs(lhs32(d:end, :)), [], "all"))
 
-            Qbotleft = Qbot(:, 1:2); %supposedly leads to null term
-            Rtop = mathcalR(1:2, :); %supposedly leads to null term
+            %% (33a)
+            lhs_33 = Qb * Qx * RitildeEst1 * a * Lambda_rec;
+            rhs_33 = Qx * b;
+
+            disp("Checking (33) -> lhs and rhs should be equal")
+
+            disp("max(abs(lhs_33 - rhs_33)), [], ""all"")")
+            disp(max(abs(lhs_33 - rhs_33), [], "all"))
+
+            %% (33b)
+            lhs_33 = Qb * Qx * RitildeEst2 * a * Lambda_rec;
+            rhs_33 = Qx * b;
+
+            disp("Checking (33) -> lhs and rhs should be equal")
+
+            disp("max(abs(lhs_33 - rhs_33)), [], ""all"")")
+            disp(max(abs(lhs_33 - rhs_33), [], "all"))
+           
+
+            %% (34a)
+            lhs_34 = Qx' * Qb * Qx * RitildeEst1 * a * Lambda_rec;
+            rhs_34 = b;
+
+            disp("Checking (34a) -> lhs and rhs should be equal")
+
+            disp("max(abs(lhs_34 - rhs_34)), [], ""all"")")
+            disp(max(abs(lhs_34 - rhs_34), [], "all"))
+
+            %% (34b)
+            lhs_34 = Qx' * Qb * Qx * RitildeEst2 * a * Lambda_rec;
+            rhs_34 = b;
+
+            disp("Checking (34b) -> lhs and rhs should be equal")
+
+            disp("max(abs(lhs_34 - rhs_34)), [], ""all"")")
+            disp(max(abs(lhs_34 - rhs_34), [], "all"))
+
+            %% (35a)
+            lhs_35 = RitildeEst1 * a;
+            
+            disp("Checking (35a) -> last (p-3) rows should be 0")
+            
+            disp("max(abs(lhs_35(d+1:end, :)), [], ""all"")")
+            disp(max(abs(lhs_35(d+1:end, :)), [], "all"))
+
+            %% (36)
+
+            %about the span of Q_x^{top}\transpose
+
+            %% (37)
+            lhs_37 = Qx' * Qb * Qx * RitildeEst1 * a * Lambda_rec;
+            rhs_37 = b;
+
+            disp("Checking (37) -> lhs and rhs should be equal")
+
+            disp("max(abs(lhs_37 - rhs_37)), [], ""all"")")
+            disp(max(abs(lhs_37 - rhs_37), [], "all"))
+            
+
+            %% (37) underbrace
+
+            disp("Checking UNDERBRACE OF (37) -> lhs and rhs should be equal")
+
+            disp("max(abs(Qx' * Qb * Qx * RitildeEst1 - Ri_tilde2)), [], ""all"")")
+            disp(max(abs(Qx' * inv(blkdiag(eye(2),-Rb')) * Qx * RitildeEst1 - Ri_tilde2), [], "all"))
+            disp(max(abs(Qx' * inv(blkdiag(eye(2),Rb')) * Qx * RitildeEst2 - Ri_tilde2), [], "all"))
+
+            disp("")
+
+            %% (38)
+
+            % Rb = ssom_procrustesRb()
+
+            % Qx' * blkdiag(eye(2), Rb') * Qx * Ri_tilde2
+
+            %% (39)
+
+            %direct consequence of (38)            
+
 
             %% (40)
 
@@ -187,31 +257,9 @@ else
             disp(max(abs(supposedly_zero_applying_lemma), [], "all"))
 
            
-            %% (37)
-            tmp = blkdiag(eye(2,2), Rb);
-            lhs_37 = Qx' * tmp * Qx * RitildeEst1 * a * Lambda_rec;
-            rhs_37 = b;
-
-            disp("[lhs_37, rhs_37]")
-            disp([lhs_37, rhs_37])
-
-            %% (38)
-
-            % Rb = ssom_procrustesRb()
-
-            % Qx' * blkdiag(eye(2), Rb') * Qx * Ri_tilde2
+            
 
             
-            %% ssom_recoverRitilde()
-
-            % [RitildeEst1,RitildeEst2,~,~] = ...
-            %         ssom_recoverRitilde(Qx_edges * Ri_tilde2 , Qx * b);
-            % 
-            % 
-            % disp("RitildeEst1")
-            % disp(RitildeEst1)
-            % disp("RitildeEst2")
-            % disp(RitildeEst2)
 
 
         end
