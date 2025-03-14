@@ -28,20 +28,19 @@ problem_struct.sz = [d, d, N];
 
 
 
-
 XR = make_rand_stiefel_3d_array(d,d,N);
 XT = rand(d,N);
 X.R = XR;
 X.T = XT;
 
-UR = stiefel_randTangentNormVector(XR);
+% UR = stiefel_randTangentNormVector(XR);
 UT = rand(d,N);
-U.R = UR;
-U.T = UT / norm(UT);
+% U.R = UR;
+% U.T = UT / norm(UT);
 
 
-XRnext = cat_zero_rows_3d_array(make_rand_stiefel_3d_array(d,d,N));
-XTnext = cat_zero_row(rand(d,N));
+XRnext = cat_zero_rows_3d_array(XR);
+XTnext = cat_zero_row(XT);
 Xnext.R = XRnext;
 Xnext.T = XTnext;
 
@@ -50,7 +49,7 @@ UTnext = cat_zero_row(UT);
 Unext.R = URnext;
 Unext.T = UTnext / norm(UTnext);
 
-Hmat = make_H_mat(Xnext,Unext, problem_struct);
+Hmat = make_H_mat(Xnext, problem_struct);
 disp("Hmat")
 disp(Hmat)
 
@@ -73,10 +72,14 @@ disp(min(abs(vectorizeXrt(Hgp) - Htest), [], "all"))
 % disp("lambdas")
 % disp(lambdas)
 
-max_imag_part = max(imag(lambdas), [], "all");
+max_imag_part = max(abs(imag(lambdas)), [], "all");
 
 disp("max_imag_part")
 disp(max_imag_part)
+
+if (max_imag_part > 1e-6)
+    error("Hessian NOT symmetric")
+end
 
 lambdas = real(lambdas);
 % V = real(V);
@@ -97,7 +100,7 @@ disp(vmin)
 
 
 
-[Y0, lambda_pim_out, v_pim_out] = rsom_pim_hessian_genproc(X, problem_struct);
+[~, lambda_pim_out, v_pim_out] = rsom_pim_hessian_genproc(X, problem_struct);
 
 disp("lambda_pim_out")
 disp(lambda_pim_out)
@@ -109,7 +112,7 @@ disp([vmin, vectorizeXrt(v_pim_out)])
 
 end %file function
 
-function Hmat = make_H_mat(X, U, problem_struct)
+function Hmat = make_H_mat(X, problem_struct)
 tmp = vectorizeXrt(X);
 vecsz = length(tmp);
 Hmat = zeros(vecsz);
