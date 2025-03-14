@@ -128,12 +128,29 @@ check = abs(max(C) - min(C)) < tol;
 % If yes, get the scalar multiple
 if check
     scalar = C(1);
+    disp("Eigenvectors check OK!")
 else % If not, set to NaN
     scalar = NaN;
 end
 
 disp("scalar")
 disp(scalar)
+
+%checking also eigenvalue
+disp("[lambda_min, lambda_pim_out]")
+disp([lambda_min, lambda_pim_out])
+
+lambdas_check = abs(lambda_min - lambda_pim_out) < 1e-3;
+disp("abs(lambda_min - lambda_pim_out) < 1e-3")
+disp(lambdas_check)
+
+if lambdas_check
+    disp("Eigenvalues check OK!")
+else
+    disp("Eigenvalues check FAIL!")
+end
+
+
 
 end %file function
 
