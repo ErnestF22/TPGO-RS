@@ -88,7 +88,7 @@ lambda_min = min(diag(lambdas)); %!!
 disp("lambda_min")
 disp(lambda_min)
 
-[x,y]=find(lambdas==lambda_min);
+[x,y]=find(lambdas==lambda_min); %Note: x, y should be equal (lambdas matrix is diagonal)
 disp("x")
 disp(x)
 disp("y")
@@ -104,11 +104,36 @@ disp(vmin)
 
 disp("lambda_pim_out")
 disp(lambda_pim_out)
-disp("v_pim_out")
-disp(v_pim_out)
+disp("vectorizeXrt(v_pim_out)")
+disp(vectorizeXrt(v_pim_out))
 
 disp("vmin, vectorizeXrt(v_pim_out)")
 disp([vmin, vectorizeXrt(v_pim_out)])
+
+% check whether vmin, v_pim_out are proportional
+
+tol = 1e-10; % Divide tolerance
+A = remove_quasi_zeros(vmin, 10 * tol);
+B = remove_quasi_zeros(vectorizeXrt(v_pim_out), 10 * tol);
+C = A./B; % Divide element-wise
+
+%removing NaNs (0-divisions)
+id1 = isnan(C);
+C(id1) = [];
+
+% Check if the difference between largest and smallest values are within the
+% tolerance
+check = abs(max(C) - min(C)) < tol;
+
+% If yes, get the scalar multiple
+if check
+    scalar = C(1);
+else % If not, set to NaN
+    scalar = NaN;
+end
+
+disp("scalar")
+disp(scalar)
 
 end %file function
 
