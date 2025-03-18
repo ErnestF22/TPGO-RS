@@ -155,8 +155,8 @@ end
 end %file function
 
 function Hmat = make_H_mat(X, problem_struct)
-tmp = vectorizeXrt(X);
-vecsz = length(tmp);
+Xvec = vectorizeXrt(X);
+vecsz = length(Xvec);
 Hmat = zeros(vecsz);
 p = size(X.R, 1);
 d = size(X.R, 2);

@@ -1015,6 +1015,257 @@ namespace ROPTLIB
         vPimTout = vPimTshift;
     }
 
+    void SampleSomProblem::rsomEscapeHessianGenprocEigen(const SomUtils::VecMatD &R, const SomUtils::MatD &T,
+                                                         Vector &Y0, double &lambdaPimOut, SomUtils::VecMatD &vPimRout, SomUtils::MatD &vPimTout) const
+    {
+        int staircaseNextStepLevel = T.rows() + 1;
+        ROFL_VAR1(staircaseNextStepLevel);
+        SomUtils::VecMatD Rnext(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
+        SomUtils::catZeroRow3dArray(R, Rnext);
+        SomUtils::MatD Tnext(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
+        SomUtils::catZeroRow(T, Tnext);
+
+        // stiefel_normalize_han = @(x) x./ (norm(x(:))); //Note: this is basically eucl_normalize_han
+
+        // u_start.R = stiefel_randTangentNormVector(Rnext);
+        SomUtils::VecMatD RnextTg(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
+        stiefelRandTgNormVector(Rnext, RnextTg);
+        // u_start.R = stiefel_normalize(Rnext, u_start.R);
+        SomUtils::VecMatD RnextTgNorm(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
+        SomUtils::normalizeEucl(RnextTg, RnextTgNorm);
+
+        // u_start.T = rand(size(Tnext));
+        auto TnextTg = SomUtils::MatD::Random(staircaseNextStepLevel, sz_.n_);
+        // u_start.T = stiefel_normalize_han(u_start.T);
+        SomUtils::MatD TnextTgNorm(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
+        SomUtils::normalizeEucl(TnextTg, TnextTgNorm);
+
+        // [lambda_pim, v_pim] = pim_function_genproc(rhess_fun_han, u_start, stiefel_normalize_han, thresh);
+        // disp('Difference between lambda*v_max and H(v_max) should be in the order of the tolerance:')
+        double lambdaPim = 1e+6;
+        SomUtils::VecMatD vPimR(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
+        SomUtils::MatD vPimT(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
+
+        /**
+         * Do the job
+         */
+
+        // Xvec = vectorizeXrt(X);
+        // vecsz = length(Xvec);
+        // Hmat = zeros(vecsz);
+        SomUtils::MatD Xvec(staircaseNextStepLevel * sz_.d_ * sz_.n_ + staircaseNextStepLevel * sz_.n_, 1);
+        vectorizeRT(Rnext, Tnext, Xvec);
+        int vecsz = Xvec.rows();
+        SomUtils::MatD Hmat(SomUtils::MatD::Zero(vecsz, vecsz));
+
+        // p = size(X.R, 1);
+        // d = size(X.R, 2);
+        // n = size(X.R, 3);
+        // for ii = 1:vecsz
+        //     e_i = zeros(vecsz, 1);
+        //     e_i(ii) = 1;
+        //     U_e_i = convertToRT(e_i, p, d, n);
+        //     Hgp_e_i = hess_genproc(X,U_e_i,problem_struct);
+        //     Hmat(:,ii) = vectorizeXrt(Hgp_e_i);
+
+        SomUtils::SomSize szNext(staircaseNextStepLevel, sz_.d_, sz_.n_);
+
+        ROPTLIB::SampleSomProblem ProbNext(szNext, Tijs_, edges_);
+
+        for (int i = 0; i < vecsz; ++i)
+        {
+            SomUtils::MatD eI(SomUtils::MatD::Zero(vecsz, 1));
+            eI(i) = 1;
+            SomUtils::VecMatD uRi(szNext.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, szNext.d_));
+            SomUtils::MatD uTi(SomUtils::MatD::Zero(staircaseNextStepLevel, szNext.n_));
+
+            ProbNext.getRotations(eI, uRi);
+            ProbNext.getTranslations(eI, uTi);
+
+            SomUtils::VecMatD rhrI(szNext.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, szNext.d_));
+            SomUtils::MatD rhtI(SomUtils::MatD::Zero(staircaseNextStepLevel, szNext.n_));
+
+            hessGenprocEigen(Rnext, uRi, eI, uTi, rhrI, rhtI);
+
+            SomUtils::MatD rhVecI(SomUtils::MatD::Zero(vecsz, 1));
+            vectorizeRT(rhrI, rhtI, rhVecI);
+            Hmat.col(i) = rhVecI;
+        }
+
+        /**
+         * Linesearch for escaping saddle point
+         */
+
+        // // %Preparing linesearch
+        // nrs_next = problem_struct_next.sz(1);
+        // d = problem_struct_next.sz(2);
+        // N = problem_struct_next.sz(3);
+
+        Stiefel mani1(staircaseNextStepLevel, szNext.d_);
+        mani1.ChooseParamsSet2();
+        integer numoftypes = 2; // 2 i.e. (3D) Stiefel + Euclidean
+
+        integer numofmani1 = szNext.n_; // num of Stiefel manifolds
+        integer numofmani2 = 1;
+        Euclidean mani2(staircaseNextStepLevel, szNext.n_);
+        ProductManifold ProdManiNext(numoftypes, &mani1, numofmani1, &mani2, numofmani2);
+
+        Vector xIn = ProdManiNext.RandominManifold(); //!! in other cases xIn would have been a pointer
+
+        SomUtils::MatD Y0T(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
+        SomUtils::VecMatD Y0R(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
+        linesearchDummy(costCurr_, Rnext, Tnext, vPimRout, vPimTout, Y0R, Y0T);
+
+        // ls Dummy debug: save on file scope
+        {
+            { // costCurr
+                std::ofstream outfile;
+
+                outfile.open("costCurr.csv", std::ios_base::trunc);
+                outfile << costCurr_;
+                outfile.close();
+            }
+
+            { // Rnext
+                std::ofstream outfile;
+
+                outfile.open("Rnext.csv", std::ios_base::trunc);
+                if (!outfile.is_open())
+                {
+                    ROFL_VAR1("Error opening outfile")
+                    ROFL_ASSERT(0);
+                }
+                for (int i = 0; i < sz_.n_; ++i)
+                    outfile << Rnext[i].reshaped<Eigen::ColMajor>(Rnext[i].rows() * Rnext[i].cols(), 1) << std::endl;
+                outfile.close();
+            }
+
+            { // Tnext
+                std::ofstream outfile;
+
+                outfile.open("Tnext.csv", std::ios_base::trunc);
+                if (!outfile.is_open())
+                {
+                    ROFL_VAR1("Error opening outfile")
+                    ROFL_ASSERT(0);
+                }
+                outfile << Tnext.reshaped<Eigen::ColMajor>(Tnext.rows() * Tnext.cols(), 1);
+                outfile.close();
+            }
+
+            { // vPimRout
+                std::ofstream outfile;
+
+                outfile.open("vPimRout.csv", std::ios_base::trunc);
+                if (!outfile.is_open())
+                {
+                    ROFL_VAR1("Error opening outfile")
+                    ROFL_ASSERT(0);
+                }
+                for (int i = 0; i < sz_.n_; ++i)
+                    outfile << vPimRout[i].reshaped<Eigen::ColMajor>(vPimRout[i].rows() * vPimRout[i].cols(), 1) << std::endl;
+                outfile.close();
+            }
+
+            { // vPimTout
+                std::ofstream outfile;
+
+                outfile.open("vPimTout.csv", std::ios_base::trunc);
+                if (!outfile.is_open())
+                {
+                    ROFL_VAR1("Error opening outfile")
+                    ROFL_ASSERT(0);
+                }
+                outfile << vPimTout.reshaped<Eigen::ColMajor>(vPimTout.rows() * vPimTout.cols(), 1);
+                outfile.close();
+            }
+
+            { // Y0R
+                std::ofstream outfile;
+
+                outfile.open("Y0R.csv", std::ios_base::trunc);
+                if (!outfile.is_open())
+                {
+                    ROFL_VAR1("Error opening outfile")
+                    ROFL_ASSERT(0);
+                }
+                for (int i = 0; i < sz_.n_; ++i)
+                    outfile << Y0R[i].reshaped<Eigen::ColMajor>(Y0R[i].rows() * Y0R[i].cols(), 1) << std::endl;
+                outfile.close();
+            }
+
+            { // Y0T
+                std::ofstream outfile;
+
+                outfile.open("Y0T.csv", std::ios_base::trunc);
+                if (!outfile.is_open())
+                {
+                    ROFL_VAR1("Error opening outfile")
+                    ROFL_ASSERT(0);
+                }
+                outfile << Y0T.reshaped<Eigen::ColMajor>(Y0T.rows() * Y0T.cols(), 1);
+                outfile.close();
+            }
+        }
+
+        Y0 = ProdManiNext.RandominManifold();
+        // ROFL_VAR1(Y0T);
+
+        { // EigToRopt scope for Y0
+
+            int rotSz = szNext.p_ * szNext.d_;
+            // int translSz = szNext.p_;
+
+            int gElemIdx = 0;
+            // fill result with computed gradient values : R
+            for (int i = 0; i < sz_.n_; ++i)
+            {
+                // ROFL_VAR1(gElemIdx);
+                // ROFL_VAR2("\n", rgR[gElemIdx]);
+                // result->GetElement(gElemIdx).SetToIdentity(); // Ri
+                // result->GetElement(gElemIdx).Print("Ri before assignment");
+
+                Vector RnextROPT(staircaseNextStepLevel, sz_.d_);
+                // RnextROPT.Initialize();
+                realdp *GroptlibWriteArray = RnextROPT.ObtainWriteEntireData();
+                for (int j = 0; j < rotSz; ++j)
+                {
+                    // ROFL_VAR2(i, j);
+                    // RnextROPT.Print("RnextROPT before assignment");
+
+                    // ROFL_VAR1(RnextROPT.GetElement(j, 0));
+
+                    GroptlibWriteArray[j] = Y0R[i].reshaped(sz_.d_ * staircaseNextStepLevel, 1)(j);
+
+                    // ROFL_VAR1("");
+                    // RnextROPT.Print("RnextROPT after assignment");
+                }
+                RnextROPT.CopyTo(Y0.GetElement(gElemIdx));
+                // result->GetElement(gElemIdx).Print("Riem. grad Ri after assignment");
+                gElemIdx++;
+            }
+
+            // fill result with computed gradient values : T
+
+            Vector TnextROPT(staircaseNextStepLevel, sz_.n_);
+            realdp *GroptlibWriteArray = TnextROPT.ObtainWriteEntireData();
+            for (int j = 0; j < staircaseNextStepLevel * sz_.n_; ++j)
+            {
+                // TnextROPT.Print("TnextROPT before assignment");
+
+                // ROFL_VAR1(RnextROPT.GetElement(j, 0));
+
+                GroptlibWriteArray[j] = Y0T.reshaped(sz_.n_ * staircaseNextStepLevel, 1)(j);
+
+                // ROFL_VAR1("");
+                // TnextROPT.Print("TnextROPT after assignment");
+            }
+            // TnextROPT.Print("line 1215");
+            // Y0.GetElement(gElemIdx).Print("line 1216");
+            TnextROPT.CopyTo(Y0.GetElement(gElemIdx));
+        } // end of EigToRopt scope for xIn
+    }
+
     void SampleSomProblem::rsomPimHessianGenproc(double thresh, const SomUtils::VecMatD &R, const SomUtils::MatD &T, Vector &Y0, bool armijo) const
     {
         // [Y_star, lambda, v] = rsom_pim_hessian_genproc( ...

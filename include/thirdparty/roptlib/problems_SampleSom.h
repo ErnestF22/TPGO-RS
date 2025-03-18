@@ -449,6 +449,15 @@ namespace ROPTLIB
                                       bool armijo = false) const;
 
       /**
+       * @brief Find minimum eigenvalue of Hessian H(x)[u] using a basis of the tangent space
+       * @param R, @param T are the starting points
+       * @param Y0 reference output: new starting point for RS next step
+       * @param lambdaPimOut, vPimRout, vPimTout reference outputs: associated eigencouple
+       */
+      void rsomEscapeHessianGenprocEigen(const SomUtils::VecMatD &R, const SomUtils::MatD &T,
+         Vector &Y0, double &lambdaPimOut, SomUtils::VecMatD &vPimRout, SomUtils::MatD &vPimTout) const;
+
+      /**
        * @brief Power iteration method for R, T (generalized Procrustes) version of the problem
        * Params are:
        * @param thresh for PIM computation thresholds (eigencouple check, stopping conditions of PIM)
