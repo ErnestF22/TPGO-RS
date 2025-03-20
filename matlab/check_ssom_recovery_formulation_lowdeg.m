@@ -18,16 +18,6 @@ low_deg = 2; %This is still an assumption for SSOM
 nodes_high_deg = node_degrees > low_deg; % all nodes are high deg in this test
 nodes_low_deg = ~nodes_high_deg;
 
-%% from deg>=3 recovery procedure
-
-% Y_stack = [matStackH(R), T_diffs];
-
-% Qy = svd(Y_stack * Y_stack'); %last p-d rows are indeed 0
-% Qx_edges = POCRotateToMinimizeLastEntries(Y_stack);
-% R_tilde2_edges_high_deg = multiprod(repmat(Qx_edges, 1, 1, sum(nodes_high_deg)), R(:,:,nodes_high_deg));
-
-% R(:,:,nodes_low_deg) = multiprod (repmat(Qx_edges, 1, 1, sum(nodes_low_deg)), R(:,:,nodes_low_deg));
-
 %%
 
 p = size(R,1);
@@ -57,9 +47,9 @@ disp(max(abs(Qy_25(d+1:end, :)), [], "all"))
 
 
 %%
-Qx_edges = POCRotateToMinimizeLastEntries(Y_stack);
+Qy = POCRotateToMinimizeLastEntries(Y_stack);
 
-R_tilde2_edges = multiprod(repmat(Qx_edges, 1, 1, sum(nodes_high_deg)), R(:,:,nodes_high_deg));
+R_tilde2_edges = multiprod(repmat(Qy, 1, 1, sum(nodes_high_deg)), R(:,:,nodes_high_deg));
 disp("R_tilde2_edges")
 disp(R_tilde2_edges)
 
@@ -94,16 +84,16 @@ else
             problem_data_local = problem_data;
             problem_data_local.d = problem_data.sz(2);
             problem_data_local.node_degrees = node_degrees;
-            T_diffs_shifted = Qx_edges * T_diffs; %this has last row to 0
+            T_diffs_shifted = Qy * T_diffs; %this has last row to 0
             [a, b, Lambda_rec] = ssom_make_tij1j2s_edges(node_id, ...
                 T_diffs_shifted, lambdas, tijs, edges, problem_data_local);
 
             %% (27), (28)
-            disp("[R(:,:,node_id) * a *Lambda_rec, b]")
-            disp([R(:,:,node_id) * a*Lambda_rec, b])
+            disp("Qy * [R(:,:,node_id) * a *Lambda_rec, b]")
+            disp([Qy * R(:,:,node_id) * a*Lambda_rec, b])
             disp("Checking (27), (28) -> diff between lhs and rhs should be 0")
-            disp("max(abs(R(:,:,node_id) * a*Lambda_rec - b), [], ""all"")")
-            disp(max(abs(Ri_tilde2 * a*Lambda_rec - b), [], "all"))
+            disp("max(abs(Qy * R(:,:,node_id) * a*Lambda_rec - b), [], ""all"")")
+            disp(max(abs(Qy * Ri_tilde2 * a*Lambda_rec - b), [], "all"))
 
             %% (29)
             Qx = POCRotateToMinimizeLastEntries(b);
@@ -117,7 +107,7 @@ else
 
             
             [RitildeEst1,RitildeEst2,Qx,Rb] = ...
-                ssom_recoverRitilde(Qx_edges * Ri_tilde2,b);
+                ssom_recoverRitilde(Qy * Ri_tilde2,b);
 
             %% (30)
 
@@ -225,9 +215,9 @@ else
 
             disp("Checking UNDERBRACE OF (37) -> lhs and rhs should be equal")
 
-            disp("max(abs(Qx' * Qb * Qx * RitildeEst1 - Ri_tilde2)), [], ""all"")")
-            disp(max(abs(Qx' * inv(blkdiag(eye(2),-Rb')) * Qx * RitildeEst1 - Ri_tilde2), [], "all"))
-            disp(max(abs(Qx' * inv(blkdiag(eye(2),Rb')) * Qx * RitildeEst2 - Ri_tilde2), [], "all"))
+            disp("max(abs(Qx' * Qb * Qx * RitildeEst1 - Qy * Ri_tilde2)), [], ""all"")")
+            disp(max(abs(Qx' * inv(blkdiag(eye(2),-Rb')) * Qx * RitildeEst1 - Qy * Ri_tilde2), [], "all"))
+            disp(max(abs(Qx' * inv(blkdiag(eye(2),Rb')) * Qx * RitildeEst2 - Qy * Ri_tilde2), [], "all"))
 
             disp("")
 
@@ -243,6 +233,15 @@ else
 
 
             %% (40)
+            Qxtransp = Qx';
+            Qtop = Qxtransp(1:d, :);
+            Qbot = Qxtransp(d+1:end, :);
+            Qbotleft = Qbot(:, 1:low_deg);
+            Qbotright = Qbot(:, low_deg + 1:end);
+
+            mathcalR = Qx * Qy * Ri_tilde2;
+            Rtop = mathcalR(1:low_deg, :);
+            Rbot = mathcalR(d:end, :);
 
             supposedly_zero_without_lemma = ...
                 Qbotleft * Rtop + Qbotright * Rb' * Rbot; %supposedly null 

@@ -1092,6 +1092,21 @@ namespace ROPTLIB
             Hmat.col(i) = rhVecI;
         }
 
+        auto eigvals = Hmat.eigenvalues(); // TODO: check how to use sparse matrix methods -> maybe SPECTRA library?
+        auto eigvecs = Hmat.eigenvectors();
+
+        lambdaPimOut = eigvals.minCoeff();
+        auto minEigvalIdx = eigvals.argmin();
+        auto minEigvec = eigvecs.col(minEigvalIdx);
+        ProbNext.getRotations(minEigvec, vPimRout);
+        ProbNext.getTranslations(minEigvec, vPimTout);
+        if (lambdaPimOut > 0)
+        {
+            // lambdaPimOut, vPimRout, vPimTout are already set before this check
+            ROFL_VAR2(lambdaPimOut, "lambdaPimOut > 0 -> avoiding linesearch")
+            return;
+        }
+
         /**
          * Linesearch for escaping saddle point
          */
