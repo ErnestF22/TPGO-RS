@@ -256,36 +256,108 @@ for f in folders:
 
 import matplotlib.pyplot as plt
 
-mindeg_to_plot = 3
+mindeg_to_plot = 2
 
 xpoints = np.array([0, 0.1, 0.2, 0.5, 1, 2])
-rot_errs_rs = np.array([])
-transl_errs_rs = np.array([])
-exec_times_rs = np.array([])
+
+############################ PLOT RS ############################
+
+
+rot_errs_rs = np.zeros_like(xpoints, dtype=np.float64)
+transl_errs_rs = np.zeros_like(xpoints, dtype=np.float64)
+exec_times_rs = np.zeros_like(xpoints, dtype=np.float64)
 
 for t in tuples_rs:
     t_n = t[0]
     t_mindeg = t[1]
+    if (t_mindeg != mindeg_to_plot):
+        continue
     t_sigma = t[2]
     t_rot_errs_mean_rs = t[3]
     t_transl_errs_mean_rs = t[4]
     t_exec_times_mean_rs = t[5]
-    rot_errs_rs = np.append(rot_errs_rs, t_rot_errs_mean_rs) #!! not sure about if these are ordered for sigma
-    transl_errs_rs = np.append(transl_errs_rs, t_transl_errs_mean_rs)
-    exec_times_rs = np.append(exec_times_rs, t_exec_times_mean_rs)
+
+    sigma_index = np.where(xpoints == t_sigma)
+    rot_errs_rs[sigma_index] = t_rot_errs_mean_rs
+    transl_errs_rs[sigma_index] = t_transl_errs_mean_rs
+    exec_times_rs[sigma_index] = t_exec_times_mean_rs
+
+############################ PLOT ICP ############################
+
+rot_errs_icp = np.zeros_like(xpoints, dtype=np.float64)
+transl_errs_icp = np.zeros_like(xpoints, dtype=np.float64)
+exec_times_icp = np.zeros_like(xpoints, dtype=np.float64)
+
+for t in tuples_icp:
+    t_n = t[0]
+    t_mindeg = t[1]
+    if (t_mindeg != mindeg_to_plot):
+        continue
+    t_sigma = t[2]
+    t_rot_errs_mean_icp = t[3]
+    t_transl_errs_mean_icp = t[4]
+    t_exec_times_mean_icp = t[5]
+
+    sigma_index = np.where(xpoints == t_sigma)
+    rot_errs_icp[sigma_index] = t_rot_errs_mean_icp
+    transl_errs_icp[sigma_index] = t_transl_errs_mean_icp
+    exec_times_icp[sigma_index] = t_exec_times_mean_icp
+
+############################ PLOT PROCRUSTES ############################
+
+rot_errs_procrustes = np.zeros_like(xpoints, dtype=np.float64)
+transl_errs_procrustes = np.zeros_like(xpoints, dtype=np.float64)
+exec_times_procrustes = np.zeros_like(xpoints, dtype=np.float64)
+
+for t in tuples_procrustes:
+    t_n = t[0]
+    t_mindeg = t[1]
+    if (t_mindeg != mindeg_to_plot):
+        continue
+    t_sigma = t[2]
+    t_rot_errs_mean_procrustes = t[3]
+    t_transl_errs_mean_procrustes = t[4]
+    t_exec_times_mean_procrustes = t[5]
+
+    sigma_index = np.where(xpoints == t_sigma)
+    rot_errs_procrustes[sigma_index] = t_rot_errs_mean_procrustes
+    transl_errs_procrustes[sigma_index] = t_transl_errs_mean_procrustes
+    exec_times_procrustes[sigma_index] = t_exec_times_mean_procrustes
 
 
 fig = plt.figure()
-gs = fig.add_gridspec(3, hspace=0)
-axs = gs.subplots(sharex=True, sharey=True)
-fig.suptitle('Sharing both axes')
-axs[0].plot(xpoints, rot_errs_rs, label="RSOM", color='blue')
-axs[1].plot(xpoints, transl_errs_rs, label="RSOM", color='blue')
-axs[2].plot(xpoints, exec_times_rs, label="RSOM", color='blue')
+gs = fig.add_gridspec(3, hspace=1)
+axs = gs.subplots(sharex=True)
+fig.suptitle('mindeg ' + str(mindeg_to_plot))
+axs[0].plot(xpoints, rot_errs_rs, 'o', label="TPGO-RS", color='green')
+axs[0].set_title('Rotation errors')
+# axs[0].set_ylim(-0.1, 3.14)
+axs[1].plot(xpoints, transl_errs_rs, 'o', label="TPGO-RS", color='green')
+axs[1].set_title('Translation errors')
+
+axs[2].plot(xpoints, exec_times_rs, 'o', label="TPGO-RS", color='green')
+axs[2].set_title('Execution times [ms]')
+# axs[2].set_ylim()
+
+axs[0].plot(xpoints, rot_errs_icp, 'o', label="TPGO-ICP", color='red')
+axs[0].set_title('Rotation errors')
+axs[1].plot(xpoints, transl_errs_icp, 'o', label="TPGO-ICP", color='red')
+axs[1].set_title('Translation errors')
+
+axs[2].plot(xpoints, exec_times_icp, 'o', label="TPGO-ICP", color='red')
+axs[2].set_title('Execution times [ms]')
+
+axs[0].plot(xpoints, rot_errs_procrustes, 'o', label="TPGO-PROCR", color='blue')
+axs[0].set_title('Rotation errors')
+axs[1].plot(xpoints, transl_errs_procrustes, 'o', label="TPGO-PROCR", color='blue')
+axs[1].set_title('Translation errors')
+axs[2].plot(xpoints, exec_times_procrustes, 'o', label="TPGO-PROCR", color='blue')
+axs[2].set_title('Execution times [ms]')
 
 # Hide x labels and tick labels for all but bottom plot.
 for ax in axs:
     ax.label_outer()
+    ax.legend()
 
 plt.show()
 
