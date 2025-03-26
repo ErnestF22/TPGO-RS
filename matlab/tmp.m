@@ -1,4 +1,8 @@
-function check_ssom_recovery_formulation_lowdeg
+function tmp
+
+% 
+% \tilde{\Lambda}_{rec}a=\bmat{*_{2\times 2}\\0_{(p-2)\times 2}}? \nonumber
+%
 
 load('data/ssom_recovery/ws2.mat', 'X_manopt_out')
 load('data/ssom_recovery/ws2.mat', 'problem_data')
@@ -66,11 +70,7 @@ if ~any(nodes_low_deg)
 else
     for node_id = 1:length(node_degrees)
         node_deg = node_degrees(node_id);        
-
-        if (node_id > 1)
-            break; %TODO: remove this early break later
-        end
-
+        
         if node_deg == low_deg           
 
             fprintf("Running recoverRitilde() on node %g\n", node_id);
@@ -201,102 +201,14 @@ else
 
             %about the span of Q_x^{top}\transpose
 
-            %% (37)
-            lhs_37 = Qx' * Qb * Qx * RitildeEst1 * a * Lambda_rec;
-            rhs_37 = b;
+            %% QUESTION
 
-            disp("Checking (37a) -> lhs and rhs should be equal")
-
-            disp("max(abs(lhs_37 - rhs_37)), [], ""all"")")
-            disp(max(abs(lhs_37 - rhs_37), [], "all"))
-            
-
-            lhs_37 = Qx' * Qb * Qx * RitildeEst2 * a * Lambda_rec;
-            rhs_37 = b;
-
-            disp("Checking (37b) -> lhs and rhs should be equal")
-
-            disp("max(abs(lhs_37 - rhs_37)), [], ""all"")")
-            disp(max(abs(lhs_37 - rhs_37), [], "all"))
-
-            %% (37) underbrace a, b
-
-            disp("Checking UNDERBRACE OF (37) -> lhs and rhs should be equal")
-
-            disp("max(abs(Qx' * Qb * Qx * RitildeEst1 - Qy * Ri_tilde2)), [], ""all"")")
-            disp(max(abs(Qx' * inv(blkdiag(eye(2),-Rb')) * Qx * RitildeEst1 - Qy * Ri_tilde2), [], "all"))
-            disp("max(abs(Qx' * Qb * Qx * RitildeEst2 - Qy * Ri_tilde2)), [], ""all"")")
-            disp(max(abs(Qx' * inv(blkdiag(eye(2),Rb')) * Qx * RitildeEst2 - Qy * Ri_tilde2), [], "all"))
-
-            disp("")
-
-            %% (38)
-
-            % Rb = ssom_procrustesRb()
-
-            % Qx' * blkdiag(eye(2), Rb') * Qx * Ri_tilde2
-
-            %% (39)
-
-            %direct consequence of (38)            
-
-
-            %% (40)
-            Qxtransp = Qx';
-            Qtop = Qxtransp(1:d, :);
-            Qbot = Qxtransp(d+1:end, :);
-            Qbotleft = Qbot(:, 1:low_deg);
-            Qbotright = Qbot(:, low_deg + 1:end);
-
-            mathcalR = Qx * Qy * Ri_tilde2;
-            Rtop = mathcalR(1:low_deg, :);
-            Rbot = mathcalR(d:end, :);
-
-            supposedly_zero_without_lemma = ...
-                Qbotleft * Rtop + Qbotright * Rb' * Rbot; %supposedly null 
-
-            disp("max(abs(supposedly_zero_without_lemma), [], ""all"")")
-            disp(max(abs(supposedly_zero_without_lemma), [], "all"))
-    
-            %% (41)
-            supposedly_zero_applying_lemma = Qbotright * Rb' * Rbot; %supposedly null
-
-            disp("max(abs(supposedly_zero_applying_lemma), [], ""all"")")
-            disp(max(abs(supposedly_zero_applying_lemma), [], "all"))
-           
-
-
-        end
+            tmp = rand(low_deg, low_deg);
+            rhs = [tmp; zeros(p-low_deg, low_deg)];
+        
     end
 end
 
-% disp("R_recovered")
-% disp(R_recovered)
-% disp("T_recovered")
-% disp(T_recovered)
 
 
-
-end %file function
-
-function [RitildeEst1, RitildeEst2, Qx, RbEst] = ssom_recoverRitilde(Ritilde2,Tijtilde)
-Qx=align2d(Tijtilde);
-QxRitilde2Bot=Qx(3:end,:)*Ritilde2;
-[U,~,~]=svd(QxRitilde2Bot,'econ');
-c=U(:,2);
-
-QLastRight=Qx(3:end,4)';
-
-RbEst=ssom_procrustesRb(c,QLastRight');
-RitildeEst1=Qx'*blkdiag(eye(2),-RbEst')*Qx*Ritilde2;
-RitildeEst2=Qx'*blkdiag(eye(2),RbEst')*Qx*Ritilde2;
-% RitildeEst1 = rand(size(Ritilde2));
-% RitildeEst2 = rand(size(Ritilde2));
-end
-    
-function RbEst=ssom_procrustesRb(c,q)
-[U,~,V]=svd(c*q');
-diagmat = eye(size(U,1));
-diagmat(end, end) = det(U*V');
-RbEst=U*diagmat*V';
-end
+end % file function

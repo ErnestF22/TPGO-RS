@@ -782,6 +782,7 @@ namespace ROPTLIB
             SomUtils::MatD Ri(SomUtils::MatD::Zero(sz_.p_, sz_.d_));
             getRi(xEig, Ri, i); // TODO: this can probably be optimized better
             rOut[i] = Ri;
+            // ROFL_VAR3(i, rOut[i].rows(), rOut[i].cols())
         }
     }
 

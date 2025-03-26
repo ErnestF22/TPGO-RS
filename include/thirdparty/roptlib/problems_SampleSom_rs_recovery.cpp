@@ -1056,7 +1056,6 @@ namespace ROPTLIB
         SomUtils::MatD Xvec(staircaseNextStepLevel * sz_.d_ * sz_.n_ + staircaseNextStepLevel * sz_.n_, 1);
         vectorizeRT(Rnext, Tnext, Xvec);
         int vecsz = Xvec.rows();
-        SomUtils::MatD Hmat(SomUtils::MatD::Zero(vecsz, vecsz));
 
         // p = size(X.R, 1);
         // d = size(X.R, 2);
@@ -1069,37 +1068,21 @@ namespace ROPTLIB
         //     Hmat(:,ii) = vectorizeXrt(Hgp_e_i);
 
         SomUtils::SomSize szNext(staircaseNextStepLevel, sz_.d_, sz_.n_);
+        SomUtils::MatD Hmat(SomUtils::MatD::Zero(vecsz, vecsz));
+        makeHmat(Xvec, szNext, Hmat);
 
-        ROPTLIB::SampleSomProblem ProbNext(szNext, Tijs_, edges_);
+        Eigen::SelfAdjointEigenSolver<SomUtils::MatD> es;
+        es.compute(Hmat);
+        auto eigvals = es.eigenvalues(); // TODO: check how to use sparse matrix methods -> maybe SPECTRA library?
+        auto eigvecs = es.eigenvectors();
 
-        for (int i = 0; i < vecsz; ++i)
-        {
-            SomUtils::MatD eI(SomUtils::MatD::Zero(vecsz, 1));
-            eI(i) = 1;
-            SomUtils::VecMatD uRi(szNext.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, szNext.d_));
-            SomUtils::MatD uTi(SomUtils::MatD::Zero(staircaseNextStepLevel, szNext.n_));
-
-            ProbNext.getRotations(eI, uRi);
-            ProbNext.getTranslations(eI, uTi);
-
-            SomUtils::VecMatD rhrI(szNext.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, szNext.d_));
-            SomUtils::MatD rhtI(SomUtils::MatD::Zero(staircaseNextStepLevel, szNext.n_));
-
-            hessGenprocEigen(Rnext, uRi, eI, uTi, rhrI, rhtI);
-
-            SomUtils::MatD rhVecI(SomUtils::MatD::Zero(vecsz, 1));
-            vectorizeRT(rhrI, rhtI, rhVecI);
-            Hmat.col(i) = rhVecI;
-        }
-
-        auto eigvals = Hmat.eigenvalues(); // TODO: check how to use sparse matrix methods -> maybe SPECTRA library?
-        auto eigvecs = Hmat.eigenvectors();
+        ROFL_VAR2(eigvals, eigvecs);
 
         lambdaPimOut = eigvals.minCoeff();
-        auto minEigvalIdx = eigvals.argmin();
-        auto minEigvec = eigvecs.col(minEigvalIdx);
-        ProbNext.getRotations(minEigvec, vPimRout);
-        ProbNext.getTranslations(minEigvec, vPimTout);
+        // auto minEigvalIdx = eigvals.diagonal().argmin();
+        // auto minEigvec = eigvecs.col(minEigvalIdx);
+        // ProbNext.getRotations(minEigvec, vPimRout);
+        // ProbNext.getTranslations(minEigvec, vPimTout);
         if (lambdaPimOut > 0)
         {
             // lambdaPimOut, vPimRout, vPimTout are already set before this check

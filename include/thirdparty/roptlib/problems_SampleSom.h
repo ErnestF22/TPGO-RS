@@ -11,6 +11,7 @@
 #include <eigen3/Eigen/Sparse>
 #include <eigen3/Eigen/SparseLU>
 #include <eigen3/Eigen/SparseQR>
+#include <eigen3/Eigen/Eigenvalues>
 #include <unsupported/Eigen/MatrixFunctions>
 
 #include <rofl/common/io.h>
@@ -455,7 +456,7 @@ namespace ROPTLIB
        * @param lambdaPimOut, vPimRout, vPimTout reference outputs: associated eigencouple
        */
       void rsomEscapeHessianGenprocEigen(const SomUtils::VecMatD &R, const SomUtils::MatD &T,
-         Vector &Y0, double &lambdaPimOut, SomUtils::VecMatD &vPimRout, SomUtils::MatD &vPimTout) const;
+                                         Vector &Y0, double &lambdaPimOut, SomUtils::VecMatD &vPimRout, SomUtils::MatD &vPimTout) const;
 
       /**
        * @brief Power iteration method for R, T (generalized Procrustes) version of the problem
@@ -698,6 +699,54 @@ namespace ROPTLIB
        */
       bool globalize(int src, const SomUtils::VecMatD &Rsedn, const SomUtils::MatD &Tsedn,
                      SomUtils::VecMatD &Rout, SomUtils::MatD &Tout);
+
+      /**
+       * @brief Make Hmat matrix s.t. Hmat * u = H(x)[u] for all u in tangent space
+       * of x = [R, T] (with R in SO(d)^N, T in R^(d x N))
+       * @param XvecNext is the vectorized version of x
+       * @param szNext is the size of the problem
+       * @param Tijs is the relative translations between nodes
+       * @param edges is the adjacency matrix
+       * reference @param Hmat is the output matrix
+       */
+      void makeHmat(const SomUtils::MatD &XvecNext, const SomUtils::SomSize &szNext, SomUtils::MatD &Hmat) const
+      {
+         int staircaseNextStepLevel = szNext.p_;
+
+         ROPTLIB::SampleSomProblem ProbNextLocal(szNext, Tijs_, edges_);
+
+         SomUtils::VecMatD xRi(szNext.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, szNext.d_));
+         SomUtils::MatD xTi(SomUtils::MatD::Zero(staircaseNextStepLevel, szNext.n_));
+         ProbNextLocal.getRotations(XvecNext, xRi);
+         ProbNextLocal.getTranslations(XvecNext, xTi);
+
+         int vecsz = XvecNext.rows();
+
+         for (int i = 0; i < vecsz; ++i)
+         {
+            SomUtils::MatD eI(SomUtils::MatD::Zero(vecsz, 1));
+            eI(i) = 1;
+            SomUtils::VecMatD uRi(szNext.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, szNext.d_));
+            SomUtils::MatD uTi(SomUtils::MatD::Zero(staircaseNextStepLevel, szNext.n_));
+
+            ProbNextLocal.getRotations(eI, uRi);
+            ProbNextLocal.getTranslations(eI, uTi);
+
+            SomUtils::VecMatD rhrI(szNext.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, szNext.d_));
+            SomUtils::MatD rhtI(SomUtils::MatD::Zero(staircaseNextStepLevel, szNext.n_));
+
+            // ROFL_VAR2(i, vecsz)
+            // ROFL_VAR3(szNext.n_, xRi[szNext.n_].rows(), xRi[szNext.n_].cols())
+            // ROFL_VAR2(uRi[0], uTi)
+            ProbNextLocal.hessGenprocEigen(xRi, uRi, xTi, uTi, rhrI, rhtI);
+            // ROFL_VAR2(rhrI[0], rhtI)
+
+            SomUtils::MatD rhVecI(SomUtils::MatD::Zero(vecsz, 1));
+            ProbNextLocal.vectorizeRT(rhrI, rhtI, rhVecI);
+            Hmat.col(i) = rhVecI;
+            ROFL_VAR2(i, rhVecI.transpose())
+         }
+      }
    };
 
    /**
