@@ -709,44 +709,7 @@ namespace ROPTLIB
        * @param edges is the adjacency matrix
        * reference @param Hmat is the output matrix
        */
-      void makeHmat(const SomUtils::MatD &XvecNext, const SomUtils::SomSize &szNext, SomUtils::MatD &Hmat) const
-      {
-         int staircaseNextStepLevel = szNext.p_;
-
-         ROPTLIB::SampleSomProblem ProbNextLocal(szNext, Tijs_, edges_);
-
-         SomUtils::VecMatD xRi(szNext.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, szNext.d_));
-         SomUtils::MatD xTi(SomUtils::MatD::Zero(staircaseNextStepLevel, szNext.n_));
-         ProbNextLocal.getRotations(XvecNext, xRi);
-         ProbNextLocal.getTranslations(XvecNext, xTi);
-
-         int vecsz = XvecNext.rows();
-
-         for (int i = 0; i < vecsz; ++i)
-         {
-            SomUtils::MatD eI(SomUtils::MatD::Zero(vecsz, 1));
-            eI(i) = 1;
-            SomUtils::VecMatD uRi(szNext.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, szNext.d_));
-            SomUtils::MatD uTi(SomUtils::MatD::Zero(staircaseNextStepLevel, szNext.n_));
-
-            ProbNextLocal.getRotations(eI, uRi);
-            ProbNextLocal.getTranslations(eI, uTi);
-
-            SomUtils::VecMatD rhrI(szNext.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, szNext.d_));
-            SomUtils::MatD rhtI(SomUtils::MatD::Zero(staircaseNextStepLevel, szNext.n_));
-
-            // ROFL_VAR2(i, vecsz)
-            // ROFL_VAR3(szNext.n_, xRi[szNext.n_].rows(), xRi[szNext.n_].cols())
-            // ROFL_VAR2(uRi[0], uTi)
-            ProbNextLocal.hessGenprocEigen(xRi, uRi, xTi, uTi, rhrI, rhtI);
-            // ROFL_VAR2(rhrI[0], rhtI)
-
-            SomUtils::MatD rhVecI(SomUtils::MatD::Zero(vecsz, 1));
-            ProbNextLocal.vectorizeRT(rhrI, rhtI, rhVecI);
-            Hmat.col(i) = rhVecI;
-            ROFL_VAR2(i, rhVecI.transpose())
-         }
-      }
+      void makeHmat(const SomUtils::MatD &XvecNext, const SomUtils::SomSize &szNext, SomUtils::MatD &Hmat) const;
    };
 
    /**

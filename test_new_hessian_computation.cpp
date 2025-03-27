@@ -15,6 +15,58 @@
 
 namespace fs = std::filesystem;
 
+void removeQuasiZeros(Eigen::MatrixXd &mat, double thr = 1e-5)
+{
+    for (int i = 0; i < mat.rows(); ++i)
+    {
+        for (int j = 0; j < mat.cols(); ++j)
+        {
+            if (std::abs(mat(i, j)) < thr)
+            {
+                mat(i, j) = 0;
+            }
+        }
+    }
+}
+
+SomUtils::MatD compareWithNans(const SomUtils::MatD &vec1, const SomUtils::MatD &vec2)
+{
+
+    const SomUtils::MatD zero_or_nan_1 = vec1 - vec1;
+    const SomUtils::MatD zero_or_nan_2 = vec2 - vec2;
+
+    const SomUtils::MatD compare = (vec1.array() < vec2.array()).matrix().cast<double>();
+
+    return compare + zero_or_nan_1 + zero_or_nan_2;
+}
+
+bool compareWithNansEigenvectors(const SomUtils::MatD &vec, double &scalar, double tol = 1e-9)
+{
+    std::vector<double> vd;
+    for (int i = 0; i < vec.rows(); ++i)
+    {
+        auto vecI = vec(i, 0);
+        if (!std::isnan(vecI))
+        {
+            vd.push_back(vecI);
+        }
+    }
+
+    const auto [minVd, maxVd] = std::minmax_element(std::begin(vd), std::end(vd));
+
+    if (vd.size() > 0)
+    {
+        scalar = vd[0];
+    }
+    else
+    {
+        scalar = std::nan("nan");
+    }
+
+    ROFL_VAR2(*minVd, *maxVd)
+    return (fabs(*maxVd - *minVd) < tol);
+}
+
 int main(int argc, char **argv)
 {
 
@@ -95,9 +147,8 @@ int main(int argc, char **argv)
     ROPTLIB::Euclidean mani2(d, n);
     ROPTLIB::ProductManifold ProdMani(numoftypes, &mani1, numofmani1, &mani2, numofmani2);
     ROPTLIB::SampleSomProblem Prob(somSzD, Tijs, edges);
-    SomUtils::SomSize somSzNext(d+1, d, n);
+    SomUtils::SomSize somSzNext(d + 1, d, n);
     ROPTLIB::SampleSomProblem ProbNext(somSzNext, Tijs, edges);
-
 
     std::string XnextPathStr = "../data/Xnext_vec.csv";
     std::string UnextPathStr = "../data/Unext_vec.csv";
@@ -119,13 +170,9 @@ int main(int argc, char **argv)
 
     // ROFL_VAR1(Unext.transpose())
 
-
     SomUtils::VecMatD xRnext(somSzD.n_, SomUtils::MatD::Zero(somSzNext.p_, somSzNext.d_));
     SomUtils::MatD xTnext(SomUtils::MatD::Zero(somSzNext.p_, somSzNext.n_));
     ROPTLIB::Vector Y0;
-    double lambdaPimOut;
-    SomUtils::VecMatD vPimRout;
-    SomUtils::MatD vPimTout;
 
     SomUtils::VecMatD uRnext(somSzD.n_, SomUtils::MatD::Zero(somSzNext.p_, somSzNext.d_));
     SomUtils::MatD uTnext(SomUtils::MatD::Zero(somSzNext.p_, somSzNext.n_));
@@ -140,9 +187,9 @@ int main(int argc, char **argv)
     // disp("Hgp")
     // disp(Hgp)
 
-    SomUtils::VecMatD rhr(somSzD.n_, SomUtils::MatD::Zero(somSzNext.p_, somSzNext.d_));
-    SomUtils::MatD rht(SomUtils::MatD::Zero(somSzNext.p_, somSzNext.n_));
-    ProbNext.hessGenprocEigen(xRnext, uRnext, xTnext, uTnext, rhr, rht);
+    // SomUtils::VecMatD rhr(somSzD.n_, SomUtils::MatD::Zero(somSzNext.p_, somSzNext.d_));
+    // SomUtils::MatD rht(SomUtils::MatD::Zero(somSzNext.p_, somSzNext.n_));
+    // ProbNext.hessGenprocEigen(xRnext, uRnext, xTnext, uTnext, rhr, rht);
     // for (auto i = 0; i < somSzD.n_; i++)
     // {
     //     ROFL_VAR1(rhr[i]);
@@ -155,7 +202,6 @@ int main(int argc, char **argv)
     // disp("min(abs(vectorizeXrt(Hgp) - Htest), [], ""all"")")
     // disp(min(abs(vectorizeXrt(Hgp) - Htest), [], "all"))
 
-
     // [V, lambdas] = eig(Hmat);
     // % disp("V")
     // % disp(V)
@@ -167,94 +213,102 @@ int main(int argc, char **argv)
 
     ProbNext.makeHmat(Xnext, somSzNext, Hmat);
 
-    Eigen::EigenSolver<SomUtils::MatD> es;
-    es.compute(Hmat);
-    auto eigvals = es.eigenvalues(); // TODO: check how to use sparse matrix methods -> maybe SPECTRA library?
-    auto eigvecs = es.eigenvectors();
+    if (SomUtils::isEqualFloats(Hmat - Hmat.transpose(), SomUtils::MatD::Zero(vecsz, vecsz)))
+    {
+        // Checking whether anti-symmetric part is zero
+        ROFL_ERR("Hessian NOT symmetric")
+        ROFL_ASSERT(0)
+    }
 
-    ROFL_VAR5(vecsz, eigvals.rows(), eigvals.cols(), eigvecs.rows(), eigvecs.cols());
-
-    lambdaPimOut = eigvals.real().minCoeff();
-    ROFL_VAR1(lambdaPimOut)
-
+    // Eigen::SelfAdjointEigenSolver<SomUtils::MatD> es;
+    // es.compute(Hmat);
+    // auto eigvals = es.eigenvalues(); // TODO: check how to use sparse matrix methods -> maybe SPECTRA library?
+    // auto eigvecs = es.eigenvectors();
+    // ROFL_VAR5(vecsz, eigvals.rows(), eigvals.cols(), eigvecs.rows(), eigvecs.cols());
     // ROFL_VAR1(Hmat)
 
-    // auto minEigvalIdx = eigvals.diagonal().argmin();
-    // auto minEigvec = eigvecs.col(minEigvalIdx);
-    // ProbNext.getRotations(minEigvec, vPimRout);
-    // ProbNext.getTranslations(minEigvec, vPimTout);
-
-
-    // Prob.rsomEscapeHessianGenprocEigen(xRnext, xTnext, Y0, lambdaPimOut, vPimRout, vPimTout);
-
-
-    // max_imag_part = max(abs(imag(lambdas)), [], "all");
-
-    // disp("max_imag_part")
-    // disp(max_imag_part)
-
-    // if (max_imag_part > 1e-6)
-    //     error("Hessian NOT symmetric")
-    // end
-
-    // lambdas = real(lambdas);
-    // % V = real(V);
-
-    // lambda_min = min(diag(lambdas)); %!!
-    // disp("lambda_min")
-    // disp(lambda_min)
-
-    // [x,y]=find(lambdas==lambda_min); %Note: x, y should be equal (lambdas matrix is diagonal)
-    // disp("x")
-    // disp(x)
-    // disp("y")
-    // disp(y)
+    SomUtils::VecMatD xR(somSzD.n_, SomUtils::MatD::Zero(somSzD.d_, somSzD.d_));
+    SomUtils::MatD xT(SomUtils::MatD::Zero(somSzD.d_, somSzD.n_));
+    xT = xTnext.block(0, 0, somSzD.d_, somSzD.n_);
+    for (int i = 0; i < somSzD.n_; ++i)
+    {
+        xR[i] = xRnext[i].block(0, 0, somSzD.d_, somSzD.d_);
+    }
+    SomUtils::VecMatD vRout(somSzD.n_, SomUtils::MatD::Zero(somSzNext.p_, somSzD.d_));
+    SomUtils::MatD vTout(SomUtils::MatD::Zero(somSzNext.p_, somSzD.n_));
+    double lambdaOut;
+    Prob.rsomEscapeHessianGenprocEigen(xR, xT, Y0, lambdaOut, vRout, vTout);
 
     // vmin = V(:,x);
     // disp("vmin")
     // disp(vmin)
 
-
+    ROFL_VAR1(lambdaOut)
 
     // [~, lambda_pim_out, v_pim_out] = rsom_pim_hessian_genproc(X, problem_struct);
+    SomUtils::VecMatD vPimRout(somSzD.n_, SomUtils::MatD::Zero(somSzNext.p_, somSzD.d_));
+    SomUtils::MatD vPimTout(SomUtils::MatD::Zero(somSzNext.p_, somSzD.n_));
+    double lambdaPimOut;
+    ROPTLIB::Vector Y0pim;
+    Prob.rsomPimHessianGenprocEigen(1e-4, xR, xT, Y0pim, lambdaPimOut, vPimRout, vPimTout);
+
+    ROFL_VAR1(lambdaPimOut)
 
     // disp("lambda_pim_out")
     // disp(lambda_pim_out)
     // disp("vectorizeXrt(v_pim_out)")
     // disp(vectorizeXrt(v_pim_out))
-
     // disp("vmin, vectorizeXrt(v_pim_out)")
     // disp([vmin, vectorizeXrt(v_pim_out)])
 
-    // % check whether vmin, v_pim_out are proportional
+    SomUtils::MatD XvecPimOut = SomUtils::MatD::Zero(vecsz, 1);
+    ProbNext.vectorizeRT(vPimRout, vPimTout, XvecPimOut);
 
-    // tol = 1e-10; % Divide tolerance
-    // A = remove_quasi_zeros(vmin, 10 * tol);
-    // B = remove_quasi_zeros(vectorizeXrt(v_pim_out), 10 * tol);
+    SomUtils::MatD XvecOut = SomUtils::MatD::Zero(vecsz, 1);
+    ProbNext.vectorizeRT(vRout, vTout, XvecOut);
+
+    // check whether vmin, v_pim_out are proportional
+
+    double tol = 1e-9; // Divide tolerance
+    // A = remove_quasi_zeros(vmin, tol);
+    // B = remove_quasi_zeros(vectorizeXrt(v_pim_out), tol);
     // C = A./B; % Divide element-wise
+    removeQuasiZeros(XvecPimOut, tol);
+    removeQuasiZeros(XvecOut, tol);
 
-    // %removing NaNs (0-divisions)
+    SomUtils::MatD tmp = SomUtils::MatD::Zero(vecsz, 2);
+    tmp.col(0) = XvecPimOut;
+    tmp.col(1) = XvecOut;
+    ROFL_VAR1(tmp)
+    auto A = XvecPimOut;
+    auto B = XvecOut;
+    auto C = A.cwiseQuotient(B); // Divide element-wise
+
+    // removing NaNs (0-divisions)
     // id1 = isnan(C);
     // C(id1) = [];
 
-    // % Check if the difference between largest and smallest values are within the
-    // % tolerance
+    // % Check if the difference between largest and smallest values are within the tolerance
     // check = abs(max(C) - min(C)) < tol;
+    double scalar = std::nan("nan");
+    bool check = compareWithNansEigenvectors(C, scalar, tol);
 
-    // % If yes, get the scalar multiple
-    // if check
-    //     scalar = C(1);
-    //     disp("Eigenvectors check OK!")
-    // else % If not, set to NaN
-    //     scalar = NaN;
-    // end
+    // If check OK, get the scalar multiple
+    if (check)
+    {
+        ROFL_ERR("Eigenvectors check OK!")
+    }
+    else
+    {
+        ROFL_ERR("Eigenvectors check FAIL!")
+    }
 
     // disp("scalar")
     // disp(scalar)
+    ROFL_VAR1(scalar)
 
-    // %checking also eigenvalue
-    // disp("[lambda_min, lambda_pim_out]")
-    // disp([lambda_min, lambda_pim_out])
+    // checking also eigenvalues
+    ROFL_VAR2(lambdaOut, lambdaPimOut)
 
     // lambdas_check = abs(lambda_min - lambda_pim_out) < 1e-3;
     // disp("abs(lambda_min - lambda_pim_out) < 1e-3")

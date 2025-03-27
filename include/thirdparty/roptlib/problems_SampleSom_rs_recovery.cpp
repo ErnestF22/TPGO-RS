@@ -1076,9 +1076,10 @@ namespace ROPTLIB
         auto eigvals = es.eigenvalues(); // TODO: check how to use sparse matrix methods -> maybe SPECTRA library?
         auto eigvecs = es.eigenvectors();
 
-        ROFL_VAR2(eigvals, eigvecs);
+        // ROFL_VAR2(eigvals, eigvecs);
 
-        lambdaPimOut = eigvals.minCoeff();
+        Eigen::Index minRow, minCol;
+        lambdaPimOut = eigvals.minCoeff(&minRow, &minCol);
         // auto minEigvalIdx = eigvals.diagonal().argmin();
         // auto minEigvec = eigvecs.col(minEigvalIdx);
         // ProbNext.getRotations(minEigvec, vPimRout);
@@ -1089,6 +1090,15 @@ namespace ROPTLIB
             ROFL_VAR2(lambdaPimOut, "lambdaPimOut > 0 -> avoiding linesearch")
             return;
         }
+
+        ROFL_VAR6(eigvals.rows(), eigvals.cols(), eigvecs.rows(), eigvecs.cols(), minRow, minCol);
+
+        auto vPimOut = eigvecs.col(minRow);
+        SomUtils::SomSize somSzNext(staircaseNextStepLevel, sz_.d_, sz_.n_);
+        ROPTLIB::SampleSomProblem ProbNext(somSzNext, Tijs_, edges_);
+        ROFL_VAR2(vPimOut.rows(), vPimOut.cols());
+        ProbNext.getRotations(vPimOut, vPimRout);
+        ProbNext.getTranslations(vPimOut, vPimTout);
 
         /**
          * Linesearch for escaping saddle point

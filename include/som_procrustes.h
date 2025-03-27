@@ -98,7 +98,7 @@ public:
 private:
     /**
      * Vectorize R and T into a single vector XvecOut
-     * equivalent of Matla's XvecOut = [R(:); T(:)];
+     * equivalent of Matlab's XvecOut = [R(:); T(:)];
      */
     void vectorizeRT(const SomUtils::VecMatD &R, const SomUtils::MatD &T, SomUtils::MatD &XvecOut) const;
 
