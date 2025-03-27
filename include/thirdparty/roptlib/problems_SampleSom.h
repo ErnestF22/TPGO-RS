@@ -456,7 +456,7 @@ namespace ROPTLIB
        * @param lambdaPimOut, vPimRout, vPimTout reference outputs: associated eigencouple
        */
       void rsomEscapeHessianGenprocEigen(const SomUtils::VecMatD &R, const SomUtils::MatD &T,
-                                         Vector &Y0, double &lambdaPimOut, SomUtils::VecMatD &vPimRout, SomUtils::MatD &vPimTout) const;
+                                         Vector &Y0, double &lambdaOut, SomUtils::VecMatD &vRout, SomUtils::MatD &vTout) const;
 
       /**
        * @brief Power iteration method for R, T (generalized Procrustes) version of the problem

@@ -1016,46 +1016,26 @@ namespace ROPTLIB
     }
 
     void SampleSomProblem::rsomEscapeHessianGenprocEigen(const SomUtils::VecMatD &R, const SomUtils::MatD &T,
-                                                         Vector &Y0, double &lambdaPimOut, SomUtils::VecMatD &vPimRout, SomUtils::MatD &vPimTout) const
+                                                         Vector &Y0, double &lambdaOut, SomUtils::VecMatD &vRout, SomUtils::MatD &vTout) const
     {
-        int staircaseNextStepLevel = T.rows() + 1;
-        ROFL_VAR1(staircaseNextStepLevel);
-        SomUtils::VecMatD Rnext(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
+        int staircaseStepLevel = T.rows() + 1;
+        ROFL_VAR1(staircaseStepLevel);
+        SomUtils::VecMatD Rnext(sz_.n_, SomUtils::MatD::Zero(staircaseStepLevel, sz_.d_));
         SomUtils::catZeroRow3dArray(R, Rnext);
-        SomUtils::MatD Tnext(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
+        SomUtils::MatD Tnext(SomUtils::MatD::Zero(staircaseStepLevel, sz_.n_));
         SomUtils::catZeroRow(T, Tnext);
 
-        // stiefel_normalize_han = @(x) x./ (norm(x(:))); //Note: this is basically eucl_normalize_han
-
-        // u_start.R = stiefel_randTangentNormVector(Rnext);
-        SomUtils::VecMatD RnextTg(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
-        stiefelRandTgNormVector(Rnext, RnextTg);
-        // u_start.R = stiefel_normalize(Rnext, u_start.R);
-        SomUtils::VecMatD RnextTgNorm(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
-        SomUtils::normalizeEucl(RnextTg, RnextTgNorm);
-
-        // u_start.T = rand(size(Tnext));
-        auto TnextTg = SomUtils::MatD::Random(staircaseNextStepLevel, sz_.n_);
-        // u_start.T = stiefel_normalize_han(u_start.T);
-        SomUtils::MatD TnextTgNorm(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
-        SomUtils::normalizeEucl(TnextTg, TnextTgNorm);
-
-        // [lambda_pim, v_pim] = pim_function_genproc(rhess_fun_han, u_start, stiefel_normalize_han, thresh);
-        // disp('Difference between lambda*v_max and H(v_max) should be in the order of the tolerance:')
-        double lambdaPim = 1e+6;
-        SomUtils::VecMatD vPimR(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
-        SomUtils::MatD vPimT(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
-
         /**
-         * Do the job
+         * makeHmat()
          */
 
         // Xvec = vectorizeXrt(X);
         // vecsz = length(Xvec);
         // Hmat = zeros(vecsz);
-        SomUtils::MatD Xvec(staircaseNextStepLevel * sz_.d_ * sz_.n_ + staircaseNextStepLevel * sz_.n_, 1);
+        SomUtils::MatD Xvec(staircaseStepLevel * sz_.d_ * sz_.n_ + staircaseStepLevel * sz_.n_, 1);
         vectorizeRT(Rnext, Tnext, Xvec);
         int vecsz = Xvec.rows();
+        ROFL_VAR1(vecsz)
 
         // p = size(X.R, 1);
         // d = size(X.R, 2);
@@ -1067,9 +1047,18 @@ namespace ROPTLIB
         //     Hgp_e_i = hess_genproc(X,U_e_i,problem_struct);
         //     Hmat(:,ii) = vectorizeXrt(Hgp_e_i);
 
-        SomUtils::SomSize szNext(staircaseNextStepLevel, sz_.d_, sz_.n_);
+        SomUtils::SomSize szNext(staircaseStepLevel, sz_.d_, sz_.n_);
         SomUtils::MatD Hmat(SomUtils::MatD::Zero(vecsz, vecsz));
-        makeHmat(Xvec, szNext, Hmat);
+
+        ROPTLIB::SampleSomProblem ProbNext(szNext, Tijs_, edges_);
+        ProbNext.makeHmat(Xvec, szNext, Hmat); //TODO: Xvec is vectorized and then re-decomposed in makeHmat()
+
+        if (SomUtils::isEqualFloats(Hmat - Hmat.transpose(), SomUtils::MatD::Zero(vecsz, vecsz)))
+        {
+            // Checking whether anti-symmetric part is zero
+            ROFL_ERR("Hessian NOT symmetric")
+            ROFL_ASSERT(0)
+        }
 
         Eigen::SelfAdjointEigenSolver<SomUtils::MatD> es;
         es.compute(Hmat);
@@ -1079,26 +1068,29 @@ namespace ROPTLIB
         // ROFL_VAR2(eigvals, eigvecs);
 
         Eigen::Index minRow, minCol;
-        lambdaPimOut = eigvals.minCoeff(&minRow, &minCol);
-        // auto minEigvalIdx = eigvals.diagonal().argmin();
-        // auto minEigvec = eigvecs.col(minEigvalIdx);
-        // ProbNext.getRotations(minEigvec, vPimRout);
-        // ProbNext.getTranslations(minEigvec, vPimTout);
-        if (lambdaPimOut > 0)
+        lambdaOut = eigvals.minCoeff(&minRow, &minCol);
+
+        auto vOut = eigvecs.col(minRow);
+        ROFL_VAR2(vOut.rows(), vOut.cols());
+        ProbNext.getRotations(vOut, vRout);
+        ProbNext.getTranslations(vOut, vTout);
+
+        ProbNext.eigencheckHessianGenproc(lambdaOut, Rnext, vRout, Tnext, vTout);
+
+        // auto minusVrOut = vRout;
+        // std::for_each(minusVrOut.begin(), minusVrOut.end(), [](SomUtils::MatD &x) { //^^^ take argument by reference: LAMBDA FUNCTION
+        //     x *= -1;
+        // });
+        // ProbNext.eigencheckHessianGenproc(lambdaOut, Rnext, minusVrOut, Tnext, -vTout);
+
+        if (lambdaOut > 0)
         {
-            // lambdaPimOut, vPimRout, vPimTout are already set before this check
-            ROFL_VAR2(lambdaPimOut, "lambdaPimOut > 0 -> avoiding linesearch")
+            // lambdaOut, vRout, vTout are already set before this check
+            ROFL_VAR2(lambdaOut, "lambdaOut > 0 -> avoiding linesearch")
             return;
         }
 
         ROFL_VAR6(eigvals.rows(), eigvals.cols(), eigvecs.rows(), eigvecs.cols(), minRow, minCol);
-
-        auto vPimOut = eigvecs.col(minRow);
-        SomUtils::SomSize somSzNext(staircaseNextStepLevel, sz_.d_, sz_.n_);
-        ROPTLIB::SampleSomProblem ProbNext(somSzNext, Tijs_, edges_);
-        ROFL_VAR2(vPimOut.rows(), vPimOut.cols());
-        ProbNext.getRotations(vPimOut, vPimRout);
-        ProbNext.getTranslations(vPimOut, vPimTout);
 
         /**
          * Linesearch for escaping saddle point
@@ -1109,20 +1101,20 @@ namespace ROPTLIB
         // d = problem_struct_next.sz(2);
         // N = problem_struct_next.sz(3);
 
-        Stiefel mani1(staircaseNextStepLevel, szNext.d_);
+        Stiefel mani1(staircaseStepLevel, szNext.d_);
         mani1.ChooseParamsSet2();
         integer numoftypes = 2; // 2 i.e. (3D) Stiefel + Euclidean
 
         integer numofmani1 = szNext.n_; // num of Stiefel manifolds
         integer numofmani2 = 1;
-        Euclidean mani2(staircaseNextStepLevel, szNext.n_);
+        Euclidean mani2(staircaseStepLevel, szNext.n_);
         ProductManifold ProdManiNext(numoftypes, &mani1, numofmani1, &mani2, numofmani2);
 
         Vector xIn = ProdManiNext.RandominManifold(); //!! in other cases xIn would have been a pointer
 
-        SomUtils::MatD Y0T(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
-        SomUtils::VecMatD Y0R(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
-        linesearchDummy(costCurr_, Rnext, Tnext, vPimRout, vPimTout, Y0R, Y0T);
+        SomUtils::MatD Y0T(SomUtils::MatD::Zero(staircaseStepLevel, sz_.n_));
+        SomUtils::VecMatD Y0R(sz_.n_, SomUtils::MatD::Zero(staircaseStepLevel, sz_.d_));
+        linesearchDummy(costCurr_, Rnext, Tnext, vRout, vTout, Y0R, Y0T);
 
         // ls Dummy debug: save on file scope
         {
@@ -1161,30 +1153,30 @@ namespace ROPTLIB
                 outfile.close();
             }
 
-            { // vPimRout
+            { // vRout
                 std::ofstream outfile;
 
-                outfile.open("vPimRout.csv", std::ios_base::trunc);
+                outfile.open("vRout.csv", std::ios_base::trunc);
                 if (!outfile.is_open())
                 {
                     ROFL_VAR1("Error opening outfile")
                     ROFL_ASSERT(0);
                 }
                 for (int i = 0; i < sz_.n_; ++i)
-                    outfile << vPimRout[i].reshaped<Eigen::ColMajor>(vPimRout[i].rows() * vPimRout[i].cols(), 1) << std::endl;
+                    outfile << vRout[i].reshaped<Eigen::ColMajor>(vRout[i].rows() * vRout[i].cols(), 1) << std::endl;
                 outfile.close();
             }
 
-            { // vPimTout
+            { // vTout
                 std::ofstream outfile;
 
-                outfile.open("vPimTout.csv", std::ios_base::trunc);
+                outfile.open("vTout.csv", std::ios_base::trunc);
                 if (!outfile.is_open())
                 {
                     ROFL_VAR1("Error opening outfile")
                     ROFL_ASSERT(0);
                 }
-                outfile << vPimTout.reshaped<Eigen::ColMajor>(vPimTout.rows() * vPimTout.cols(), 1);
+                outfile << vTout.reshaped<Eigen::ColMajor>(vTout.rows() * vTout.cols(), 1);
                 outfile.close();
             }
 
@@ -1233,7 +1225,7 @@ namespace ROPTLIB
                 // result->GetElement(gElemIdx).SetToIdentity(); // Ri
                 // result->GetElement(gElemIdx).Print("Ri before assignment");
 
-                Vector RnextROPT(staircaseNextStepLevel, sz_.d_);
+                Vector RnextROPT(staircaseStepLevel, sz_.d_);
                 // RnextROPT.Initialize();
                 realdp *GroptlibWriteArray = RnextROPT.ObtainWriteEntireData();
                 for (int j = 0; j < rotSz; ++j)
@@ -1243,7 +1235,7 @@ namespace ROPTLIB
 
                     // ROFL_VAR1(RnextROPT.GetElement(j, 0));
 
-                    GroptlibWriteArray[j] = Y0R[i].reshaped(sz_.d_ * staircaseNextStepLevel, 1)(j);
+                    GroptlibWriteArray[j] = Y0R[i].reshaped(sz_.d_ * staircaseStepLevel, 1)(j);
 
                     // ROFL_VAR1("");
                     // RnextROPT.Print("RnextROPT after assignment");
@@ -1255,15 +1247,15 @@ namespace ROPTLIB
 
             // fill result with computed gradient values : T
 
-            Vector TnextROPT(staircaseNextStepLevel, sz_.n_);
+            Vector TnextROPT(staircaseStepLevel, sz_.n_);
             realdp *GroptlibWriteArray = TnextROPT.ObtainWriteEntireData();
-            for (int j = 0; j < staircaseNextStepLevel * sz_.n_; ++j)
+            for (int j = 0; j < staircaseStepLevel * sz_.n_; ++j)
             {
                 // TnextROPT.Print("TnextROPT before assignment");
 
                 // ROFL_VAR1(RnextROPT.GetElement(j, 0));
 
-                GroptlibWriteArray[j] = Y0T.reshaped(sz_.n_ * staircaseNextStepLevel, 1)(j);
+                GroptlibWriteArray[j] = Y0T.reshaped(sz_.n_ * staircaseStepLevel, 1)(j);
 
                 // ROFL_VAR1("");
                 // TnextROPT.Print("TnextROPT after assignment");
@@ -1761,7 +1753,7 @@ namespace ROPTLIB
         //     end
         // end
 
-        ROFL_ASSERT(checkIsStiefelTg(x, e))
+        ROFL_ASSERT_VAR2(checkIsStiefelTg(x, e), x[0], e[0])
 
         SomUtils::VecMatD rTmp(sz_.n_);
         SomUtils::VecMatD xeSum(sz_.n_, SomUtils::MatD::Zero(x[0].rows(), x[0].cols()));
@@ -1873,8 +1865,8 @@ namespace ROPTLIB
         SomUtils::VecMatD Y0Rtry = Y0R;
         SomUtils::MatD Y0Ttry = Y0T;
 
-        int maxLsSteps = 25;
-        double contractionFactor = 0.5;
+        int maxLsSteps = 25;            // TODO: add this as param
+        double contractionFactor = 0.5; // TODO: add this as param
 
         SomUtils::MatD vVec(SomUtils::MatD::Zero(vRin[0].rows() * vRin[0].cols() * vRin.size() + vTin.rows() * vTin.cols(), 1));
         vectorizeRT(vRin, vTin, vVec);

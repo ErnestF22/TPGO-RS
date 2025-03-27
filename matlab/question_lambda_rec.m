@@ -1,4 +1,4 @@
-function tmp
+function question_lambda_rec
 
 % 
 % \tilde{\Lambda}_{rec}a=\bmat{*_{2\times 2}\\0_{(p-2)\times 2}}? \nonumber
@@ -201,10 +201,31 @@ else
 
             %about the span of Q_x^{top}\transpose
 
-            %% QUESTION
+            %% QUESTION ABOUT \TILDE{LAMBDA_REC}
 
-            tmp = rand(low_deg, low_deg);
-            rhs = [tmp; zeros(p-low_deg, low_deg)];
+            %solving like XA = B
+
+            A = a;
+            B = dd;
+
+            % tmp = rand(low_deg, low_deg);
+            % rhs = [tmp; zeros(p-low_deg, low_deg)];
+            X = mrdivide(B, A);
+            disp("X")
+            disp(X)
+
+            %if full expression was meant i.e., solving like AXB = C for X
+            
+            A = Qx * RitildeEst1;
+            B = a;
+            C = dd;
+            % X = inv(A' * A) * A' * C * B' * inv(B * B');
+            X = pinv(A) * C * pinv(B);
+            disp("X")
+            disp(X)
+
+            disp("is_equal_floats(AXB, C)")
+            disp(is_equal_floats(A *X * B, C))
         
     end
 end

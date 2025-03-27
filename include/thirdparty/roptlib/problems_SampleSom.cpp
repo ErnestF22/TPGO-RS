@@ -1136,29 +1136,32 @@ namespace ROPTLIB
 
     void SampleSomProblem::makeHmat(const SomUtils::MatD &XvecNext, const SomUtils::SomSize &szNext, SomUtils::MatD &Hmat) const
     {
-        int staircaseNextStepLevel = szNext.p_; // TODO: it can maybe be deducted fron XvecNext.size()?
+        int staircaseStepLevel = szNext.p_; // TODO: it can maybe be deducted fron XvecNext.size()?
+
+        ROFL_VAR1(staircaseStepLevel)
 
         ROPTLIB::SampleSomProblem ProbNextLocal(szNext, Tijs_, edges_);
 
-        SomUtils::VecMatD xRi(szNext.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, szNext.d_));
-        SomUtils::MatD xTi(SomUtils::MatD::Zero(staircaseNextStepLevel, szNext.n_));
+        SomUtils::VecMatD xRi(szNext.n_, SomUtils::MatD::Zero(staircaseStepLevel, szNext.d_));
+        SomUtils::MatD xTi(SomUtils::MatD::Zero(staircaseStepLevel, szNext.n_));
         ProbNextLocal.getRotations(XvecNext, xRi);
         ProbNextLocal.getTranslations(XvecNext, xTi);
 
         int vecsz = XvecNext.rows();
+        ROFL_VAR1(vecsz)
 
         for (int i = 0; i < vecsz; ++i)
         {
             SomUtils::MatD eI(SomUtils::MatD::Zero(vecsz, 1));
             eI(i) = 1;
-            SomUtils::VecMatD uRi(szNext.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, szNext.d_));
-            SomUtils::MatD uTi(SomUtils::MatD::Zero(staircaseNextStepLevel, szNext.n_));
+            SomUtils::VecMatD uRi(szNext.n_, SomUtils::MatD::Zero(staircaseStepLevel, szNext.d_));
+            SomUtils::MatD uTi(SomUtils::MatD::Zero(staircaseStepLevel, szNext.n_));
 
             ProbNextLocal.getRotations(eI, uRi);
             ProbNextLocal.getTranslations(eI, uTi);
 
-            SomUtils::VecMatD rhrI(szNext.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, szNext.d_));
-            SomUtils::MatD rhtI(SomUtils::MatD::Zero(staircaseNextStepLevel, szNext.n_));
+            SomUtils::VecMatD rhrI(szNext.n_, SomUtils::MatD::Zero(staircaseStepLevel, szNext.d_));
+            SomUtils::MatD rhtI(SomUtils::MatD::Zero(staircaseStepLevel, szNext.n_));
 
             // ROFL_VAR2(i, vecsz)
             // ROFL_VAR3(szNext.n_, xRi[szNext.n_].rows(), xRi[szNext.n_].cols())
@@ -1262,7 +1265,7 @@ namespace ROPTLIB
             SomUtils::VecMatD vLambdaR(n, SomUtils::MatD::Zero(somSzNext.p_, somSzNext.d_));
             SomUtils::MatD vLambdaT(SomUtils::MatD::Zero(somSzNext.p_, somSzNext.n_));
             ProbPrev.setCostCurr(costLast);
-            ProbPrev.rsomPimHessianGenprocEigen(1e-4, R, T, Y0, lambda, vLambdaR, vLambdaT);
+            ProbPrev.rsomEscapeHessianGenprocEigen(R, T, Y0, lambda, vLambdaR, vLambdaT);
 
             if (lambda > 0)
             {
