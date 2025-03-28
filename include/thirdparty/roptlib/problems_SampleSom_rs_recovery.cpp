@@ -1018,7 +1018,7 @@ namespace ROPTLIB
     void SampleSomProblem::rsomEscapeHessianGenprocEigen(const SomUtils::VecMatD &R, const SomUtils::MatD &T,
                                                          Vector &Y0, double &lambdaOut, SomUtils::VecMatD &vRout, SomUtils::MatD &vTout) const
     {
-        int staircaseStepLevel = T.rows() + 1;
+        int staircaseStepLevel = T.rows() + 1; // TODO: this has likely to be passed as param
         ROFL_VAR1(staircaseStepLevel);
         SomUtils::VecMatD Rnext(sz_.n_, SomUtils::MatD::Zero(staircaseStepLevel, sz_.d_));
         SomUtils::catZeroRow3dArray(R, Rnext);
@@ -1034,24 +1034,15 @@ namespace ROPTLIB
         // Hmat = zeros(vecsz);
         SomUtils::MatD Xvec(staircaseStepLevel * sz_.d_ * sz_.n_ + staircaseStepLevel * sz_.n_, 1);
         vectorizeRT(Rnext, Tnext, Xvec);
+
         int vecsz = Xvec.rows();
-        ROFL_VAR1(vecsz)
-
-        // p = size(X.R, 1);
-        // d = size(X.R, 2);
-        // n = size(X.R, 3);
-        // for ii = 1:vecsz
-        //     e_i = zeros(vecsz, 1);
-        //     e_i(ii) = 1;
-        //     U_e_i = convertToRT(e_i, p, d, n);
-        //     Hgp_e_i = hess_genproc(X,U_e_i,problem_struct);
-        //     Hmat(:,ii) = vectorizeXrt(Hgp_e_i);
-
-        SomUtils::SomSize szNext(staircaseStepLevel, sz_.d_, sz_.n_);
         SomUtils::MatD Hmat(SomUtils::MatD::Zero(vecsz, vecsz));
 
-        ROPTLIB::SampleSomProblem ProbNext(szNext, Tijs_, edges_);
-        ProbNext.makeHmat(Xvec, szNext, Hmat); //TODO: Xvec is vectorized and then re-decomposed in makeHmat()
+        SomUtils::SomSize somSzNext(staircaseStepLevel, sz_.d_, sz_.n_);
+
+        ROPTLIB::SampleSomProblem ProbNext(somSzNext, Tijs_, edges_);
+
+        ProbNext.makeHmat(Xvec, somSzNext, Hmat);
 
         if (SomUtils::isEqualFloats(Hmat - Hmat.transpose(), SomUtils::MatD::Zero(vecsz, vecsz)))
         {
@@ -1060,12 +1051,19 @@ namespace ROPTLIB
             ROFL_ASSERT(0)
         }
 
+        // Eigen::SelfAdjointEigenSolver<SomUtils::MatD> es;
+        // es.compute(Hmat);
+        // auto eigvals = es.eigenvalues(); // TODO: check how to use sparse matrix methods -> maybe SPECTRA library?
+        // auto eigvecs = es.eigenvectors();
+        // ROFL_VAR5(vecsz, eigvals.rows(), eigvals.cols(), eigvecs.rows(), eigvecs.cols());
+        // ROFL_VAR1(Hmat)
+
         Eigen::SelfAdjointEigenSolver<SomUtils::MatD> es;
         es.compute(Hmat);
         auto eigvals = es.eigenvalues(); // TODO: check how to use sparse matrix methods -> maybe SPECTRA library?
         auto eigvecs = es.eigenvectors();
 
-        // ROFL_VAR2(eigvals, eigvecs);
+        ROFL_VAR2(eigvals, eigvecs);
 
         Eigen::Index minRow, minCol;
         lambdaOut = eigvals.minCoeff(&minRow, &minCol);
@@ -1101,13 +1099,13 @@ namespace ROPTLIB
         // d = problem_struct_next.sz(2);
         // N = problem_struct_next.sz(3);
 
-        Stiefel mani1(staircaseStepLevel, szNext.d_);
+        Stiefel mani1(staircaseStepLevel, somSzNext.d_);
         mani1.ChooseParamsSet2();
         integer numoftypes = 2; // 2 i.e. (3D) Stiefel + Euclidean
 
-        integer numofmani1 = szNext.n_; // num of Stiefel manifolds
+        integer numofmani1 = somSzNext.n_; // num of Stiefel manifolds
         integer numofmani2 = 1;
-        Euclidean mani2(staircaseStepLevel, szNext.n_);
+        Euclidean mani2(staircaseStepLevel, somSzNext.n_);
         ProductManifold ProdManiNext(numoftypes, &mani1, numofmani1, &mani2, numofmani2);
 
         Vector xIn = ProdManiNext.RandominManifold(); //!! in other cases xIn would have been a pointer
@@ -1213,8 +1211,8 @@ namespace ROPTLIB
 
         { // EigToRopt scope for Y0
 
-            int rotSz = szNext.p_ * szNext.d_;
-            // int translSz = szNext.p_;
+            int rotSz = somSzNext.p_ * somSzNext.d_;
+            // int translSz = somSzNext.p_;
 
             int gElemIdx = 0;
             // fill result with computed gradient values : R

@@ -768,7 +768,9 @@ namespace ROPTLIB
     void SampleSomProblem::getRotations(const SomUtils::MatD &xEig, SomUtils::VecMatD &rOut) const
     {
         // rOut already needs to have fixed size by here
-        int rotSz = getRotSz(); // as a vector
+        int rotSz = getRotSz(); // vectorized
+
+        ROFL_ASSERT(rotSz * sz_.n_ + sz_.p_ * sz_.n_ == xEig.rows())
 
         // int endId = (i+1) * rotSz;
 
@@ -1144,6 +1146,7 @@ namespace ROPTLIB
 
         SomUtils::VecMatD xRi(szNext.n_, SomUtils::MatD::Zero(staircaseStepLevel, szNext.d_));
         SomUtils::MatD xTi(SomUtils::MatD::Zero(staircaseStepLevel, szNext.n_));
+        ROFL_VAR1("Calling getRotations()")
         ProbNextLocal.getRotations(XvecNext, xRi);
         ProbNextLocal.getTranslations(XvecNext, xTi);
 
@@ -1157,22 +1160,23 @@ namespace ROPTLIB
             SomUtils::VecMatD uRi(szNext.n_, SomUtils::MatD::Zero(staircaseStepLevel, szNext.d_));
             SomUtils::MatD uTi(SomUtils::MatD::Zero(staircaseStepLevel, szNext.n_));
 
+            ROFL_VAR1("Calling getRotations()")
             ProbNextLocal.getRotations(eI, uRi);
             ProbNextLocal.getTranslations(eI, uTi);
 
             SomUtils::VecMatD rhrI(szNext.n_, SomUtils::MatD::Zero(staircaseStepLevel, szNext.d_));
             SomUtils::MatD rhtI(SomUtils::MatD::Zero(staircaseStepLevel, szNext.n_));
 
-            // ROFL_VAR2(i, vecsz)
-            // ROFL_VAR3(szNext.n_, xRi[szNext.n_].rows(), xRi[szNext.n_].cols())
-            // ROFL_VAR2(uRi[0], uTi)
+            ROFL_VAR2(i, vecsz)
+            ROFL_VAR3(szNext.n_, xRi[szNext.n_ - 1].rows(), xRi[szNext.n_ - 1].cols())
+            ROFL_VAR2(uRi[0], uTi)
             ProbNextLocal.hessGenprocEigen(xRi, uRi, xTi, uTi, rhrI, rhtI);
-            // ROFL_VAR2(rhrI[0], rhtI)
+            ROFL_VAR2(rhrI[0], rhtI)
 
             SomUtils::MatD rhVecI(SomUtils::MatD::Zero(vecsz, 1));
             ProbNextLocal.vectorizeRT(rhrI, rhtI, rhVecI);
             Hmat.col(i) = rhVecI;
-            // ROFL_VAR2(i, rhVecI.transpose())
+            ROFL_VAR2(i, rhVecI.transpose())
         }
     }
 
@@ -1241,6 +1245,7 @@ namespace ROPTLIB
             {
                 SomUtils::SomSize somSzScope(staircaseStepIdx - 1, d, n); // TODO: improve getRotations() and getTranslations() and avoid local scope
                 ROPTLIB::SampleSomProblem ProbScope(somSzScope, Prob.Tijs_, Prob.edges_);
+                ROFL_VAR1("Calling getRotations()")
                 ProbScope.getRotations(XoptEigVec, R);
                 ProbScope.getTranslations(XoptEigVec, T);
             }
@@ -1255,16 +1260,21 @@ namespace ROPTLIB
             ROPTLIB::SampleSomProblem ProbNext(somSzNext, Prob.Tijs_, Prob.edges_);
 
             ProbNext.setGt(rGt, tGt);
+            ROFL_VAR1(ProbNext.costEigen(ProbNext.Rgt_, ProbNext.Tgt_));
+            ROFL_VAR1(ProbNext.costEigen(R, T));
 
             ROPTLIB::Stiefel mani1next(somSzNext.p_, somSzNext.d_);
             mani1next.ChooseParamsSet2();
             ROPTLIB::Euclidean mani2next(somSzNext.p_, somSzNext.n_);
             ROPTLIB::ProductManifold ProdManiNext(numoftypes, &mani1next, numofmani1, &mani2next, numofmani2);
-            ROPTLIB::Vector Y0 = ProdManiNext.RandominManifold();
+            ROPTLIB::Vector Y0;
             double lambda;
             SomUtils::VecMatD vLambdaR(n, SomUtils::MatD::Zero(somSzNext.p_, somSzNext.d_));
             SomUtils::MatD vLambdaT(SomUtils::MatD::Zero(somSzNext.p_, somSzNext.n_));
             ProbPrev.setCostCurr(costLast);
+            for (auto& Rm : R)
+                ROFL_VAR1(ProbPrev.checkIsOnStiefel(Rm))
+            ROFL_VAR1("Calling ProbPrev.rsomEscapeHessianGenprocEigen()")
             ProbPrev.rsomEscapeHessianGenprocEigen(R, T, Y0, lambda, vLambdaR, vLambdaT);
 
             if (lambda > 0)
@@ -1313,6 +1323,7 @@ namespace ROPTLIB
             XoptNext.Print("XoptNext");
             SomUtils::VecMatD XoptNextR(n, SomUtils::MatD::Zero(staircaseStepIdx, d));
             SomUtils::MatD XoptNextT(SomUtils::MatD::Zero(staircaseStepIdx, n));
+            ROFL_VAR1("Calling getRotations()")
             ProbNext.getRotations(XoptEigVec, XoptNextR);
             ProbNext.getTranslations(XoptEigVec, XoptNextT);
 

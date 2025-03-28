@@ -173,6 +173,9 @@ target_link_libraries(test_make_Ab ${rofl_LIBRARIES} lapack blas boost_system bo
 add_executable(test_matlab_ls test_matlab_ls.cpp include/som_utils.cpp)
 target_link_libraries(test_matlab_ls ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
 
+add_executable(test_multiple_nhc test_multiple_nhc.cpp include/som_utils.cpp)
+target_link_libraries(test_multiple_nhc ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
+
 add_executable(test_new_hessian_computation test_new_hessian_computation.cpp include/som_utils.cpp)
 target_link_libraries(test_new_hessian_computation ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
 
