@@ -3,6 +3,9 @@ hmat = readmatrix("../data/hmat.csv");
 
 hmat = reshape(hmat, 80, 80);
 
-eig(hmat)
+[~, eigvals] = eig(hmat);
+
+
+disp(sort(diag(real(eigvals))))
 
 end %file function

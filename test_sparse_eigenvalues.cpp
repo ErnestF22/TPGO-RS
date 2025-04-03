@@ -38,7 +38,7 @@ int main (int argc, char **argv)
 
     // Initialize and compute
     eigs.init();
-    int nconv = eigs.compute();
+    int nconv = eigs.compute(Spectra::SortRule::SmallestReal);
 
     // Retrieve results
     Eigen::VectorXcd evalues;
