@@ -12,6 +12,7 @@
 #include "thirdparty/roptlib/problems_SampleSom.h"
 
 #include <rofl/common/param_map.h>
+#include <rofl/common/profiler.h>
 
 namespace fs = std::filesystem;
 
@@ -150,15 +151,21 @@ int main(int argc, char **argv)
     SomUtils::VecMatD Rout(n, SomUtils::MatD::Identity(d, d));
     SomUtils::MatD Tout(SomUtils::MatD::Zero(d, n));
     int lastStaircaseStep;
-    double costOut = ROPTLIB::runRsomRS(Prob, startX, srcNodeId, Rout, Tout, lastStaircaseStep); // note: startX is needed (even if random) in ROPTLIB;
-    // ROPTLIB namespace is used even if runRsomRS() is not in SampleSomProblem class, nor in "original" ROPTLIB
-    ROFL_VAR1(costOut)
+    double exectime = 0;
+    {
+        rofl::ScopedTimer timer("RsomRS");
+        double costOut = ROPTLIB::runRsomRS(Prob, startX, srcNodeId, Rout, Tout, lastStaircaseStep); // note: startX is needed (even if random) in ROPTLIB;
+        // ROPTLIB namespace is used even if runRsomRS() is not in SampleSomProblem class, nor in "original" ROPTLIB
+        ROFL_VAR1(costOut)
+        exectime = timer.elapsedTimeMs();
+    }
 
     std::vector<double> rotErrs(numEdges, 1e+6), translErrs(numEdges, 1e+6);
     SomUtils::computeErrorsSingleRsom(edges,
                                       Rout, Tout,
                                       RgtEig, TgtEig,
                                       rotErrs, translErrs);
+    ROFL_VAR1(exectime)
 
     return 0;
 }

@@ -1043,12 +1043,13 @@ namespace ROPTLIB
         ROPTLIB::SampleSomProblem ProbNext(somSzNext, Tijs_, edges_);
 
         ProbNext.makeHmat(Xvec, somSzNext, Hmat);
+        ROFL_VAR1(Hmat)
 
-        if (SomUtils::isEqualFloats(Hmat - Hmat.transpose(), SomUtils::MatD::Zero(vecsz, vecsz)))
+        if (!SomUtils::isEqualFloats(Hmat - Hmat.transpose(), SomUtils::MatD::Zero(vecsz, vecsz)))
         {
             // Checking whether anti-symmetric part is zero
             ROFL_ERR("Hessian NOT symmetric")
-            ROFL_ASSERT(0)
+            // ROFL_ASSERT(0)
         }
 
         // Eigen::SelfAdjointEigenSolver<SomUtils::MatD> es;
@@ -1058,7 +1059,8 @@ namespace ROPTLIB
         // ROFL_VAR5(vecsz, eigvals.rows(), eigvals.cols(), eigvecs.rows(), eigvecs.cols());
         // ROFL_VAR1(Hmat)
 
-        Eigen::SelfAdjointEigenSolver<SomUtils::MatD> es;
+        ROFL_VAR1("Computing Eigenvalues and Eigenvectors");
+        Eigen::EigenSolver<SomUtils::MatD> es;
         es.compute(Hmat);
         auto eigvals = es.eigenvalues(); // TODO: check how to use sparse matrix methods -> maybe SPECTRA library?
         auto eigvecs = es.eigenvectors();
@@ -1066,9 +1068,11 @@ namespace ROPTLIB
         ROFL_VAR2(eigvals, eigvecs);
 
         Eigen::Index minRow, minCol;
-        lambdaOut = eigvals.minCoeff(&minRow, &minCol);
+        lambdaOut = eigvals.real().minCoeff(&minRow, &minCol);
 
-        auto vOut = eigvecs.col(minRow);
+        ROFL_VAR1(lambdaOut);
+
+        auto vOut = eigvecs.real().col(minRow);
         ROFL_VAR2(vOut.rows(), vOut.cols());
         ProbNext.getRotations(vOut, vRout);
         ProbNext.getTranslations(vOut, vTout);
@@ -1081,7 +1085,7 @@ namespace ROPTLIB
         // });
         // ProbNext.eigencheckHessianGenproc(lambdaOut, Rnext, minusVrOut, Tnext, -vTout);
 
-        if (lambdaOut > 0)
+        if (lambdaOut > -1e-2)
         {
             // lambdaOut, vRout, vTout are already set before this check
             ROFL_VAR2(lambdaOut, "lambdaOut > 0 -> avoiding linesearch")

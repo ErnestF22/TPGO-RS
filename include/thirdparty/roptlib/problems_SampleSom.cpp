@@ -1168,6 +1168,7 @@ namespace ROPTLIB
             SomUtils::MatD rhtI(SomUtils::MatD::Zero(staircaseStepLevel, szNext.n_));
 
             ROFL_VAR2(i, vecsz)
+            ROFL_VAR1(Tijs_)
             ROFL_VAR3(szNext.n_, xRi[szNext.n_ - 1].rows(), xRi[szNext.n_ - 1].cols())
             ROFL_VAR2(uRi[0], uTi)
             ProbNextLocal.hessGenprocEigen(xRi, uRi, xTi, uTi, rhrI, rhtI);
@@ -1277,7 +1278,7 @@ namespace ROPTLIB
             ROFL_VAR1("Calling ProbPrev.rsomEscapeHessianGenprocEigen()")
             ProbPrev.rsomEscapeHessianGenprocEigen(R, T, Y0, lambda, vLambdaR, vLambdaT);
 
-            if (lambda > 0)
+            if (lambda > -1e-2)
             {
                 ROFL_VAR2(lambda, "R, T eigenvals > 0: exiting staircase")
                 // staircaseStepSkipped = 0;

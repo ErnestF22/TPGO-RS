@@ -1,6 +1,6 @@
 function generate_testnetwork_n100
 
-N = 50;
+N = 75;
 mindeg = 2;
 d = 3;
 
