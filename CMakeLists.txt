@@ -194,6 +194,9 @@ target_link_libraries(test_rsom_pim_hessian_genproc ${rofl_LIBRARIES} roptlib_lo
 add_executable(test_single_run_rsom_rs test_single_run_rsom_rs.cpp include/som_utils.cpp)
 target_link_libraries(test_single_run_rsom_rs ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
 
+add_executable(test_sparse_eigenvalues test_sparse_eigenvalues.cpp include/som_utils.cpp)
+target_link_libraries(test_sparse_eigenvalues ${rofl_LIBRARIES} boost_iostreams boost_system boost_filesystem)
+
 add_executable(test_som_procrustes test_som_procrustes.cpp include/som_utils.cpp include/som_procrustes.cpp)
 target_link_libraries(test_som_procrustes ${rofl_LIBRARIES} boost_system boost_filesystem)
 

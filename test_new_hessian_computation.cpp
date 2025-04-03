@@ -212,6 +212,9 @@ int main(int argc, char **argv)
     SomUtils::MatD Hmat(SomUtils::MatD::Zero(vecsz, vecsz));
 
     ProbNext.makeHmat(Xnext, somSzNext, Hmat);
+    std::ofstream hessianFile("hmat.csv");
+    hessianFile << Hmat.reshaped<Eigen::ColMajor>(Hmat.cols() * Hmat.rows(), 1);
+    hessianFile.close();
 
     if (SomUtils::isEqualFloats(Hmat - Hmat.transpose(), SomUtils::MatD::Zero(vecsz, vecsz)))
     {
