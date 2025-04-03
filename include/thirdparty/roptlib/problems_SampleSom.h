@@ -32,6 +32,9 @@
 
 #include "thirdparty/qr_unique_sizeless/main.h"
 
+#include <Spectra/GenEigsSolver.h>
+#include <Spectra/MatOp/SparseGenMatProd.h>
+
 #include "../../som_utils.h"
 
 namespace ROPTLIB

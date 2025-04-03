@@ -1059,21 +1059,61 @@ namespace ROPTLIB
         // ROFL_VAR5(vecsz, eigvals.rows(), eigvals.cols(), eigvecs.rows(), eigvecs.cols());
         // ROFL_VAR1(Hmat)
 
-        ROFL_VAR1("Computing Eigenvalues and Eigenvectors");
-        Eigen::EigenSolver<SomUtils::MatD> es;
-        es.compute(Hmat);
-        auto eigvals = es.eigenvalues(); // TODO: check how to use sparse matrix methods -> maybe SPECTRA library?
-        auto eigvecs = es.eigenvectors();
+        /** Computing min eigencouple via Eigen library*/
+        // ROFL_VAR1("Computing Eigenvalues and Eigenvectors");
+        // Eigen::EigenSolver<SomUtils::MatD> es;
+        // es.compute(Hmat);
+        // auto eigvals = es.eigenvalues(); // TODO: check how to use sparse matrix methods -> maybe SPECTRA library?
+        // auto eigvecs = es.eigenvectors();
 
-        ROFL_VAR2(eigvals, eigvecs);
+        // ROFL_VAR2(eigvals, eigvecs);
 
-        Eigen::Index minRow, minCol;
-        lambdaOut = eigvals.real().minCoeff(&minRow, &minCol);
+        // Eigen::Index minRow, minCol;
+        // lambdaOut = eigvals.real().minCoeff(&minRow, &minCol);
 
-        ROFL_VAR1(lambdaOut);
+        // ROFL_VAR1(lambdaOut);
 
-        auto vOut = eigvecs.real().col(minRow);
-        ROFL_VAR2(vOut.rows(), vOut.cols());
+        // auto vOut = eigvecs.real().col(minRow);
+        // ROFL_VAR2(vOut.rows(), vOut.cols());
+        /** */
+
+        /** Computing min eigencouple via Spectra library*/
+        Eigen::SparseMatrix<double, Eigen::ColMajor> HmatSparse(Hmat.rows(), Hmat.cols());
+        HmatSparse = Hmat.sparseView();
+        // Eigen::EigenSolver<Eigen::SparseMatrix<double>> es;
+        // es.compute(HmatSparse);
+        // auto eigvals = es.eigenvalues();
+        // auto eigvecs = es.eigenvectors();
+
+        // Construct matrix operation object using the wrapper class DenseSymMatProd
+        Spectra::SparseGenMatProd<double> op(HmatSparse);
+
+        // Construct eigen solver object, requesting the largest three eigenvalues
+        Spectra::GenEigsSolver<Spectra::SparseGenMatProd<double>> eigs(op, 1, HmatSparse.rows());
+
+        // Initialize and compute
+        eigs.init();
+        int nconv = eigs.compute(Spectra::SortRule::SmallestReal);
+
+        // Retrieve results
+        Eigen::VectorXd eigvals;
+        Eigen::MatrixXd eigvecs;
+        if (eigs.info() == Spectra::CompInfo::Successful)
+        {
+            eigvals = eigs.eigenvalues().real();
+            eigvecs = eigs.eigenvectors().real();
+        }
+
+        std::cout << "Eigenvalues found:\n"
+                  << eigvals << std::endl;
+        std::cout << "Eigenvectors found:\n"
+                  << eigvecs << std::endl;
+
+        auto vOut = eigvecs.real().col(0);        
+
+        /** */
+
+        lambdaOut = eigvals(0);
         ProbNext.getRotations(vOut, vRout);
         ProbNext.getTranslations(vOut, vTout);
 
@@ -1092,7 +1132,7 @@ namespace ROPTLIB
             return;
         }
 
-        ROFL_VAR6(eigvals.rows(), eigvals.cols(), eigvecs.rows(), eigvecs.cols(), minRow, minCol);
+        ROFL_VAR4(eigvals.rows(), eigvals.cols(), eigvecs.rows(), eigvecs.cols());
 
         /**
          * Linesearch for escaping saddle point

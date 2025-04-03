@@ -30,7 +30,7 @@ int main (int argc, char **argv)
     // auto eigvals = es.eigenvalues();
     // auto eigvecs = es.eigenvectors();
 
-    // Construct matrix operation object using the wrapper class DenseSymMatProd
+    // Construct matrix operation object using the wrapper class SparseGenMatProd
     Spectra::SparseGenMatProd<double> op(HmatSparse);
 
     // Construct eigen solver object, requesting the largest three eigenvalues
@@ -42,10 +42,14 @@ int main (int argc, char **argv)
 
     // Retrieve results
     Eigen::VectorXcd evalues;
-    if(eigs.info() == Spectra::CompInfo::Successful)
+    Eigen::MatrixXcd evecs;
+    if(eigs.info() == Spectra::CompInfo::Successful) {
         evalues = eigs.eigenvalues();
+        evecs = eigs.eigenvectors();
+    }
 
     std::cout << "Eigenvalues found:\n" << evalues << std::endl;
+    std::cout << "Eigenvectors found:\n" << evecs << std::endl;
 
 
     return 0;
