@@ -4,7 +4,7 @@ import numpy as np
 
 
 
-rsom_rs_results_path = "results/"
+rsom_rs_results_path = "results/escape_spectra/"
 folders = os.listdir(rsom_rs_results_path)
 tuples_rs = []
 
@@ -18,7 +18,7 @@ for f in folders:
     print("folder")
     print(folder)
 
-    testid = folder[8: 27]
+    testid = folder[8 + len("escape_spectra/"): 27 +len("escape_spectra/")]
 
     print("testid")
     print(testid)
