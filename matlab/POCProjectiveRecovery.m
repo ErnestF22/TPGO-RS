@@ -61,7 +61,8 @@ disp(norm(tangentRi'*Ri_tilde2-tangentRi'*Ri_tilde2,'fro'))
 
 %equation (38) on Overleaf
 tangentAmbiguity=vec((Ri_tilde2*hat3(s)+Ri_tilde2_ort*b)*tij*Lij+Ri_tilde2*tij*diag(mu));
-tangentAmbiguity2=vec(Ri_tilde2*hat3(s)*tij*Lij+Ri_tilde2_ort*b*tij*Lij+Ri_tilde2*tij*diag(mu));
+tangentAmbiguity2= ...
+    vec(Ri_tilde2*hat3(s)*tij*Lij+Ri_tilde2_ort*b*tij*Lij+Ri_tilde2*tij*diag(mu));
 M1=zeros(dimStair*2,3);
 I3=eye(3);
 for iM1=1:3
@@ -80,13 +81,53 @@ disp(norm(tangentAmbiguity-tangentAmbiguity4,'fro'))
 N=null(M);
 disp('Nullspace of M')
 disp(N)
+
+%% checking (51)
+
+Qx=align2d(Tij_tilde);
+QxRitilde2Bot=Qx(3:4,:)*Ri_tilde2;
+[U,~,~]=svd(QxRitilde2Bot,'econ');
+c=U(:,2);
+
+QLastRight=Qx(3:4,4)';
+
+RbEst=procrustesRb(c,QLastRight');
+d = 3;
+lhs_51 = Qx' * blkdiag(eye(d), RbEst') * Qx * Ri_tilde2;
+disp("lhs_51")
+disp(lhs_51)
+
 keyboard()
 
+end % file function
 
 function Qx=align2d_EoF(v)
 Q=fliplr(orthComplement(v));
 Qx=flipud(orthCompleteBasis(Q)');
+end
 
 function Qalign=align3d(v)
 [U,S,V]=svd(v);
 Qalign=fliplr(orthCompleteBasis(U(:,4)))';
+
+end 
+
+% function [RitildeEst1,RitildeEst2,Qx, RbEst]=recoverRitilde(Ritilde2,Tijtilde)
+% Qx=align2d(Tijtilde);
+% QxRitilde2Bot=Qx(3:4,:)*Ritilde2;
+% [U,~,~]=svd(QxRitilde2Bot,'econ');
+% c=U(:,2);
+% 
+% QLastRight=Qx(3:4,4)';
+% 
+% RbEst=procrustesRb(c,QLastRight');
+% RitildeEst1=Qx'*blkdiag(eye(2),-RbEst')*Qx*Ritilde2;
+% RitildeEst2=Qx'*blkdiag(eye(2),RbEst')*Qx*Ritilde2;
+% end
+
+function RbEst=procrustesRb(c,q)
+[U,~,V]=svd(c*q');
+diagmat = eye(size(U,1));
+diagmat(end, end) = det(U*V');
+RbEst=U*diagmat*V';
+end
