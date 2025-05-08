@@ -85,17 +85,73 @@ disp(N)
 %% checking (51)
 
 Qx=align2d(Tij_tilde);
-QxRitilde2Bot=Qx(3:4,:)*Ri_tilde2;
+QxRitilde2Bot=Qx(3:5,:)*Ri_tilde2;
 [U,~,~]=svd(QxRitilde2Bot,'econ');
-c=U(:,2);
+c=U(:,1);
 
-QLastRight=Qx(3:4,4)';
+QLastRight=Qx(3:5,1);
 
-RbEst=procrustesRb(c,QLastRight');
+RbEst=procrustesRb(c,QLastRight);
 d = 3;
-lhs_51 = Qx' * blkdiag(eye(d), RbEst') * Qx * Ri_tilde2;
+lhs_51 = Qx' * blkdiag(eye(2), RbEst') * Qx * Ri_tilde2;
 disp("lhs_51")
 disp(lhs_51)
+
+%% checking (52)- on real case data
+
+load('data/ssom_recovery/ws2.mat', 'X_manopt_out')
+load('data/ssom_recovery/ws2.mat', 'problem_data')
+% load('data/ssom_recovery/ws2.mat', 'problem_data_next')
+% load('data/ssom_recovery/ws2.mat', 'N')
+
+node_degrees = sum(problem_data.A, 2);
+low_deg = 2;
+T = X_manopt_out.T;
+lambdas = X_manopt_out.lambda;
+edges = problem_data.E;
+tijs = problem_data.tijs;
+
+T_diffs = make_T_edges(T,edges);
+R = X_manopt_out.R;
+nodes_high_deg = node_degrees > low_deg; % all nodes are high deg in this test
+
+
+Y_stack = [matStackH(R(:,:,nodes_high_deg)), T_diffs];
+Qalign=align3d(Y_stack);
+Qy = Qalign;
+
+Qx=align2d(T_diffs);
+
+Qxtransp = Qx';
+Qtop = Qxtransp(1:d, :);
+Qbot = Qxtransp(d+1:end, :);
+Qbotleft = Qbot(:, 1:low_deg);
+Qbotright = Qbot(:, low_deg + 1:end);
+
+Ri_tilde2 = R(:,:,1);
+
+mathcalR = Qx * Qy * Ri_tilde2;
+Rtop = mathcalR(1:low_deg, :);
+Rbot = mathcalR(d:end, :);
+
+QxRitilde2Bot=Qx(3:end,:)*Ri_tilde2;
+[U,~,~]=svd(QxRitilde2Bot,'econ');
+c=U(:,1);
+
+QLastRight=Qx(3:end,5);
+Rb = procrustesRb(c, QLastRight);
+
+
+supposedly_zero_without_lemma = ...
+    Qbotleft * Rtop + Qbotright * Rb' * Rbot; %supposedly null 
+
+disp("max(abs(supposedly_zero_without_lemma), [], ""all"")")
+disp(max(abs(supposedly_zero_without_lemma), [], "all"))
+
+supposedly_zero_applying_lemma = Qbotright * Rb' * Rbot; %supposedly null
+
+disp("max(abs(supposedly_zero_applying_lemma), [], ""all"")")
+disp(max(abs(supposedly_zero_applying_lemma), [], "all"))
 
 keyboard()
 
