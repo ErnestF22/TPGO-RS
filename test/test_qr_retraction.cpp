@@ -14,8 +14,6 @@
 
 #include "thirdparty/roptlib/problems_SampleSom.h"
 
-
-
 // function Y = retraction_qr_stiefel(X, U, t)
 //     % It is necessary to call qr_unique rather than simply qr to ensure
 //     % this is a retraction, to avoid spurious column sign flips.
@@ -25,7 +23,6 @@
 //         Y = qr_unique(X + t*U);
 //     end
 // end
-
 
 int main(int argc, char **argv)
 {

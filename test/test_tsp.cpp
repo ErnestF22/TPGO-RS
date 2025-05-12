@@ -85,7 +85,7 @@ void brute_force_tsp(const Eigen::MatrixXi &distances, std::vector<int> &shortes
             minDistance = currentDistance;
             shortestRoute = currentRoute;
         }
-        permNum ++;
+        permNum++;
     } while (std::next_permutation(cities.begin(), cities.end()));
 
     shortestRoute.push_back(0);

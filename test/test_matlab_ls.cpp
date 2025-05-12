@@ -124,7 +124,6 @@ int main(int argc, char **argv)
     ProbNext.SetUseGrad(true);
     ProbNext.SetUseHess(true);
 
-
     // 2) Eig to ROPT
     { // EigToRopt scope for Y0
 
@@ -175,7 +174,6 @@ int main(int argc, char **argv)
         }
         Y0TROPT.CopyTo(Y0.GetElement(gElemIdx));
     } // end of EigToRopt scope for Y0
-
 
     ROPTLIB::RTRNewton *RTRNewtonSolverNext = new ROPTLIB::RTRNewton(&ProbNext, &Y0); // USE INITGUESS HERE!
     RTRNewtonSolverNext->Verbose = ROPTLIB::ITERRESULT;

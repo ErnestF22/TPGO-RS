@@ -90,7 +90,7 @@ int main(int argc, char **argv)
     for (int i = 0; i < n; ++i)
         ROFL_VAR3(i, newxCppR[i], newxMlabREig[i])
 
-    // T 
+    // T
     ROFL_VAR2(newxCppT, newxMlabTEig)
 
     // R - Polar

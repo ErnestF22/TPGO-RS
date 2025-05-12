@@ -88,6 +88,7 @@ include/thirdparty/roptlib/problems_SPDKarcherMean.cpp
 include/thirdparty/roptlib/problems_SphereConvexHull.cpp
 include/thirdparty/roptlib/problems_SphereSparsestVector.cpp
 include/thirdparty/roptlib/problems_SphereTxRQ.cpp
+include/thirdparty/roptlib/problems_Ssom.cpp #ssom
 include/thirdparty/roptlib/problems_StieBrockett.cpp
 include/thirdparty/roptlib/problems_StieSPCA.cpp
 include/thirdparty/roptlib/manifolds_SphereTx.cpp
@@ -190,6 +191,9 @@ target_link_libraries(test_rsom_pim_hessian_genproc ${rofl_LIBRARIES} roptlib_lo
 
 add_executable(test_single_run_rsom_rs test/test_single_run_rsom_rs.cpp include/som_utils.cpp)
 target_link_libraries(test_single_run_rsom_rs ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
+
+add_executable(test_single_run_ssom test/test_single_run_ssom.cpp include/som_utils.cpp)
+target_link_libraries(test_single_run_ssom ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
 
 add_executable(test_sparse_eigenvalues test/test_sparse_eigenvalues.cpp include/som_utils.cpp)
 target_link_libraries(test_sparse_eigenvalues ${rofl_LIBRARIES} boost_iostreams boost_system boost_filesystem)

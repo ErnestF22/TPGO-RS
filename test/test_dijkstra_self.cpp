@@ -12,8 +12,6 @@
 
 #include <rofl/common/macros.h>
 
-
-
 int main(int argc, char **argv)
 {
 
@@ -68,7 +66,6 @@ int main(int argc, char **argv)
 
     int src = 0;
     Prob.dijkstraSP(n, src, adjmat, dist, prev);
-
 
     ROFL_VAR1("Dijkstra self implementation output")
 

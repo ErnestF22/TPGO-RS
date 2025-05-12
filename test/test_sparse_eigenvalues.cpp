@@ -13,13 +13,11 @@
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/SparseCore>
 
-
-int main (int argc, char **argv)
+int main(int argc, char **argv)
 {
     int vecsz = 80;
     SomUtils::MatD Hmat(vecsz * vecsz, 1);
     SomUtils::readCsvEigen("../data/hmat.csv", Hmat);
-    
 
     Hmat = Hmat.reshaped<Eigen::ColMajor>(vecsz, vecsz);
 
@@ -43,14 +41,16 @@ int main (int argc, char **argv)
     // Retrieve results
     Eigen::VectorXcd evalues;
     Eigen::MatrixXcd evecs;
-    if(eigs.info() == Spectra::CompInfo::Successful) {
+    if (eigs.info() == Spectra::CompInfo::Successful)
+    {
         evalues = eigs.eigenvalues();
         evecs = eigs.eigenvectors();
     }
 
-    std::cout << "Eigenvalues found:\n" << evalues << std::endl;
-    std::cout << "Eigenvectors found:\n" << evecs << std::endl;
-
+    std::cout << "Eigenvalues found:\n"
+              << evalues << std::endl;
+    std::cout << "Eigenvectors found:\n"
+              << evecs << std::endl;
 
     return 0;
 }

@@ -326,9 +326,9 @@ int main(int argc, char **argv)
 
                 std::vector<double> rotErrsTestjd(numEdges, 1e+6), translErrsTestjd(numEdges, 1e+6);
                 SomUtils::computeErrorsSingleRsom(edges,
-                                                 Rout, Tout,
-                                                 RgtEig, TgtEig,
-                                                 rotErrsTestjd, translErrsTestjd);
+                                                  Rout, Tout,
+                                                  RgtEig, TgtEig,
+                                                  rotErrsTestjd, translErrsTestjd);
 
                 double execTimeIJ = runRsomRStimer.elapsedTimeMs();
                 ROFL_VAR3(entry, testjd, execTimeIJ)

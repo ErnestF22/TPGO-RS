@@ -106,7 +106,7 @@ int main(int argc, char **argv)
 
     auto asd = findAnswer(5, edges);
 
-    for (int i=0; i<asd.size(); ++i)
+    for (int i = 0; i < asd.size(); ++i)
         std::cout << asd[i] << std::endl;
 
     return 0;

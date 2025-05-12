@@ -84,7 +84,6 @@ void testSomSample(SomUtils::SomSize somSz, SomUtils::MatD &Tijs, Eigen::MatrixX
     ROFL_VAR1(Prob.f(startX));
     ROFL_VAR1(ProbNext.f(Y0));
 
-
     delete RTRNewtonSolver;
 }
 
