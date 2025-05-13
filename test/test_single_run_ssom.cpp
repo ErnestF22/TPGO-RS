@@ -108,10 +108,12 @@ int main(int argc, char **argv)
     SomUtils::MatD XgtVecEig(SomUtils::MatD::Zero(d * d * n + d * n, 1));
     SomUtils::VecMatD RgtEig(n, SomUtils::MatD::Zero(d, d));
     SomUtils::MatD TgtEig(SomUtils::MatD::Zero(d, n));
+    SomUtils::MatD LambdasGtEig(SomUtils::MatD::Zero(numEdges, 1));
     Prob.RoptToEig(xGt, XgtVecEig);
     Prob.getRotations(XgtVecEig, RgtEig);
     Prob.getTranslations(XgtVecEig, TgtEig);
-    Prob.setGt(RgtEig, TgtEig);
+    Prob.getScales(XgtVecEig, LambdasGtEig);
+    Prob.setGt(RgtEig, TgtEig, LambdasGtEig);
 
     // Set the domain of the problem to be the product of Stiefel manifolds
     Prob.SetDomain(&ProdMani);
@@ -149,11 +151,14 @@ int main(int argc, char **argv)
     int srcNodeId = 0;
     SomUtils::VecMatD Rout(n, SomUtils::MatD::Identity(d, d));
     SomUtils::MatD Tout(SomUtils::MatD::Zero(d, n));
+    SomUtils::MatD lambdasOut(SomUtils::MatD::Zero(numEdges, 1));
     int lastStaircaseStep;
     double exectime = 0;
     {
         rofl::ScopedTimer timer("RsomRS");
-        double costOut = ROPTLIB::runSsom(Prob, startX, srcNodeId, Rout, Tout, lastStaircaseStep); // note: startX is needed (even if random) in ROPTLIB;
+        double costOut = ROPTLIB::runSsom(Prob, startX, srcNodeId, 
+            Rout, Tout, lambdasOut, 
+            lastStaircaseStep); // note: startX is needed (even if random) in ROPTLIB;
         // ROPTLIB namespace is used even if runRsomRS() is not in SsomProblem class, nor in "original" ROPTLIB
         ROFL_VAR1(costOut)
         exectime = timer.elapsedTimeMs();

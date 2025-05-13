@@ -324,6 +324,11 @@ namespace SomUtils
                                  const SomUtils::VecMatD &Rgt, const SomUtils::MatD &Tgt,
                                  std::vector<double> &rotErrs, std::vector<double> &translErrs);
 
+    /**
+     * Apply ReLU to double input @param x and return the result
+     */                                 
+    double RElU(double x);
+
 } // end of namespace SomUtils
 
 #endif /*SOM_UTILS_H_*/

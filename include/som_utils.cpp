@@ -865,4 +865,9 @@ namespace SomUtils
         }
     }
 
+    double RElU(double x)
+    {
+        return (x > 0) ? x : 0;
+    }
+
 } // end of namespace SomUtils

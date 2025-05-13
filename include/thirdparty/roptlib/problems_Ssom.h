@@ -77,9 +77,12 @@ namespace ROPTLIB
 
       /**
        * @brief Compute and return cost (as double) with Eigen inputs
-       * i.e., p x d x n @param Reigen and p x n @param Teigen
+       * i.e., p x d x n @param Reigen p x n @param Teigen and e x 1 @param LambdasEigen
        */
-      double costEigen(const SomUtils::VecMatD &Reigen, const SomUtils::MatD &Teigen) const;
+      double costEigen(
+          const SomUtils::VecMatD &Reigen,
+          const SomUtils::MatD &Teigen,
+          const SomUtils::MatD &LambdasEigen) const;
 
       /**
        * @brief Compute and return cost (as double) with fully vectorized
@@ -103,6 +106,11 @@ namespace ROPTLIB
       // virtual Vector &Grad(const Variable &x, Vector *result) const;
 
       /**
+       * Multiply each column of Tijs by the corresponding scale lambda
+       */
+      void makeTijsScaled(const SomUtils::MatD &Tijs, const SomUtils::MatD &Lambdas, SomUtils::MatD &TijsScaled) const;
+
+      /**
        * Function that computes Euclidean gradient of Translation estimation cost (with Eigen inputs/outputs)
        */
       void egradR(const SomUtils::MatD &P, SomUtils::VecMatD &egR) const;
@@ -110,17 +118,30 @@ namespace ROPTLIB
       /**
        * Function that computes Riemannian gradient of Rotation estimation cost (with Eigen inputs/outputs)
        */
-      void rgradR(const SomUtils::VecMatD &R, const SomUtils::MatD &P, SomUtils::VecMatD &rgR) const;
+      void rgradR(const SomUtils::VecMatD &R, const SomUtils::MatD &Lambdas,
+                  const SomUtils::MatD &P, SomUtils::VecMatD &rgR) const;
 
       /**
        * Function that computes Euclidean gradient of Translation estimation cost (with Eigen inputs/outputs)
        */
-      void egradT(const SomUtils::MatD &T, const SomUtils::MatD &Lr, const SomUtils::MatD &Pr, SomUtils::MatD &egT) const;
+      void egradT(const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
+                  const SomUtils::MatD &Lr, const SomUtils::MatD &Pr,
+                  SomUtils::MatD &egT) const;
 
       /**
        * Function that computes Riemannian gradient of Translation estimation cost (with Eigen inputs/outputs)
        */
-      void rgradT(const SomUtils::MatD &T, const SomUtils::MatD &Lr, const SomUtils::MatD &Pr, SomUtils::MatD &egT) const;
+      void rgradT(const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
+                  const SomUtils::MatD &Lr, const SomUtils::MatD &Pr,
+                  SomUtils::MatD &egT) const;
+
+      /**
+       * Function that computes Riemannian gradient of scale/Lambdas estimation cost (with Eigen inputs/outputs)
+       */
+      void rgradLambdas(const SomUtils::VecMatD &R, const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
+                        SomUtils::MatD &rgLambdas) const;
+
+      double ssomReLUargument(double lambdaE) const;
 
       /**
        * Euclidean Hessian action i.e., *result = H(x)[etax]
@@ -131,12 +152,19 @@ namespace ROPTLIB
        * Hessian (Genproc) with Eigen I/O;
        * called internally by RieHessianEta()
        */
-      void hessGenprocEigen(const SomUtils::VecMatD &xR, const SomUtils::VecMatD &uR, const SomUtils::MatD &xT, const SomUtils::MatD &uT, SomUtils::VecMatD &rhR, SomUtils::MatD &rhT) const;
+      void hessGenprocEigen(const SomUtils::VecMatD &xR, const SomUtils::VecMatD &uR,
+                            const SomUtils::MatD &xT, const SomUtils::MatD &uT,
+                            const SomUtils::MatD &xLambdas, const SomUtils::MatD &uLambdas,
+                            SomUtils::VecMatD &rhR, SomUtils::MatD &rhT, SomUtils::MatD &rhLambdas) const;
 
       /**
        * Hessian (Genproc) with Eigen I/O of f-(mu*u)
        */
-      void hessGenprocEigenShifted(const SomUtils::VecMatD &xR, const SomUtils::VecMatD &uR, const SomUtils::MatD &xT, const SomUtils::MatD &uT, double mu, SomUtils::VecMatD &rhR, SomUtils::MatD &rhT) const;
+      void hessGenprocEigenShifted(const SomUtils::VecMatD &xR, const SomUtils::VecMatD &uR,
+                                   const SomUtils::MatD &xT, const SomUtils::MatD &uT,
+                                   const SomUtils::MatD &xLambdas, const SomUtils::MatD &uLambdas,
+                                   double mu,
+                                   SomUtils::VecMatD &rhR, SomUtils::MatD &rhT, SomUtils::MatD &rhLambdas) const;
 
       /**
        * Hessian action i.e., *result = H(x)[etax]
@@ -180,9 +208,19 @@ namespace ROPTLIB
       void getTi(const SomUtils::MatD &xEig, SomUtils::MatD &tOut, int i) const;
 
       /**
+       * Get i-th scale from Eigen-converted variable xEig and return it in ref @param lambdaOut
+       */
+      void getLambdaI(const SomUtils::MatD &xEig, double &lambdaOut, int i) const;
+
+      /**
        * Get i-th Translation from Eigen-converted variable xEig on SE(d)^N
        */
       void getTiSEdN(const SomUtils::MatD &xEig, SomUtils::MatD &tOut, int i) const;
+
+      /**
+       * Get i-th scale from Eigen-converted variable xEig on SE(d)^N and return it in ref @param lambdaOut
+       */
+      void getLambdaISEdN(const SomUtils::MatD &xEig, double &lambdaOut, int i) const;
 
       /**
        * Get all translations in p * n matrix tOut
@@ -190,14 +228,21 @@ namespace ROPTLIB
       void getTranslations(const SomUtils::MatD &xEig, SomUtils::MatD &tOut) const;
 
       /**
+       * Get all translations in e * 1 matrix scalesOut
+       */
+      void getScales(const SomUtils::MatD &xEig, SomUtils::MatD &scalesOut) const;
+
+      /**
        * Computes matrices used in rotation estimation cost
        */
-      void makePfrct(const SomUtils::MatD &T, SomUtils::MatD &P, double &frct) const;
+      void makePfrct(const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
+                     SomUtils::MatD &P, double &frct) const;
 
       /**
        * Computes matrices used in translation estimation cost
        */
-      void makeLrPrBr(const SomUtils::VecMatD &R, SomUtils::MatD &Lr, SomUtils::MatD &Pr, SomUtils::MatD &Br) const;
+      void makeLrPrBr(const SomUtils::VecMatD &R, const SomUtils::MatD &Lambdas,
+                      SomUtils::MatD &Lr, SomUtils::MatD &Pr, SomUtils::MatD &Br) const;
 
       /**
        * Compute one of the Genproc Hessian subparts
@@ -230,6 +275,11 @@ namespace ROPTLIB
       int getTranslSz() const;
 
       /**
+       * Set rho_ class param
+       */
+      void setRho(double rho);
+
+      /**
        * @brief Return vectorized (following col-major order, like in MATLAB) version of @param R
        * in output reference @param RvecOut
        */
@@ -237,10 +287,11 @@ namespace ROPTLIB
 
       /**
        * @brief Return vectorized (following col-major order, like in MATLAB) version of @param R
-       * Followed by vectorized version of @param T
+       * followed by vectorized version of @param T followed by vectorized version of @param Lambdas
        * in output reference @param XvecOut
        */
-      void vectorizeRT(const SomUtils::VecMatD &R, const SomUtils::MatD &T, SomUtils::MatD &XvecOut) const;
+      void vectorizeRTLambdas(const SomUtils::VecMatD &R, const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
+                              SomUtils::MatD &XvecOut) const;
 
       /**
        * @brief Convert ROPTLIB Vector input @param x on Stiefel manifold into output reference @param xEigen
@@ -264,10 +315,15 @@ namespace ROPTLIB
       void setGtT(const SomUtils::MatD &T);
 
       /**
-       * @brief Set for the Rgt_ (i.e., rotation ground truth) and Tgt_ (i.e., translation ground truth)
-       * objects equal to inputs @param R, @param T
+       * @brief Set the LambdasGt_ (i.e., translation ground truth) object equal to input @param Lambdas
        */
-      void setGt(const SomUtils::VecMatD &R, const SomUtils::MatD &T);
+      void setGtLambdas(const SomUtils::MatD &Lambdas);
+
+      /**
+       * @brief Set for the Rgt_ (i.e., rotation ground truth) and Tgt_ (i.e., translation ground truth)
+       * objects equal to inputs @param R, @param T, @param Lambdas
+       */
+      void setGt(const SomUtils::VecMatD &R, const SomUtils::MatD &T, const SomUtils::MatD &Lambdas);
 
       /**
        * @brief Return the Riemannian Staircase Recovery Success (called rsRecoverySuccess_) object
@@ -301,6 +357,11 @@ namespace ROPTLIB
       Eigen::MatrixXi edges_;
 
       /**
+       * Rho compensation factor (to avoid 0-scales-based optima)
+       */
+      double rho_;
+
+      /**
        * Basically just edges_.rows()
        * Saved separately for ease
        */
@@ -320,6 +381,11 @@ namespace ROPTLIB
        * Ground truth information for T
        */
       SomUtils::MatD Tgt_;
+
+      /**
+       * Ground truth information for T
+       */
+      SomUtils::MatD LambdasGt_;
 
       /*
        * Boolean stating whether recovery from RS output back to SE(d)^N has been successful or not
@@ -720,8 +786,10 @@ namespace ROPTLIB
     */
    double runSsom(ROPTLIB::SsomProblem &Prob,
                   const ROPTLIB::Vector &startX,
-                  int src, SomUtils::VecMatD &Rout,
+                  int src,
+                  SomUtils::VecMatD &Rout,
                   SomUtils::MatD &Tout,
+                  SomUtils::MatD &lambdasOut,
                   int &staircaseStepIdx);
 
 } // end of namespace ROPTLIB
