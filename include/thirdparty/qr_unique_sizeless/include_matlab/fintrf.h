@@ -31,8 +31,7 @@
 #define R2024a 800
 #define MW_LATEST_API_VERSION 800
 
-
-#define MW_REL2VER(A) A 
+#define MW_REL2VER(A) A
 
 #if defined(MX_COMPAT_32) || defined(MEX_DOUBLE_HANDLE)
 
@@ -49,11 +48,13 @@
 #endif
 
 #if defined(MX_COMPAT_32) && defined(MATLAB_MEXSRC_RELEASE)
-#error "Source code macro MATLAB_MEXSRC_RELEASE is incompatible with MX_COMPAT_32"
+#error                                                                         \
+    "Source code macro MATLAB_MEXSRC_RELEASE is incompatible with MX_COMPAT_32"
 #endif
 
 #if defined(MEX_DOUBLE_HANDLE) && defined(MATLAB_MEXSRC_RELEASE)
-#error "Source code macro MATLAB_MEXSRC_RELEASE is incompatible with MEX_DOUBLE_HANDLE"
+#error                                                                         \
+    "Source code macro MATLAB_MEXSRC_RELEASE is incompatible with MEX_DOUBLE_HANDLE"
 #endif
 
 #else
@@ -81,7 +82,7 @@
 #error invalid MATLAB_MEXSRC_RELEASE definition
 #endif
 #endif
-      
+
 #if defined(MATLAB_DEFAULT_RELEASE)
 #define MW_DEFAULT_VERSION MW_REL2VER(MATLAB_DEFAULT_RELEASE)
 #if MW_DEFAULT_VERSION < MW_FIRST_API_VERSION
@@ -140,35 +141,35 @@
  */
 #endif
 #if defined(__LP64__) || defined(_M_AMD64) || defined(__amd64)
-# define mwpointer integer*8
-# define mwPointer integer*8
-# define MWPOINTER INTEGER*8
+#define mwpointer integer * 8
+#define mwPointer integer * 8
+#define MWPOINTER INTEGER * 8
 #else
-# define mwpointer integer*4
-# define mwPointer integer*4
-# define MWPOINTER INTEGER*4
+#define mwpointer integer * 4
+#define mwPointer integer * 4
+#define MWPOINTER INTEGER * 4
 #endif
 
 #if defined(MX_COMPAT_32)
-# define mwsize  integer*4
-# define mwSize  integer*4
-# define MWSIZE  INTEGER*4
-# define mwindex integer*4
-# define mwIndex integer*4
-# define MWINDEX INTEGER*4
-# define mwsignedindex integer*4
-# define mwSignedIndex integer*4
-# define MWSIGNEDINDEX INTEGER*4
+#define mwsize integer * 4
+#define mwSize integer * 4
+#define MWSIZE INTEGER * 4
+#define mwindex integer * 4
+#define mwIndex integer * 4
+#define MWINDEX INTEGER * 4
+#define mwsignedindex integer * 4
+#define mwSignedIndex integer * 4
+#define MWSIGNEDINDEX INTEGER * 4
 #else
-# define mwsize  mwpointer
-# define mwSize  mwpointer
-# define MWSIZE  MWPOINTER
-# define mwindex mwpointer
-# define mwIndex mwpointer
-# define MWINDEX MWPOINTER
-# define mwsignedindex mwpointer
-# define mwSignedIndex mwpointer
-# define MWSIGNEDINDEX MWPOINTER
+#define mwsize mwpointer
+#define mwSize mwpointer
+#define MWSIZE MWPOINTER
+#define mwindex mwpointer
+#define mwIndex mwpointer
+#define MWINDEX MWPOINTER
+#define mwsignedindex mwpointer
+#define mwSignedIndex mwpointer
+#define MWSIGNEDINDEX MWPOINTER
 #endif
 
 #if defined(TARGET_API_VERSION)
@@ -1136,13 +1137,13 @@
 #endif
 /* Current MATRIX published API version */
 #define MX_CURRENT_API_VER 0x08000000
-#define FORT_MX_CURRENT_API_VER z'08000000'
+#define FORT_MX_CURRENT_API_VER z '08000000'
 
 /* Backward compatible MATRIX published API versions */
 #define MX_LAST_32BIT_VER 0x07000000
 #define MX_LAST_SEPARATE_COMPLEX_VER 0x07300000
-#define FORT_MX_LAST_32BIT_VER z'07000000'
-#define FORT_MX_LAST_SEP_COMPLEX_VER z'07300000'
+#define FORT_MX_LAST_32BIT_VER z '07000000'
+#define FORT_MX_LAST_SEP_COMPLEX_VER z '07300000'
 
 /* Required MEX-file MATRIX published API version */
 #if TARGET_API_VERSION == 700
@@ -1173,9 +1174,10 @@
 
 #ifdef __GFORTRAN__
 #define MX_HAS_64BIT_ARRAY_DIMS MX_TARGET_API_VER > MX_LAST_32BIT_VER
-#define MX_HAS_INTERLEAVED_COMPLEX MX_TARGET_API_VER > MX_LAST_SEPARATE_COMPLEX_VER
+#define MX_HAS_INTERLEAVED_COMPLEX                                             \
+  MX_TARGET_API_VER > MX_LAST_SEPARATE_COMPLEX_VER
 #else
 #define MX_HAS_64BIT_ARRAY_DIMS FORT_MX_TARGET_API_VER > FORT_MX_LAST_32BIT_VER
-#define MX_HAS_INTERLEAVED_COMPLEX FORT_MX_TARGET_API_VER > FORT_MX_LAST_SEP_COMPLEX_VER
+#define MX_HAS_INTERLEAVED_COMPLEX                                             \
+  FORT_MX_TARGET_API_VER > FORT_MX_LAST_SEP_COMPLEX_VER
 #endif
-

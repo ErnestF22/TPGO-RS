@@ -9,7 +9,7 @@
 
 #include <exception>
 
-#if defined(_WIN32 )
+#if defined(_WIN32)
 #define NOEXCEPT throw()
 #else
 #define NOEXCEPT noexcept
@@ -17,191 +17,198 @@
 
 namespace matlab {
 
-    namespace engine {
+namespace engine {
 
-        class Exception : public std::exception {
-        public:
-            Exception();
+class Exception : public std::exception {
+public:
+  Exception();
 
-            /**
-            * Constructor that accepts an error message
-            */
-            Exception(const std::string& msg);
+  /**
+   * Constructor that accepts an error message
+   */
+  Exception(const std::string &msg);
 
-            virtual ~Exception();
+  virtual ~Exception();
 
-            Exception& operator=(const Exception& rhs);
+  Exception &operator=(const Exception &rhs);
 
-            /**
-            * Returns the error message
-            */
-            virtual const char* what() const NOEXCEPT;
-        private:
-            std::string message;
-        };
+  /**
+   * Returns the error message
+   */
+  virtual const char *what() const NOEXCEPT;
 
-        class StackFrame final {
-        public:
-            StackFrame();
+private:
+  std::string message;
+};
 
-            /**
-            * Constructor that accepts a file name, function name and line number
-            */
-            StackFrame(const std::u16string& file, const std::u16string& func, uint64_t line);
+class StackFrame final {
+public:
+  StackFrame();
 
-            /**
-            * Get the file name
-            */
-            std::u16string getFileName() const;
+  /**
+   * Constructor that accepts a file name, function name and line number
+   */
+  StackFrame(const std::u16string &file, const std::u16string &func,
+             uint64_t line);
 
-            /**
-            * Get the function name
-            */
-            std::u16string getFunctionName() const;
+  /**
+   * Get the file name
+   */
+  std::u16string getFileName() const;
 
-            /**
-            * Get the line number
-            */
-            uint64_t getLineNumber() const;
-        private:
-            std::u16string fileName;
-            std::u16string funcName;
-            uint64_t lineNumber;
-        };
+  /**
+   * Get the function name
+   */
+  std::u16string getFunctionName() const;
 
+  /**
+   * Get the line number
+   */
+  uint64_t getLineNumber() const;
 
-        class MATLABException : public Exception {
-        public:
-            MATLABException();
+private:
+  std::u16string fileName;
+  std::u16string funcName;
+  uint64_t lineNumber;
+};
 
-            /**
-            * Constructor that accepts an error message
-            */
-            MATLABException(const std::string& msg);
+class MATLABException : public Exception {
+public:
+  MATLABException();
 
-            /**
-            * Constructor that accepts an error message ID and an error message
-            */
-            MATLABException(const std::string& id, const std::u16string& txt);
+  /**
+   * Constructor that accepts an error message
+   */
+  MATLABException(const std::string &msg);
 
-            /**
-            * Get the message ID
-            */
-            std::string getMessageID() const;
+  /**
+   * Constructor that accepts an error message ID and an error message
+   */
+  MATLABException(const std::string &id, const std::u16string &txt);
 
-            /**
-            * Get the error message
-            */
-            std::u16string getMessageText() const;
+  /**
+   * Get the message ID
+   */
+  std::string getMessageID() const;
 
-            virtual ~MATLABException();
+  /**
+   * Get the error message
+   */
+  std::u16string getMessageText() const;
 
-            /**
-            * Copy constructor
-            */
-            MATLABException(const MATLABException& rhs);
+  virtual ~MATLABException();
 
-            /**
-            * Assignment operator
-            */
-            MATLABException& operator=(const MATLABException& rhs);
-        private:
-            std::string errorID;
-            std::u16string errorText;
-        };
+  /**
+   * Copy constructor
+   */
+  MATLABException(const MATLABException &rhs);
 
-        class MATLABSyntaxException final : public MATLABException {
-        public:
-            /**
-            * Constructor that accepts an error message
-            */
-            MATLABSyntaxException(const std::string& msg);
+  /**
+   * Assignment operator
+   */
+  MATLABException &operator=(const MATLABException &rhs);
 
-            /**
-            * Constructor that accepts an error message ID and an error message
-            */
-            MATLABSyntaxException(const std::string& id, const std::u16string& txt);
-        };
+private:
+  std::string errorID;
+  std::u16string errorText;
+};
 
-        class MATLABExecutionException final : public MATLABException {
-        public:
-            MATLABExecutionException();
+class MATLABSyntaxException final : public MATLABException {
+public:
+  /**
+   * Constructor that accepts an error message
+   */
+  MATLABSyntaxException(const std::string &msg);
 
-            /**
-            * Constructor that accepts an error message ID and an error message
-            */
-            MATLABExecutionException(const std::string& msg, const std::vector<StackFrame>& trace);
+  /**
+   * Constructor that accepts an error message ID and an error message
+   */
+  MATLABSyntaxException(const std::string &id, const std::u16string &txt);
+};
 
-            /**
-            * Constructor that accepts an error message ID and an error message
-            */
-            MATLABExecutionException(const std::string& id, const std::u16string& txt, const std::vector<StackFrame>& trace, const std::vector<MATLABExecutionException>& cause);
+class MATLABExecutionException final : public MATLABException {
+public:
+  MATLABExecutionException();
 
-            /**
-            * Get the stack trace
-            */
-            std::vector<StackFrame> getStackTrace() const;
+  /**
+   * Constructor that accepts an error message ID and an error message
+   */
+  MATLABExecutionException(const std::string &msg,
+                           const std::vector<StackFrame> &trace);
 
-            /**
-            * Get the cause of the MATLAB exception
-            */
-            std::vector<MATLABExecutionException> getCause() const;
+  /**
+   * Constructor that accepts an error message ID and an error message
+   */
+  MATLABExecutionException(const std::string &id, const std::u16string &txt,
+                           const std::vector<StackFrame> &trace,
+                           const std::vector<MATLABExecutionException> &cause);
 
-            /**
-            * Set the cause of the MATLAB exception
-            */
-            void setCause(const std::vector<MATLABExecutionException>& cause);
-        private:
-            std::vector<StackFrame> stackTrace;
-            std::vector<MATLABExecutionException> errorCause;
-        };
+  /**
+   * Get the stack trace
+   */
+  std::vector<StackFrame> getStackTrace() const;
 
-        class TypeConversionException final : public Exception {
-        public:
-            TypeConversionException();
+  /**
+   * Get the cause of the MATLAB exception
+   */
+  std::vector<MATLABExecutionException> getCause() const;
 
-            /**
-            * Constructor that accepts an error message
-            */
-            TypeConversionException(const std::string& msg);
-        };
+  /**
+   * Set the cause of the MATLAB exception
+   */
+  void setCause(const std::vector<MATLABExecutionException> &cause);
 
-        class CancelledException : public MATLABException {
-        public:
-            /**
-            * Default constructor
-            */
-            CancelledException();
+private:
+  std::vector<StackFrame> stackTrace;
+  std::vector<MATLABExecutionException> errorCause;
+};
 
-            /**
-            * Default destructor
-            */
-            virtual ~CancelledException();
+class TypeConversionException final : public Exception {
+public:
+  TypeConversionException();
 
-            /**
-            * Constructor
-            */
-            CancelledException(const std::string& id, const std::u16string& msg);
-        };
+  /**
+   * Constructor that accepts an error message
+   */
+  TypeConversionException(const std::string &msg);
+};
 
-        class InterruptedException : public MATLABException {
-        public:
-            /**
-            * Default constructor
-            */
-            InterruptedException();
+class CancelledException : public MATLABException {
+public:
+  /**
+   * Default constructor
+   */
+  CancelledException();
 
-            /**
-            * Default destructor
-            */
-            virtual ~InterruptedException();
+  /**
+   * Default destructor
+   */
+  virtual ~CancelledException();
 
-            /**
-            * Constructor
-            */
-            InterruptedException(const std::string& id, const std::u16string& msg);
-        };
-    }
-}
+  /**
+   * Constructor
+   */
+  CancelledException(const std::string &id, const std::u16string &msg);
+};
+
+class InterruptedException : public MATLABException {
+public:
+  /**
+   * Default constructor
+   */
+  InterruptedException();
+
+  /**
+   * Default destructor
+   */
+  virtual ~InterruptedException();
+
+  /**
+   * Constructor
+   */
+  InterruptedException(const std::string &id, const std::u16string &msg);
+};
+} // namespace engine
+} // namespace matlab
 
 #endif

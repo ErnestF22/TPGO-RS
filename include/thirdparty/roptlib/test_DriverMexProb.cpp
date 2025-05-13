@@ -10,10 +10,10 @@ std::map<integer *, integer> *CheckMemoryDeleted;
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
 	CheckMemoryDeleted = new std::map<integer *, integer>;
-//    std::cout << "tt1:" << std::endl;//---
-//    printf("tt2:\n");//---
+	//    std::cout << "tt1:" << std::endl;//---
+	//    printf("tt2:\n");//---
 	DriverMexProb(nlhs, plhs, nrhs, prhs);
-//    printf("h17\n");//--
+	//    printf("h17\n");//--
 	// check memory
 	std::map<integer *, integer>::iterator iter = CheckMemoryDeleted->begin();
 	for (iter = CheckMemoryDeleted->begin(); iter != CheckMemoryDeleted->end(); iter++)
@@ -22,18 +22,18 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			printf("Global address: %p, sharedtimes: %d\n", iter->first, iter->second);
 	}
 	delete CheckMemoryDeleted;
-//    printf("h18\n");//--
+	//    printf("h18\n");//--
 	return;
 }
 
-void DriverMexProb(int &nlhs, mxArray ** &plhs, int &nrhs, const mxArray ** &prhs)
+void DriverMexProb(int &nlhs, mxArray **&plhs, int &nrhs, const mxArray **&prhs)
 {
-//    printf("h1\n");//--
+	//    printf("h1\n");//--
 	if (nrhs < 6)
 	{
 		mexErrMsgTxt("The number of arguments should be at least six.\n");
 	}
-//    printf("h2\n");//--
+	//    printf("h2\n");//--
 	// Argument Checking:
 	// First to third arguments should be function handles
 	if (!mxIsClass(prhs[0], "function_handle"))
@@ -47,27 +47,27 @@ void DriverMexProb(int &nlhs, mxArray ** &plhs, int &nrhs, const mxArray ** &prh
 	{
 		mexErrMsgTxt("At least one of fifth to sixth input arguments is not a structure.");
 	}
-    
-//    printf("h3\n");//--
+
+	//    printf("h3\n");//--
 	// Obtain manifold and iterate structure
 	Manifold *domain = nullptr, **manifolds = nullptr;
 	Variable initialX;
-//	Element **elements;
+	//	Element **elements;
 	integer *powsinterval, numoftype, numoftotal;
-    
-//    printf("h4\n");//--
+
+	//    printf("h4\n");//--
 	if (!ParseManiParams(prhs[5], manifolds, numoftype, powsinterval))
 	{
 		mexErrMsgTxt("Parsing ManiParams fails.");
 	}
-//    printf("h5\n");//--
-    numoftotal = powsinterval[numoftype];
-    if(numoftotal > 1)
-        domain = new MultiManifolds(manifolds, numoftype, powsinterval);
-    else
-        domain = manifolds[0];
-    
-//    printf("h6\n");//--
+	//    printf("h5\n");//--
+	numoftotal = powsinterval[numoftype];
+	if (numoftotal > 1)
+		domain = new MultiManifolds(manifolds, numoftype, powsinterval);
+	else
+		domain = manifolds[0];
+
+	//    printf("h6\n");//--
 	mxArray *tmp = mexProblem::GetFieldbyName(prhs[5], 0, "IsCheckParams");
 	if (tmp != nullptr)
 	{
@@ -76,7 +76,7 @@ void DriverMexProb(int &nlhs, mxArray ** &plhs, int &nrhs, const mxArray ** &prh
 			domain->CheckParams();
 		}
 	}
-//    printf("h7\n");//--
+	//    printf("h7\n");//--
 	bool HasHHR = false;
 	if (nrhs >= 7)
 	{
@@ -85,12 +85,12 @@ void DriverMexProb(int &nlhs, mxArray ** &plhs, int &nrhs, const mxArray ** &prh
 			mexErrMsgTxt("Seventh input argument is not a scalar.");
 		}
 
-		HasHHR = (static_cast<integer> (mxGetScalar(prhs[6])) != 0);
+		HasHHR = (static_cast<integer>(mxGetScalar(prhs[6])) != 0);
 	}
 	domain->SetHasHHR(HasHHR);
-    initialX = domain->RandominManifold();
-//    printf("h8\n");//--
-    
+	initialX = domain->RandominManifold();
+	//    printf("h8\n");//--
+
 	// initialize the initial iterate
 	if (nrhs >= 8)
 	{
@@ -100,38 +100,38 @@ void DriverMexProb(int &nlhs, mxArray ** &plhs, int &nrhs, const mxArray ** &prh
 		}
 		mexProblem::ObtainElementFromMxArray(&initialX, prhs[7]);
 	}
-//    printf("h9\n");//--
+	//    printf("h9\n");//--
 
-//    initialX.Print("initialX:");
+	//    initialX.Print("initialX:");
 	// 	initialX->Print("initialX", false);
 
 	// Define the problem
 	Problem *Prob = new mexProblem(prhs[0], prhs[1], prhs[2], prhs[3]);
-//    printf("h10\n");//--
+	//    printf("h10\n");//--
 	Prob->SetDomain(domain);
-//    Prob->CheckGradHessian(initialX);
+	//    Prob->CheckGradHessian(initialX);
 	//	Vector *egf = initialX->ConstructEmpty();
 	//	Prob->EucGrad(initialX, egf);
 	//	delete egf;
 	// solve the optimization problem
 	ParseSolverParamsAndOptimizing(prhs[4], Prob, &initialX, plhs);
-    
-//    printf("h11\n");//--
+
+	//    printf("h11\n");//--
 	delete Prob;
-//    printf("h12\n");//--
+	//    printf("h12\n");//--
 	if (numoftotal > 1)
 		delete domain;
-    
-//    printf("h13\n");//--
+
+	//    printf("h13\n");//--
 	for (integer i = 0; i < numoftype; i++)
 	{
 		delete manifolds[i];
 	}
-//    printf("h14\n");//--
+	//    printf("h14\n");//--
 	delete[] manifolds;
-//    printf("h15\n");//--
+	//    printf("h15\n");//--
 	delete[] powsinterval;
-//    printf("h16\n");//--
+	//    printf("h16\n");//--
 };
 
 #endif // end of MATLAB_MEX_FILE

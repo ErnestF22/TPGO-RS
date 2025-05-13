@@ -20,35 +20,36 @@ SparseMatrix
 #include <sstream>
 
 /*Define the namespace*/
-namespace ROPTLIB{
+namespace ROPTLIB
+{
 
-    class SparseMatrix {
+    class SparseMatrix
+    {
     public:
-        
         /*construct realRopt sparse matrix. ir and jc are arrays of indices of nonzero entries.
         vals is an array of nonzero values. nz is the number of nonzero entries. */
         SparseMatrix(integer inm, integer inn, integer *ir, integer *jc, realdp *vals, integer nz);
-        
+
         /*construct complexRopt sparse matrix. ir and jc are arrays of indices of nonzero entries.
         vals is an array of nonzero values. nz is the number of nonzero entries. */
         SparseMatrix(integer inm, integer inn, integer *ir, integer *jc, realdpcomplex *vals, integer nz);
-        
+
         void Print(const char *name = "") const;
-        
+
         inline blas_sparse_matrix GetSparseM(void) const { return SparseM; };
-        
+
         inline bool Getiscomplex(void) const { return iscomplex; };
-        
+
         inline integer Getrow(void) const { return m; };
-        
+
         inline integer Getcol(void) const { return n; };
-        
+
         ~SparseMatrix(void);
-        
+
     protected:
         integer m; /*number of rows*/
         integer n; /*number of columns*/
-        
+
         blas_sparse_matrix SparseM;
         bool iscomplex;
     };

@@ -12,8 +12,8 @@
 #define DIAG_H
 
 // Include files
-#include "rtwtypes.h"
 #include "coder_array.h"
+#include "rtwtypes.h"
 #include <cstddef>
 #include <cstdlib>
 

@@ -1,13 +1,14 @@
 /**
-* @file         coderutils_util.h
-*
-* Purpose       export/import switch for utility functions used for VideoReader codegen
-*
-* Authors       Dinesh Iyer
-*
-* Copyright     2019 The MathWorks, Inc. 
-*
-*/
+ * @file         coderutils_util.h
+ *
+ * Purpose       export/import switch for utility functions used for VideoReader
+ * codegen
+ *
+ * Authors       Dinesh Iyer
+ *
+ * Copyright     2019 The MathWorks, Inc.
+ *
+ */
 #ifdef SUPPORTS_PRAGMA_ONCE
 #pragma once
 #endif

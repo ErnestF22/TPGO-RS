@@ -1,10 +1,11 @@
 #ifdef __cplusplus
-extern "C" { 
-#endif  
+extern "C"
+{
+#endif
 
-#include "f2c.h" 
+#include "f2c.h"
 
-int cpotri_(char *uplo, integer *n, complexRopt *a, integer *lda, integer *info);
+    int cpotri_(char *uplo, integer *n, complexRopt *a, integer *lda, integer *info);
 
 #ifdef __cplusplus
 }

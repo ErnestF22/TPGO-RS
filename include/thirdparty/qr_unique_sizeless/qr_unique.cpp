@@ -10,10 +10,10 @@
 
 // Include files
 #include "qr_unique.h"
+#include "coder_array.h"
 #include "diag.h"
 #include "qr.h"
 #include "rt_nonfinite.h"
-#include "coder_array.h"
 #include <cmath>
 #include <emmintrin.h>
 

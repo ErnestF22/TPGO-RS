@@ -4,8 +4,7 @@
 #define dnnInstrumentationInterface_h
 
 #ifdef __cplusplus
-#define DNNINST_API_EXTERN_C                                                                  \
-    extern "C"
+#define DNNINST_API_EXTERN_C extern "C"
 
 #else
 #define DNNINST_API_EXTERN_C
@@ -40,12 +39,14 @@ typedef unsigned int uint32_t;
 
 #include <string>
 
-DNNINST_API_C void instrumentationInit(unsigned int numLoggingEntities ,bool isAllData=true);
+DNNINST_API_C void instrumentationInit(unsigned int numLoggingEntities,
+                                       bool isAllData = true);
 
-DNNINST_API_C void registerId(const std::string& aLayerName);
+DNNINST_API_C void registerId(const std::string &aLayerName);
 
 DNNINST_API_C void instrumentationCleanup(void);
 
-DNNINST_API_C void logData(const std::string& aLayerName, float* aData, unsigned int aSize);
+DNNINST_API_C void logData(const std::string &aLayerName, float *aData,
+                           unsigned int aSize);
 
 #endif

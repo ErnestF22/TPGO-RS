@@ -3,7 +3,7 @@ This file defines the abstract base class for the linesearch-based solvers for s
 It defines the common properties and features of the linesearch-based solvers for smooth objectives
 
 Solvers --> SolversSM --> SolversSMLS
-							
+
 ---- WH
 */
 
@@ -19,7 +19,8 @@ Solvers --> SolversSM --> SolversSMLS
 #include "others_def.h"
 
 /*Define the namespace*/
-namespace ROPTLIB{
+namespace ROPTLIB
+{
 
 	/* Linesearch algorithms. It should be assigned to the member variable "LineSearch_LS".
 	ARMIJO: The Armijo-Goldstein condition. [DS83 Algorithm A6.3.1]
@@ -31,7 +32,15 @@ namespace ROPTLIB{
 	[DS83]: J. E. Dennis and R. B. Schnabel. Numerical methods for unconstrained optimization and nonlinear equations. Springer, New Jersey, 1983
 	[NW06]: J. Nocedal and S. J. Wright. Numerical optimization. Springer, second edition, 2006
 	*/
-	enum LSAlgoSM{ LSSM_ARMIJO, LSSM_WOLFE, LSSM_STRONGWOLFE, LSSM_EXACT, LSSM_INPUTFUN, LSALGOSMLENGTH };
+	enum LSAlgoSM
+	{
+		LSSM_ARMIJO,
+		LSSM_WOLFE,
+		LSSM_STRONGWOLFE,
+		LSSM_EXACT,
+		LSSM_INPUTFUN,
+		LSALGOSMLENGTH
+	};
 
 	/* Linesearch status. It is an output argument and users don't need to assign this enumerate to any member variable.
 	NOCURVATURE: the second Wolfe condition is not satisfied
@@ -40,19 +49,37 @@ namespace ROPTLIB{
 	NONEXACT: exact line search algorithm does not find a point satisfying the inner stopping criterion
 	SUCCESS: line search algorithm succeeds in finding a point satisfying the line search condition
 	*/
-	enum LSstatusSetSM{ LSSM_NOCURVATURE, LSSM_MINSTEPSIZE, LSSM_MAXSTEPSIZE, LSSM_NONEXACT, LSSM_LSERROR, LSSM_SUCCESS, LSSTATUSSETSMLENGTH };
+	enum LSstatusSetSM
+	{
+		LSSM_NOCURVATURE,
+		LSSM_MINSTEPSIZE,
+		LSSM_MAXSTEPSIZE,
+		LSSM_NONEXACT,
+		LSSM_LSERROR,
+		LSSM_SUCCESS,
+		LSSTATUSSETSMLENGTH
+	};
 
 	/*Initial step size in line search algorithm.
-	ONESTEP: t0 = one 
+	ONESTEP: t0 = one
 	BBSTEP: t0 = g(s, s) / g(s, y), s is the difference of consecutive iterates and y is the difference of the
 			gradients at consecutie iterates.
 	QUADINT: t0 = [(3.60), NW06]
 	QUADINTMOD: t0 = [page 60, NW06]
 	[NW06]: J. Nocedal and S. J. Wright. Numerical optimization. Springer, second edition, 2006
 	*/
-	enum InitStepsizeSetSM{ LSSM_ONESTEP, LSSM_BBSTEP, LSSM_QUADINT, LSSM_QUADINTMOD, LSSM_EXTRBBSTEP, INITSTEPSIZESETSMLENGTH };
+	enum InitStepsizeSetSM
+	{
+		LSSM_ONESTEP,
+		LSSM_BBSTEP,
+		LSSM_QUADINT,
+		LSSM_QUADINTMOD,
+		LSSM_EXTRBBSTEP,
+		INITSTEPSIZESETSMLENGTH
+	};
 
-	class SolversSMLS : public SolversSM{
+	class SolversSMLS : public SolversSM
+	{
 	public:
 		/*Run the algorithm. This function gives the framework for linesearch based methods*/
 		virtual void Run(void);
@@ -67,7 +94,7 @@ namespace ROPTLIB{
 		/*Beside the four line search algorithms provided in this library and specified by the member variable "LineSearch_LS",
 		user also can define a line search algorithm by assigning the following function pointer.
 		User needs to assign LineSearch_LS to be INPUTFUN to call this function. */
-		realdp(*LinesearchInput)(integer iter, const Variable &x1, const Vector &exeta1, realdp initialstepsize, realdp initialslope, const Problem *prob, const Solvers *solver);
+		realdp (*LinesearchInput)(integer iter, const Variable &x1, const Vector &exeta1, realdp initialstepsize, realdp initialslope, const Problem *prob, const Solvers *solver);
 
 		/* ===============public parameters below================= */
 
@@ -114,18 +141,18 @@ namespace ROPTLIB{
 		initial stepsize is used as the accepted stepsize.
 		Default: 1*/
 		realdp Finalstepsize;
-        
-        /*the number of previous bb1 stepsize. Used in ABB_min stepsize. See details in [SRTZ2017]
-        [SRTZ2017]: On the steplength selection in gradient methods for unconstrained optimization.
-        stepsize * id can be used as the initial Hessian approximation in limite-memory quasi-Newton methods
-        Default: 0*/
-        integer Num_pre_BB;
-        
-        /*ratio for step size selection. It is the same as \tau in [Algorithm2, SRTZ2017]
-        stepsize * id can be used as the initial Hessian approximation in limite-memory quasi-Newton methods
-        [SRTZ2017]: On the steplength selection in gradient methods for unconstrained optimization.
-        Default: 1, value 0 defines ss/sy stepsize, if the value is 1 and Num_pre_BB is 0, then it defines sy/yy stepsize.*/
-        realdp BBratio;
+
+		/*the number of previous bb1 stepsize. Used in ABB_min stepsize. See details in [SRTZ2017]
+		[SRTZ2017]: On the steplength selection in gradient methods for unconstrained optimization.
+		stepsize * id can be used as the initial Hessian approximation in limite-memory quasi-Newton methods
+		Default: 0*/
+		integer Num_pre_BB;
+
+		/*ratio for step size selection. It is the same as \tau in [Algorithm2, SRTZ2017]
+		stepsize * id can be used as the initial Hessian approximation in limite-memory quasi-Newton methods
+		[SRTZ2017]: On the steplength selection in gradient methods for unconstrained optimization.
+		Default: 1, value 0 defines ss/sy stepsize, if the value is 1 and Num_pre_BB is 0, then it defines sy/yy stepsize.*/
+		realdp BBratio;
 
 		/* the number of computed functions values. This is used in the nonmonotonic linesearch which
 		uses max_{1 \leq i \leq num_pre_funs} (f_{k + 1 - i})
@@ -139,8 +166,8 @@ namespace ROPTLIB{
 		/*Line search algorithm. The applicable values are in the enumerate InitStepsizeSet
 		Default: QUADINTMOD (It may alter based on the derived algorithm class) */
 		InitStepsizeSetSM InitSteptype;
+
 	protected:
-        
 		/*Choose what line search algorithm is used*/
 		virtual void ChooseLinesearch(void);
 
@@ -153,14 +180,14 @@ namespace ROPTLIB{
 		/*Compute the initial stepsize using [NW06, Page 60]
 			[NW06]: J. Nocedal and S. J. Wright. Numerical optimization. Springer, second edition, 2006	*/
 		virtual void InitialStepSize(void);
-        
-        std::list<realdp> pre_BBs; /* Store a few computed BB stepsize ss/sy for initial Hessian approximation using adaptive BB min (ABB_min) idea*/
-        
-        /*Print information in every few iterations specific to an algorithm*/
-        virtual void PrintInfo(void);
-        
-        /*Print last information in an algorithm*/
-        virtual void PrintFinalInfo(void);
+
+		std::list<realdp> pre_BBs; /* Store a few computed BB stepsize ss/sy for initial Hessian approximation using adaptive BB min (ABB_min) idea*/
+
+		/*Print information in every few iterations specific to an algorithm*/
+		virtual void PrintInfo(void);
+
+		/*Print last information in an algorithm*/
+		virtual void PrintFinalInfo(void);
 
 		/*Setting parameters (member variables) to be default values */
 		virtual void SetDefaultParams(void);
@@ -199,12 +226,12 @@ namespace ROPTLIB{
 		void (SolversSMLS::*Linesearch)(void);
 
 		/* parameters */
-		realdp initiallength;	/*The initial stepsize at an iteration*/
-		realdp stepsize;		/*The step size*/
-		realdp initialslopepre, initialslope, newslope;	/*The slopes for the scalar function h(t) = f(R_{x_1}(t * eta1)) at 0 and at the accepted stepsize*/
-		std::list<realdp> pre_funs; /* Store a few computed function values for nonmonotonic line search*/
-		LSstatusSetSM LSstatus;	/*The line search status produced by the linesearch algorithm*/
-		std::string *LSstatusSetnames;	/*This string array is to store the line search status names*/
+		realdp initiallength;							/*The initial stepsize at an iteration*/
+		realdp stepsize;								/*The step size*/
+		realdp initialslopepre, initialslope, newslope; /*The slopes for the scalar function h(t) = f(R_{x_1}(t * eta1)) at 0 and at the accepted stepsize*/
+		std::list<realdp> pre_funs;						/* Store a few computed function values for nonmonotonic line search*/
+		LSstatusSetSM LSstatus;							/*The line search status produced by the linesearch algorithm*/
+		std::string *LSstatusSetnames;					/*This string array is to store the line search status names*/
 	private:
 		/*The function used in the strong Wolfe condition. See Algorithm 3.6 in [NW06]
 		[NW06] : J.Nocedal and S.J.Wright.Numerical optimization.Springer, second edition, 2006 */

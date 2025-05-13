@@ -6,10 +6,10 @@
 #include "TypedArray.hpp"
 
 namespace matlab {
-    namespace data {
-        class Object;
-        using ObjectArray = TypedArray<Object>;
-    }
-}
+namespace data {
+class Object;
+using ObjectArray = TypedArray<Object>;
+} // namespace data
+} // namespace matlab
 
 #endif

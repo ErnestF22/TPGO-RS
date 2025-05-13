@@ -2,15 +2,15 @@
 #include "manifolds_Sphere.h"
 
 /*Define the namespace*/
-namespace ROPTLIB{
+namespace ROPTLIB
+{
 
-	Sphere::Sphere(integer inn) :Stiefel(inn, 1)
+	Sphere::Sphere(integer inn) : Stiefel(inn, 1)
 	{
 		name.assign("Sphere");
 	};
 
-	Sphere::~Sphere(void)
-	{
+	Sphere::~Sphere(void) {
 	};
 
 	/* choose qf retraction, parallelization and intrinsic approach and no householder reflections */
@@ -60,7 +60,7 @@ namespace ROPTLIB{
 		realdp normetax = sqrt(Metric(x, etax, etax));
 		VectorLinearCombination(x, cos(normetax), x, sin(normetax) / normetax, etax, result);
 		realdp normresult = sqrt(Metric(x, *result, *result));
-		return ScalarTimesVector(x, static_cast<realdp> (1) / normresult, *result, result);
+		return ScalarTimesVector(x, static_cast<realdp>(1) / normresult, *result, result);
 	};
 
 	Vector &Sphere::ExpcoTangentVector(const Variable &x, const Vector &etax, const Variable &y, const Vector &xiy, Vector *result) const
@@ -70,8 +70,7 @@ namespace ROPTLIB{
 		realdp normetax = sqrt(Metric(x, etax, etax));
 		realdp sinnormetax = sin(normetax);
 		realdp cosnormetax = cos(normetax);
-		VectorLinearCombination(x, sinnormetax / normetax, xiy, (xiytetax * cosnormetax / normetax
-			- xiytx * sinnormetax - xiytetax * sinnormetax / normetax / normetax) / normetax, etax, result);
+		VectorLinearCombination(x, sinnormetax / normetax, xiy, (xiytetax * cosnormetax / normetax - xiytx * sinnormetax - xiytetax * sinnormetax / normetax / normetax) / normetax, etax, result);
 		return Projection(x, *result, result);
 	};
 
@@ -80,94 +79,99 @@ namespace ROPTLIB{
 		realdp etaxtxix = Metric(x, etax, xix);
 		realdp normetax = sqrt(Metric(x, etax, etax));
 		realdp sinnormetax = sin(normetax);
-        VectorLinearCombination(x, -sinnormetax * etaxtxix / normetax, x, sinnormetax / normetax, xix, result);
-        ScalarVectorAddVector(x, (cos(normetax) - sinnormetax / normetax) * etaxtxix / normetax / normetax, etax, *result, result);
-        
+		VectorLinearCombination(x, -sinnormetax * etaxtxix / normetax, x, sinnormetax / normetax, xix, result);
+		ScalarVectorAddVector(x, (cos(normetax) - sinnormetax / normetax) * etaxtxix / normetax / normetax, etax, *result, result);
 
-        if (IsEtaXiSameDir && HasHHR)
-        {
-            realdp nxix = std::sqrt(Metric(x, xix, xix));
-            Vector beta(3);
-            realdp *betaptr = beta.ObtainWriteEntireData();
-            realdp EtatoXi = std::sqrt(Metric(x, etax, etax)) / nxix;
-            betaptr[0] = std::sqrt(Metric(x, etax, etax) / Metric(y, *result, *result)) / EtatoXi;
-            betaptr[1] = Metric(x, etax, etax);
-            betaptr[2] = Metric(y, *result, *result) * EtatoXi * EtatoXi;
-            etax.AddToFields("beta", beta);
-            
-            if (HasHHR)
-            {
-                etax.AddToFields("betaTReta", (*result) * (betaptr[0] * EtatoXi));
-            }
-        }
-        
-        return *result;
+		if (IsEtaXiSameDir && HasHHR)
+		{
+			realdp nxix = std::sqrt(Metric(x, xix, xix));
+			Vector beta(3);
+			realdp *betaptr = beta.ObtainWriteEntireData();
+			realdp EtatoXi = std::sqrt(Metric(x, etax, etax)) / nxix;
+			betaptr[0] = std::sqrt(Metric(x, etax, etax) / Metric(y, *result, *result)) / EtatoXi;
+			betaptr[1] = Metric(x, etax, etax);
+			betaptr[2] = Metric(y, *result, *result) * EtatoXi * EtatoXi;
+			etax.AddToFields("beta", beta);
+
+			if (HasHHR)
+			{
+				etax.AddToFields("betaTReta", (*result) * (betaptr[0] * EtatoXi));
+			}
+		}
+
+		return *result;
 	};
 
 	Vector &Sphere::ExpVectorTransport(const Variable &x, const Vector &etax, const Variable &y, const Vector &xix, Vector *result) const
 	{
-        Vector xpy(x); xpy.AlphaXaddThis(1, y); /*xpy = x + y; */
+		Vector xpy(x);
+		xpy.AlphaXaddThis(1, y); /*xpy = x + y; */
 		realdp xynormsq = Metric(x, xpy, xpy);
 		realdp xixty = Metric(x, xix, y);
-        *result = xix; result->AlphaXaddThis((static_cast<realdp> (-2) * xixty / xynormsq), xpy); /* result = (static_cast<realdp> (-2) * xixty / xynormsq) * xpy + xix; */
-        return *result;
+		*result = xix;
+		result->AlphaXaddThis((static_cast<realdp>(-2) * xixty / xynormsq), xpy); /* result = (static_cast<realdp> (-2) * xixty / xynormsq) * xpy + xix; */
+		return *result;
 	};
 
 	Vector &Sphere::ExpInverseVectorTransport(const Variable &x, const Vector &etax, const Variable &y, const Vector &xiy, Vector *result) const
 	{
-        Vector xpy(x); xpy.AlphaXaddThis(1, y); /*xpy = x + y; */
-        realdp xynormsq = Metric(x, xpy, xpy);
+		Vector xpy(x);
+		xpy.AlphaXaddThis(1, y); /*xpy = x + y; */
+		realdp xynormsq = Metric(x, xpy, xpy);
 		realdp xiytx = Metric(x, xiy, x);
-        *result = xiy; result->AlphaXaddThis((static_cast<realdp> (-2) * xiytx / xynormsq), xpy);/*(static_cast<realdp> (-2) * xiytx / xynormsq) * xpy + xiy;*/
-        return *result;
+		*result = xiy;
+		result->AlphaXaddThis((static_cast<realdp>(-2) * xiytx / xynormsq), xpy); /*(static_cast<realdp> (-2) * xiytx / xynormsq) * xpy + xiy;*/
+		return *result;
 	};
 
 	LinearOPE &Sphere::ExpHInvTran(const Variable &x, const Vector &etax, const Variable &y, const LinearOPE &Hx, integer start, integer end, LinearOPE *result) const
 	{
-        Vector xpy(x); xpy.AlphaXaddThis(1, y); /*xpy = x + y; */
-        integer ell = Hx.Getrow();
+		Vector xpy(x);
+		xpy.AlphaXaddThis(1, y); /*xpy = x + y; */
+		integer ell = Hx.Getrow();
 		integer length = etax.Getlength();
 		const realdp *M = Hx.ObtainReadData();
 		realdp *Hxpy = new realdp[ell];
 		const realdp *xpyTV = xpy.ObtainReadData();
 
 		/* Hxpy <- M(: start : start + length - 1) * xpyTV, details: www.netlib.org/lapack/explore-html/dc/da8/gemv_8f.html */
-		gemv_(GLOBAL::N, &ell, &length, &GLOBAL::DONE, const_cast<realdp *> (M + start * ell), &ell, const_cast<realdp *> (xpyTV), &GLOBAL::IONE, &GLOBAL::DZERO, Hxpy, &GLOBAL::IONE);
+		gemv_(GLOBAL::N, &ell, &length, &GLOBAL::DONE, const_cast<realdp *>(M + start * ell), &ell, const_cast<realdp *>(xpyTV), &GLOBAL::IONE, &GLOBAL::DZERO, Hxpy, &GLOBAL::IONE);
 
-		realdp scalar = static_cast<realdp> (-2) / Metric(x, xpy, xpy);
-        *result = Hx;
+		realdp scalar = static_cast<realdp>(-2) / Metric(x, xpy, xpy);
+		*result = Hx;
 		const realdp *xv = x.ObtainReadData();
 		realdp *resultL = result->ObtainWritePartialData();
 		/* resultL(:, start : start + length - 1) <- scalar * Hxpy * xv^T + resultL(:, start : start + length - 1),
 		details: www.netlib.org/lapack/explore-html/dc/da8/ger_8f.html */
-		ger_(&length, &ell, &scalar, Hxpy, &GLOBAL::IONE, const_cast<realdp *> (xv), &GLOBAL::IONE, resultL + start * ell, &ell);
+		ger_(&length, &ell, &scalar, Hxpy, &GLOBAL::IONE, const_cast<realdp *>(xv), &GLOBAL::IONE, resultL + start * ell, &ell);
 
 		delete[] Hxpy;
-        return *result;
+		return *result;
 	};
 
 	LinearOPE &Sphere::ExpTranH(const Variable &x, const Vector &etax, const Variable &y, const LinearOPE &Hx, integer start, integer end, LinearOPE *result) const
 	{
-        Vector xpy(x); xpy.AlphaXaddThis(1, y); /*xpy = x + y; */
-        integer ell = Hx.Getrow();
+		Vector xpy(x);
+		xpy.AlphaXaddThis(1, y); /*xpy = x + y; */
+		integer ell = Hx.Getrow();
 		integer length = etax.Getlength();
 		const realdp *M = Hx.ObtainReadData();
 		realdp *Hty = new realdp[ell];
 		const realdp *yv = y.ObtainReadData();
 
 		/* Hty <- M(start : start + length - 1, :)^T * yv, details: www.netlib.org/lapack/explore-html/dc/da8/gemv_8f.html */
-		gemv_(GLOBAL::T, &length, &ell, &GLOBAL::DONE, const_cast<realdp *> (M + start), &ell, const_cast<realdp *> (yv), &GLOBAL::IONE, &GLOBAL::DZERO, Hty, &GLOBAL::IONE);
+		gemv_(GLOBAL::T, &length, &ell, &GLOBAL::DONE, const_cast<realdp *>(M + start), &ell, const_cast<realdp *>(yv), &GLOBAL::IONE, &GLOBAL::DZERO, Hty, &GLOBAL::IONE);
 
-		realdp scalar = static_cast<realdp> (-2) / Metric(x, xpy, xpy);
+		realdp scalar = static_cast<realdp>(-2) / Metric(x, xpy, xpy);
 		const realdp *xpyTV = xpy.ObtainReadData();
-        *result = Hx;
+		*result = Hx;
 		realdp *resultL = result->ObtainWritePartialData();
 		/* resultL(start : start + length - 1, :) <- scalar * xpyTV * Hty^T + resultL(start : start + length - 1, :),
 		details: www.netlib.org/lapack/explore-html/dc/da8/ger_8f.html */
-		ger_(&length, &ell, &scalar, const_cast<realdp *> (xpyTV), &GLOBAL::IONE, Hty, &GLOBAL::IONE, resultL + start, &ell);
+		ger_(&length, &ell, &scalar, const_cast<realdp *>(xpyTV), &GLOBAL::IONE, Hty, &GLOBAL::IONE, resultL + start, &ell);
 
 		delete[] Hty;
-        return *result;
+		return *result;
 	};
 
 	LinearOPE &Sphere::ExpTranHInvTran(const Variable &x, const Vector &etax, const Variable &y, const LinearOPE &Hx, LinearOPE *result) const
@@ -255,9 +259,9 @@ namespace ROPTLIB{
 		PARAMSMAP::iterator iter;
 		for (iter = params.begin(); iter != params.end(); iter++)
 		{
-			if (iter->first == static_cast<std::string> ("ParamSet"))
+			if (iter->first == static_cast<std::string>("ParamSet"))
 			{
-				switch (static_cast<integer> (iter->second))
+				switch (static_cast<integer>(iter->second))
 				{
 				case 1:
 					ChooseParamsSet1();

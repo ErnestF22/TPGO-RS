@@ -2,7 +2,8 @@
 #include "others_MinPNormConHull.h"
 
 /*Define the namespace*/
-namespace ROPTLIB{
+namespace ROPTLIB
+{
 
 	realdp MinPNormConHull(const Manifold *Mani, Variable x, Vector *Ys, integer LYs, Vector &outSoln)
 	{
@@ -21,18 +22,18 @@ namespace ROPTLIB{
 		SphereConvexHull subprob(Mani, Ys, LYs, solver, Hv);
 		Sphere Domain(LYs);
 		subprob.SetDomain(&Domain);
-        Variable InitX = Domain.RandominManifold();
+		Variable InitX = Domain.RandominManifold();
 
 		RTRNewton *RTRNewtonsolver = new RTRNewton(&subprob, &InitX);
 		RTRNewtonsolver->Stop_Criterion = SM_GRAD_F;
-        RTRNewtonsolver->Verbose = NOOUTPUT;
+		RTRNewtonsolver->Verbose = NOOUTPUT;
 		RTRNewtonsolver->Max_Iteration = 100;
-		RTRNewtonsolver->Tolerance = static_cast<realdp> (1e-10);
+		RTRNewtonsolver->Tolerance = static_cast<realdp>(1e-10);
 		RTRNewtonsolver->Run();
 		realdp fopt = RTRNewtonsolver->Getfinalfun();
-        Vector xopt = RTRNewtonsolver->GetXopt();
-        
-        outSoln = xopt.Field("Wxsq");
+		Vector xopt = RTRNewtonsolver->GetXopt();
+
+		outSoln = xopt.Field("Wxsq");
 		delete RTRNewtonsolver;
 		return fopt;
 	};

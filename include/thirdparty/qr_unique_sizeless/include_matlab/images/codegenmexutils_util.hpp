@@ -1,13 +1,14 @@
 /**
-* @file         codegenmexutils_util.hpp
-*
-* Purpose       export/import switch for MEX utility functions needed for codegen
-*
-* Authors       Dinesh Iyer
-*
-* Copyright     2019 The MathWorks, Inc.
-*
-*/
+ * @file         codegenmexutils_util.hpp
+ *
+ * Purpose       export/import switch for MEX utility functions needed for
+ * codegen
+ *
+ * Authors       Dinesh Iyer
+ *
+ * Copyright     2019 The MathWorks, Inc.
+ *
+ */
 #ifdef SUPPORTS_PRAGMA_ONCE
 #pragma once
 #endif
@@ -20,11 +21,11 @@
 /* For size_t, boolean_T, etc */
 #include "tmwtypes.h"
 
-#define IMAGESDATATYPESCODEGENMEXUTILS_API  DLL_EXPORT_SYM
+#define IMAGESDATATYPESCODEGENMEXUTILS_API DLL_EXPORT_SYM
 
 #else
 
-//#define IMAGESDATATYPESCODEGENMEXUTILS_API  DLL_IMPORT_SYM
+// #define IMAGESDATATYPESCODEGENMEXUTILS_API  DLL_IMPORT_SYM
 
 /* For size_t, boolean_T, etc */
 #ifdef MATLAB_MEX_FILE

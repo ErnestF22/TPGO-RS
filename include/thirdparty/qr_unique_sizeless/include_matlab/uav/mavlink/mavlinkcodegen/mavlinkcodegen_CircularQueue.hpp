@@ -19,51 +19,51 @@ namespace uavlib {
  */
 
 class CircularQueue {
-  private:
-    /// Pointer to Queue Front
-    int front;
+private:
+  /// Pointer to Queue Front
+  int front;
 
-    /// Pointer to Queue Rear
-    int rear;
+  /// Pointer to Queue Rear
+  int rear;
 
-    /// Maximum size of Queue
-    int maxSize;
+  /// Maximum size of Queue
+  int maxSize;
 
-    /// Placeholder for Circular queue
-    mavlink_message_t* queue;
+  /// Placeholder for Circular queue
+  mavlink_message_t *queue;
 
-  public:
-    /// Create the Circular Queue with no memory allocated
-    CircularQueue();
+public:
+  /// Create the Circular Queue with no memory allocated
+  CircularQueue();
 
-    /// Create the Circular Queue with requested size
-    CircularQueue(uint16_t queueSize);
+  /// Create the Circular Queue with requested size
+  CircularQueue(uint16_t queueSize);
 
-    ~CircularQueue();
+  ~CircularQueue();
 
-    /// check if Queue is empty
-    /**
-     * @return		boolean value indicating whether Queue is empty
-     */
-    bool isQueueEmpty() const;
+  /// check if Queue is empty
+  /**
+   * @return		boolean value indicating whether Queue is empty
+   */
+  bool isQueueEmpty() const;
 
-    /// check if Queue is full
-    /**
-     * @return		boolean value indicating whether Queue is full
-     */
-    bool isQueueFull() const;
+  /// check if Queue is full
+  /**
+   * @return		boolean value indicating whether Queue is full
+   */
+  bool isQueueFull() const;
 
-    /// Remove the Front element from Queue
-    /**
-     * @return		The MAVLink message stored at Queue Front
-     */
-    mavlink_message_t deQueue();
+  /// Remove the Front element from Queue
+  /**
+   * @return		The MAVLink message stored at Queue Front
+   */
+  mavlink_message_t deQueue();
 
-    /// Add element to Rear of Queue
-    /**
-     * @param[in] msg   MAVLink message to be added to Queue
-     */
-    void enQueue(mavlink_message_t msg);
+  /// Add element to Rear of Queue
+  /**
+   * @param[in] msg   MAVLink message to be added to Queue
+   */
+  void enQueue(mavlink_message_t msg);
 };
 } // namespace uavlib
 #endif // !MAVLINKCODEGEN_CIRCULARQUEUE_HPP

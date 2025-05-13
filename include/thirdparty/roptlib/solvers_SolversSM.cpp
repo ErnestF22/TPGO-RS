@@ -2,7 +2,8 @@
 #include "solvers_SolversSM.h"
 
 /*Define the namespace*/
-namespace ROPTLIB{
+namespace ROPTLIB
+{
 
 	void SolversSM::Run(void)
 	{
@@ -15,67 +16,67 @@ namespace ROPTLIB{
 
 	void SolversSM::PrintInfo(void)
 	{
-        printf("i:%d,f:%.3e,df/f:%.3e,", iter, f2, ((f1 - f2) / std::fabs(f2)));
+		printf("i:%d,f:%.3e,df/f:%.3e,", iter, f2, ((f1 - f2) / std::fabs(f2)));
 
-        printf("|gf|:%.3e,time:%.2g,", ngf2, static_cast<realdp>(getTickCount() - starttime) / CLK_PS);
+		printf("|gf|:%.3e,time:%.2g,", ngf2, static_cast<realdp>(getTickCount() - starttime) / CLK_PS);
 
-        printf("nf:%d,ng:%d,", nf, ng);
-        
-        if (nH != 0)
-            printf("nH:%d,", nH);
-        
-        printf("nR:%d,", nR);
-        
-        if (nV != 0)
-            printf("nV(nVp):%d(%d),", nV, nVp);
-        
+		printf("nf:%d,ng:%d,", nf, ng);
+
+		if (nH != 0)
+			printf("nH:%d,", nH);
+
+		printf("nR:%d,", nR);
+
+		if (nV != 0)
+			printf("nV(nVp):%d(%d),", nV, nVp);
+
 		printf("\n");
 	};
 
-    void SolversSM::PrintFinalInfo(void)
-    {
-        printf("i:%d,f:%.3e,", iter, f2);
+	void SolversSM::PrintFinalInfo(void)
+	{
+		printf("i:%d,f:%.3e,", iter, f2);
 
-        printf("|gf|:%.3e,|gf|/|gf0|:%.3e,time:%.2g,", ngf2, ngf2/ngf0, static_cast<realdp>(getTickCount() - starttime) / CLK_PS);
-        
-        printf("nf:%d,ng:%d,", nf, ng);
-        
-        if (nH != 0)
-            printf("nH:%d,", nH);
-        
-        printf("nR:%d,", nR);
-        
-        if (nV != 0)
-            printf("nV(nVp):%d(%d),", nV, nVp);
-        
-        printf("\n");
-    };
+		printf("|gf|:%.3e,|gf|/|gf0|:%.3e,time:%.2g,", ngf2, ngf2 / ngf0, static_cast<realdp>(getTickCount() - starttime) / CLK_PS);
+
+		printf("nf:%d,ng:%d,", nf, ng);
+
+		if (nH != 0)
+			printf("nH:%d,", nH);
+
+		printf("nR:%d,", nR);
+
+		if (nV != 0)
+			printf("nV(nVp):%d(%d),", nV, nVp);
+
+		printf("\n");
+	};
 
 	bool SolversSM::IsStopped(void)
 	{
 		if (static_cast<realdp>(getTickCount() - starttime) / CLK_PS > TimeBound)
 			return true;
-        
+
 		if (StopPtr != nullptr)
-            return StopPtr(x2, funSeries, lengthSeries, ngf2, ngf0, Prob, this);
+			return StopPtr(x2, funSeries, lengthSeries, ngf2, ngf0, Prob, this);
 
 		if (Stop_Criterion == SM_FUN_REL)
 			return ((fabs((f1 - f2) / (fabs(f1) + 1)) < Tolerance) && iter > 0);
-        
+
 		if (Stop_Criterion == SM_GRAD_F)
 			return ngf2 < Tolerance;
-        
+
 		if (Stop_Criterion == SM_GRAD_F_0)
 			return (ngf2 / ngf0) < Tolerance;
-        
+
 		printf("Error: Stopping Criterion is not specefic!\n");
 		return true;
 	};
 
 	void SolversSM::CheckParams(void)
 	{
-        Solvers::CheckParams();
-		std::string STOPCRITnames[STOPCRITSMLENGTH] = { "SM_FUN_REL", "SM_GRAD_F", "SM_GRAD_F_0" };
+		Solvers::CheckParams();
+		std::string STOPCRITnames[STOPCRITSMLENGTH] = {"SM_FUN_REL", "SM_GRAD_F", "SM_GRAD_F_0"};
 		char YES[] = "YES";
 		char NO[] = "NO";
 		char *status;
@@ -88,43 +89,41 @@ namespace ROPTLIB{
 
 	void SolversSM::Initialization(const Problem *prob, const Variable *initialx)
 	{
-        SetDefaultParams();
-        /*Some problem setting requires the default parameters*/
+		SetDefaultParams();
+		/*Some problem setting requires the default parameters*/
 		SetProbX(prob, initialx);
 	};
 
-    void SolversSM::SetDefaultParams(void)
-    {
-        Solvers::SetDefaultParams();
-        Stop_Criterion = SM_GRAD_F_0;
-        Accuracy = 1e-6;
-    };
-
-    void SolversSM::SetProbX(const Problem *prob, const Variable *initialx)
-    {
-        Solvers::SetProbX(prob, initialx);
-        Pgf1 = Prob->GetDomain()->GetEMPTY();
-        Pgf2 = Prob->GetDomain()->GetEMPTY();
-        eta1 = Prob->GetDomain()->GetEMPTY();
-        eta2 = Prob->GetDomain()->GetEMPTY();
-    };
-
-	SolversSM::~SolversSM(void)
+	void SolversSM::SetDefaultParams(void)
 	{
+		Solvers::SetDefaultParams();
+		Stop_Criterion = SM_GRAD_F_0;
+		Accuracy = 1e-6;
+	};
+
+	void SolversSM::SetProbX(const Problem *prob, const Variable *initialx)
+	{
+		Solvers::SetProbX(prob, initialx);
+		Pgf1 = Prob->GetDomain()->GetEMPTY();
+		Pgf2 = Prob->GetDomain()->GetEMPTY();
+		eta1 = Prob->GetDomain()->GetEMPTY();
+		eta2 = Prob->GetDomain()->GetEMPTY();
+	};
+
+	SolversSM::~SolversSM(void) {
 	};
 
 	void SolversSM::SetParams(PARAMSMAP params)
 	{
-        Solvers::SetParams(params);
+		Solvers::SetParams(params);
 		PARAMSMAP::iterator iter;
 		for (iter = params.begin(); iter != params.end(); iter++)
 		{
-			if (iter->first == static_cast<std::string> ("Stop_Criterion"))
+			if (iter->first == static_cast<std::string>("Stop_Criterion"))
 			{
-				Stop_Criterion = static_cast<StopCritSM> (static_cast<integer> (iter->second));
+				Stop_Criterion = static_cast<StopCritSM>(static_cast<integer>(iter->second));
 			}
-			else
-			if (iter->first == static_cast<std::string> ("Accuracy"))
+			else if (iter->first == static_cast<std::string>("Accuracy"))
 			{
 				Accuracy = iter->second;
 			}

@@ -18,11 +18,13 @@ Problem --> SphereTxRQ
 #include "others_def.h"
 
 /*Define the namespace*/
-namespace ROPTLIB{
+namespace ROPTLIB
+{
 
-    extern Vector MinMaxEigValHessian(Variable *X, Manifold *Domain, const Problem *Prob);
+	extern Vector MinMaxEigValHessian(Variable *X, Manifold *Domain, const Problem *Prob);
 
-	class SphereTxRQ : public Problem{
+	class SphereTxRQ : public Problem
+	{
 	public:
 		SphereTxRQ(Manifold *inmani, Variable *inroot, const Problem *inprob, bool inismin = true);
 		void SetMinOrMax(bool inismin);
@@ -36,7 +38,7 @@ namespace ROPTLIB{
 		const Problem *prob;
 		mutable Variable root;
 		bool ismin;
-        mutable Vector TmpTV; /*a tangent vector for temporary storage*/
+		mutable Vector TmpTV; /*a tangent vector for temporary storage*/
 	};
 }; /*end of ROPTLIB namespace*/
 #endif /* end of SPHERETXRQ_H */

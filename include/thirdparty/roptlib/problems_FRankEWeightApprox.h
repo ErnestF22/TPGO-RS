@@ -1,6 +1,6 @@
 /*
 This file defines the class for the problem
-min_{X \in R_r^{m by n}} \|X - A\|_W^2, 
+min_{X \in R_r^{m by n}} \|X - A\|_W^2,
 where R_r{m by n} is the set of m by n matrices with rank r, A is a given m by n matrix, W is a mn by mn symmetric
 positive definite matrix and \|M\|_W^2 is the W weighted norm, i.e., \|M\|_W^2 = vec(M)^T W vec(M) and vec(M) is the vector given by
 vectorizing the matrix M.
@@ -21,9 +21,11 @@ Problem --> FRankWeightApprox
 #include "manifolds_FixedRankE.h"
 
 /*Define the namespace*/
-namespace ROPTLIB{
+namespace ROPTLIB
+{
 
-	class FRankEWeightApprox : public Problem{
+	class FRankEWeightApprox : public Problem
+	{
 	public:
 		FRankEWeightApprox(Vector inA, Vector inW, integer inm, integer inn, integer inr);
 		virtual ~FRankEWeightApprox();

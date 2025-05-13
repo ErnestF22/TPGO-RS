@@ -66,7 +66,8 @@ static double argInit_real_T(const Eigen::MatrixXd &m, int rowId, int colId);
 
 //   Eigen::MatrixXd Qeig, Reig;
 
-//   // The initialize function is being called automatically from your entry-point
+//   // The initialize function is being called automatically from your
+//   entry-point
 //   // function. So, a call to initialize is not included here. Invoke the
 //   // entry-point functions.
 //   // You can call entry-point functions multiple times.
@@ -76,7 +77,6 @@ static double argInit_real_T(const Eigen::MatrixXd &m, int rowId, int colId);
 
 //   std::cout << "Reig" << std::endl << Reig << std::endl;
 //   std::cout << "Qeig" << std::endl << Qeig << std::endl;
-
 
 //   qr_unique_terminate();
 //   return 0;
@@ -104,7 +104,7 @@ void main_qr_unique(const Eigen::MatrixXd &Aeig, Eigen::MatrixXd &Qeig,
   for (int i = 0; i < R.size(0); ++i) {
     for (int j = 0; j < R.size(1); ++j) {
       // std::cout << R[i + R.size(0) * j] << "\t";
-      Reig(i,j) = R[i + R.size(0) * j];
+      Reig(i, j) = R[i + R.size(0) * j];
     }
     // std::cout << std::endl;
   }
@@ -113,7 +113,7 @@ void main_qr_unique(const Eigen::MatrixXd &Aeig, Eigen::MatrixXd &Qeig,
   for (int i = 0; i < Q.size(0); ++i) {
     for (int j = 0; j < Q.size(1); ++j) {
       // std::cout << Q[i + Q.size(0) * j] << "\t";
-      Qeig(i,j) = Q[i + Q.size(0) * j];
+      Qeig(i, j) = Q[i + Q.size(0) * j];
     }
     // std::cout << std::endl;
   }

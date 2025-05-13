@@ -15,8 +15,6 @@
 #ifndef MATHCNN_ALG_ALG_COMMON_DEFS_HPP_
 #define MATHCNN_ALG_ALG_COMMON_DEFS_HPP_
 
-
-
 // #if defined(BUILDING_LIBMWMATHCNN_ALG)
 // #define MATHCNN_ALG_API DLL_EXPORT_SYM
 // #else
@@ -40,17 +38,17 @@
 #include <stdio.h>
 
 // Double-precision convolution.
-EXTERN_C MATHCNN_ALG_API void convolution_nd_double(size_t ndims,
-    double* z,
-    const double* x, const size_t* dimsx, size_t ndimsx,
-    const double* w, const size_t* dimsw, size_t ndimsw,
-    const double* bias, const size_t* padding, const size_t* stride);
+EXTERN_C MATHCNN_ALG_API void
+convolution_nd_double(size_t ndims, double *z, const double *x,
+                      const size_t *dimsx, size_t ndimsx, const double *w,
+                      const size_t *dimsw, size_t ndimsw, const double *bias,
+                      const size_t *padding, const size_t *stride);
 
 // Single-precision convolution.
-EXTERN_C MATHCNN_ALG_API void convolution_nd_float(size_t ndims,
-    float* z,
-    const float* x, const size_t* dimsx, size_t ndimsx,
-    const float* w, const size_t* dimsw, size_t ndimsw,
-    const float* bias, const size_t* padding, const size_t* stride);
+EXTERN_C MATHCNN_ALG_API void
+convolution_nd_float(size_t ndims, float *z, const float *x,
+                     const size_t *dimsx, size_t ndimsx, const float *w,
+                     const size_t *dimsw, size_t ndimsw, const float *bias,
+                     const size_t *padding, const size_t *stride);
 
 #endif // MATHCNN_ALG_EXTERNAL_API_HPP_

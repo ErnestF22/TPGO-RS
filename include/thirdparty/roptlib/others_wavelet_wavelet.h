@@ -19,4 +19,4 @@ void haarFWT_1d_inverse(int n, realdpcomplex *v);
 void haarFWT_2d(int n1, int n2, realdpcomplex *v);
 void haarFWT_2d_inverse(int n, int n2, realdpcomplex *v);
 
-#endif/* WAVELET_H */
+#endif /* WAVELET_H */

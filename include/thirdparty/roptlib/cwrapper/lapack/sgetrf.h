@@ -1,10 +1,11 @@
 #ifdef __cplusplus
-extern "C" { 
-#endif  
+extern "C"
+{
+#endif
 
-#include "f2c.h" 
+#include "f2c.h"
 
-int sgetrf_(integer *m, integer *n, realRopt *a, integer *lda, integer *ipiv, integer *info);
+    int sgetrf_(integer *m, integer *n, realRopt *a, integer *lda, integer *ipiv, integer *info);
 
 #ifdef __cplusplus
 }

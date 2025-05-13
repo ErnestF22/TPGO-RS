@@ -23,14 +23,16 @@
 namespace flexbuffers {
 
 // Verifies the `nested` flexbuffer within a flatbuffer vector is valid.
-inline bool VerifyNestedFlexBuffer(
-    const flatbuffers::Vector<uint8_t> *const nested,
-    flatbuffers::Verifier &verifier) {
-  if (!nested) return true;
+inline bool
+VerifyNestedFlexBuffer(const flatbuffers::Vector<uint8_t> *const nested,
+                       flatbuffers::Verifier &verifier)
+{
+  if (!nested)
+    return true;
   return verifier.Check(flexbuffers::VerifyBuffer(
       nested->data(), nested->size(), verifier.GetFlexReuseTracker()));
 }
 
-}  // namespace flexbuffers
+} // namespace flexbuffers
 
-#endif  // FLATBUFFERS_FLEX_FLAT_UTIL_H_
+#endif // FLATBUFFERS_FLEX_FLAT_UTIL_H_

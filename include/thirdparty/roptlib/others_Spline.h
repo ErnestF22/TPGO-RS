@@ -13,9 +13,11 @@ TODO: Define the class to be a spline curve, not just a class contains many stat
 #include "others_def.h"
 
 /*Define the namespace*/
-namespace ROPTLIB{
+namespace ROPTLIB
+{
 
-	class Spline{
+	class Spline
+	{
 	public:
 		static int SplineUniformPeriodic(const realdp *Y, int n, realdp h, realdp *coefs); /* periodic boundary condition: for closed curves */
 		static int SplinePeriodic(const realdp *X, const realdp *Y, int n, realdp *coefs);

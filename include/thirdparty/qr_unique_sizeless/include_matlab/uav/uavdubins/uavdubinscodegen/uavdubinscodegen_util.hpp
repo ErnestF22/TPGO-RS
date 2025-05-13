@@ -10,13 +10,14 @@
 
 #if defined(BUILDING_LIBMWUAVDUBINSCODEGEN)
 
-#include "package.h" /* For DLL_EXPORT_SYM and EXTERN_C */
+#include "package.h"  /* For DLL_EXPORT_SYM and EXTERN_C */
 #include "tmwtypes.h" /* For uint32_T, boolean_T, etc */
 #define UAVDUBINSCODEGEN_API DLL_EXPORT_SYM
 
 #else
 
-#if defined(MATLAB_MEX_FILE) || defined(BUILDING_UNITTEST) || defined(MATLAB_BUILTINS)
+#if defined(MATLAB_MEX_FILE) || defined(BUILDING_UNITTEST) ||                  \
+    defined(MATLAB_BUILTINS)
 #include "tmwtypes.h"
 #else
 #include "rtwtypes.h"

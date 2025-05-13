@@ -19,10 +19,10 @@
  */
 
 #if defined(_MSC_VER)
-# pragma once
+#pragma once
 #endif
 #if defined(__GNUC__) && (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ > 3))
-# pragma once
+#pragma once
 #endif
 
 /*
@@ -43,10 +43,8 @@
 #define POLYFUN_MODULE_API
 #endif
 
-EXTERN_C POLYFUN_MODULE_API 
-void polyBoolean_c(double *x1, double *y1, int *size1,
-                   double *x2, double *y2, int *size2,
-                   double *input_scale_p, int *op_type,
-                   double *rx, double *ry, int *rn,
-                   double *pPgon, double *pCon, double *pIdx);
+EXTERN_C POLYFUN_MODULE_API void
+polyBoolean_c(double *x1, double *y1, int *size1, double *x2, double *y2,
+              int *size2, double *input_scale_p, int *op_type, double *rx,
+              double *ry, int *rn, double *pPgon, double *pCon, double *pIdx);
 #endif

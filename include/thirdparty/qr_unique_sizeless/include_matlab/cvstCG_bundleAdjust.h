@@ -21,10 +21,10 @@
 
 #include <stdint.h>
 
-EXTERN_C LIBMWBUNDLEADJUST_API void visionbundleAdjust(const size_t, void*, void*, const size_t,
-                                                     const size_t, void*, void*, const bool, 
-                                                     const int*, const int*, const double, 
-                                                     const double, const size_t, void*, 
-                                                     const size_t, double*, double*, double*, 
-                                                     void*, void*, const size_t, void*, void*, void*);
+EXTERN_C LIBMWBUNDLEADJUST_API void
+visionbundleAdjust(const size_t, void *, void *, const size_t, const size_t,
+                   void *, void *, const bool, const int *, const int *,
+                   const double, const double, const size_t, void *,
+                   const size_t, double *, double *, double *, void *, void *,
+                   const size_t, void *, void *, void *);
 #endif

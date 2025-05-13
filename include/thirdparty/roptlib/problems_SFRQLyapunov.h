@@ -19,34 +19,35 @@ Problem --> SFRQLyapunov
 #include "manifolds_SymFixedRankQ.h"
 
 /*Define the namespace*/
-namespace ROPTLIB{
+namespace ROPTLIB
+{
 
-	class SFRQLyapunov : public Problem{
+	class SFRQLyapunov : public Problem
+	{
 	public:
 		/*define A, M and C in the cost function \tr(Y Y^T A Y Y^T M) - tr(Y Y^T C)*/
-        SFRQLyapunov(SparseMatrix &inA, SparseMatrix &inM, Vector inC, integer inp);
+		SFRQLyapunov(SparseMatrix &inA, SparseMatrix &inM, Vector inC, integer inp);
 
 		virtual ~SFRQLyapunov();
-        
+
 		virtual realdp f(const Variable &x) const;
 
 		virtual Vector &EucGrad(const Variable &x, Vector *result) const;
 
 		virtual Vector &EucHessianEta(const Variable &x, const Vector &etax, Vector *result) const;
 
-        virtual Vector &PreConditioner(const Variable &x, const Vector &eta, Vector *result) const;
+		virtual Vector &PreConditioner(const Variable &x, const Vector &eta, Vector *result) const;
 
 		Vector &ActionEH(const Variable &x, const Vector &intreta, Vector *result) const;
 
 		Vector &LinearCG(const Variable x, const Vector &intreta, Vector *result) const;
 
-        
-        SparseMatrix *Aptr;
-        SparseMatrix *Mptr;
-        
+		SparseMatrix *Aptr;
+		SparseMatrix *Mptr;
+
 		Vector C;
 
-        integer Cp;
+		integer Cp;
 		integer n;
 		integer p;
 	};

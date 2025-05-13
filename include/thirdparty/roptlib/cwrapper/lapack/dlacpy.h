@@ -1,10 +1,11 @@
 #ifdef __cplusplus
-extern "C" { 
-#endif  
+extern "C"
+{
+#endif
 
-#include "f2c.h" 
+#include "f2c.h"
 
-int dlacpy_(char *uplo, integer *m, integer *n, doublerealRopt *a, integer *lda, doublerealRopt *b, integer *ldb);
+    int dlacpy_(char *uplo, integer *m, integer *n, doublerealRopt *a, integer *lda, doublerealRopt *b, integer *ldb);
 
 #ifdef __cplusplus
 }

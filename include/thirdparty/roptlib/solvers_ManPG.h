@@ -13,9 +13,11 @@ Solvers --> SolversNSM --> SolversNSMPGLS --> ManPG
 #include "others_def.h"
 
 /*Define the namespace*/
-namespace ROPTLIB{
+namespace ROPTLIB
+{
 
-	class ManPG : public SolversNSMPGLS{
+	class ManPG : public SolversNSMPGLS
+	{
 	public:
 		/*The contructor of RPG method. It calls the function Solvers::Initialization.
 		INPUT : prob is the problem which defines the cost function, gradient and possible the action of Hessian
@@ -23,21 +25,20 @@ namespace ROPTLIB{
 		initialx is the initial iterate.*/
 		ManPG(const Problem *prob, const Variable *initialx);
 
-        ~ManPG();
-        
+		~ManPG();
+
 		/*Setting parameters (member variables) to be default values */
 		virtual void SetDefaultParams();
-        
-        /*Run the proximal gradient algorithm.*/
-        void Run(void);
-        
-	protected:
-        
-        /*Print information specific to an algorithm*/
-        virtual void PrintInfo(void);
 
-        /*Print last information in an algorithm*/
-        virtual void PrintFinalInfo(void);
+		/*Run the proximal gradient algorithm.*/
+		void Run(void);
+
+	protected:
+		/*Print information specific to an algorithm*/
+		virtual void PrintInfo(void);
+
+		/*Print last information in an algorithm*/
+		virtual void PrintFinalInfo(void);
 	};
 }; /*end of ROPTLIB namespace*/
 #endif /* end of MANPG_H */

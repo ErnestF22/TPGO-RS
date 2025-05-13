@@ -5,4 +5,4 @@
 #include "others_SparseBLAS_blas_sparse_proto.h"
 #include "others_SparseBLAS_nist_spblas.h"
 #endif
-   /* BLAS_SPARSE_H */
+/* BLAS_SPARSE_H */

@@ -15,9 +15,11 @@ Solvers --> SolversSM --> SolversSMLS --> RSD
 #include "others_def.h"
 
 /*Define the namespace*/
-namespace ROPTLIB{
+namespace ROPTLIB
+{
 
-	class RSD : public SolversSMLS{
+	class RSD : public SolversSMLS
+	{
 	public:
 		/*The contructor of RSD method. It calls the function Solvers::Initialization.
 		INPUT : prob is the problem which defines the cost function, gradient and possible the action of Hessian
@@ -28,15 +30,15 @@ namespace ROPTLIB{
 	protected:
 		/*Set the search direction to be negative gradient*/
 		virtual void GetSearchDir(void);
-        
-        /*Call Solvers::SetProbX function and indicate RCG does not need action of Hessian.
-        INPUT:    prob is the problem which defines the cost function, gradient and possible the action of Hessian
-        and specifies the manifold of domain.
-        initialx is the initial iterate.*/
-        virtual void SetProbX(const Problem *prob, const Variable *initialx);
 
-        /*Setting parameters (member variables) to be default values */
-        virtual void SetDefaultParams(void);
+		/*Call Solvers::SetProbX function and indicate RCG does not need action of Hessian.
+		INPUT:    prob is the problem which defines the cost function, gradient and possible the action of Hessian
+		and specifies the manifold of domain.
+		initialx is the initial iterate.*/
+		virtual void SetProbX(const Problem *prob, const Variable *initialx);
+
+		/*Setting parameters (member variables) to be default values */
+		virtual void SetDefaultParams(void);
 	};
 }; /*end of ROPTLIB namespace*/
 #endif /* end of RSD_H */

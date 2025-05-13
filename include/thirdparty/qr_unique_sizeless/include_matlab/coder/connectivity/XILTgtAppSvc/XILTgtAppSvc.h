@@ -7,24 +7,27 @@
 
 #include "rtwtypes.h"
 
-#if defined (USING_CS_API) || defined(BUILDING_LIBMWCODER_XILTGTAPPSVC)
-       
-    typedef uint8_T IOUnit_T;   
+#if defined(USING_CS_API) || defined(BUILDING_LIBMWCODER_XILTGTAPPSVC)
+
+typedef uint8_T IOUnit_T;
 #else
-   
-    #include "xilcomms_rtiostream.h"
+
+#include "xilcomms_rtiostream.h"
 #endif
-       
+
 #ifdef USE_XILTGTAPPSVC_ERROR
-    static const boolean_T XILTGTAPPSVC_ERROR = 0;
+static const boolean_T XILTGTAPPSVC_ERROR = 0;
 #endif
 #ifdef USE_XILTGTAPPSVC_SUCCESS
-    static const boolean_T XILTGTAPPSVC_SUCCESS = 1;
+static const boolean_T XILTGTAPPSVC_SUCCESS = 1;
 #endif
 
 #define XIL_RTIOSTREAM_BASED_SERVICE_ID 1
-typedef enum {XIL_COMMAND_NOT_COMPLETE=0,
-              XIL_COMMAND_COMPLETE,
-              XIL_STEP_COMPLETE} XILCommandResponseType;
-             
+typedef enum
+{
+  XIL_COMMAND_NOT_COMPLETE = 0,
+  XIL_COMMAND_COMPLETE,
+  XIL_STEP_COMPLETE
+} XILCommandResponseType;
+
 #endif

@@ -15,18 +15,28 @@ Solvers --> SolversSM --> SolversSMLS --> RNewton
 #include "others_def.h"
 
 /*Define the namespace*/
-namespace ROPTLIB{
+namespace ROPTLIB
+{
 
 	/* output status of the truncated conjugate gradient. It is an output argument and users don't need to assign this enumerate to any member variable.
 	LSSM_NEGCURVTURE: Find negative curvature
 	LSSM_LCON: Teminate when the kappa variable takes effect, which indicate the convergence rate is linear.
 	LSSM_SCON: Teminate when the theta variable takes effect, which indicate the convergence rate is superlinear.
 	LSSM_MAXITER: Teminate when the inner iterations reach the maximum inner iterations specified by the member variable "Max_Inner_Iter"
-    LSSM_ERROR: other serious errors
+	LSSM_ERROR: other serious errors
 	*/
-	enum tCGLSSMstatusSet{ LSSM_NEGCURVTURE, LSSM_LCON, LSSM_SCON, LSSM_MAXITER, LSSM_ERROR, TCGLSSMSTATUSSETLENGTH };
+	enum tCGLSSMstatusSet
+	{
+		LSSM_NEGCURVTURE,
+		LSSM_LCON,
+		LSSM_SCON,
+		LSSM_MAXITER,
+		LSSM_ERROR,
+		TCGLSSMSTATUSSETLENGTH
+	};
 
-	class RNewton : public SolversSMLS{
+	class RNewton : public SolversSMLS
+	{
 	public:
 		/*The contructor of RNewton method. It calls the function Solvers::Initialization.
 		INPUT : prob is the problem which defines the cost function, gradient and possible the action of Hessian
@@ -62,6 +72,7 @@ namespace ROPTLIB{
 		Default: theta 0.1, kappa 0.9*/
 		realdp theta;
 		realdp kappa;
+
 	protected:
 		/*Compute the search direction by using truncated conjugate gradient to approximately solve Hessian[direction] = - gradient*/
 		virtual void GetSearchDir(void);
@@ -71,18 +82,18 @@ namespace ROPTLIB{
 
 		/*Run the truncated conjugate gradient method for the local linear system*/
 		void tCG_LS(void);
-        
-        /*Call Solvers::SetProbX function; initialize temporary vectors; and indicate RNewton need action of Hessian.
-        INPUT:    prob is the problem which defines the cost function, gradient and possible the action of Hessian
-        and specifies the manifold of domain.
-        initialx is the initial iterate.*/
-        virtual void SetProbX(const Problem *prob, const Variable *initialx);
 
-        /*Setting parameters (member variables) to be default values */
-        virtual void SetDefaultParams(void);
+		/*Call Solvers::SetProbX function; initialize temporary vectors; and indicate RNewton need action of Hessian.
+		INPUT:    prob is the problem which defines the cost function, gradient and possible the action of Hessian
+		and specifies the manifold of domain.
+		initialx is the initial iterate.*/
+		virtual void SetProbX(const Problem *prob, const Variable *initialx);
 
-		integer innerIter; /*the number of iterations of the truncated conjugate gradient method*/
-		tCGLSSMstatusSet tCGLSSMstatus; /*the output status of the truncated conjugate gradient method*/
+		/*Setting parameters (member variables) to be default values */
+		virtual void SetDefaultParams(void);
+
+		integer innerIter;					/*the number of iterations of the truncated conjugate gradient method*/
+		tCGLSSMstatusSet tCGLSSMstatus;		/*the output status of the truncated conjugate gradient method*/
 		std::string *tCGLSSMstatusSetnames; /*the output names of the truncated conjugate gradient method*/
 	};
 }; /*end of ROPTLIB namespace*/

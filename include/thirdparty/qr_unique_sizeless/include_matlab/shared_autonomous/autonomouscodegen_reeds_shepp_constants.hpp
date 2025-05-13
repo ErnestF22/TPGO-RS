@@ -19,7 +19,8 @@
 namespace autonomous {
 namespace reedsshepp {
 
-static const uint32_T TotalNumPaths = 44; ///< Total number of possible Reeds-Shepp paths
+static const uint32_T TotalNumPaths =
+    44; ///< Total number of possible Reeds-Shepp paths
 
 } // namespace reedsshepp
 } // namespace autonomous

@@ -1,10 +1,11 @@
 #ifdef __cplusplus
-extern "C" { 
-#endif  
+extern "C"
+{
+#endif
 
-#include "f2c.h" 
+#include "f2c.h"
 
-Z_f zladiv_(doublecomplexRopt * ret_val, doublecomplexRopt *x, doublecomplexRopt *y);
+    Z_f zladiv_(doublecomplexRopt *ret_val, doublecomplexRopt *x, doublecomplexRopt *y);
 
 #ifdef __cplusplus
 }

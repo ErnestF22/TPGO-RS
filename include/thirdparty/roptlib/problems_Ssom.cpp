@@ -1234,8 +1234,8 @@ namespace ROPTLIB
         mani1.ChooseParamsSet2();
         ROPTLIB::Euclidean mani2(d, n);
         ROPTLIB::Euclidean mani3(e);
-        ROPTLIB::ProductManifold ProdManiSsom(numoftypes, 
-            &mani1, numofmani1, &mani2, numofmani2, &mani3, numofmani3);
+        ROPTLIB::ProductManifold ProdManiSsom(numoftypes,
+                                              &mani1, numofmani1, &mani2, numofmani2, &mani3, numofmani3);
 
         SomUtils::MatD XoptEigVec(SomUtils::MatD::Zero(d * d * n + d * n + e, 1));
         Prob.RoptToEig(Xopt, XoptEigVec);

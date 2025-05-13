@@ -1,10 +1,11 @@
 #ifdef __cplusplus
-extern "C" { 
-#endif  
+extern "C"
+{
+#endif
 
-#include "f2c.h" 
+#include "f2c.h"
 
-int zsteqr_(char *compz, integer *n, doublerealRopt *d__, doublerealRopt *e, doublecomplexRopt *z__, integer *ldz, doublerealRopt *work, integer *info);
+    int zsteqr_(char *compz, integer *n, doublerealRopt *d__, doublerealRopt *e, doublecomplexRopt *z__, integer *ldz, doublerealRopt *work, integer *info);
 
 #ifdef __cplusplus
 }

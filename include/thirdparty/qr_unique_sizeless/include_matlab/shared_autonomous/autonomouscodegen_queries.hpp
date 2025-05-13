@@ -19,8 +19,9 @@
 namespace autonomous {
 namespace queries {
 
-inline bool isNaN(real64_T x){
-    return x != x;
+inline bool isNaN(real64_T x)
+{
+  return x != x;
 }
 
 } // namespace queries

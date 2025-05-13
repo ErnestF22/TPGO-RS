@@ -1,10 +1,11 @@
 #ifdef __cplusplus
-extern "C" { 
-#endif  
+extern "C"
+{
+#endif
 
-#include "f2c.h" 
+#include "f2c.h"
 
-E_f scasum_(integer *n, complexRopt *cx, integer *incx);
+    E_f scasum_(integer *n, complexRopt *cx, integer *incx);
 
 #ifdef __cplusplus
 }

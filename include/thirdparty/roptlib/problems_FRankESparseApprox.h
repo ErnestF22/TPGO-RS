@@ -16,9 +16,11 @@ Problem --> FRankESparseApprox
 #include "manifolds_FixedRankE.h"
 
 /*Define the namespace*/
-namespace ROPTLIB{
+namespace ROPTLIB
+{
 
-	class FRankESparseApprox : public Problem{
+	class FRankESparseApprox : public Problem
+	{
 	public:
 		FRankESparseApprox(Vector inA, realdp inlambda, integer inm, integer inn, integer inr, integer inlengthW);
 		virtual ~FRankESparseApprox();
@@ -26,20 +28,20 @@ namespace ROPTLIB{
 
 		virtual Vector &EucGrad(const Variable &x, Vector *result) const;
 		virtual Vector &EucHessianEta(const Variable &x, const Vector &etax, Vector *result) const;
-        
-        virtual Vector &ProxW(const Vector &x, const Vector &Weight, Vector *result) const;
-        virtual Vector &CalJW(const Vector &x, const Vector &eta, const Vector &Weight, Vector *result) const;
-        
-        /*The create the weight matrix*/
-        virtual Vector &PreConditioner(const Variable &x, const Vector &eta, Vector *result) const;
+
+		virtual Vector &ProxW(const Vector &x, const Vector &Weight, Vector *result) const;
+		virtual Vector &CalJW(const Vector &x, const Vector &eta, const Vector &Weight, Vector *result) const;
+
+		/*The create the weight matrix*/
+		virtual Vector &PreConditioner(const Variable &x, const Vector &eta, Vector *result) const;
 
 		Vector A;
-        realdp lambda;
+		realdp lambda;
 		integer m;
 		integer n;
 		integer r;
-        integer lengthW;
-        realdp L;
+		integer lengthW;
+		realdp L;
 	};
 }; /*end of ROPTLIB namespace*/
 #endif

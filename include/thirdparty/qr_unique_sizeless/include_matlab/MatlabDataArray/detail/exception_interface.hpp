@@ -8,28 +8,33 @@
 #include <string>
 
 namespace matlab {
-    namespace data {
-        namespace detail {
-            template <typename Base, matlab::data::ExceptionType Type>
-            class ArrayException : public Base, public std::exception {
-              public:
-                ArrayException(std::string str) :
-                    fStringTxt(std::move(str)) {}
+namespace data {
+namespace detail {
+template <typename Base, matlab::data::ExceptionType Type>
+class ArrayException : public Base, public std::exception {
+public:
+  ArrayException(std::string str) : fStringTxt(std::move(str))
+  {
+  }
 
-                ~ArrayException() MW_NOEXCEPT {}
+  ~ArrayException() MW_NOEXCEPT
+  {
+  }
 
-                ArrayException(const ArrayException& other) :
-                    fStringTxt(other.fStringTxt) {}
+  ArrayException(const ArrayException &other) : fStringTxt(other.fStringTxt)
+  {
+  }
 
-                const char* what() const MW_NOEXCEPT override {
-                    return fStringTxt.c_str();
-                }
-                
-              private:
-                std::string fStringTxt;
-            };
-        }
-    }
-}
-                
+  const char *what() const MW_NOEXCEPT override
+  {
+    return fStringTxt.c_str();
+  }
+
+private:
+  std::string fStringTxt;
+};
+} // namespace detail
+} // namespace data
+} // namespace matlab
+
 #endif

@@ -2,7 +2,8 @@
 #include "manifolds_SmartSpace.h"
 
 /*Define the namespace*/
-namespace ROPTLIB{
+namespace ROPTLIB
+{
 
 	void SmartSpace::Initialization(integer numberofdimensions, ...)
 	{
@@ -29,14 +30,13 @@ namespace ROPTLIB{
 			sharedtimes = new integer;
 			*sharedtimes = 1;
 		}
-		else
-			if ((*sharedtimes) > 1)
-			{
-				NewMemory();
-				(*sharedtimes)--;
-				sharedtimes = new integer;
-				*sharedtimes = 1;
-			}
+		else if ((*sharedtimes) > 1)
+		{
+			NewMemory();
+			(*sharedtimes)--;
+			sharedtimes = new integer;
+			*sharedtimes = 1;
+		}
 	};
 
 	void SmartSpace::CopyOnWrite(void)
@@ -47,18 +47,17 @@ namespace ROPTLIB{
 			sharedtimes = new integer;
 			*sharedtimes = 1;
 		}
-		else
-			if ((*sharedtimes) > 1)
-			{
-				realdp *ptr = Space;
-				NewMemory();
-				(*sharedtimes)--;
-				sharedtimes = new integer;
-				*sharedtimes = 1;
+		else if ((*sharedtimes) > 1)
+		{
+			realdp *ptr = Space;
+			NewMemory();
+			(*sharedtimes)--;
+			sharedtimes = new integer;
+			*sharedtimes = 1;
 
-				integer N = length, inc = 1;
-				copy_(&N, ptr, &inc, Space, &inc);
-			}
+			integer N = length, inc = 1;
+			copy_(&N, ptr, &inc, Space, &inc);
+		}
 	};
 
 	void SmartSpace::RandUnform(realdp start, realdp end)
@@ -76,20 +75,20 @@ namespace ROPTLIB{
 			Space[i] = (genrandnormal() + mean) * variance;
 	};
 
-    void SmartSpace::SetToZeros(void)
-    {
-        NewMemoryOnWrite();
-        for (integer i = 0; i < length; i++)
-            Space[i] = 0;
-    };
+	void SmartSpace::SetToZeros(void)
+	{
+		NewMemoryOnWrite();
+		for (integer i = 0; i < length; i++)
+			Space[i] = 0;
+	};
 
 	void SmartSpace::CopyTo(SmartSpace &eta) const
 	{
 		if (this == &eta || (eta.Space == Space && !(eta.Space == nullptr && Space == nullptr)))
 			return;
-        
+
 		bool IsSameSize = true;
-        
+
 		if (eta.ls != ls)
 		{
 			IsSameSize = false;
@@ -108,51 +107,55 @@ namespace ROPTLIB{
 		if (eta.sharedtimes != nullptr && *(eta.sharedtimes) == 1 && IsSameSize)
 		{
 			integer N = length, inc = 1;
-            
-             if(Space != nullptr)
-                copy_(&N, Space, &inc, eta.Space, &inc);
-             else
-             {
- 				delete eta.sharedtimes; eta.sharedtimes = nullptr;
- 				delete[] eta.Space; eta.Space = nullptr;
-             }
+
+			if (Space != nullptr)
+				copy_(&N, Space, &inc, eta.Space, &inc);
+			else
+			{
+				delete eta.sharedtimes;
+				eta.sharedtimes = nullptr;
+				delete[] eta.Space;
+				eta.Space = nullptr;
+			}
 			return;
 		}
 		if (eta.sharedtimes != nullptr && *(eta.sharedtimes) > 1)
 		{
 			(*(eta.sharedtimes))--;
 		}
-		else
-			if (eta.sharedtimes != nullptr && *(eta.sharedtimes) == 1)
-			{
+		else if (eta.sharedtimes != nullptr && *(eta.sharedtimes) == 1)
+		{
 #ifdef CHECKMEMORYDELETED
-				(*CheckMemoryDeleted)[eta->sharedtimes] = *(eta->sharedtimes);
+			(*CheckMemoryDeleted)[eta->sharedtimes] = *(eta->sharedtimes);
 #endif
-				delete eta.sharedtimes; eta.sharedtimes = nullptr;
-				delete[] eta.Space; eta.Space = nullptr;
-			}
-        
+			delete eta.sharedtimes;
+			eta.sharedtimes = nullptr;
+			delete[] eta.Space;
+			eta.Space = nullptr;
+		}
+
 		if (sharedtimes != nullptr)
 			(*sharedtimes)++;
 		eta.sharedtimes = sharedtimes;
 		eta.Space = Space;
-        
+
 		if (eta.ls != ls)
 		{
 			delete[] eta.size;
 			eta.size = new integer[ls];
 			eta.ls = ls;
 		}
-        
+
 		for (integer i = 0; i < ls; i++)
 			eta.size[i] = size[i];
-        
+
 		eta.length = length;
 	};
 
 	void SmartSpace::NewMemory(void)
 	{
-		try{
+		try
+		{
 			Space = new realdp[length];
 		}
 		catch (std::bad_alloc exception)
@@ -182,7 +185,7 @@ namespace ROPTLIB{
 	{
 		if (size != nullptr)
 			delete[] size;
-        size = nullptr;
+		size = nullptr;
 
 		if (sharedtimes != nullptr)
 		{
@@ -196,12 +199,12 @@ namespace ROPTLIB{
 				delete sharedtimes;
 				delete[] Space;
 			}
-            sharedtimes = nullptr;
-            Space = nullptr;
+			sharedtimes = nullptr;
+			Space = nullptr;
 		}
 	};
 
-	void SmartSpace::Print(const char * name) const
+	void SmartSpace::Print(const char *name) const
 	{
 		integer product = 1;
 		for (integer i = 2; i < ls; i++)
@@ -220,62 +223,60 @@ namespace ROPTLIB{
 				printf(" x %d", size[i]);
 			printf("\n");
 		}
-		else
-			if (ls == 1 || (ls > 1 && size[1] * product == 1))
+		else if (ls == 1 || (ls > 1 && size[1] * product == 1))
+		{
+			printf("%s , shared times:%d, shared times address:%p\n", name, *sharedtimes, sharedtimes);
+			for (integer i = 0; i < length; i++)
+				printf("%.10e\n", Space[i]);
+		}
+		else if (ls == 2 || product == 1)
+		{
+			printf("%s , shared times:%d, shared times address:%p\n", name, *sharedtimes, sharedtimes);
+			for (integer j = 0; j < size[0]; j++)
 			{
-				printf("%s , shared times:%d, shared times address:%p\n", name, *sharedtimes, sharedtimes);
-				for (integer i = 0; i < length; i++)
-					printf("%.10e\n", Space[i]);
+				for (integer k = 0; k < size[1]; k++)
+				{
+					printf("%.10e\t", Space[j + size[0] * k]);
+				}
+				printf("\n");
 			}
-			else
-				if (ls == 2 || product == 1)
+		}
+		else
+		{
+			integer row = size[0], col = size[1];
+			integer *idices = new integer[ls + 1];
+			realdp *ptr = Space;
+			for (integer i = 2; i < ls + 1; i++)
+				idices[i] = 0;
+			while (1)
+			{
+				printf("%s(:,:", name);
+				for (integer i = 2; i < ls; i++)
+					printf(",%d", idices[i]);
+				printf("), shared times:%d\n", *sharedtimes);
+				for (integer j = 0; j < row; j++)
 				{
-					printf("%s , shared times:%d, shared times address:%p\n", name, *sharedtimes, sharedtimes);
-					for (integer j = 0; j < size[0]; j++)
+					for (integer k = 0; k < col; k++)
 					{
-						for (integer k = 0; k < size[1]; k++)
-						{
-							printf("%.10e\t", Space[j + size[0] * k]);
-						}
-						printf("\n");
+						printf("%.10e\t", ptr[j + row * k]);
 					}
+					printf("\n");
 				}
-				else
+				ptr += row * col;
+				idices[2]++;
+				for (integer i = 2; i < ls; i++)
 				{
-					integer row = size[0], col = size[1];
-					integer *idices = new integer[ls + 1];
-					realdp *ptr = Space;
-					for (integer i = 2; i < ls + 1; i++)
+					if (idices[i] == size[i])
+					{
 						idices[i] = 0;
-					while (1)
-					{
-						printf("%s(:,:", name);
-						for (integer i = 2; i < ls; i++)
-							printf(",%d", idices[i]);
-						printf("), shared times:%d\n", *sharedtimes);
-						for (integer j = 0; j < row; j++)
-						{
-							for (integer k = 0; k < col; k++)
-							{
-								printf("%.10e\t", ptr[j + row * k]);
-							}
-							printf("\n");
-						}
-						ptr += row * col;
-						idices[2]++;
-						for (integer i = 2; i < ls; i++)
-						{
-							if (idices[i] == size[i])
-							{
-								idices[i] = 0;
-								idices[i + 1]++;
-							}
-						}
-						if (idices[ls] == 1)
-							break;
+						idices[i + 1]++;
 					}
-					delete[] idices;
 				}
+				if (idices[ls] == 1)
+					break;
+			}
+			delete[] idices;
+		}
 	};
 
 	void SmartSpace::SetByParams(integer *insize, integer inls, integer inlength, integer *insharedtimes, realdp *inSpace)
@@ -287,40 +288,40 @@ namespace ROPTLIB{
 		Space = inSpace;
 	};
 
-    void SmartSpace::SetByParams(integer *insharedtimes, realdp *inSpace)
-    {
-        sharedtimes = insharedtimes;
-        Space = inSpace;
-    };
+	void SmartSpace::SetByParams(integer *insharedtimes, realdp *inSpace)
+	{
+		sharedtimes = insharedtimes;
+		Space = inSpace;
+	};
 
-    void SmartSpace::DeleteBySettingNull(void)
-    {
-        size = nullptr;
-        sharedtimes = nullptr;
-        Space = nullptr;
-    };
+	void SmartSpace::DeleteBySettingNull(void)
+	{
+		size = nullptr;
+		sharedtimes = nullptr;
+		Space = nullptr;
+	};
 
 	void SmartSpace::Delete(void)
 	{
-        if (size != nullptr)
-            delete[] size;
-        size = nullptr;
-        ls = 0;
+		if (size != nullptr)
+			delete[] size;
+		size = nullptr;
+		ls = 0;
 
-        if (sharedtimes != nullptr)
-        {
+		if (sharedtimes != nullptr)
+		{
 #ifdef CHECKMEMORYDELETED
-            (*CheckMemoryDeleted)[sharedtimes] = *sharedtimes;
+			(*CheckMemoryDeleted)[sharedtimes] = *sharedtimes;
 #endif
-            (*sharedtimes)--;
-            if (*sharedtimes == 0 && Space != nullptr)
-            {
-                delete sharedtimes;
-                delete[] Space;
-            }
-            sharedtimes = nullptr;
-            Space = nullptr;
-        }
-        length = 0;
+			(*sharedtimes)--;
+			if (*sharedtimes == 0 && Space != nullptr)
+			{
+				delete sharedtimes;
+				delete[] Space;
+			}
+			sharedtimes = nullptr;
+			Space = nullptr;
+		}
+		length = 0;
 	};
 }; /*end of ROPTLIB namespace*/

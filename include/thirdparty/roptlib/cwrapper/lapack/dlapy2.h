@@ -1,10 +1,11 @@
 #ifdef __cplusplus
-extern "C" { 
-#endif  
+extern "C"
+{
+#endif
 
-#include "f2c.h" 
+#include "f2c.h"
 
-doublerealRopt dlapy2_(doublerealRopt *x, doublerealRopt *y);
+    doublerealRopt dlapy2_(doublerealRopt *x, doublerealRopt *y);
 
 #ifdef __cplusplus
 }

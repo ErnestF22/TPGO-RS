@@ -1,10 +1,11 @@
 #ifdef __cplusplus
-extern "C" { 
-#endif  
+extern "C"
+{
+#endif
 
-#include "f2c.h" 
+#include "f2c.h"
 
-int sormbr_(char *vect, char *side, char *trans, integer *m, integer *n, integer *k, realRopt *a, integer *lda, realRopt *tau, realRopt *c__, integer *ldc, realRopt *work, integer *lwork, integer *info);
+    int sormbr_(char *vect, char *side, char *trans, integer *m, integer *n, integer *k, realRopt *a, integer *lda, realRopt *tau, realRopt *c__, integer *ldc, realRopt *work, integer *lwork, integer *info);
 
 #ifdef __cplusplus
 }

@@ -1,10 +1,11 @@
 #ifdef __cplusplus
-extern "C" { 
-#endif  
+extern "C"
+{
+#endif
 
-#include "f2c.h" 
+#include "f2c.h"
 
-int ctrtri_(char *uplo, char *diag, integer *n, complexRopt *a, integer *lda, integer *info);
+    int ctrtri_(char *uplo, char *diag, integer *n, complexRopt *a, integer *lda, integer *info);
 
 #ifdef __cplusplus
 }

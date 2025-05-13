@@ -1,10 +1,11 @@
 #ifdef __cplusplus
-extern "C" { 
-#endif  
+extern "C"
+{
+#endif
 
-#include "f2c.h" 
+#include "f2c.h"
 
-logical lsame_(char *ca, char *cb);
+    logical lsame_(char *ca, char *cb);
 
 #ifdef __cplusplus
 }

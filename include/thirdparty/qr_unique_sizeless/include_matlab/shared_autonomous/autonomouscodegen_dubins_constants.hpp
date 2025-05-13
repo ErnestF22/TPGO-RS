@@ -19,7 +19,8 @@
 namespace autonomous {
 namespace dubins {
 
-static const uint32_T TotalNumPaths = 6; ///< Total number of possible Dubins paths
+static const uint32_T TotalNumPaths =
+    6; ///< Total number of possible Dubins paths
 
 } // namespace dubins
 } // namespace autonomous

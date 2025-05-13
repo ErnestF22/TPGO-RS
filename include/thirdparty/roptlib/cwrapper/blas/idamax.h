@@ -1,10 +1,11 @@
 #ifdef __cplusplus
-extern "C" { 
-#endif  
+extern "C"
+{
+#endif
 
-#include "f2c.h" 
+#include "f2c.h"
 
-integer idamax_(integer *n, doublerealRopt *dx, integer *incx);
+    integer idamax_(integer *n, doublerealRopt *dx, integer *incx);
 
 #ifdef __cplusplus
 }

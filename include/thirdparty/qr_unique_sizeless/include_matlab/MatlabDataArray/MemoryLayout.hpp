@@ -3,10 +3,14 @@
 #ifndef MATLAB_DATA_MEMORY_LAYOUT_HPP
 #define MATLAB_DATA_MEMORY_LAYOUT_HPP
 
-
 namespace matlab {
 namespace data {
-enum class MemoryLayout : int { COLUMN_MAJOR = 0, ROW_MAJOR, UNKNOWN };
+enum class MemoryLayout : int
+{
+  COLUMN_MAJOR = 0,
+  ROW_MAJOR,
+  UNKNOWN
+};
 }
 } // namespace matlab
 

@@ -8,7 +8,8 @@
 #ifndef PLANNINGCODEGEN_UTILS_HPP
 #define PLANNINGCODEGEN_UTILS_HPP
 
-#if defined(BUILDING_LIBMWPLANNINGCODEGEN) // should be defined by the mw build infrastructure
+#if defined(BUILDING_LIBMWPLANNINGCODEGEN) // should be defined by the mw build
+                                           // infrastructure
 
 #include "package.h"  /* For DLL_EXPORT_SYM and EXTERN_C */
 #include "tmwtypes.h" /* For uint32_T, boolean_T, etc */
@@ -18,8 +19,10 @@
 #else /* BUILDING_LIBMWPLANNINGCODEGEN */
 
 /* For uint32_T, boolean_T, etc */
-/* Consuming MATLAB C++ module should define MATLAB_BUILTINS token in its makefile */
-#if defined(MATLAB_MEX_FILE) || defined(BUILDING_UNITTEST) || defined(MATLAB_BUILTINS)
+/* Consuming MATLAB C++ module should define MATLAB_BUILTINS token in its
+ * makefile */
+#if defined(MATLAB_MEX_FILE) || defined(BUILDING_UNITTEST) ||                  \
+    defined(MATLAB_BUILTINS)
 #include "tmwtypes.h"
 #else
 #include "rtwtypes.h"
@@ -40,6 +43,5 @@
 #define EXTERN_C
 #endif
 #endif
-
 
 #endif /* PLANNINGCODEGEN_UTILS_HPP */

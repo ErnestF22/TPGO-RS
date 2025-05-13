@@ -1,10 +1,11 @@
 #ifdef __cplusplus
-extern "C" { 
-#endif  
+extern "C"
+{
+#endif
 
-#include "f2c.h" 
+#include "f2c.h"
 
-int zlaset_(char *uplo, integer *m, integer *n, doublecomplexRopt *alpha, doublecomplexRopt *beta, doublecomplexRopt *a, integer *lda);
+    int zlaset_(char *uplo, integer *m, integer *n, doublecomplexRopt *alpha, doublecomplexRopt *beta, doublecomplexRopt *a, integer *lda);
 
 #ifdef __cplusplus
 }

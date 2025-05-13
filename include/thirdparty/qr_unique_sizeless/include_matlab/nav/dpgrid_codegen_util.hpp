@@ -5,7 +5,6 @@
 
 /* Copyright 2024 The MathWorks, Inc. */
 
-
 #ifndef DPGRID_CODEGEN_UTIL_HPP
 #define DPGRID_CODEGEN_UTIL_HPP
 
@@ -19,7 +18,8 @@
 
 #else
 
-#if defined(MATLAB_MEX_FILE) || defined(BUILDING_UNITTEST) || defined(MATLAB_BUILTINS)
+#if defined(MATLAB_MEX_FILE) || defined(BUILDING_UNITTEST) ||                  \
+    defined(MATLAB_BUILTINS)
 #include "tmwtypes.h"
 #else
 #include "rtwtypes.h"
@@ -27,7 +27,9 @@
 
 #ifndef EXTERN_C
 #ifdef __cplusplus
-#define EXTERN_C extern "C" /* sbcheck:ok:extern_c needed because of LIBMWDPGRID_CODEGEN_API*/
+#define EXTERN_C                                                               \
+  extern "C" /* sbcheck:ok:extern_c needed because of                          \
+                LIBMWDPGRID_CODEGEN_API*/
 #else
 #define EXTERN_C extern
 #endif

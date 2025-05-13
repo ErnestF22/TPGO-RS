@@ -14,9 +14,11 @@ Problem --> EucQuadratic
 #include "others_def.h"
 
 /*Define the namespace*/
-namespace ROPTLIB{
+namespace ROPTLIB
+{
 
-	class EucQuadratic : public Problem{
+	class EucQuadratic : public Problem
+	{
 	public:
 		EucQuadratic(Vector M);
 		virtual ~EucQuadratic(void);
@@ -24,7 +26,7 @@ namespace ROPTLIB{
 		virtual Vector &EucGrad(const Variable &x, Vector *result) const;
 		virtual Vector &EucHessianEta(const Variable &x, const Vector &etax, Vector *result) const;
 
-        Vector A;
+		Vector A;
 	};
 }; /*end of ROPTLIB namespace*/
 #endif /* end of EUCQUADRATIC_H */

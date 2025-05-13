@@ -24,8 +24,10 @@ namespace flatbuffers {
 // Allocator interface. This is flatbuffers-specific and meant only for
 // `vector_downward` usage.
 class Allocator {
- public:
-  virtual ~Allocator() {}
+public:
+  virtual ~Allocator()
+  {
+  }
 
   // Allocate `size` bytes of memory.
   virtual uint8_t *allocate(size_t size) = 0;
@@ -40,8 +42,9 @@ class Allocator {
   // actually in use at each end, and needs to be copied.
   virtual uint8_t *reallocate_downward(uint8_t *old_p, size_t old_size,
                                        size_t new_size, size_t in_use_back,
-                                       size_t in_use_front) {
-    FLATBUFFERS_ASSERT(new_size > old_size);  // vector_downward only grows
+                                       size_t in_use_front)
+  {
+    FLATBUFFERS_ASSERT(new_size > old_size); // vector_downward only grows
     uint8_t *new_p = allocate(new_size);
     memcpy_downward(old_p, old_size, new_p, new_size, in_use_back,
                     in_use_front);
@@ -49,20 +52,20 @@ class Allocator {
     return new_p;
   }
 
- protected:
+protected:
   // Called by `reallocate_downward` to copy memory from `old_p` of `old_size`
   // to `new_p` of `new_size`. Only memory of size `in_use_front` and
   // `in_use_back` will be copied from the front and back of the old memory
   // allocation.
   void memcpy_downward(uint8_t *old_p, size_t old_size, uint8_t *new_p,
-                       size_t new_size, size_t in_use_back,
-                       size_t in_use_front) {
+                       size_t new_size, size_t in_use_back, size_t in_use_front)
+  {
     memcpy(new_p + new_size - in_use_back, old_p + old_size - in_use_back,
            in_use_back);
     memcpy(new_p, old_p, in_use_front);
   }
 };
 
-}  // namespace flatbuffers
+} // namespace flatbuffers
 
-#endif  // FLATBUFFERS_ALLOCATOR_H_
+#endif // FLATBUFFERS_ALLOCATOR_H_

@@ -1,10 +1,11 @@
 #ifdef __cplusplus
-extern "C" { 
-#endif  
+extern "C"
+{
+#endif
 
-#include "f2c.h" 
+#include "f2c.h"
 
-int cung2l_(integer *m, integer *n, integer *k, complexRopt *a, integer *lda, complexRopt *tau, complexRopt *work, integer *info);
+    int cung2l_(integer *m, integer *n, integer *k, complexRopt *a, integer *lda, complexRopt *tau, complexRopt *work, integer *info);
 
 #ifdef __cplusplus
 }

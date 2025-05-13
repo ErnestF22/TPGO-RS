@@ -1,10 +1,11 @@
 #ifdef __cplusplus
-extern "C" { 
-#endif  
+extern "C"
+{
+#endif
 
-#include "f2c.h" 
+#include "f2c.h"
 
-C_f cladiv_(complexRopt * ret_val, complexRopt *x, complexRopt *y);
+    C_f cladiv_(complexRopt *ret_val, complexRopt *x, complexRopt *y);
 
 #ifdef __cplusplus
 }

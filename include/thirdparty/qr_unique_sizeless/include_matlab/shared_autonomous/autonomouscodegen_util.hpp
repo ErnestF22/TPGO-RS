@@ -21,8 +21,10 @@
 #else
 
 /* For uint32_T, boolean_T, etc */
-/* Consuming MATLAB C++ module should define MATLAB_BUILTINS token in its makefile */
-#if defined(MATLAB_MEX_FILE) || defined(BUILDING_UNITTEST) || defined(MATLAB_BUILTINS)
+/* Consuming MATLAB C++ module should define MATLAB_BUILTINS token in its
+ * makefile */
+#if defined(MATLAB_MEX_FILE) || defined(BUILDING_UNITTEST) ||                  \
+    defined(MATLAB_BUILTINS)
 #include "tmwtypes.h"
 #else
 #include "rtwtypes.h"

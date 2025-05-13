@@ -2,7 +2,8 @@
 #include "others_Timer.h"
 
 /*Define the namespace*/
-namespace ROPTLIB{
+namespace ROPTLIB
+{
 
 	unsigned long getTickCount(void)
 	{
@@ -13,13 +14,13 @@ namespace ROPTLIB{
 		QueryPerformanceFrequency(&li);
 		long long dff = li.QuadPart;
 		QueryPerformanceCounter(&li);
-		currentTime = static_cast<unsigned long> (li.QuadPart * 1000000 / dff);
+		currentTime = static_cast<unsigned long>(li.QuadPart * 1000000 / dff);
 #elif _WIN32
 		LARGE_INTEGER li;
 		QueryPerformanceFrequency(&li);
 		long long dff = li.QuadPart;
 		QueryPerformanceCounter(&li);
-		currentTime = static_cast<unsigned long> (li.QuadPart * 1000000 / dff);
+		currentTime = static_cast<unsigned long>(li.QuadPart * 1000000 / dff);
 #elif __APPLE__
 #include "TargetConditionals.h"
 #if TARGET_OS_MAC

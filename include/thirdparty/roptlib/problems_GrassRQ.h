@@ -15,9 +15,11 @@ Problem --> GrassRQ
 #include "others_def.h"
 
 /*Define the namespace*/
-namespace ROPTLIB{
+namespace ROPTLIB
+{
 
-	class GrassRQ : public Problem{
+	class GrassRQ : public Problem
+	{
 	public:
 		GrassRQ(Vector inB, integer inn, integer inp);
 		virtual ~GrassRQ();

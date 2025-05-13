@@ -2,7 +2,8 @@
 #include "problems_SphereTxRQ.h"
 
 /*Define the namespace*/
-namespace ROPTLIB{
+namespace ROPTLIB
+{
 
     Vector MinMaxEigValHessian(Variable *X, Manifold *Domain, const Problem *Prob)
     {
@@ -16,7 +17,7 @@ namespace ROPTLIB{
             RTRNewton RTRNewtonsolver(&ProbHess, &TV0);
             RTRNewtonsolver.Verbose = NOOUTPUT;
             RTRNewtonsolver.Run();
-            if(RTRNewtonsolver.Getnormgfgf0() > 1e-6)
+            if (RTRNewtonsolver.Getnormgfgf0() > 1e-6)
             {
                 printf("Warning: Rayleigh quotient for computing the smallest eigenvalue of the Hessian is not solved accurately!\n");
             }
@@ -30,74 +31,73 @@ namespace ROPTLIB{
             RTRNewton RTRNewtonsolver(&ProbHess, &TV0);
             RTRNewtonsolver.Verbose = NOOUTPUT;
             RTRNewtonsolver.Run();
-            if(RTRNewtonsolver.Getnormgfgf0() > 1e-6)
+            if (RTRNewtonsolver.Getnormgfgf0() > 1e-6)
             {
                 printf("Warning: Rayleigh quotient for computing the largest eigenvalue of the Hessian is not solved accurately!\n");
             }
-            resultptr[1] = - RTRNewtonsolver.Getfinalfun();
+            resultptr[1] = -RTRNewtonsolver.Getfinalfun();
         }
-        
+
         return result;
     };
 
-	SphereTxRQ::SphereTxRQ(Manifold *inmani, Variable *inroot, const Problem *inprob, bool inismin)
-	{
-		mani = inmani;
-		prob = inprob;
-		root = *inroot;
-		ismin = inismin;
-		prob->SetUseGrad(true);
-		prob->SetUseHess(true);
-		prob->f(root);
-        
-        if(inmani->GetIsIntrinsic())
+    SphereTxRQ::SphereTxRQ(Manifold *inmani, Variable *inroot, const Problem *inprob, bool inismin)
+    {
+        mani = inmani;
+        prob = inprob;
+        root = *inroot;
+        ismin = inismin;
+        prob->SetUseGrad(true);
+        prob->SetUseHess(true);
+        prob->f(root);
+
+        if (inmani->GetIsIntrinsic())
             TmpTV = inmani->GetEMPTYINTR();
         else
             TmpTV = inmani->GetEMPTYEXTR();
-        
+
         prob->Grad(root, &TmpTV); /*for creating "EGrad" data in root*/
-        
+
         NumGradHess = false;
-	};
+    };
 
-	void SphereTxRQ::SetMinOrMax(bool inismin)
-	{
-		ismin = inismin;
-	};
+    void SphereTxRQ::SetMinOrMax(bool inismin)
+    {
+        ismin = inismin;
+    };
 
-	SphereTxRQ::~SphereTxRQ(void)
-	{
-	};
+    SphereTxRQ::~SphereTxRQ(void) {
+    };
 
-	realdp SphereTxRQ::f(const Variable &x) const
-	{
+    realdp SphereTxRQ::f(const Variable &x) const
+    {
         prob->HessianEta(root, x, &TmpTV);
         realdp result = mani->Metric(root, TmpTV, x);
         x.AddToFields("Hx", TmpTV);
-        result = ismin ? result : - result;
+        result = ismin ? result : -result;
         return result;
-	};
+    };
 
-	Vector &SphereTxRQ::EucGrad(const Variable &x, Vector *result) const
-	{
+    Vector &SphereTxRQ::EucGrad(const Variable &x, Vector *result) const
+    {
         *result = x.Field("Hx");
-        if(ismin)
+        if (ismin)
         {
             mani->ScalarTimesVector(root, 2, *result, result);
             return *result;
         }
         mani->ScalarTimesVector(root, -2, *result, result);
-        
-        return *result;
-	};
 
-	Vector &SphereTxRQ::EucHessianEta(const Variable &x, const Vector &etax, Vector *result) const
-	{
+        return *result;
+    };
+
+    Vector &SphereTxRQ::EucHessianEta(const Variable &x, const Vector &etax, Vector *result) const
+    {
         prob->HessianEta(root, etax, result);
-        
-        if(ismin)
+
+        if (ismin)
             return mani->ScalarTimesVector(root, 2, *result, result);
-        
+
         return mani->ScalarTimesVector(root, -2, *result, result);
-	};
+    };
 }; /*end of ROPTLIB namespace*/

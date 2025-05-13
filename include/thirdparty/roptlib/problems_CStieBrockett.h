@@ -15,9 +15,11 @@ Problem --> CStieBrockett
 #include "others_def.h"
 
 /*Define the namespace*/
-namespace ROPTLIB{
+namespace ROPTLIB
+{
 
-	class CStieBrockett : public Problem{
+	class CStieBrockett : public Problem
+	{
 	public:
 		CStieBrockett(Vector inB, Vector inD);
 		virtual ~CStieBrockett();

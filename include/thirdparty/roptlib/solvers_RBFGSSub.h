@@ -1,6 +1,6 @@
 /*
 This file defines the limited-memory BFGS for locally lipschitz functions on Riemannian manifolds
- 
+
  Solvers --> SolversNSM --> SolversNSMSub --> SolversNSMSubLS --> RBFGSSub
 
 ---- WH
@@ -13,11 +13,12 @@ This file defines the limited-memory BFGS for locally lipschitz functions on Rie
 #include "others_def.h"
 
 /*Define the namespace*/
-namespace ROPTLIB{
+namespace ROPTLIB
+{
 
-	class RBFGSSub : public SolversNSMSubLS{
+	class RBFGSSub : public SolversNSMSubLS
+	{
 	public:
-
 		/*The contructor of RBFGS method. It calls the function Solvers::Initialization.
 		INPUT : prob is the problem which defines the cost function, gradient and possible the action of Hessian
 		and specifies the manifold of domain.
@@ -44,32 +45,31 @@ namespace ROPTLIB{
 
 		/*Setting parameters (member variables) to be default values */
 		virtual void SetDefaultParams();
-        
-        /*Compute result = H v in eps-subgradient-based methods*/
-        virtual Vector &HvSub(const Vector &v, Vector *result);
-        
+
+		/*Compute result = H v in eps-subgradient-based methods*/
+		virtual Vector &HvSub(const Vector &v, Vector *result);
+
 	protected:
-    
-        /*Compute result = H v in RBFGS for L-continuous functions*/
-        virtual Vector &HvRBFGSSub(const Vector &v, const LinearOPE &H, Vector *result);
-    
-        /*Update the Hessian approximation for RBFGS for L-continuous functions if necessary*/
-        virtual void UpdateDataRBFGSSub(void);
+		/*Compute result = H v in RBFGS for L-continuous functions*/
+		virtual Vector &HvRBFGSSub(const Vector &v, const LinearOPE &H, Vector *result);
+
+		/*Update the Hessian approximation for RBFGS for L-continuous functions if necessary*/
+		virtual void UpdateDataRBFGSSub(void);
 
 		/*Print information specific to SolversLPSub*/
 		virtual void PrintInfo();
 
 		/*Update the Hessian approximation if necessary*/
 		void UpdateData(void);
-        
-        bool isupdated; /*Mark whether the (inverse) Hessian approximation is updated*/
-        realdp betay, inpsy, inpss, inpyy;  /*betay: \|\xi\| / \|\mathcal{T}_{R_\xi} \xi\| in the locking condition;
-                                                phic: the coefficient (1-phic) BFGS + phi DFP in Broyden family method
-                                                inpsy: g(s, y); inpss: g(s, s); inpyy: g(y, y); */
 
-        Vector s, y;/*the s, y of current step*/
-        Vector Py; /*the preconditioned y.*/
-        LinearOPE H; /*The inverse Hessian approximations for current and next iterations respectively*/
+		bool isupdated;					   /*Mark whether the (inverse) Hessian approximation is updated*/
+		realdp betay, inpsy, inpss, inpyy; /*betay: \|\xi\| / \|\mathcal{T}_{R_\xi} \xi\| in the locking condition;
+											   phic: the coefficient (1-phic) BFGS + phi DFP in Broyden family method
+											   inpsy: g(s, y); inpss: g(s, s); inpyy: g(y, y); */
+
+		Vector s, y; /*the s, y of current step*/
+		Vector Py;	 /*the preconditioned y.*/
+		LinearOPE H; /*The inverse Hessian approximations for current and next iterations respectively*/
 	};
 }; /*end of ROPTLIB namespace*/
 #endif /* end of RBFGSLPSUB_H */

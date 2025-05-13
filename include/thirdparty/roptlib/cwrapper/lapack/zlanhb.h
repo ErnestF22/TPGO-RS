@@ -1,10 +1,11 @@
 #ifdef __cplusplus
-extern "C" { 
-#endif  
+extern "C"
+{
+#endif
 
-#include "f2c.h" 
+#include "f2c.h"
 
-doublerealRopt zlanhb_(char *norm, char *uplo, integer *n, integer *k, doublecomplexRopt *ab, integer *ldab, doublerealRopt *work);
+    doublerealRopt zlanhb_(char *norm, char *uplo, integer *n, integer *k, doublecomplexRopt *ab, integer *ldab, doublerealRopt *work);
 
 #ifdef __cplusplus
 }

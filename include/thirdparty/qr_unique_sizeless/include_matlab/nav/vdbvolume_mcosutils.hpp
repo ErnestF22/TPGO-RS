@@ -10,11 +10,13 @@ namespace nav {
 using mcos::factory::mxArrayProxy;
 
 template <typename Data_T, typename M_T = size_t>
-void mxArrayProxyToRaw(const mxArrayProxy& mx2D, Data_T*& data, M_T* numRow = nullptr) {
-    data = static_cast<Data_T*>(mxGetData(mx2D.fMember));
-    if (numRow != nullptr) {
-        *numRow = static_cast<M_T>(mxGetM(mx2D.fMember));
-    }
+void mxArrayProxyToRaw(const mxArrayProxy &mx2D, Data_T *&data,
+                       M_T *numRow = nullptr)
+{
+  data = static_cast<Data_T *>(mxGetData(mx2D.fMember));
+  if (numRow != nullptr) {
+    *numRow = static_cast<M_T>(mxGetM(mx2D.fMember));
+  }
 }
 } // namespace nav
 

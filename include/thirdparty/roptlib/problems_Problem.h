@@ -16,16 +16,18 @@ Problem
 #include "others_def.h"
 
 /*Define the namespace*/
-namespace ROPTLIB{
+namespace ROPTLIB
+{
 
 	/*Declaration of Manifold*/
 	class Manifold;
-    class Problem;
+	class Problem;
 
-    extern Vector MinMaxEigValHessian(Variable *X, Manifold *Domain, const Problem *Prob);
-    extern unsigned long starttime;    /*the start time of running the algorithm*/
+	extern Vector MinMaxEigValHessian(Variable *X, Manifold *Domain, const Problem *Prob);
+	extern unsigned long starttime; /*the start time of running the algorithm*/
 
-	class Problem{
+	class Problem
+	{
 	public:
 		/*This function indicates this is an abstract class.*/
 		virtual ~Problem(void) = 0;
@@ -62,26 +64,26 @@ namespace ROPTLIB{
 		virtual Vector &EucHessianEta(const Variable &x, const Vector &etax, Vector *result) const;
 
 		/*The preconditioner.
-        Default: result = eta, no preconditioner*/
+		Default: result = eta, no preconditioner*/
 		virtual Vector &PreConditioner(const Variable &x, const Vector &eta, Vector *result) const;
 
-		/*Proximal mapping: 
-		     argmin_{y \in R^n} 0.5 \|y-x\|_W^2 + lambda \|y\|_1,
+		/*Proximal mapping:
+			 argmin_{y \in R^n} 0.5 \|y-x\|_W^2 + lambda \|y\|_1,
 		where W is a diagonal weights.
-        Default: result = x, i.e., lambda = 0*/
+		Default: result = x, i.e., lambda = 0*/
 		virtual Vector &ProxW(const Vector &x, const Vector &Weight, Vector *result) const;
 
 		/*Action of the generalized Jacobian of the ProxW along the direction eta.
-        Default: result = eta, i.e., lambbda = 0*/
+		Default: result = eta, i.e., lambbda = 0*/
 		virtual Vector &CalJW(const Vector &x, const Vector &eta, const Vector &Weight, Vector *result) const;
 
 		/*Check the correctness of the Riemannian gradient and Riemannian Hessian.
 		See details in the user manual*/
 		virtual void CheckGradHessian(Variable x) const;
-        
-        /*Compute the minimim and maximum eigenvalues of the Riemannian Hessian at x*/
-        virtual Vector MinMaxEigValHess(Variable x) const;
-        
+
+		/*Compute the minimim and maximum eigenvalues of the Riemannian Hessian at x*/
+		virtual Vector MinMaxEigValHess(Variable x) const;
+
 		/*Set the domain of the cost function.*/
 		virtual void SetDomain(Manifold *inDomain);
 
@@ -93,24 +95,24 @@ namespace ROPTLIB{
 
 		/*Mark whether the action of the Hessian is used in the algorithm or not.*/
 		virtual void SetUseHess(bool usehess) const;
-        
-        /*Mark whether the numerical gradient and numerical Hessian are used.*/
-        virtual void SetNumGradHess(bool inNumGradHess) const;
-        
+
+		/*Mark whether the numerical gradient and numerical Hessian are used.*/
+		virtual void SetNumGradHess(bool inNumGradHess) const;
+
 		/*Get whether the gradient is used*/
 		inline bool GetUseGrad(void) const { return UseGrad; };
 
 		/*Get whether the action of the Hessian is used*/
 		inline bool GetUseHess(void) const { return UseHess; };
-        
-        /*Get whether the numerical gradient and numerical Hessian are used*/
-        inline bool GetNumGradHess(void) const { return NumGradHess; };
-        
+
+		/*Get whether the numerical gradient and numerical Hessian are used*/
+		inline bool GetNumGradHess(void) const { return NumGradHess; };
+
 	protected:
-		Manifold *Domain; /*Domain of the cost function. It is required to be assigned.*/
+		Manifold *Domain;	  /*Domain of the cost function. It is required to be assigned.*/
 		mutable bool UseGrad; /*Mark whether the gradient is used*/
 		mutable bool UseHess; /*Mark whether the action of the Hessian is used.*/
-        mutable bool NumGradHess;
+		mutable bool NumGradHess;
 	};
 
 }; /*end of ROPTLIB namespace*/

@@ -15,18 +15,20 @@ Manifold --> Grassmann
 #include "others_def.h"
 
 /*Define the namespace*/
-namespace ROPTLIB{
+namespace ROPTLIB
+{
 
-	class Grassmann : public Manifold{
+	class Grassmann : public Manifold
+	{
 	public:
 		/*Construct the Grassmann manifold: Gr(p, n) and set up default parameters*/
 		Grassmann(integer n, integer p);
 
 		/*Delete EMPTYINTR and EMPTYEXTR*/
 		virtual ~Grassmann(void);
-        
-        /*Randomly generate a point on the Grassmann manifold.*/
-        virtual Variable RandominManifold(void) const;
+
+		/*Randomly generate a point on the Grassmann manifold.*/
+		virtual Variable RandominManifold(void) const;
 
 		/*Compute the qf retraction defined in [AMS2008, (4.8)].
 			[AMS2008]P.-A. Absil, R. Mahony, and R. Sepulchre. Optimization algorithms on matrix manifolds.
@@ -65,7 +67,7 @@ namespace ROPTLIB{
 		virtual Vector &EucHvToHv(const Variable &x, const Vector &etax, const Vector &exix, const Problem *prob, Vector *result) const;
 
 	protected:
-        mutable integer n; /*The number of row*/
+		mutable integer n; /*The number of row*/
 		mutable integer p; /*The number of column*/
 	};
 }; /*end of ROPTLIB namespace*/

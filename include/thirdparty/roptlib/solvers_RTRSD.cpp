@@ -2,7 +2,8 @@
 #include "solvers_RTRSD.h"
 
 /*Define the namespace*/
-namespace ROPTLIB{
+namespace ROPTLIB
+{
 
 	RTRSD::RTRSD(const Problem *prob, const Variable *initialx)
 	{
@@ -19,14 +20,14 @@ namespace ROPTLIB{
 	void RTRSD::SetDefaultParams(void)
 	{
 		SolversSMTR::SetDefaultParams();
-		theta = static_cast<realdp> (0.1);
-		kappa = static_cast<realdp> (0.9);
+		theta = static_cast<realdp>(0.1);
+		kappa = static_cast<realdp>(0.9);
 		SolverName.assign("RTRSD");
 	};
 
 	Vector &RTRSD::HessianEta(const Vector &Eta, Vector *result)
 	{
-        *result = Eta;
-        return *result;
+		*result = Eta;
+		return *result;
 	};
 }; /*end of ROPTLIB namespace*/

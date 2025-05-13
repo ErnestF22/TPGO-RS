@@ -14,7 +14,8 @@ Solvers --> SolversSM --> SolversSMTR
 #include "others_def.h"
 
 /*Define the namespace*/
-namespace ROPTLIB{
+namespace ROPTLIB
+{
 
 	/* output status of the truncated conjugate gradient. It is an output argument and users don't need to assign this enumerate to any member variable.
 	TR_NEGCURVTURE: Find negative curvature
@@ -23,9 +24,20 @@ namespace ROPTLIB{
 	TR_SCON: Teminate when the theta variable takes effect, which indicate the convergence rate is superlinear.
 	TR_MAXITER: Teminate when the inner iterations reach the maximum inner iterations specified by the member variable "Max_Inner_Iter"
 	*/
-	enum tCGstatusSetSM{ TRSM_NEGCURVTURE, TRSM_EXCREGION, TRSM_MIN, TRSM_LCON, TRSM_SCON, TRSM_MAXITER, TRSM_ERROR, TCGSTATUSSETSMLENGTH };
+	enum tCGstatusSetSM
+	{
+		TRSM_NEGCURVTURE,
+		TRSM_EXCREGION,
+		TRSM_MIN,
+		TRSM_LCON,
+		TRSM_SCON,
+		TRSM_MAXITER,
+		TRSM_ERROR,
+		TCGSTATUSSETSMLENGTH
+	};
 
-	class SolversSMTR : public SolversSM{
+	class SolversSMTR : public SolversSM
+	{
 	public:
 		/*Run the algorithm. This function gives the framework for all the trust region based methods*/
 		virtual void Run(void);
@@ -83,12 +95,13 @@ namespace ROPTLIB{
 		/*The initial radius of the trust region
 		Default: 1*/
 		realdp initial_Delta;
+
 	protected:
-        /*Print information in every few iterations specific to an algorithm*/
-        virtual void PrintInfo(void);
-        
-        /*Print last information in an algorithm*/
-        virtual void PrintFinalInfo(void);
+		/*Print information in every few iterations specific to an algorithm*/
+		virtual void PrintInfo(void);
+
+		/*Print last information in an algorithm*/
+		virtual void PrintFinalInfo(void);
 
 		/*Delete objects that are used in this class*/
 		virtual ~SolversSMTR(void);
@@ -121,12 +134,12 @@ namespace ROPTLIB{
 		virtual void Acceptence(void);
 
 		/* algorithm-related variables: */
-		realdp rho;	/*the difference between the local model and the true function*/
-		realdp Delta;	/*the radius of the trust region*/
-        Vector Heta2;
-		integer innerIter;	/*The number of inner iterations for solving the local model.*/
-		tCGstatusSetSM tCGstatusSM; /*The status of solving the local model*/
-		std::string *tCGstatusSetSMnames;	/*This string array is to store the trust region status names*/
+		realdp rho;	  /*the difference between the local model and the true function*/
+		realdp Delta; /*the radius of the trust region*/
+		Vector Heta2;
+		integer innerIter;				  /*The number of inner iterations for solving the local model.*/
+		tCGstatusSetSM tCGstatusSM;		  /*The status of solving the local model*/
+		std::string *tCGstatusSetSMnames; /*This string array is to store the trust region status names*/
 	};
 }; /*end of ROPTLIB namespace*/
 #endif

@@ -1,10 +1,11 @@
 #ifdef __cplusplus
-extern "C" { 
-#endif  
+extern "C"
+{
+#endif
 
-#include "f2c.h" 
+#include "f2c.h"
 
-int claqsy_(char *uplo, integer *n, complexRopt *a, integer *lda, realRopt *s, realRopt *scond, realRopt *amax, char *equed);
+    int claqsy_(char *uplo, integer *n, complexRopt *a, integer *lda, realRopt *s, realRopt *scond, realRopt *amax, char *equed);
 
 #ifdef __cplusplus
 }

@@ -1,10 +1,11 @@
 #ifdef __cplusplus
-extern "C" { 
-#endif  
+extern "C"
+{
+#endif
 
-#include "f2c.h" 
+#include "f2c.h"
 
-int dlamrg_(integer *n1, integer *n2, doublerealRopt *a, integer *dtrd1, integer *dtrd2, integer *index);
+    int dlamrg_(integer *n1, integer *n2, doublerealRopt *a, integer *dtrd1, integer *dtrd2, integer *index);
 
 #ifdef __cplusplus
 }

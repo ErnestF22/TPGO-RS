@@ -1,10 +1,11 @@
 #ifdef __cplusplus
-extern "C" { 
-#endif  
+extern "C"
+{
+#endif
 
-#include "f2c.h" 
+#include "f2c.h"
 
-E_f slapy3_(realRopt *x, realRopt *y, realRopt *z__);
+    E_f slapy3_(realRopt *x, realRopt *y, realRopt *z__);
 
 #ifdef __cplusplus
 }

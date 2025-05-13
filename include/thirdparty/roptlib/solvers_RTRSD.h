@@ -15,9 +15,11 @@ Solvers --> SolversSM --> SolversSMTR --> RTRSD
 #include "others_def.h"
 
 /*Define the namespace*/
-namespace ROPTLIB{
+namespace ROPTLIB
+{
 
-	class RTRSD : public SolversSMTR{
+	class RTRSD : public SolversSMTR
+	{
 	public:
 		/*The contructor of RTRSD method. It calls the function Solvers::Initialization.
 		INPUT : prob is the problem which defines the cost function, gradient and possible the action of Hessian
@@ -26,15 +28,15 @@ namespace ROPTLIB{
 		RTRSD(const Problem *prob, const Variable *initialx);
 
 	protected:
-        /*Call Solvers::SetProbX function; initialize temporary vectors; and indicate RTRSD does not need action of Hessian.
-        INPUT:    prob is the problem which defines the cost function, gradient and possible the action of Hessian
-        and specifies the manifold of domain.
-        initialx is the initial iterate.*/
-        virtual void SetProbX(const Problem *prob, const Variable *initialx);
+		/*Call Solvers::SetProbX function; initialize temporary vectors; and indicate RTRSD does not need action of Hessian.
+		INPUT:    prob is the problem which defines the cost function, gradient and possible the action of Hessian
+		and specifies the manifold of domain.
+		initialx is the initial iterate.*/
+		virtual void SetProbX(const Problem *prob, const Variable *initialx);
 
-        /*Setting parameters (member variables) to be default values */
-        virtual void SetDefaultParams(void);
-        
+		/*Setting parameters (member variables) to be default values */
+		virtual void SetDefaultParams(void);
+
 		/*Set result = Eta. In other words, the Hessian approximation is just an identity*/
 		virtual Vector &HessianEta(const Vector &Eta, Vector *result);
 	};

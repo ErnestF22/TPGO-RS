@@ -13,9 +13,11 @@ Manifold --> Stiefel --> Sphere
 #include "manifolds_Stiefel.h"
 
 /*Define the namespace*/
-namespace ROPTLIB{
+namespace ROPTLIB
+{
 
-	class Sphere : public Stiefel{
+	class Sphere : public Stiefel
+	{
 	public:
 		/*Construct the unit sphere S^{n-1}*/
 		Sphere(integer n);
@@ -56,21 +58,21 @@ namespace ROPTLIB{
 
 		/*If parallel translation is used, then call member function "ExpHInvTran",
 		otherwise, call function in Stiefel::HInvTran*/
-        virtual LinearOPE &HInvTran(const Variable &x, const Vector &etax, const Variable &y, const LinearOPE &Hx, integer start, integer end, LinearOPE *result) const;
+		virtual LinearOPE &HInvTran(const Variable &x, const Vector &etax, const Variable &y, const LinearOPE &Hx, integer start, integer end, LinearOPE *result) const;
 
 		/*If parallel translation is used, then call member function "ExpTranH",
 		otherwise, call function in Stiefel::TranH*/
-        virtual LinearOPE &TranH(const Variable &x, const Vector &etax, const Variable &y, const LinearOPE &Hx, integer start, integer end, LinearOPE *result) const;
+		virtual LinearOPE &TranH(const Variable &x, const Vector &etax, const Variable &y, const LinearOPE &Hx, integer start, integer end, LinearOPE *result) const;
 
 		/*If parallel translation is used, then call member function "ExpTranHInvTran",
 		otherwise, call function in Stiefel::TranHInvTran*/
-        virtual LinearOPE &TranHInvTran(const Variable &x, const Vector &etax, const Variable &y, const LinearOPE &Hx, LinearOPE *result) const;
+		virtual LinearOPE &TranHInvTran(const Variable &x, const Vector &etax, const Variable &y, const LinearOPE &Hx, LinearOPE *result) const;
 
 		/*PARAMSMAP is defined in "def.h" and it is a map from string to realdp, i.e., std::map<std::string, realdp> .
 		This function is used to set the parameters by the mapping*/
 		virtual void SetParams(PARAMSMAP params);
-	private:
 
+	private:
 		/* exponential mapping using extrinsic approach*/
 		virtual Variable &ExpRetraction(const Variable &x, const Vector &etax, Variable *result) const;
 

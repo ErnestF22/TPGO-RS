@@ -33,20 +33,21 @@ namespace uav {
  * @param angleRad Input angle (in radians)
  * @return Angle wrapped to interval [0, 2pi] (in radians)
  */
-inline real64_T wrapTo2Pi(const real64_T angleRad) {
-    // Deal with very small negative angles. And, to deal with floating point error
-    // and degenerate cases (where one of the arc lengths might be around 0 or 2pi).
-    // Rather than choosing a longer path, we choose a shortest path which makes
-    // values really close to 0 and 2pi equal to 0.          
-    
-    if (angleRad < 0 && angleRad > -tooSmall) {
-        return 0;
-    }
-    double xm = angleRad - twoPi * floor(angleRad / twoPi);
-    if (twoPi - xm < 0.5 * 1e-6){
-        xm = 0;
-    }
-    return xm;
+inline real64_T wrapTo2Pi(const real64_T angleRad)
+{
+  // Deal with very small negative angles. And, to deal with floating point
+  // error and degenerate cases (where one of the arc lengths might be around 0
+  // or 2pi). Rather than choosing a longer path, we choose a shortest path
+  // which makes values really close to 0 and 2pi equal to 0.
+
+  if (angleRad < 0 && angleRad > -tooSmall) {
+    return 0;
+  }
+  double xm = angleRad - twoPi * floor(angleRad / twoPi);
+  if (twoPi - xm < 0.5 * 1e-6) {
+    xm = 0;
+  }
+  return xm;
 }
 
 /// Wrap angle to interval [-pi, pi]
@@ -54,15 +55,15 @@ inline real64_T wrapTo2Pi(const real64_T angleRad) {
  * @param[in] angleRad Input angle (in radians)
  * @return Angle wrapped to interval [-pi, pi] (in radians)
  */
-inline real64_T wrapToPi(const real64_T angleRad) {
-    real64_T wrappedAngle = fmod(angleRad, twoPi);
-    if (wrappedAngle < -getPi()) {
-        wrappedAngle += twoPi;
-    }
-    else if (wrappedAngle > getPi()) {
-        wrappedAngle -= twoPi;
-    }
-    return wrappedAngle;
+inline real64_T wrapToPi(const real64_T angleRad)
+{
+  real64_T wrappedAngle = fmod(angleRad, twoPi);
+  if (wrappedAngle < -getPi()) {
+    wrappedAngle += twoPi;
+  } else if (wrappedAngle > getPi()) {
+    wrappedAngle -= twoPi;
+  }
+  return wrappedAngle;
 }
 } // namespace uav
 

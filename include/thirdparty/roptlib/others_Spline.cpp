@@ -2,7 +2,8 @@
 #include "others_Spline.h"
 
 /*Define the namespace*/
-namespace ROPTLIB{
+namespace ROPTLIB
+{
 
 	int Spline::SplineUniformPeriodic(const realdp *Y, int n, realdp h, realdp *coefs)
 	{ /* solving system based on second derivatives. */
@@ -25,9 +26,9 @@ namespace ROPTLIB{
 			d[i] = 2.0;
 			ud[i] = 0.5;
 			if (i == nn - 1)
-				vec[i] = static_cast<realdp> (3) / h * ((Y[1] - Y[i + 1]) / h - (Y[i + 1] - Y[i]) / h);
+				vec[i] = static_cast<realdp>(3) / h * ((Y[1] - Y[i + 1]) / h - (Y[i + 1] - Y[i]) / h);
 			else
-				vec[i] = static_cast<realdp> (3) / h * ((Y[i + 2] - Y[i + 1]) / h - (Y[i + 1] - Y[i]) / h);
+				vec[i] = static_cast<realdp>(3) / h * ((Y[i + 2] - Y[i + 1]) / h - (Y[i + 1] - Y[i]) / h);
 		}
 
 		if (!SolvePeriodicSystem(d, ud, ld, vec, s, nn))
@@ -118,7 +119,7 @@ namespace ROPTLIB{
 			ld[i - 1] = 0.5;
 			d[i] = 2.0;
 			ud[i] = 0.5;
-			vec[i] = static_cast<realdp> (3) / h * ((Y[i + 1] - Y[i]) / h - (Y[i] - Y[i - 1]) / h);
+			vec[i] = static_cast<realdp>(3) / h * ((Y[i + 1] - Y[i]) / h - (Y[i] - Y[i - 1]) / h);
 		}
 		/*s2 form*/
 		first_d = (Y[1] - Y[0]) / (h);
@@ -253,7 +254,7 @@ namespace ROPTLIB{
 		ud[nn - 2] += last_column[i] * coef;
 		vec[i + 1] += vec[i] * coef;
 
-		coef = -temp / d[i]; /*this temp stores nn - 1 row, i column entry*/
+		coef = -temp / d[i];		/*this temp stores nn - 1 row, i column entry*/
 		ld[nn - 1] += ud[i] * coef; /*this temp stores nn - 1 row, i + 1 column entry*/
 		d[nn - 1] += last_column[i] * coef;
 		vec[nn - 1] += vec[i] * coef;
@@ -308,7 +309,7 @@ namespace ROPTLIB{
 		integer i, nn;
 		realdp output;
 		nn = N - 1;
-		i = static_cast<integer> (t / h);
+		i = static_cast<integer>(t / h);
 		while (t - i * h >= -std::numeric_limits<realdp>::epsilon())
 			i++;
 		i--;
@@ -335,7 +336,7 @@ namespace ROPTLIB{
 	{
 		int i, nn;
 		nn = N - 1;
-		i = static_cast<int> (t / h);
+		i = static_cast<int>(t / h);
 		while (t - i * h >= -std::numeric_limits<realdp>::epsilon())
 			i++;
 		i--;
@@ -377,7 +378,7 @@ namespace ROPTLIB{
 	{
 		int i, nn;
 		nn = N - 1;
-		i = static_cast<int> (t / h);
+		i = static_cast<int>(t / h);
 		while (t - i * h >= -std::numeric_limits<realdp>::epsilon())
 			i++;
 		i--;

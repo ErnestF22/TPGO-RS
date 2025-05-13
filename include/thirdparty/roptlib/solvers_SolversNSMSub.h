@@ -18,12 +18,14 @@ Solvers --> SolversNSM --> SolversNSMSub
 #include "others_def.h"
 
 /*Define the namespace*/
-namespace ROPTLIB{
+namespace ROPTLIB
+{
 
-	class SolversNSMSub : public SolversNSM{
+	class SolversNSMSub : public SolversNSM
+	{
 	public:
-        /*Run the algorithm. This function initializes the variables for all the subgradient-based methods*/
-        virtual void Run(void);
+		/*Run the algorithm. This function initializes the variables for all the subgradient-based methods*/
+		virtual void Run(void);
 
 		/*Check whether the general parameters are legal or not.*/
 		virtual void CheckParams(void);
@@ -34,10 +36,10 @@ namespace ROPTLIB{
 
 		/*Destructor. It is a pure virtual function*/
 		virtual ~SolversNSMSub(void) = 0;
-        
-        /*Compute result = H v in eps-subgradient-based methods*/
-        virtual Vector &HvSub(const Vector &v, Vector *result);
-        
+
+		/*Compute result = H v in eps-subgradient-based methods*/
+		virtual Vector &HvSub(const Vector &v, Vector *result);
+
 		/*This parameter is used in the stopping criterion for optimizing partly smooth functions.
 		If ||x_{k+1} - x_k|| / (||x_{k+1}|| + 1) is less than Diffx, then store the gradient of the latter one.
 		Compute the minimum norm vector in the convex hull of the gradients stored. If the norm of the minimum norm
@@ -46,8 +48,8 @@ namespace ROPTLIB{
 		realdp Diffx;
 
 		/*In eps-subgradient-based algorithms, one needs to compute a minimum length in a convex hull of a few vectors. The number
-        of those vectors need be greater than the dimenion of the domain manifold. This parameter specifies the number greater than
-        the dimension.
+		of those vectors need be greater than the dimenion of the domain manifold. This parameter specifies the number greater than
+		the dimension.
 		Default: Intrinsic dimension of the domain manifold*/
 		integer NumExtraGF;
 
@@ -67,21 +69,21 @@ namespace ROPTLIB{
 		/*Setting parameters (member variables) to be default values */
 		virtual void SetDefaultParams(void);
 
-        /*Print information in every few iterations specific to an algorithm*/
-        virtual void PrintInfo(void);
-        
-        /*Print last information in an algorithm*/
-        virtual void PrintFinalInfo(void);
-        
-        /*A function pointer to an action of the Hessian*/
-        Vector &(SolversNSMSub::*Hv)(const Vector &v, Vector *result);
+		/*Print information in every few iterations specific to an algorithm*/
+		virtual void PrintInfo(void);
+
+		/*Print last information in an algorithm*/
+		virtual void PrintFinalInfo(void);
+
+		/*A function pointer to an action of the Hessian*/
+		Vector &(SolversNSMSub::*Hv)(const Vector &v, Vector *result);
 
 		/* the next six parameters are for stopping criterion of optimizing partly smooth cost functions */
-		Vector *gfs; /*The gradients of previous few steps*/
-		integer Lengthgfs; /*The maximum length of gfs*/
+		Vector *gfs;			  /*The gradients of previous few steps*/
+		integer Lengthgfs;		  /*The maximum length of gfs*/
 		integer Currentlengthgfs; /*the current of gfs*/
-		integer idxgfs; /*current idx of gfs*/
-		integer subprobtimes; /*the number of runs for solving the sub convex problem*/
+		integer idxgfs;			  /*current idx of gfs*/
+		integer subprobtimes;	  /*the number of runs for solving the sub convex problem*/
 
 		/*points in a neighborhood of current iterate. It is used in RGS.*/
 		Variable *Xs;

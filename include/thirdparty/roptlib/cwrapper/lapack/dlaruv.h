@@ -1,10 +1,11 @@
 #ifdef __cplusplus
-extern "C" { 
-#endif  
+extern "C"
+{
+#endif
 
-#include "f2c.h" 
+#include "f2c.h"
 
-int dlaruv_(integer *iseed, integer *n, doublerealRopt *x);
+    int dlaruv_(integer *iseed, integer *n, doublerealRopt *x);
 
 #ifdef __cplusplus
 }

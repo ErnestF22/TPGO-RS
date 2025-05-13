@@ -5,49 +5,50 @@
 
 #include "matlab_application.hpp"
 #include <MatlabExecutionInterface/execution_interface.hpp>
-#include <vector>
-#include <streambuf>
-#include <memory>
-#include <future>
 #include <complex>
+#include <future>
+#include <memory>
+#include <streambuf>
+#include <vector>
 
 namespace matlab {
 
-    namespace cpplib {
+namespace cpplib {
 
-        using namespace matlab::execution; 
-        class MATLABLibrary : public matlab::execution::ExecutionInterface{
-        public:
-           /**
-            * Destructor
-            *
-            * @throw none
-            */
-            ~MATLABLibrary();     
- 
-            /**
-            * wait for all figures to be closed 
-            **/
-            void waitForFiguresToClose();
- 
+using namespace matlab::execution;
+class MATLABLibrary : public matlab::execution::ExecutionInterface {
+public:
+  /**
+   * Destructor
+   *
+   * @throw none
+   */
+  ~MATLABLibrary();
 
-        private:
-            
-            friend FutureResult<std::unique_ptr<MATLABLibrary>> initMATLABLibraryAsync(std::shared_ptr<MATLABApplication> application, const std::u16string& ctffilename, const std::u16string& session_key);
-           /**
-            * Constructor
-            *
-            * @param handle - The internal implementation
-            * 
-            * @throw none
-            */
-            MATLABLibrary(std::shared_ptr<MATLABApplication> application, uint64_t handle);
+  /**
+   * wait for all figures to be closed
+   **/
+  void waitForFiguresToClose();
 
-            std::shared_ptr<MATLABApplication> appPtr_;
+private:
+  friend FutureResult<std::unique_ptr<MATLABLibrary>>
+  initMATLABLibraryAsync(std::shared_ptr<MATLABApplication> application,
+                         const std::u16string &ctffilename,
+                         const std::u16string &session_key);
+  /**
+   * Constructor
+   *
+   * @param handle - The internal implementation
+   *
+   * @throw none
+   */
+  MATLABLibrary(std::shared_ptr<MATLABApplication> application,
+                uint64_t handle);
 
-        };
+  std::shared_ptr<MATLABApplication> appPtr_;
+};
 
-    }
-}
+} // namespace cpplib
+} // namespace matlab
 
-#endif //MATLAB_LIBRARY_HPP
+#endif // MATLAB_LIBRARY_HPP

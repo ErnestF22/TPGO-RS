@@ -2,7 +2,8 @@
 #include "solvers_RTRNewton.h"
 
 /*Define the namespace*/
-namespace ROPTLIB{
+namespace ROPTLIB
+{
 
 	RTRNewton::RTRNewton(const Problem *prob, const Variable *initialx)
 	{

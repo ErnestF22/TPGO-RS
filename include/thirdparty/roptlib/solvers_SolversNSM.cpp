@@ -2,7 +2,8 @@
 #include "solvers_SolversNSM.h"
 
 /*Define the namespace*/
-namespace ROPTLIB{
+namespace ROPTLIB
+{
 
     void SolversNSM::Run(void)
     {
@@ -17,7 +18,7 @@ namespace ROPTLIB{
     void SolversNSM::CheckParams(void)
     {
         Solvers::CheckParams();
-        std::string STOPCRITnames[STOPCRITNNSMLENGTH] = { "NSM_FUN_REL", "NSM_DIR_F", "NSM_DIR_F_0" };
+        std::string STOPCRITnames[STOPCRITNNSMLENGTH] = {"NSM_FUN_REL", "NSM_DIR_F", "NSM_DIR_F_0"};
         char YES[] = "YES";
         char NO[] = "NO";
         char *status;
@@ -44,29 +45,29 @@ namespace ROPTLIB{
         PARAMSMAP::iterator iter;
         for (iter = params.begin(); iter != params.end(); iter++)
         {
-            if (iter->first == static_cast<std::string> ("Stop_Criterion"))
+            if (iter->first == static_cast<std::string>("Stop_Criterion"))
             {
-                Stop_Criterion = static_cast<StopCritNSM> (static_cast<integer> (iter->second));
+                Stop_Criterion = static_cast<StopCritNSM>(static_cast<integer>(iter->second));
             }
         }
     };
-	void SolversNSM::PrintInfo(void)
-	{
+    void SolversNSM::PrintInfo(void)
+    {
         printf("i:%d,f:%.3e,df/f:%.3e,", iter, f2, ((f1 - f2) / std::fabs(f2)));
 
         printf("|nd|:%.3e,time:%.2e,", ndir1, static_cast<realdp>(getTickCount() - starttime) / CLK_PS);
 
         printf("nf:%d,ng:%d,", nf, ng);
-        
+
         if (nH != 0)
             printf("nH:%d,", nH);
-        
+
         printf("nR:%d,", nR);
-        
+
         if (nV != 0)
             printf("nV(nVp):%d(%d),", nV, nVp);
-		printf("\n");
-	};
+        printf("\n");
+    };
 
     void SolversNSM::PrintFinalInfo(void)
     {
@@ -75,48 +76,47 @@ namespace ROPTLIB{
         printf("|nd|:%.3e,|nd|/|nd0|:%.3e,time:%.2e,", ndir1, ndir1 / ndir0, static_cast<realdp>(getTickCount() - starttime) / CLK_PS);
 
         printf("nf:%d,ng:%d,", nf, ng);
-        
+
         if (nH != 0)
             printf("nH:%d,", nH);
-        
+
         printf("nR:%d,", nR);
-        
+
         if (nV != 0)
             printf("nV(nVp):%d(%d),", nV, nVp);
         printf("\n");
-        
+
         printf("\n");
     };
 
-	bool SolversNSM::IsStopped(void)
-	{
-		if (static_cast<realdp>(getTickCount() - starttime) / CLK_PS > TimeBound)
-			return true;
-        
+    bool SolversNSM::IsStopped(void)
+    {
+        if (static_cast<realdp>(getTickCount() - starttime) / CLK_PS > TimeBound)
+            return true;
+
         if (StopPtr != nullptr)
             return StopPtr(x2, funSeries, lengthSeries, ndir1, ndir0, Prob, this);
-        
+
         if (Stop_Criterion == NSM_FUN_REL)
             return ((fabs((f1 - f2) / (fabs(f1) + 1)) < Tolerance) && iter > 0);
-        
+
         if (Stop_Criterion == NSM_DIR_F)
             return ndir1 < Tolerance;
         if (Stop_Criterion == NSM_DIR_F_0)
             return (ndir1 / ndir0) < Tolerance;
-        
+
         printf("Error: Stopping Criterion is not specefic!\n");
         return true;
-	};
+    };
 
-	void SolversNSM::Initialization(const Problem *prob, const Variable *initialx)
-	{
+    void SolversNSM::Initialization(const Problem *prob, const Variable *initialx)
+    {
         SetDefaultParams();
         /*Some problem setting requires the default parameters*/
-		SetProbX(prob, initialx);
-	};
+        SetProbX(prob, initialx);
+    };
 
-	SolversNSM::~SolversNSM(void)
-	{
-	};
+    SolversNSM::~SolversNSM(void) {
+    };
 
 }; /*end of ROPTLIB namespace*/

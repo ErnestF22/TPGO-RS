@@ -1,10 +1,11 @@
 #ifdef __cplusplus
-extern "C" { 
-#endif  
+extern "C"
+{
+#endif
 
-#include "f2c.h" 
+#include "f2c.h"
 
-int zgemv_(char *trans, integer *m, integer *n, doublecomplexRopt *alpha, doublecomplexRopt *a, integer *lda, doublecomplexRopt *x, integer *incx, doublecomplexRopt *beta, doublecomplexRopt *y, integer *incy);
+    int zgemv_(char *trans, integer *m, integer *n, doublecomplexRopt *alpha, doublecomplexRopt *a, integer *lda, doublecomplexRopt *x, integer *incx, doublecomplexRopt *beta, doublecomplexRopt *y, integer *incy);
 
 #ifdef __cplusplus
 }

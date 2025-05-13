@@ -1,10 +1,11 @@
 #ifdef __cplusplus
-extern "C" { 
-#endif  
+extern "C"
+{
+#endif
 
-#include "f2c.h" 
+#include "f2c.h"
 
-int dstev_(char *jobz, integer *n, doublerealRopt *d__, doublerealRopt *e, doublerealRopt *z__, integer *ldz, doublerealRopt *work, integer *info);
+    int dstev_(char *jobz, integer *n, doublerealRopt *d__, doublerealRopt *e, doublerealRopt *z__, integer *ldz, doublerealRopt *work, integer *info);
 
 #ifdef __cplusplus
 }

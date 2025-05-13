@@ -18,19 +18,19 @@
 #define FLATBUFFERS_PCH_H_
 
 // stl
+#include <algorithm>
 #include <cstdint>
 #include <cstring>
-#include <algorithm>
-#include <list>
-#include <string>
-#include <utility>
 #include <iomanip>
+#include <limits>
+#include <list>
 #include <map>
 #include <memory>
-#include <limits>
 #include <stack>
-#include <vector>
+#include <string>
 #include <type_traits>
+#include <utility>
+#include <vector>
 
 // flatbuffers
 #include "flatbuffers/util.h"

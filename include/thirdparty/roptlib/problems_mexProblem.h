@@ -17,9 +17,11 @@ Problem
 #include "matrix.h"
 
 /*Define the namespace*/
-namespace ROPTLIB{
+namespace ROPTLIB
+{
 
-	class mexProblem : public Problem{
+	class mexProblem : public Problem
+	{
 	public:
 		/*Construct a mex Problem with function handles of cost function, Euclidean gradient and action of
 		Euclidean of Hessian from Matlab*/
@@ -55,11 +57,10 @@ namespace ROPTLIB{
 		/*S is a Matlab structure. This function obtain its field by key = name */
 		static mxArray *GetFieldbyName(const mxArray *S, integer idxstruct, const char *name);
 
-
 	protected:
-		const mxArray *mxf; /*Matlab function handle of the cost function*/
-		const mxArray *mxgf; /*Matlab function handle of the Euclidean gradient*/
-		const mxArray *mxHess; /*Matlab function handle of the action of the Euclidean Hessian.*/
+		const mxArray *mxf;		 /*Matlab function handle of the cost function*/
+		const mxArray *mxgf;	 /*Matlab function handle of the Euclidean gradient*/
+		const mxArray *mxHess;	 /*Matlab function handle of the action of the Euclidean Hessian.*/
 		const mxArray *mxPreCon; /*Matlab function handle of the Preconditioner.*/
 	};
 }; /*end of ROPTLIB namespace*/

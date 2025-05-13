@@ -69,7 +69,7 @@ struct FlatCOption {
 };
 
 class FlatCompiler {
- public:
+public:
   typedef void (*WarnFn)(const FlatCompiler *flatc, const std::string &warn,
                          bool show_exe_name);
 
@@ -78,13 +78,17 @@ class FlatCompiler {
 
   // Parameters required to initialize the FlatCompiler.
   struct InitParams {
-    InitParams() : warn_fn(nullptr), error_fn(nullptr) {}
+    InitParams() : warn_fn(nullptr), error_fn(nullptr)
+    {
+    }
 
     WarnFn warn_fn;
     ErrorFn error_fn;
   };
 
-  explicit FlatCompiler(const InitParams &params) : params_(params) {}
+  explicit FlatCompiler(const InitParams &params) : params_(params)
+  {
+  }
 
   bool RegisterCodeGenerator(const FlatCOption &option,
                              std::shared_ptr<CodeGenerator> code_generator);
@@ -97,7 +101,7 @@ class FlatCompiler {
   // Parse the FlatC options from command line arguments.
   FlatCOptions ParseFromCommandLineArguments(int argc, const char **argv);
 
- private:
+private:
   void ParseFile(flatbuffers::Parser &parser, const std::string &filename,
                  const std::string &contents,
                  const std::vector<const char *> &include_directories) const;
@@ -126,6 +130,6 @@ class FlatCompiler {
   InitParams params_;
 };
 
-}  // namespace flatbuffers
+} // namespace flatbuffers
 
-#endif  // FLATBUFFERS_FLATC_H_
+#endif // FLATBUFFERS_FLATC_H_

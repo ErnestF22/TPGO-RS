@@ -4,7 +4,7 @@ min_{(h, m) \in C_*^N \times C_*^N / C_*} \|y - diag(F B h (\bar{F} H C m)^*)\|_
 where y \in C^L, B \in C^{L \times N}, C \in C^{L \times N}, H \in C^{L \times L},  L = N.
 This is for 2D problems. F is the Kronecker Product of two 1D DFT matrix.
 See the optimization problem in
-    Wen Huang and Paul Hand, Blind Deconvolution by a Steepest Descent Algorithm on a Quotient Manifold, SIIMS, 2018
+	Wen Huang and Paul Hand, Blind Deconvolution by a Steepest Descent Algorithm on a Quotient Manifold, SIIMS, 2018
 
 Note that when this is used for blind deconvolution in imaging denoising, B is the
 is a sparse diagonal matrix where the sparse entries correspond to the support of the kernel;
@@ -30,30 +30,32 @@ Problem --> CFRankQ2FBlindDecon2D
 #ifdef ROPTLIB_WITH_FFTW
 
 /*Define the namespace*/
-namespace ROPTLIB{
+namespace ROPTLIB
+{
 
-	class CFRankQ2FBlindDecon2D : public Problem{
+	class CFRankQ2FBlindDecon2D : public Problem
+	{
 	public:
 		/*y \in C^L, B \in C^{L \times N}, C \in C^{L \times N},
 		if C == nullptr, then haar wavelet transform is used.*/
 		CFRankQ2FBlindDecon2D(Vector iny, SparseMatrix &inB, SparseMatrix &inC, integer inn1, integer inn2, integer inr, realdp inrho, realdp ind, realdp inmu);
 		virtual ~CFRankQ2FBlindDecon2D();
-    
-        virtual realdp f(const Variable &x) const;
 
-        virtual Vector &EucGrad(const Variable &x, Vector *result) const;
+		virtual realdp f(const Variable &x) const;
 
-        virtual Vector &EucHessianEta(const Variable &x, const Vector &etax, Vector *result) const;
-        
+		virtual Vector &EucGrad(const Variable &x, Vector *result) const;
+
+		virtual Vector &EucHessianEta(const Variable &x, const Vector &etax, Vector *result) const;
+
 		Vector y;
-        SparseMatrix *Bptr;
-        SparseMatrix *Cptr;
+		SparseMatrix *Bptr;
+		SparseMatrix *Cptr;
 
 		mutable integer L;
 		mutable integer n1;
 		mutable integer n2;
 		mutable integer r;
-        
+
 		realdp rho;
 		realdp d;
 		realdp mu;

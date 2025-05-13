@@ -1,10 +1,11 @@
 #ifdef __cplusplus
-extern "C" { 
-#endif  
+extern "C"
+{
+#endif
 
-#include "f2c.h" 
+#include "f2c.h"
 
-Z_f zdotc_(doublecomplexRopt * ret_val, integer *n, doublecomplexRopt *zx, integer *incx, doublecomplexRopt *zy, integer *incy);
+    Z_f zdotc_(doublecomplexRopt *ret_val, integer *n, doublecomplexRopt *zx, integer *incx, doublecomplexRopt *zy, integer *incy);
 
 #ifdef __cplusplus
 }

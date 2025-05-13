@@ -2,26 +2,27 @@
 #include "solvers_SolversNSMPGLS.h"
 
 /*Define the namespace*/
-namespace ROPTLIB{
+namespace ROPTLIB
+{
 
     SolversNSMPGLS::~SolversNSMPGLS()
     {
-		delete[] LSstatusSetnames;
+        delete[] LSstatusSetnames;
     };
 
-	void SolversNSMPGLS::SetProbX(const Problem *prob, const Variable *initialx)
-	{
-		SolversNSM::SetProbX(prob, initialx);
-		prob->SetUseGrad(true);
-		prob->SetUseHess(false);
+    void SolversNSMPGLS::SetProbX(const Problem *prob, const Variable *initialx)
+    {
+        SolversNSM::SetProbX(prob, initialx);
+        prob->SetUseGrad(true);
+        prob->SetUseHess(false);
         dimNorVec = Prob->GetDomain()->GetExtrDim() - Prob->GetDomain()->GetIntrDim();
         eta1 = Prob->GetDomain()->GetEMPTY();
         eta2 = Prob->GetDomain()->GetEMPTY();
-	};
+    };
 
-	void SolversNSMPGLS::SetDefaultParams()
-	{
-		SolversNSM::SetDefaultParams();
+    void SolversNSMPGLS::SetDefaultParams()
+    {
+        SolversNSM::SetDefaultParams();
         Minstepsize = 2e-2;
         LS_ratio = 0.5;
         LS_alpha = 0.0001;
@@ -36,13 +37,13 @@ namespace ROPTLIB{
         LSstatusSetnames = new std::string[LSSTATUSSETPGLENGTH];
         LSstatusSetnames[LSPG_MINSTEPSIZE].assign("LSPG_MINSTEPSIZE");
         LSstatusSetnames[LSPG_SUCCESS].assign("LSPG_SUCCESS");
-	};
+    };
 
     void SolversNSMPGLS::CheckParams(void)
     {
         SolversNSM::CheckParams();
 
-        std::string RPGVariantnames[RPGVARIANTLENGTH] = { "REGULAR", "ADALIPSCHITZ" };
+        std::string RPGVariantnames[RPGVARIANTLENGTH] = {"REGULAR", "ADALIPSCHITZ"};
 
         char YES[] = "YES";
         char NO[] = "NO";
@@ -65,7 +66,7 @@ namespace ROPTLIB{
         f2 = h();
         realdp maxpref = f1;
         /* simple backtracking */
-        while (maxpref - f2 < - LS_alpha * initialslope * stepsize)
+        while (maxpref - f2 < -LS_alpha * initialslope * stepsize)
         {
             stepsize *= LS_ratio;
             if (stepsize < Minstepsize)
@@ -85,21 +86,23 @@ namespace ROPTLIB{
     realdp SolversNSMPGLS::h(void)
     {
         Mani->ScalarTimesVector(x1, stepsize, eta1, &eta2);
-        Mani->Retraction(x1, eta2, &x2); nR++;
+        Mani->Retraction(x1, eta2, &x2);
+        nR++;
         nf++;
         return Prob->f(x2);
     };
 
     realdp SolversNSMPGLS::dh(void)
     {
-        Prob->Grad(x2, &gf2); ng++;
+        Prob->Grad(x2, &gf2);
+        ng++;
         nV++;
-        Vector diffeta1(eta1); Mani->DiffRetraction(x1, eta2, x2, eta1, &diffeta1, true);
+        Vector diffeta1(eta1);
+        Mani->DiffRetraction(x1, eta2, x2, eta1, &diffeta1, true);
         return Mani->Metric(x2, gf2, diffeta1);
     };
 
-    void SolversNSMPGLS::UpdateData(void)
-    {
+    void SolversNSMPGLS::UpdateData(void) {
     };
 
     void SolversNSMPGLS::SetParams(PARAMSMAP params)
@@ -108,24 +111,21 @@ namespace ROPTLIB{
         PARAMSMAP::iterator iter;
         for (iter = params.begin(); iter != params.end(); iter++)
         {
-            if (iter->first == static_cast<std::string> ("RPGLSVariant"))
+            if (iter->first == static_cast<std::string>("RPGLSVariant"))
             {
-                Variant = static_cast<RPGLSVariant> (static_cast<integer> (iter->second));
+                Variant = static_cast<RPGLSVariant>(static_cast<integer>(iter->second));
             }
-            else
-            if (iter->first == static_cast<std::string> ("LS_ratio"))
+            else if (iter->first == static_cast<std::string>("LS_ratio"))
             {
-                LS_ratio = static_cast<integer> (iter->second);
+                LS_ratio = static_cast<integer>(iter->second);
             }
-            else
-            if (iter->first == static_cast<std::string> ("LS_alpha"))
+            else if (iter->first == static_cast<std::string>("LS_alpha"))
             {
-                LS_alpha = static_cast<integer> (iter->second);
+                LS_alpha = static_cast<integer>(iter->second);
             }
-            else
-            if (iter->first == static_cast<std::string> ("Minstepsize"))
+            else if (iter->first == static_cast<std::string>("Minstepsize"))
             {
-                Minstepsize = static_cast<integer> (iter->second);
+                Minstepsize = static_cast<integer>(iter->second);
             }
         }
     };

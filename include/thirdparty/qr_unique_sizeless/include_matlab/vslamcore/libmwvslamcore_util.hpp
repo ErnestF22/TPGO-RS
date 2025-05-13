@@ -3,17 +3,17 @@
 #ifndef _VSLAMCG_UTIL_
 #define _VSLAMCG_UTIL_
 
-#ifndef VSLAMROSCODEGEN 
+#ifndef VSLAMROSCODEGEN
 #include "version.h"
 #endif
 
 #if defined(BUILDING_LIBMWVSLAMCORE)
-  #define LIBMWVSLAMCORE_API DLL_EXPORT_SYM
+#define LIBMWVSLAMCORE_API DLL_EXPORT_SYM
 #else
-#ifdef VSLAMROSCODEGEN 
-  #define LIBMWVSLAMCORE_API
+#ifdef VSLAMROSCODEGEN
+#define LIBMWVSLAMCORE_API
 #else
-  #define LIBMWVSLAMCORE_API DLL_IMPORT_SYM
+#define LIBMWVSLAMCORE_API DLL_IMPORT_SYM
 #endif
 #endif
 
@@ -23,4 +23,4 @@
 #include "rtwtypes.h"
 #endif
 
-#endif 
+#endif

@@ -29,4 +29,4 @@
 
 #endif
 
-#endif // CPPSHAREDLIB_API_UTIL_HPP 
+#endif // CPPSHAREDLIB_API_UTIL_HPP

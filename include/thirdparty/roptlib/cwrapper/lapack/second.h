@@ -1,10 +1,11 @@
 #ifdef __cplusplus
-extern "C" { 
-#endif  
+extern "C"
+{
+#endif
 
-#include "f2c.h" 
+#include "f2c.h"
 
-E_f second_(void);
+    E_f second_(void);
 
 #ifdef __cplusplus
 }

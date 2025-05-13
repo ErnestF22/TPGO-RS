@@ -1,10 +1,11 @@
 #ifdef __cplusplus
-extern "C" { 
-#endif  
+extern "C"
+{
+#endif
 
-#include "f2c.h" 
+#include "f2c.h"
 
-int dscal_(integer *n, doublerealRopt *da, doublerealRopt *dx, integer *incx);
+    int dscal_(integer *n, doublerealRopt *da, doublerealRopt *dx, integer *incx);
 
 #ifdef __cplusplus
 }

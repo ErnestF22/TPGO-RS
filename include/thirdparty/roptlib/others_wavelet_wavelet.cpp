@@ -2,7 +2,7 @@
 
 void haarFWT_1d(int n, realdpcomplex *v)
 {
-	realdp r2 = static_cast<realdp> (sqrt(2.0));
+	realdp r2 = static_cast<realdp>(sqrt(2.0));
 	realdp *tmp = new realdp[2 * n];
 	for (integer i = 0; i < 2 * n; i++)
 		tmp[i] = 0;
@@ -37,7 +37,7 @@ void haarFWT_1d(int n, realdpcomplex *v)
 
 void haarFWT_1d_inverse(int n, realdpcomplex *v)
 {
-	realdp r2 = static_cast<realdp> (sqrt(2.0));
+	realdp r2 = static_cast<realdp>(sqrt(2.0));
 	realdp *tmp = new realdp[2 * n];
 	for (integer i = 0; i < 2 * n; i++)
 		tmp[i] = 0;
@@ -60,14 +60,14 @@ void haarFWT_1d_inverse(int n, realdpcomplex *v)
 		j = j * 2;
 	}
 
-	delete [] tmp;
+	delete[] tmp;
 
 	return;
 };
 
 void haarFWT_2d(int n1, int n2, realdpcomplex *vv)
 {
-	realdp r2 = static_cast<realdp> (sqrt(2.0));
+	realdp r2 = static_cast<realdp>(sqrt(2.0));
 
 	realdpcomplex *tmp = new realdpcomplex[n1 * n2];
 
@@ -92,8 +92,8 @@ void haarFWT_2d(int n1, int n2, realdpcomplex *vv)
 			{
 				tmp[i + j * n1].r = (vv[2 * i + j * n1].r + vv[2 * i + 1 + j * n1].r) / r2;
 				tmp[i + j * n1].i = (vv[2 * i + j * n1].i + vv[2 * i + 1 + j * n1].i) / r2;
-				tmp[k + i + j * n1].r = (vv[2 * i + j*n1].r - vv[2 * i + 1 + j * n1].r) / r2;
-				tmp[k + i + j * n1].i = (vv[2 * i + j*n1].i - vv[2 * i + 1 + j * n1].i) / r2;
+				tmp[k + i + j * n1].r = (vv[2 * i + j * n1].r - vv[2 * i + 1 + j * n1].r) / r2;
+				tmp[k + i + j * n1].i = (vv[2 * i + j * n1].i - vv[2 * i + 1 + j * n1].i) / r2;
 			}
 		}
 		for (integer j = 0; j < n2; j++)
@@ -120,8 +120,8 @@ void haarFWT_2d(int n1, int n2, realdpcomplex *vv)
 			{
 				tmp[i + j * n1].r = (vv[i + 2 * j * n1].r + vv[i + (2 * j + 1) * n1].r) / r2;
 				tmp[i + j * n1].i = (vv[i + 2 * j * n1].i + vv[i + (2 * j + 1) * n1].i) / r2;
-				tmp[i + (k + j) * n1].r = (vv[i + 2 * j*n1].r - vv[i + (2 * j + 1) * n1].r) / r2;
-				tmp[i + (k + j) * n1].i = (vv[i + 2 * j*n1].i - vv[i + (2 * j + 1) * n1].i) / r2;
+				tmp[i + (k + j) * n1].r = (vv[i + 2 * j * n1].r - vv[i + (2 * j + 1) * n1].r) / r2;
+				tmp[i + (k + j) * n1].i = (vv[i + 2 * j * n1].i - vv[i + (2 * j + 1) * n1].i) / r2;
 			}
 		}
 
@@ -129,8 +129,8 @@ void haarFWT_2d(int n1, int n2, realdpcomplex *vv)
 		{
 			for (integer i = 0; i < n1; i++)
 			{
-				vv[i + j*n1].r = tmp[i + j*n1].r;
-				vv[i + j*n1].i = tmp[i + j*n1].i;
+				vv[i + j * n1].r = tmp[i + j * n1].r;
+				vv[i + j * n1].i = tmp[i + j * n1].i;
 			}
 		}
 	}
@@ -139,7 +139,7 @@ void haarFWT_2d(int n1, int n2, realdpcomplex *vv)
 
 void haarFWT_2d_inverse(int n1, int n2, realdpcomplex *vv)
 {
-	realdp r2 = static_cast<realdp> (sqrt(2.0));
+	realdp r2 = static_cast<realdp>(sqrt(2.0));
 
 	realdpcomplex *tmp = new realdpcomplex[n1 * n2];
 
@@ -158,10 +158,10 @@ void haarFWT_2d_inverse(int n1, int n2, realdpcomplex *vv)
 		{
 			for (integer i = 0; i < n1; i++)
 			{
-				tmp[i + (2 * j) * n1].r = (vv[i + j * n1].r + vv[i + (k + j)*n1].r) / r2;
-				tmp[i + (2 * j) * n1].i = (vv[i + j * n1].i + vv[i + (k + j)*n1].i) / r2;
-				tmp[i + (2 * j + 1) * n1].r = (vv[i + j * n1].r - vv[i + (k + j)*n1].r) / r2;
-				tmp[i + (2 * j + 1) * n1].i = (vv[i + j * n1].i - vv[i + (k + j)*n1].i) / r2;
+				tmp[i + (2 * j) * n1].r = (vv[i + j * n1].r + vv[i + (k + j) * n1].r) / r2;
+				tmp[i + (2 * j) * n1].i = (vv[i + j * n1].i + vv[i + (k + j) * n1].i) / r2;
+				tmp[i + (2 * j + 1) * n1].r = (vv[i + j * n1].r - vv[i + (k + j) * n1].r) / r2;
+				tmp[i + (2 * j + 1) * n1].i = (vv[i + j * n1].i - vv[i + (k + j) * n1].i) / r2;
 			}
 		}
 

@@ -1,10 +1,11 @@
 #ifdef __cplusplus
-extern "C" { 
-#endif  
+extern "C"
+{
+#endif
 
-#include "f2c.h" 
+#include "f2c.h"
 
-int clargv_(integer *n, complexRopt *x, integer *incx, complexRopt *y, integer *incy, realRopt *c__, integer *incc);
+    int clargv_(integer *n, complexRopt *x, integer *incx, complexRopt *y, integer *incy, realRopt *c__, integer *incc);
 
 #ifdef __cplusplus
 }

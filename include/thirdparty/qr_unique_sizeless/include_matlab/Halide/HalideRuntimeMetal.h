@@ -1,7 +1,8 @@
 #ifndef HALIDE_HALIDERUNTIMEMETAL_H
 #define HALIDE_HALIDERUNTIMEMETAL_H
 
-// Don't include HalideRuntime.h if the contents of it were already pasted into a generated header above this one
+// Don't include HalideRuntime.h if the contents of it were already pasted into
+// a generated header above this one
 #ifndef HALIDE_HALIDERUNTIME_H
 
 #include "HalideRuntime.h"
@@ -27,14 +28,11 @@ extern int halide_metal_initialize_kernels(void *user_context, void **state_ptr,
                                            const char *src, int size);
 void halide_metal_finalize_kernels(void *user_context, void *state_ptr);
 
-extern int halide_metal_run(void *user_context,
-                            void *state_ptr,
-                            const char *entry_name,
-                            int blocksX, int blocksY, int blocksZ,
-                            int threadsX, int threadsY, int threadsZ,
-                            int shared_mem_bytes,
-                            size_t arg_sizes[],
-                            void *args[],
+extern int halide_metal_run(void *user_context, void *state_ptr,
+                            const char *entry_name, int blocksX, int blocksY,
+                            int blocksZ, int threadsX, int threadsY,
+                            int threadsZ, int shared_mem_bytes,
+                            size_t arg_sizes[], void *args[],
                             int8_t arg_is_buffer[]);
 // @}
 
@@ -45,7 +43,9 @@ extern int halide_metal_run(void *user_context,
  * routine is called. This call can fail due to running out of memory
  * or being passed an invalid buffer. The device and host dirty bits
  * are left unmodified. */
-extern int halide_metal_wrap_buffer(void *user_context, struct halide_buffer_t *buf, uint64_t buffer);
+extern int halide_metal_wrap_buffer(void *user_context,
+                                    struct halide_buffer_t *buf,
+                                    uint64_t buffer);
 
 /** Disconnect a halide_buffer_t from the memory it was previously
  * wrapped around. Should only be called for a halide_buffer_t that
@@ -54,17 +54,21 @@ extern int halide_metal_wrap_buffer(void *user_context, struct halide_buffer_t *
  * buffer, but does not free the MTLBuffer. The dev field of the
  * halide_buffer_t will be NULL on return.
  */
-extern int halide_metal_detach_buffer(void *user_context, struct halide_buffer_t *buf);
+extern int halide_metal_detach_buffer(void *user_context,
+                                      struct halide_buffer_t *buf);
 
 /** Return the underlying MTLBuffer for a halide_buffer_t. This buffer must be
  * valid on an Metal device, or not have any associated device
  * memory. If there is no device memory (dev field is NULL), this
  * returns 0.
  */
-extern uintptr_t halide_metal_get_buffer(void *user_context, struct halide_buffer_t *buf);
+extern uintptr_t halide_metal_get_buffer(void *user_context,
+                                         struct halide_buffer_t *buf);
 
-/** Returns the offset associated with the Metal Buffer allocation via device_crop or device_slice. */
-extern uint64_t halide_metal_get_crop_offset(void *user_context, struct halide_buffer_t *buf);
+/** Returns the offset associated with the Metal Buffer allocation via
+ * device_crop or device_slice. */
+extern uint64_t halide_metal_get_crop_offset(void *user_context,
+                                             struct halide_buffer_t *buf);
 
 struct halide_metal_device;
 struct halide_metal_command_queue;
@@ -82,10 +86,12 @@ struct halide_metal_command_queue;
  *     halide_device_free called or have been detached via
  *     halide_metal_detach_buffer.
  * - halide_device_release has been called on the interface returned from
- *     halide_metal_device_interface(). (This releases the programs on the context.)
+ *     halide_metal_device_interface(). (This releases the programs on the
+ * context.)
  */
-extern int halide_metal_acquire_context(void *user_context, struct halide_metal_device **device_ret,
-                                        struct halide_metal_command_queue **queue_ret, bool create);
+extern int halide_metal_acquire_context(
+    void *user_context, struct halide_metal_device **device_ret,
+    struct halide_metal_command_queue **queue_ret, bool create);
 
 /** This call balances each successful halide_metal_acquire_context call.
  * If halide_metal_acquire_context is replaced, this routine must be replaced
@@ -94,7 +100,7 @@ extern int halide_metal_acquire_context(void *user_context, struct halide_metal_
 extern int halide_metal_release_context(void *user_context);
 
 #ifdef __cplusplus
-}  // End extern "C"
+} // End extern "C"
 #endif
 
-#endif  // HALIDE_HALIDERUNTIMEMETAL_H
+#endif // HALIDE_HALIDERUNTIMEMETAL_H

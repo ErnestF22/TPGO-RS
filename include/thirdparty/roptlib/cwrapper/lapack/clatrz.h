@@ -1,10 +1,11 @@
 #ifdef __cplusplus
-extern "C" { 
-#endif  
+extern "C"
+{
+#endif
 
-#include "f2c.h" 
+#include "f2c.h"
 
-int clatrz_(integer *m, integer *n, integer *l, complexRopt *a, integer *lda, complexRopt *tau, complexRopt *work);
+    int clatrz_(integer *m, integer *n, integer *l, complexRopt *a, integer *lda, complexRopt *tau, complexRopt *work);
 
 #ifdef __cplusplus
 }

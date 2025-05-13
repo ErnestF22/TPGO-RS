@@ -41,22 +41,25 @@
 namespace flatbuffers {
 
 // Converts a Field ID to a virtual table offset.
-inline voffset_t FieldIndexToOffset(voffset_t field_id) {
+inline voffset_t FieldIndexToOffset(voffset_t field_id)
+{
   // Should correspond to what EndTable() below builds up.
   const voffset_t fixed_fields =
-      2 * sizeof(voffset_t);  // Vtable size and Object Size.
+      2 * sizeof(voffset_t); // Vtable size and Object Size.
   return fixed_fields + field_id * sizeof(voffset_t);
 }
 
-template<typename T, typename Alloc = std::allocator<T>>
-const T *data(const std::vector<T, Alloc> &v) {
+template <typename T, typename Alloc = std::allocator<T>>
+const T *data(const std::vector<T, Alloc> &v)
+{
   // Eventually the returned pointer gets passed down to memcpy, so
   // we need it to be non-null to avoid undefined behavior.
   static uint8_t t;
   return v.empty() ? reinterpret_cast<const T *>(&t) : &v.front();
 }
-template<typename T, typename Alloc = std::allocator<T>>
-T *data(std::vector<T, Alloc> &v) {
+template <typename T, typename Alloc = std::allocator<T>>
+T *data(std::vector<T, Alloc> &v)
+{
   // Eventually the returned pointer gets passed down to memcpy, so
   // we need it to be non-null to avoid undefined behavior.
   static uint8_t t;
@@ -72,8 +75,8 @@ T *data(std::vector<T, Alloc> &v) {
 /// `PushElement`/`AddElement`/`EndTable`, or the builtin `CreateString`/
 /// `CreateVector` functions. Do this is depth-first order to build up a tree to
 /// the root. `Finish()` wraps up the buffer ready for transport.
-template<bool Is64Aware = false> class FlatBufferBuilderImpl {
- public:
+template <bool Is64Aware = false> class FlatBufferBuilderImpl {
+public:
   // This switches the size type of the builder, based on if its 64-bit aware
   // (uoffset64_t) or not (uoffset_t).
   typedef
@@ -97,15 +100,10 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
       : buf_(initial_size, allocator, own_allocator, buffer_minalign,
              static_cast<SizeT>(Is64Aware ? FLATBUFFERS_MAX_64_BUFFER_SIZE
                                           : FLATBUFFERS_MAX_BUFFER_SIZE)),
-        num_field_loc(0),
-        max_voffset_(0),
-        length_of_64_bit_region_(0),
-        nested(false),
-        finished(false),
-        minalign_(1),
-        force_defaults_(false),
-        dedup_vtables_(true),
-        string_pool(nullptr) {
+        num_field_loc(0), max_voffset_(0), length_of_64_bit_region_(0),
+        nested(false), finished(false), minalign_(1), force_defaults_(false),
+        dedup_vtables_(true), string_pool(nullptr)
+  {
     EndianCheck();
   }
 
@@ -114,15 +112,10 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
       : buf_(1024, nullptr, false, AlignOf<largest_scalar_t>(),
              static_cast<SizeT>(Is64Aware ? FLATBUFFERS_MAX_64_BUFFER_SIZE
                                           : FLATBUFFERS_MAX_BUFFER_SIZE)),
-        num_field_loc(0),
-        max_voffset_(0),
-        length_of_64_bit_region_(0),
-        nested(false),
-        finished(false),
-        minalign_(1),
-        force_defaults_(false),
-        dedup_vtables_(true),
-        string_pool(nullptr) {
+        num_field_loc(0), max_voffset_(0), length_of_64_bit_region_(0),
+        nested(false), finished(false), minalign_(1), force_defaults_(false),
+        dedup_vtables_(true), string_pool(nullptr)
+  {
     EndianCheck();
     // Default construct and swap idiom.
     // Lack of delegating constructors in vs2010 makes it more verbose than
@@ -131,14 +124,16 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
   }
 
   /// @brief Move assignment operator for FlatBufferBuilder.
-  FlatBufferBuilderImpl &operator=(FlatBufferBuilderImpl &&other) noexcept {
+  FlatBufferBuilderImpl &operator=(FlatBufferBuilderImpl &&other) noexcept
+  {
     // Move construct a temporary and swap idiom
     FlatBufferBuilderImpl temp(std::move(other));
     Swap(temp);
     return *this;
   }
 
-  void Swap(FlatBufferBuilderImpl &other) {
+  void Swap(FlatBufferBuilderImpl &other)
+  {
     using std::swap;
     buf_.swap(other.buf_);
     swap(num_field_loc, other.num_field_loc);
@@ -152,40 +147,49 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
     swap(string_pool, other.string_pool);
   }
 
-  ~FlatBufferBuilderImpl() {
-    if (string_pool) delete string_pool;
+  ~FlatBufferBuilderImpl()
+  {
+    if (string_pool)
+      delete string_pool;
   }
 
-  void Reset() {
-    Clear();       // clear builder state
-    buf_.reset();  // deallocate buffer
+  void Reset()
+  {
+    Clear();      // clear builder state
+    buf_.reset(); // deallocate buffer
   }
 
   /// @brief Reset all the state in this FlatBufferBuilder so it can be reused
   /// to construct another buffer.
-  void Clear() {
+  void Clear()
+  {
     ClearOffsets();
     buf_.clear();
     nested = false;
     finished = false;
     minalign_ = 1;
     length_of_64_bit_region_ = 0;
-    if (string_pool) string_pool->clear();
+    if (string_pool)
+      string_pool->clear();
   }
 
   /// @brief The current size of the serialized buffer, counting from the end.
   /// @return Returns an `SizeT` with the current size of the buffer.
-  SizeT GetSize() const { return buf_.size(); }
+  SizeT GetSize() const
+  {
+    return buf_.size();
+  }
 
   /// @brief The current size of the serialized buffer relative to the end of
   /// the 32-bit region.
   /// @return Returns an `uoffset_t` with the current size of the buffer.
-  template<bool is_64 = Is64Aware>
+  template <bool is_64 = Is64Aware>
   // Only enable this method for the 64-bit builder, as only that builder is
   // concerned with the 32/64-bit boundary, and should be the one to bare any
   // run time costs.
-  typename std::enable_if<is_64, uoffset_t>::type GetSizeRelative32BitRegion()
-      const {
+  typename std::enable_if<is_64, uoffset_t>::type
+  GetSizeRelative32BitRegion() const
+  {
     //[32-bit region][64-bit region]
     //         [XXXXXXXXXXXXXXXXXXX] GetSize()
     //               [YYYYYYYYYYYYY] length_of_64_bit_region_
@@ -193,17 +197,19 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
     return static_cast<uoffset_t>(GetSize() - length_of_64_bit_region_);
   }
 
-  template<bool is_64 = Is64Aware>
+  template <bool is_64 = Is64Aware>
   // Only enable this method for the 32-bit builder.
-  typename std::enable_if<!is_64, uoffset_t>::type GetSizeRelative32BitRegion()
-      const {
+  typename std::enable_if<!is_64, uoffset_t>::type
+  GetSizeRelative32BitRegion() const
+  {
     return static_cast<uoffset_t>(GetSize());
   }
 
   /// @brief Get the serialized buffer (after you call `Finish()`).
   /// @return Returns an `uint8_t` pointer to the FlatBuffer data inside the
   /// buffer.
-  uint8_t *GetBufferPointer() const {
+  uint8_t *GetBufferPointer() const
+  {
     Finished();
     return buf_.data();
   }
@@ -211,28 +217,34 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
   /// @brief Get the serialized buffer (after you call `Finish()`) as a span.
   /// @return Returns a constructed flatbuffers::span that is a view over the
   /// FlatBuffer data inside the buffer.
-  flatbuffers::span<uint8_t> GetBufferSpan() const {
+  flatbuffers::span<uint8_t> GetBufferSpan() const
+  {
     Finished();
     return flatbuffers::span<uint8_t>(buf_.data(), buf_.size());
   }
 
   /// @brief Get a pointer to an unfinished buffer.
   /// @return Returns a `uint8_t` pointer to the unfinished buffer.
-  uint8_t *GetCurrentBufferPointer() const { return buf_.data(); }
+  uint8_t *GetCurrentBufferPointer() const
+  {
+    return buf_.data();
+  }
 
   /// @brief Get the released pointer to the serialized buffer.
   /// @warning Do NOT attempt to use this FlatBufferBuilder afterwards!
   /// @return A `FlatBuffer` that owns the buffer and its allocator and
   /// behaves similar to a `unique_ptr` with a deleter.
   FLATBUFFERS_ATTRIBUTE([[deprecated("use Release() instead")]])
-  DetachedBuffer ReleaseBufferPointer() {
+  DetachedBuffer ReleaseBufferPointer()
+  {
     Finished();
     return buf_.release();
   }
 
   /// @brief Get the released DetachedBuffer.
   /// @return A `DetachedBuffer` that owns the buffer and its allocator.
-  DetachedBuffer Release() {
+  DetachedBuffer Release()
+  {
     Finished();
     return buf_.release();
   }
@@ -246,7 +258,8 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
   /// the serialized `FlatBuffer`.
   /// @remark If the allocator is owned, it gets deleted when the destructor is
   /// called..
-  uint8_t *ReleaseRaw(size_t &size, size_t &offset) {
+  uint8_t *ReleaseRaw(size_t &size, size_t &offset)
+  {
     Finished();
     return buf_.release_raw(size, offset);
   }
@@ -256,13 +269,15 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
   /// you call Finish()). You can use this information if you need to embed
   /// a FlatBuffer in some other buffer, such that you can later read it
   /// without first having to copy it into its own buffer.
-  size_t GetBufferMinAlignment() const {
+  size_t GetBufferMinAlignment() const
+  {
     Finished();
     return minalign_;
   }
 
   /// @cond FLATBUFFERS_INTERNAL
-  void Finished() const {
+  void Finished() const
+  {
     // If you get this assert, you're attempting to get access a buffer
     // which hasn't been finished yet. Be sure to call
     // FlatBufferBuilder::Finish with your root table.
@@ -277,98 +292,134 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
   /// @param[in] fd When set to `true`, always serializes default values that
   /// are set. Optional fields which are not set explicitly, will still not be
   /// serialized.
-  void ForceDefaults(bool fd) { force_defaults_ = fd; }
+  void ForceDefaults(bool fd)
+  {
+    force_defaults_ = fd;
+  }
 
   /// @brief By default vtables are deduped in order to save space.
   /// @param[in] dedup When set to `true`, dedup vtables.
-  void DedupVtables(bool dedup) { dedup_vtables_ = dedup; }
-
-  /// @cond FLATBUFFERS_INTERNAL
-  void Pad(size_t num_bytes) { buf_.fill(num_bytes); }
-
-  void TrackMinAlign(size_t elem_size) {
-    if (elem_size > minalign_) minalign_ = elem_size;
+  void DedupVtables(bool dedup)
+  {
+    dedup_vtables_ = dedup;
   }
 
-  void Align(size_t elem_size) {
+  /// @cond FLATBUFFERS_INTERNAL
+  void Pad(size_t num_bytes)
+  {
+    buf_.fill(num_bytes);
+  }
+
+  void TrackMinAlign(size_t elem_size)
+  {
+    if (elem_size > minalign_)
+      minalign_ = elem_size;
+  }
+
+  void Align(size_t elem_size)
+  {
     TrackMinAlign(elem_size);
     buf_.fill(PaddingBytes(buf_.size(), elem_size));
   }
 
-  void PushFlatBuffer(const uint8_t *bytes, size_t size) {
+  void PushFlatBuffer(const uint8_t *bytes, size_t size)
+  {
     PushBytes(bytes, size);
     finished = true;
   }
 
-  void PushBytes(const uint8_t *bytes, size_t size) { buf_.push(bytes, size); }
+  void PushBytes(const uint8_t *bytes, size_t size)
+  {
+    buf_.push(bytes, size);
+  }
 
-  void PopBytes(size_t amount) { buf_.pop(amount); }
+  void PopBytes(size_t amount)
+  {
+    buf_.pop(amount);
+  }
 
-  template<typename T> void AssertScalarT() {
+  template <typename T> void AssertScalarT()
+  {
     // The code assumes power of 2 sizes and endian-swap-ability.
     static_assert(flatbuffers::is_scalar<T>::value, "T must be a scalar type");
   }
 
   // Write a single aligned scalar to the buffer
-  template<typename T, typename ReturnT = uoffset_t>
-  ReturnT PushElement(T element) {
+  template <typename T, typename ReturnT = uoffset_t>
+  ReturnT PushElement(T element)
+  {
     AssertScalarT<T>();
     Align(sizeof(T));
     buf_.push_small(EndianScalar(element));
     return CalculateOffset<ReturnT>();
   }
 
-  template<typename T, template<typename> class OffsetT = Offset>
-  uoffset_t PushElement(OffsetT<T> off) {
+  template <typename T, template <typename> class OffsetT = Offset>
+  uoffset_t PushElement(OffsetT<T> off)
+  {
     // Special case for offsets: see ReferTo below.
     return PushElement(ReferTo(off.o));
   }
 
   // When writing fields, we track where they are, so we can create correct
   // vtables later.
-  void TrackField(voffset_t field, uoffset_t off) {
-    FieldLoc fl = { off, field };
+  void TrackField(voffset_t field, uoffset_t off)
+  {
+    FieldLoc fl = {off, field};
     buf_.scratch_push_small(fl);
     num_field_loc++;
-    if (field > max_voffset_) { max_voffset_ = field; }
+    if (field > max_voffset_) {
+      max_voffset_ = field;
+    }
   }
 
   // Like PushElement, but additionally tracks the field this represents.
-  template<typename T> void AddElement(voffset_t field, T e, T def) {
+  template <typename T> void AddElement(voffset_t field, T e, T def)
+  {
     // We don't serialize values equal to the default.
-    if (IsTheSameAs(e, def) && !force_defaults_) return;
+    if (IsTheSameAs(e, def) && !force_defaults_)
+      return;
     TrackField(field, PushElement(e));
   }
 
-  template<typename T> void AddElement(voffset_t field, T e) {
+  template <typename T> void AddElement(voffset_t field, T e)
+  {
     TrackField(field, PushElement(e));
   }
 
-  template<typename T> void AddOffset(voffset_t field, Offset<T> off) {
-    if (off.IsNull()) return;  // Don't store.
+  template <typename T> void AddOffset(voffset_t field, Offset<T> off)
+  {
+    if (off.IsNull())
+      return; // Don't store.
     AddElement(field, ReferTo(off.o), static_cast<uoffset_t>(0));
   }
 
-  template<typename T> void AddOffset(voffset_t field, Offset64<T> off) {
-    if (off.IsNull()) return;  // Don't store.
+  template <typename T> void AddOffset(voffset_t field, Offset64<T> off)
+  {
+    if (off.IsNull())
+      return; // Don't store.
     AddElement(field, ReferTo(off.o), static_cast<uoffset64_t>(0));
   }
 
-  template<typename T> void AddStruct(voffset_t field, const T *structptr) {
-    if (!structptr) return;  // Default, don't store.
+  template <typename T> void AddStruct(voffset_t field, const T *structptr)
+  {
+    if (!structptr)
+      return; // Default, don't store.
     Align(AlignOf<T>());
     buf_.push_small(*structptr);
     TrackField(field, CalculateOffset<uoffset_t>());
   }
 
-  void AddStructOffset(voffset_t field, uoffset_t off) {
+  void AddStructOffset(voffset_t field, uoffset_t off)
+  {
     TrackField(field, off);
   }
 
   // Offsets initially are relative to the end of the buffer (downwards).
   // This function converts them to be relative to the current location
   // in the buffer (when stored here), pointing upwards.
-  uoffset_t ReferTo(uoffset_t off) {
+  uoffset_t ReferTo(uoffset_t off)
+  {
     // Align to ensure GetSizeRelative32BitRegion() below is correct.
     Align(sizeof(uoffset_t));
     // 32-bit offsets are relative to the tail of the 32-bit region of the
@@ -377,24 +428,28 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
     return ReferTo(off, GetSizeRelative32BitRegion());
   }
 
-  uoffset64_t ReferTo(uoffset64_t off) {
+  uoffset64_t ReferTo(uoffset64_t off)
+  {
     // Align to ensure GetSize() below is correct.
     Align(sizeof(uoffset64_t));
     // 64-bit offsets are relative to tail of the whole buffer
     return ReferTo(off, GetSize());
   }
 
-  template<typename T, typename T2> T ReferTo(const T off, const T2 size) {
+  template <typename T, typename T2> T ReferTo(const T off, const T2 size)
+  {
     FLATBUFFERS_ASSERT(off && off <= size);
     return size - off + static_cast<T>(sizeof(T));
   }
 
-  template<typename T> T ReferTo(const T off, const T size) {
+  template <typename T> T ReferTo(const T off, const T size)
+  {
     FLATBUFFERS_ASSERT(off && off <= size);
     return size - off + static_cast<T>(sizeof(T));
   }
 
-  void NotNested() {
+  void NotNested()
+  {
     // If you hit this, you're trying to construct a Table/Vector/String
     // during the construction of its parent table (between the MyTableBuilder
     // and table.Finish().
@@ -410,7 +465,8 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
 
   // From generated code (or from the parser), we call StartTable/EndTable
   // with a sequence of AddElement calls in between.
-  uoffset_t StartTable() {
+  uoffset_t StartTable()
+  {
     NotNested();
     nested = true;
     return GetSizeRelative32BitRegion();
@@ -419,7 +475,8 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
   // This finishes one serialized object by generating the vtable if it's a
   // table, comparing it against existing vtables, and writing the
   // resulting vtable offset.
-  uoffset_t EndTable(uoffset_t start) {
+  uoffset_t EndTable(uoffset_t start)
+  {
     // If you get this assert, a corresponding StartTable wasn't called.
     FLATBUFFERS_ASSERT(nested);
     // Write the vtable offset, which is the start of any Table.
@@ -465,7 +522,8 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
         auto vt_offset_ptr = reinterpret_cast<uoffset_t *>(it);
         auto vt2 = reinterpret_cast<voffset_t *>(buf_.data_at(*vt_offset_ptr));
         auto vt2_size = ReadScalar<voffset_t>(vt2);
-        if (vt1_size != vt2_size || 0 != memcmp(vt2, vt1, vt1_size)) continue;
+        if (vt1_size != vt2_size || 0 != memcmp(vt2, vt1, vt1_size))
+          continue;
         vt_use = *vt_offset_ptr;
         buf_.pop(GetSizeRelative32BitRegion() - vtable_offset_loc);
         break;
@@ -488,13 +546,15 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
   }
 
   FLATBUFFERS_ATTRIBUTE([[deprecated("call the version above instead")]])
-  uoffset_t EndTable(uoffset_t start, voffset_t /*numfields*/) {
+  uoffset_t EndTable(uoffset_t start, voffset_t /*numfields*/)
+  {
     return EndTable(start);
   }
 
   // This checks a required field has been set in a given table that has
   // just been constructed.
-  template<typename T> void Required(Offset<T> table, voffset_t field) {
+  template <typename T> void Required(Offset<T> table, voffset_t field)
+  {
     auto table_ptr = reinterpret_cast<const Table *>(buf_.data_at(table.o));
     bool ok = table_ptr->GetOptionalFieldOffset(field) != 0;
     // If this fails, the caller will show what field needs to be set.
@@ -502,14 +562,19 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
     (void)ok;
   }
 
-  uoffset_t StartStruct(size_t alignment) {
+  uoffset_t StartStruct(size_t alignment)
+  {
     Align(alignment);
     return GetSizeRelative32BitRegion();
   }
 
-  uoffset_t EndStruct() { return GetSizeRelative32BitRegion(); }
+  uoffset_t EndStruct()
+  {
+    return GetSizeRelative32BitRegion();
+  }
 
-  void ClearOffsets() {
+  void ClearOffsets()
+  {
     buf_.scratch_pop(num_field_loc * sizeof(FieldLoc));
     num_field_loc = 0;
     max_voffset_ = 0;
@@ -517,15 +582,18 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
 
   // Aligns such that when "len" bytes are written, an object can be written
   // after it (forward in the buffer) with "alignment" without padding.
-  void PreAlign(size_t len, size_t alignment) {
-    if (len == 0) return;
+  void PreAlign(size_t len, size_t alignment)
+  {
+    if (len == 0)
+      return;
     TrackMinAlign(alignment);
     buf_.fill(PaddingBytes(GetSize() + len, alignment));
   }
 
   // Aligns such than when "len" bytes are written, an object of type `AlignT`
   // can be written after it (forward in the buffer) without padding.
-  template<typename AlignT> void PreAlign(size_t len) {
+  template <typename AlignT> void PreAlign(size_t len)
+  {
     AssertScalarT<AlignT>();
     PreAlign(len, AlignOf<AlignT>());
   }
@@ -535,8 +603,9 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
   /// @param[in] str A const char pointer to the data to be stored as a string.
   /// @param[in] len The number of bytes that should be stored from `str`.
   /// @return Returns the offset in the buffer where the string starts.
-  template<template<typename> class OffsetT = Offset>
-  OffsetT<String> CreateString(const char *str, size_t len) {
+  template <template <typename> class OffsetT = Offset>
+  OffsetT<String> CreateString(const char *str, size_t len)
+  {
     CreateStringImpl(str, len);
     return OffsetT<String>(
         CalculateOffset<typename OffsetT<String>::offset_type>());
@@ -545,24 +614,27 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
   /// @brief Store a string in the buffer, which is null-terminated.
   /// @param[in] str A const char pointer to a C-string to add to the buffer.
   /// @return Returns the offset in the buffer where the string starts.
-  template<template<typename> class OffsetT = Offset>
-  OffsetT<String> CreateString(const char *str) {
+  template <template <typename> class OffsetT = Offset>
+  OffsetT<String> CreateString(const char *str)
+  {
     return CreateString<OffsetT>(str, strlen(str));
   }
 
   /// @brief Store a string in the buffer, which is null-terminated.
   /// @param[in] str A char pointer to a C-string to add to the buffer.
   /// @return Returns the offset in the buffer where the string starts.
-  template<template<typename> class OffsetT = Offset>
-  OffsetT<String> CreateString(char *str) {
+  template <template <typename> class OffsetT = Offset>
+  OffsetT<String> CreateString(char *str)
+  {
     return CreateString<OffsetT>(str, strlen(str));
   }
 
   /// @brief Store a string in the buffer, which can contain any binary data.
   /// @param[in] str A const reference to a std::string to store in the buffer.
   /// @return Returns the offset in the buffer where the string starts.
-  template<template<typename> class OffsetT = Offset>
-  OffsetT<String> CreateString(const std::string &str) {
+  template <template <typename> class OffsetT = Offset>
+  OffsetT<String> CreateString(const std::string &str)
+  {
     return CreateString<OffsetT>(str.c_str(), str.length());
   }
 
@@ -581,8 +653,9 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
   /// @brief Store a string in the buffer, which can contain any binary data.
   /// @param[in] str A const pointer to a `String` struct to add to the buffer.
   /// @return Returns the offset in the buffer where the string starts
-  template<template<typename> class OffsetT = Offset>
-  OffsetT<String> CreateString(const String *str) {
+  template <template <typename> class OffsetT = Offset>
+  OffsetT<String> CreateString(const String *str)
+  {
     return str ? CreateString<OffsetT>(str->c_str(), str->size()) : 0;
   }
 
@@ -590,11 +663,12 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
   /// @param[in] str A const reference to a std::string like type with support
   /// of T::c_str() and T::length() to store in the buffer.
   /// @return Returns the offset in the buffer where the string starts.
-  template<template<typename> class OffsetT = Offset,
-           // No need to explicitly declare the T type, let the compiler deduce
-           // it.
-           int &...ExplicitArgumentBarrier, typename T>
-  OffsetT<String> CreateString(const T &str) {
+  template <template <typename> class OffsetT = Offset,
+            // No need to explicitly declare the T type, let the compiler deduce
+            // it.
+            int &...ExplicitArgumentBarrier, typename T>
+  OffsetT<String> CreateString(const T &str)
+  {
     return CreateString<OffsetT>(str.c_str(), str.length());
   }
 
@@ -605,7 +679,8 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
   /// @param[in] str A const char pointer to the data to be stored as a string.
   /// @param[in] len The number of bytes that should be stored from `str`.
   /// @return Returns the offset in the buffer where the string starts.
-  Offset<String> CreateSharedString(const char *str, size_t len) {
+  Offset<String> CreateSharedString(const char *str, size_t len)
+  {
     FLATBUFFERS_ASSERT(FLATBUFFERS_GENERAL_HEAP_ALLOC_OK);
     if (!string_pool) {
       string_pool = new StringOffsetMap(StringOffsetCompare(buf_));
@@ -634,7 +709,8 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
   /// stored on the heap, but only stores the numerical offsets.
   /// @param[in] str A const std::string_view to store in the buffer.
   /// @return Returns the offset in the buffer where the string starts
-  Offset<String> CreateSharedString(const flatbuffers::string_view str) {
+  Offset<String> CreateSharedString(const flatbuffers::string_view str)
+  {
     return CreateSharedString(str.data(), str.size());
   }
 #else
@@ -644,7 +720,8 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
   /// stored on the heap, but only stores the numerical offsets.
   /// @param[in] str A const char pointer to a C-string to add to the buffer.
   /// @return Returns the offset in the buffer where the string starts.
-  Offset<String> CreateSharedString(const char *str) {
+  Offset<String> CreateSharedString(const char *str)
+  {
     return CreateSharedString(str, strlen(str));
   }
 
@@ -654,7 +731,8 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
   /// stored on the heap, but only stores the numerical offsets.
   /// @param[in] str A const reference to a std::string to store in the buffer.
   /// @return Returns the offset in the buffer where the string starts.
-  Offset<String> CreateSharedString(const std::string &str) {
+  Offset<String> CreateSharedString(const std::string &str)
+  {
     return CreateSharedString(str.c_str(), str.length());
   }
 #endif
@@ -665,31 +743,36 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
   /// stored on the heap, but only stores the numerical offsets.
   /// @param[in] str A const pointer to a `String` struct to add to the buffer.
   /// @return Returns the offset in the buffer where the string starts
-  Offset<String> CreateSharedString(const String *str) {
+  Offset<String> CreateSharedString(const String *str)
+  {
     return str ? CreateSharedString(str->c_str(), str->size()) : 0;
   }
 
   /// @cond FLATBUFFERS_INTERNAL
-  template<typename LenT = uoffset_t, typename ReturnT = uoffset_t>
-  ReturnT EndVector(size_t len) {
-    FLATBUFFERS_ASSERT(nested);  // Hit if no corresponding StartVector.
+  template <typename LenT = uoffset_t, typename ReturnT = uoffset_t>
+  ReturnT EndVector(size_t len)
+  {
+    FLATBUFFERS_ASSERT(nested); // Hit if no corresponding StartVector.
     nested = false;
     return PushElement<LenT, ReturnT>(static_cast<LenT>(len));
   }
 
-  template<template<typename> class OffsetT = Offset, typename LenT = uint32_t>
-  void StartVector(size_t len, size_t elemsize, size_t alignment) {
+  template <template <typename> class OffsetT = Offset,
+            typename LenT = uint32_t>
+  void StartVector(size_t len, size_t elemsize, size_t alignment)
+  {
     NotNested();
     nested = true;
     // Align to the Length type of the vector (either 32-bit or 64-bit), so
     // that the length of the buffer can be added without padding.
     PreAlign<LenT>(len * elemsize);
-    PreAlign(len * elemsize, alignment);  // Just in case elemsize > uoffset_t.
+    PreAlign(len * elemsize, alignment); // Just in case elemsize > uoffset_t.
   }
 
-  template<typename T, template<typename> class OffsetT = Offset,
-           typename LenT = uint32_t>
-  void StartVector(size_t len) {
+  template <typename T, template <typename> class OffsetT = Offset,
+            typename LenT = uint32_t>
+  void StartVector(size_t len)
+  {
     return StartVector<OffsetT, LenT>(len, sizeof(T), AlignOf<T>());
   }
 
@@ -698,15 +781,19 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
   // normally dictate.
   // This is useful when storing a nested_flatbuffer in a vector of bytes,
   // or when storing SIMD floats, etc.
-  void ForceVectorAlignment(size_t len, size_t elemsize, size_t alignment) {
-    if (len == 0) return;
+  void ForceVectorAlignment(size_t len, size_t elemsize, size_t alignment)
+  {
+    if (len == 0)
+      return;
     FLATBUFFERS_ASSERT(VerifyAlignmentRequirements(alignment));
     PreAlign(len * elemsize, alignment);
   }
 
   // Similar to ForceVectorAlignment but for String fields.
-  void ForceStringAlignment(size_t len, size_t alignment) {
-    if (len == 0) return;
+  void ForceStringAlignment(size_t len, size_t alignment)
+  {
+    if (len == 0)
+      return;
     FLATBUFFERS_ASSERT(VerifyAlignmentRequirements(alignment));
     PreAlign((len + 1) * sizeof(char), alignment);
   }
@@ -722,9 +809,10 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
   /// @param[in] len The number of elements to serialize.
   /// @return Returns a typed `TOffset` into the serialized data indicating
   /// where the vector is stored.
-  template<typename T, template<typename...> class OffsetT = Offset,
-           template<typename...> class VectorT = Vector>
-  OffsetT<VectorT<T>> CreateVector(const T *v, size_t len) {
+  template <typename T, template <typename...> class OffsetT = Offset,
+            template <typename...> class VectorT = Vector>
+  OffsetT<VectorT<T>> CreateVector(const T *v, size_t len)
+  {
     // The type of the length field in the vector.
     typedef typename VectorT<T>::size_type LenT;
     typedef typename OffsetT<VectorT<T>>::offset_type offset_type;
@@ -757,7 +845,8 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
   /// serialize into the buffer as a `vector`.
   /// @return Returns a typed `Offset` into the serialized data indicating
   /// where the vector is stored.
-  template<typename T, class C> Offset<Vector<T>> CreateVector(const C &array) {
+  template <typename T, class C> Offset<Vector<T>> CreateVector(const C &array)
+  {
     return CreateVector(array.data(), array.size());
   }
 
@@ -766,15 +855,19 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
   /// @param[in] v The value of the initializer list.
   /// @return Returns a typed `Offset` into the serialized data indicating
   /// where the vector is stored.
-  template<typename T>
-  Offset<Vector<T>> CreateVector(std::initializer_list<T> v) {
+  template <typename T>
+  Offset<Vector<T>> CreateVector(std::initializer_list<T> v)
+  {
     return CreateVector(v.begin(), v.size());
   }
 
-  template<typename T>
-  Offset<Vector<Offset<T>>> CreateVector(const Offset<T> *v, size_t len) {
+  template <typename T>
+  Offset<Vector<Offset<T>>> CreateVector(const Offset<T> *v, size_t len)
+  {
     StartVector<Offset<T>>(len);
-    for (auto i = len; i > 0;) { PushElement(v[--i]); }
+    for (auto i = len; i > 0;) {
+      PushElement(v[--i]);
+    }
     return Offset<Vector<Offset<T>>>(EndVector(len));
   }
 
@@ -784,21 +877,24 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
   /// buffer as a `vector`.
   /// @return Returns a typed `Offset` into the serialized data indicating
   /// where the vector is stored.
-  template<typename T, typename Alloc = std::allocator<T>>
-  Offset<Vector<T>> CreateVector(const std::vector<T, Alloc> &v) {
+  template <typename T, typename Alloc = std::allocator<T>>
+  Offset<Vector<T>> CreateVector(const std::vector<T, Alloc> &v)
+  {
     return CreateVector(data(v), v.size());
   }
 
-  template<template<typename...> class VectorT = Vector64,
-           int &...ExplicitArgumentBarrier, typename T>
-  Offset64<VectorT<T>> CreateVector64(const std::vector<T> &v) {
+  template <template <typename...> class VectorT = Vector64,
+            int &...ExplicitArgumentBarrier, typename T>
+  Offset64<VectorT<T>> CreateVector64(const std::vector<T> &v)
+  {
     return CreateVector<T, Offset64, VectorT>(data(v), v.size());
   }
 
   // vector<bool> may be implemented using a bit-set, so we can't access it as
   // an array. Instead, read elements manually.
   // Background: https://isocpp.org/blog/2012/11/on-vectorbool
-  Offset<Vector<uint8_t>> CreateVector(const std::vector<bool> &v) {
+  Offset<Vector<uint8_t>> CreateVector(const std::vector<bool> &v)
+  {
     StartVector<uint8_t>(v.size());
     for (auto i = v.size(); i > 0;) {
       PushElement(static_cast<uint8_t>(v[--i]));
@@ -813,12 +909,14 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
   /// returns any type that you can construct a FlatBuffers vector out of.
   /// @return Returns a typed `Offset` into the serialized data indicating
   /// where the vector is stored.
-  template<typename T>
+  template <typename T>
   Offset<Vector<T>> CreateVector(size_t vector_size,
-                                 const std::function<T(size_t i)> &f) {
+                                 const std::function<T(size_t i)> &f)
+  {
     FLATBUFFERS_ASSERT(FLATBUFFERS_GENERAL_HEAP_ALLOC_OK);
     std::vector<T> elems(vector_size);
-    for (size_t i = 0; i < vector_size; i++) elems[i] = f(i);
+    for (size_t i = 0; i < vector_size; i++)
+      elems[i] = f(i);
     return CreateVector(elems);
   }
 
@@ -833,11 +931,13 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
   /// @param state State passed to f.
   /// @return Returns a typed `Offset` into the serialized data indicating
   /// where the vector is stored.
-  template<typename T, typename F, typename S>
-  Offset<Vector<T>> CreateVector(size_t vector_size, F f, S *state) {
+  template <typename T, typename F, typename S>
+  Offset<Vector<T>> CreateVector(size_t vector_size, F f, S *state)
+  {
     FLATBUFFERS_ASSERT(FLATBUFFERS_GENERAL_HEAP_ALLOC_OK);
     std::vector<T> elems(vector_size);
-    for (size_t i = 0; i < vector_size; i++) elems[i] = f(i, state);
+    for (size_t i = 0; i < vector_size; i++)
+      elems[i] = f(i, state);
     return CreateVector(elems);
   }
 
@@ -849,10 +949,11 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
   /// buffer as a `vector`.
   /// @return Returns a typed `Offset` into the serialized data indicating
   /// where the vector is stored.
-  template<typename StringType = std::string,
-           typename Alloc = std::allocator<StringType>>
-  Offset<Vector<Offset<String>>> CreateVectorOfStrings(
-      const std::vector<StringType, Alloc> &v) {
+  template <typename StringType = std::string,
+            typename Alloc = std::allocator<StringType>>
+  Offset<Vector<Offset<String>>>
+  CreateVectorOfStrings(const std::vector<StringType, Alloc> &v)
+  {
     return CreateVectorOfStrings(v.cbegin(), v.cend());
   }
 
@@ -862,8 +963,9 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
   /// @param end The ending iterator of the collection
   /// @return Returns a typed `Offset` into the serialized data indicating
   /// where the vector is stored.
-  template<class It>
-  Offset<Vector<Offset<String>>> CreateVectorOfStrings(It begin, It end) {
+  template <class It>
+  Offset<Vector<Offset<String>>> CreateVectorOfStrings(It begin, It end)
+  {
     auto size = std::distance(begin, end);
     auto scratch_buffer_usage = size * sizeof(Offset<String>);
     // If there is not enough space to store the offsets, there definitely won't
@@ -891,9 +993,10 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
   /// @param[in] len The number of elements to serialize.
   /// @return Returns a typed `Offset` into the serialized data indicating
   /// where the vector is stored.
-  template<typename T, template<typename...> class OffsetT = Offset,
-           template<typename...> class VectorT = Vector>
-  OffsetT<VectorT<const T *>> CreateVectorOfStructs(const T *v, size_t len) {
+  template <typename T, template <typename...> class OffsetT = Offset,
+            template <typename...> class VectorT = Vector>
+  OffsetT<VectorT<const T *>> CreateVectorOfStructs(const T *v, size_t len)
+  {
     // The type of the length field in the vector.
     typedef typename VectorT<T>::size_type LenT;
     typedef typename OffsetT<VectorT<const T *>>::offset_type offset_type;
@@ -914,9 +1017,11 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
   /// where the vector is stored.
   /// This is mostly useful when flatbuffers are generated with mutation
   /// accessors.
-  template<typename T>
-  Offset<Vector<const T *>> CreateVectorOfStructs(
-      size_t vector_size, const std::function<void(size_t i, T *)> &filler) {
+  template <typename T>
+  Offset<Vector<const T *>>
+  CreateVectorOfStructs(size_t vector_size,
+                        const std::function<void(size_t i, T *)> &filler)
+  {
     T *structs = StartVectorOfStructs<T>(vector_size);
     for (size_t i = 0; i < vector_size; i++) {
       filler(i, structs);
@@ -934,9 +1039,10 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
   /// where the vector is stored.
   /// This is mostly useful when flatbuffers are generated with mutation
   /// accessors.
-  template<typename T, typename F, typename S>
+  template <typename T, typename F, typename S>
   Offset<Vector<const T *>> CreateVectorOfStructs(size_t vector_size, F f,
-                                                  S *state) {
+                                                  S *state)
+  {
     T *structs = StartVectorOfStructs<T>(vector_size);
     for (size_t i = 0; i < vector_size; i++) {
       f(i, structs, state);
@@ -951,17 +1057,19 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
   /// serialize into the buffer as a `vector`.
   /// @return Returns a typed `Offset` into the serialized data indicating
   /// where the vector is stored.
-  template<typename T, template<typename...> class OffsetT = Offset,
-           template<typename...> class VectorT = Vector,
-           typename Alloc = std::allocator<T>>
-  OffsetT<VectorT<const T *>> CreateVectorOfStructs(
-      const std::vector<T, Alloc> &v) {
+  template <typename T, template <typename...> class OffsetT = Offset,
+            template <typename...> class VectorT = Vector,
+            typename Alloc = std::allocator<T>>
+  OffsetT<VectorT<const T *>>
+  CreateVectorOfStructs(const std::vector<T, Alloc> &v)
+  {
     return CreateVectorOfStructs<T, OffsetT, VectorT>(data(v), v.size());
   }
 
-  template<template<typename...> class VectorT = Vector64, int &..., typename T>
-  Offset64<VectorT<const T *>> CreateVectorOfStructs64(
-      const std::vector<T> &v) {
+  template <template <typename...> class VectorT = Vector64, int &...,
+            typename T>
+  Offset64<VectorT<const T *>> CreateVectorOfStructs64(const std::vector<T> &v)
+  {
     return CreateVectorOfStructs<T, Offset64, VectorT>(data(v), v.size());
   }
 
@@ -975,12 +1083,16 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
   /// to the FlatBuffer struct.
   /// @return Returns a typed `Offset` into the serialized data indicating
   /// where the vector is stored.
-  template<typename T, typename S>
-  Offset<Vector<const T *>> CreateVectorOfNativeStructs(
-      const S *v, size_t len, T (*const pack_func)(const S &)) {
+  template <typename T, typename S>
+  Offset<Vector<const T *>>
+  CreateVectorOfNativeStructs(const S *v, size_t len,
+                              T (*const pack_func)(const S &))
+  {
     FLATBUFFERS_ASSERT(pack_func);
     auto structs = StartVectorOfStructs<T>(len);
-    for (size_t i = 0; i < len; i++) { structs[i] = pack_func(v[i]); }
+    for (size_t i = 0; i < len; i++) {
+      structs[i] = pack_func(v[i]);
+    }
     return EndVectorOfStructs<T>(len);
   }
 
@@ -992,9 +1104,9 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
   /// @param[in] len The number of elements to serialize.
   /// @return Returns a typed `Offset` into the serialized data indicating
   /// where the vector is stored.
-  template<typename T, typename S>
-  Offset<Vector<const T *>> CreateVectorOfNativeStructs(const S *v,
-                                                        size_t len) {
+  template <typename T, typename S>
+  Offset<Vector<const T *>> CreateVectorOfNativeStructs(const S *v, size_t len)
+  {
     extern T Pack(const S &);
     return CreateVectorOfNativeStructs(v, len, Pack);
   }
@@ -1009,9 +1121,11 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
   /// to the FlatBuffer struct.
   /// @return Returns a typed `Offset` into the serialized data indicating
   /// where the vector is stored.
-  template<typename T, typename S, typename Alloc = std::allocator<T>>
-  Offset<Vector<const T *>> CreateVectorOfNativeStructs(
-      const std::vector<S, Alloc> &v, T (*const pack_func)(const S &)) {
+  template <typename T, typename S, typename Alloc = std::allocator<T>>
+  Offset<Vector<const T *>>
+  CreateVectorOfNativeStructs(const std::vector<S, Alloc> &v,
+                              T (*const pack_func)(const S &))
+  {
     return CreateVectorOfNativeStructs<T, S>(data(v), v.size(), pack_func);
   }
 
@@ -1023,15 +1137,17 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
   /// serialize into the buffer as a `vector`.
   /// @return Returns a typed `Offset` into the serialized data indicating
   /// where the vector is stored.
-  template<typename T, typename S, typename Alloc = std::allocator<S>>
-  Offset<Vector<const T *>> CreateVectorOfNativeStructs(
-      const std::vector<S, Alloc> &v) {
+  template <typename T, typename S, typename Alloc = std::allocator<S>>
+  Offset<Vector<const T *>>
+  CreateVectorOfNativeStructs(const std::vector<S, Alloc> &v)
+  {
     return CreateVectorOfNativeStructs<T, S>(data(v), v.size());
   }
 
   /// @cond FLATBUFFERS_INTERNAL
-  template<typename T> struct StructKeyComparator {
-    bool operator()(const T &a, const T &b) const {
+  template <typename T> struct StructKeyComparator {
+    bool operator()(const T &a, const T &b) const
+    {
       return a.KeyCompareLessThan(&b);
     }
   };
@@ -1044,9 +1160,10 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
   /// serialize into the buffer as a `vector`.
   /// @return Returns a typed `Offset` into the serialized data indicating
   /// where the vector is stored.
-  template<typename T, typename Alloc = std::allocator<T>>
-  Offset<Vector<const T *>> CreateVectorOfSortedStructs(
-      std::vector<T, Alloc> *v) {
+  template <typename T, typename Alloc = std::allocator<T>>
+  Offset<Vector<const T *>>
+  CreateVectorOfSortedStructs(std::vector<T, Alloc> *v)
+  {
     return CreateVectorOfSortedStructs(data(*v), v->size());
   }
 
@@ -1058,9 +1175,10 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
   /// serialize into the buffer as a `vector`.
   /// @return Returns a typed `Offset` into the serialized data indicating
   /// where the vector is stored.
-  template<typename T, typename S, typename Alloc = std::allocator<T>>
-  Offset<Vector<const T *>> CreateVectorOfSortedNativeStructs(
-      std::vector<S, Alloc> *v) {
+  template <typename T, typename S, typename Alloc = std::allocator<T>>
+  Offset<Vector<const T *>>
+  CreateVectorOfSortedNativeStructs(std::vector<S, Alloc> *v)
+  {
     return CreateVectorOfSortedNativeStructs<T, S>(data(*v), v->size());
   }
 
@@ -1072,8 +1190,9 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
   /// @param[in] len The number of elements to serialize.
   /// @return Returns a typed `Offset` into the serialized data indicating
   /// where the vector is stored.
-  template<typename T>
-  Offset<Vector<const T *>> CreateVectorOfSortedStructs(T *v, size_t len) {
+  template <typename T>
+  Offset<Vector<const T *>> CreateVectorOfSortedStructs(T *v, size_t len)
+  {
     std::stable_sort(v, v + len, StructKeyComparator<T>());
     return CreateVectorOfStructs(v, len);
   }
@@ -1087,28 +1206,35 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
   /// @param[in] len The number of elements to serialize.
   /// @return Returns a typed `Offset` into the serialized data indicating
   /// where the vector is stored.
-  template<typename T, typename S>
-  Offset<Vector<const T *>> CreateVectorOfSortedNativeStructs(S *v,
-                                                              size_t len) {
+  template <typename T, typename S>
+  Offset<Vector<const T *>> CreateVectorOfSortedNativeStructs(S *v, size_t len)
+  {
     extern T Pack(const S &);
     auto structs = StartVectorOfStructs<T>(len);
-    for (size_t i = 0; i < len; i++) { structs[i] = Pack(v[i]); }
+    for (size_t i = 0; i < len; i++) {
+      structs[i] = Pack(v[i]);
+    }
     std::stable_sort(structs, structs + len, StructKeyComparator<T>());
     return EndVectorOfStructs<T>(len);
   }
 
   /// @cond FLATBUFFERS_INTERNAL
-  template<typename T> struct TableKeyComparator {
-    explicit TableKeyComparator(vector_downward<SizeT> &buf) : buf_(buf) {}
-    TableKeyComparator(const TableKeyComparator &other) : buf_(other.buf_) {}
-    bool operator()(const Offset<T> &a, const Offset<T> &b) const {
+  template <typename T> struct TableKeyComparator {
+    explicit TableKeyComparator(vector_downward<SizeT> &buf) : buf_(buf)
+    {
+    }
+    TableKeyComparator(const TableKeyComparator &other) : buf_(other.buf_)
+    {
+    }
+    bool operator()(const Offset<T> &a, const Offset<T> &b) const
+    {
       auto table_a = reinterpret_cast<T *>(buf_.data_at(a.o));
       auto table_b = reinterpret_cast<T *>(buf_.data_at(b.o));
       return table_a->KeyCompareLessThan(table_b);
     }
     vector_downward<SizeT> &buf_;
 
-   private:
+  private:
     FLATBUFFERS_DELETE_FUNC(
         TableKeyComparator &operator=(const TableKeyComparator &other));
   };
@@ -1122,9 +1248,9 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
   /// @param[in] len The number of elements to store in the `vector`.
   /// @return Returns a typed `Offset` into the serialized data indicating
   /// where the vector is stored.
-  template<typename T>
-  Offset<Vector<Offset<T>>> CreateVectorOfSortedTables(Offset<T> *v,
-                                                       size_t len) {
+  template <typename T>
+  Offset<Vector<Offset<T>>> CreateVectorOfSortedTables(Offset<T> *v, size_t len)
+  {
     std::stable_sort(v, v + len, TableKeyComparator<T>(buf_));
     return CreateVector(v, len);
   }
@@ -1136,9 +1262,10 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
   /// offsets to store in the buffer in sorted order.
   /// @return Returns a typed `Offset` into the serialized data indicating
   /// where the vector is stored.
-  template<typename T, typename Alloc = std::allocator<T>>
-  Offset<Vector<Offset<T>>> CreateVectorOfSortedTables(
-      std::vector<Offset<T>, Alloc> *v) {
+  template <typename T, typename Alloc = std::allocator<T>>
+  Offset<Vector<Offset<T>>>
+  CreateVectorOfSortedTables(std::vector<Offset<T>, Alloc> *v)
+  {
     return CreateVectorOfSortedTables(data(*v), v->size());
   }
 
@@ -1150,7 +1277,8 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
   /// written to at a later time to serialize the data into a `vector`
   /// in the buffer.
   uoffset_t CreateUninitializedVector(size_t len, size_t elemsize,
-                                      size_t alignment, uint8_t **buf) {
+                                      size_t alignment, uint8_t **buf)
+  {
     NotNested();
     StartVector(len, elemsize, alignment);
     buf_.make_space(len * elemsize);
@@ -1162,7 +1290,8 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
 
   FLATBUFFERS_ATTRIBUTE([[deprecated("call the version above instead")]])
   uoffset_t CreateUninitializedVector(size_t len, size_t elemsize,
-                                      uint8_t **buf) {
+                                      uint8_t **buf)
+  {
     return CreateUninitializedVector(len, elemsize, elemsize, buf);
   }
 
@@ -1174,16 +1303,18 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
   /// @param[out] buf A pointer to a pointer of type `T` that can be
   /// written to at a later time to serialize the data into a `vector`
   /// in the buffer.
-  template<typename T>
-  Offset<Vector<T>> CreateUninitializedVector(size_t len, T **buf) {
+  template <typename T>
+  Offset<Vector<T>> CreateUninitializedVector(size_t len, T **buf)
+  {
     AssertScalarT<T>();
     return CreateUninitializedVector(len, sizeof(T), AlignOf<T>(),
                                      reinterpret_cast<uint8_t **>(buf));
   }
 
-  template<typename T>
+  template <typename T>
   Offset<Vector<const T *>> CreateUninitializedVectorOfStructs(size_t len,
-                                                               T **buf) {
+                                                               T **buf)
+  {
     return CreateUninitializedVector(len, sizeof(T), AlignOf<T>(),
                                      reinterpret_cast<uint8_t **>(buf));
   }
@@ -1191,17 +1322,21 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
   // @brief Create a vector of scalar type T given as input a vector of scalar
   // type U, useful with e.g. pre "enum class" enums, or any existing scalar
   // data of the wrong type.
-  template<typename T, typename U>
-  Offset<Vector<T>> CreateVectorScalarCast(const U *v, size_t len) {
+  template <typename T, typename U>
+  Offset<Vector<T>> CreateVectorScalarCast(const U *v, size_t len)
+  {
     AssertScalarT<T>();
     AssertScalarT<U>();
     StartVector<T>(len);
-    for (auto i = len; i > 0;) { PushElement(static_cast<T>(v[--i])); }
+    for (auto i = len; i > 0;) {
+      PushElement(static_cast<T>(v[--i]));
+    }
     return Offset<Vector<T>>(EndVector(len));
   }
 
   /// @brief Write a struct by itself, typically to be part of a union.
-  template<typename T> Offset<const T *> CreateStruct(const T &structobj) {
+  template <typename T> Offset<const T *> CreateStruct(const T &structobj)
+  {
     NotNested();
     Align(AlignOf<T>());
     buf_.push_small(structobj);
@@ -1212,8 +1347,9 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
   /// @brief Finish serializing a buffer by writing the root offset.
   /// @param[in] file_identifier If a `file_identifier` is given, the buffer
   /// will be prefixed with a standard FlatBuffers file header.
-  template<typename T>
-  void Finish(Offset<T> root, const char *file_identifier = nullptr) {
+  template <typename T>
+  void Finish(Offset<T> root, const char *file_identifier = nullptr)
+  {
     Finish(root.o, file_identifier, false);
   }
 
@@ -1224,13 +1360,14 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
   /// All >32 bit quantities in this buffer will be aligned when the whole
   /// size pre-fixed buffer is aligned.
   /// These kinds of buffers are useful for creating a stream of FlatBuffers.
-  template<typename T>
-  void FinishSizePrefixed(Offset<T> root,
-                          const char *file_identifier = nullptr) {
+  template <typename T>
+  void FinishSizePrefixed(Offset<T> root, const char *file_identifier = nullptr)
+  {
     Finish(root.o, file_identifier, true);
   }
 
-  void SwapBufAllocator(FlatBufferBuilderImpl &other) {
+  void SwapBufAllocator(FlatBufferBuilderImpl &other)
+  {
     buf_.swap_allocator(other.buf_);
   }
 
@@ -1238,12 +1375,13 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
   static const size_t kFileIdentifierLength =
       ::flatbuffers::kFileIdentifierLength;
 
- protected:
+protected:
   // You shouldn't really be copying instances of this class.
   FlatBufferBuilderImpl(const FlatBufferBuilderImpl &);
   FlatBufferBuilderImpl &operator=(const FlatBufferBuilderImpl &);
 
-  void Finish(uoffset_t root, const char *file_identifier, bool size_prefix) {
+  void Finish(uoffset_t root, const char *file_identifier, bool size_prefix)
+  {
     NotNested();
     buf_.clear_scratch();
 
@@ -1262,8 +1400,10 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
       PushBytes(reinterpret_cast<const uint8_t *>(file_identifier),
                 kFileIdentifierLength);
     }
-    PushElement(ReferTo(root));  // Location of root.
-    if (size_prefix) { PushElement(GetSize()); }
+    PushElement(ReferTo(root)); // Location of root.
+    if (size_prefix) {
+      PushElement(GetSize());
+    }
     finished = true;
   }
 
@@ -1309,14 +1449,16 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
 
   size_t minalign_;
 
-  bool force_defaults_;  // Serialize values equal to their defaults anyway.
+  bool force_defaults_; // Serialize values equal to their defaults anyway.
 
   bool dedup_vtables_;
 
   struct StringOffsetCompare {
-    explicit StringOffsetCompare(const vector_downward<SizeT> &buf)
-        : buf_(&buf) {}
-    bool operator()(const Offset<String> &a, const Offset<String> &b) const {
+    explicit StringOffsetCompare(const vector_downward<SizeT> &buf) : buf_(&buf)
+    {
+    }
+    bool operator()(const Offset<String> &a, const Offset<String> &b) const
+    {
       auto stra = reinterpret_cast<const String *>(buf_->data_at(a.o));
       auto strb = reinterpret_cast<const String *>(buf_->data_at(b.o));
       return StringLessThan(stra->data(), stra->size(), strb->data(),
@@ -1329,8 +1471,9 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
   typedef std::set<Offset<String>, StringOffsetCompare> StringOffsetMap;
   StringOffsetMap *string_pool;
 
- private:
-  void CanAddOffset64() {
+private:
+  void CanAddOffset64()
+  {
     // If you hit this assertion, you are attempting to add a 64-bit offset to
     // a 32-bit only builder. This is because the builder has overloads that
     // differ only on the offset size returned: e.g.:
@@ -1357,9 +1500,10 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
   /// @param[in] str A const char pointer to the data to be stored as a string.
   /// @param[in] len The number of bytes that should be stored from `str`.
   /// @return Returns the offset in the buffer where the string starts.
-  void CreateStringImpl(const char *str, size_t len) {
+  void CreateStringImpl(const char *str, size_t len)
+  {
     NotNested();
-    PreAlign<uoffset_t>(len + 1);  // Always 0-terminated.
+    PreAlign<uoffset_t>(len + 1); // Always 0-terminated.
     buf_.fill(1);
     PushBytes(reinterpret_cast<const uint8_t *>(str), len);
     PushElement(static_cast<uoffset_t>(len));
@@ -1367,8 +1511,9 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
 
   // Allocates space for a vector of structures.
   // Must be completed with EndVectorOfStructs().
-  template<typename T, template<typename> class OffsetT = Offset>
-  T *StartVectorOfStructs(size_t vector_size) {
+  template <typename T, template <typename> class OffsetT = Offset>
+  T *StartVectorOfStructs(size_t vector_size)
+  {
     StartVector<OffsetT>(vector_size * sizeof(T) / AlignOf<T>(), sizeof(T),
                          AlignOf<T>());
     return reinterpret_cast<T *>(buf_.make_space(vector_size * sizeof(T)));
@@ -1376,17 +1521,19 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
 
   // End the vector of structures in the flatbuffers.
   // Vector should have previously be started with StartVectorOfStructs().
-  template<typename T, template<typename> class OffsetT = Offset>
-  OffsetT<Vector<const T *>> EndVectorOfStructs(size_t vector_size) {
+  template <typename T, template <typename> class OffsetT = Offset>
+  OffsetT<Vector<const T *>> EndVectorOfStructs(size_t vector_size)
+  {
     return OffsetT<Vector<const T *>>(
         EndVector<typename Vector<const T *>::size_type,
                   typename OffsetT<Vector<const T *>>::offset_type>(
             vector_size));
   }
 
-  template<typename T>
+  template <typename T>
   typename std::enable_if<std::is_same<T, uoffset_t>::value, T>::type
-  CalculateOffset() {
+  CalculateOffset()
+  {
     // Default to the end of the 32-bit region. This may or may not be the end
     // of the buffer, depending on if any 64-bit offsets have been added.
     return GetSizeRelative32BitRegion();
@@ -1394,9 +1541,10 @@ template<bool Is64Aware = false> class FlatBufferBuilderImpl {
 
   // Specializations to handle the 64-bit CalculateOffset, which is relative to
   // end of the buffer.
-  template<typename T>
+  template <typename T>
   typename std::enable_if<std::is_same<T, uoffset64_t>::value, T>::type
-  CalculateOffset() {
+  CalculateOffset()
+  {
     // This should never be compiled in when not using a 64-bit builder.
     static_assert(Is64Aware, "invalid 64-bit offset in 32-bit builder");
 
@@ -1416,10 +1564,11 @@ using FlatBufferBuilder64 = FlatBufferBuilderImpl<true>;
 
 // These are external due to GCC not allowing them in the class.
 // See: https://stackoverflow.com/q/8061456/868247
-template<>
-template<>
+template <>
+template <>
 inline Offset64<String> FlatBufferBuilder64::CreateString(const char *str,
-                                                          size_t len) {
+                                                          size_t len)
+{
   CanAddOffset64();
   CreateStringImpl(str, len);
   return Offset64<String>(
@@ -1427,21 +1576,23 @@ inline Offset64<String> FlatBufferBuilder64::CreateString(const char *str,
 }
 
 // Used to distinguish from real Offsets.
-template<typename T = void> struct EmptyOffset {};
+template <typename T = void> struct EmptyOffset {};
 
 // TODO(derekbailey): it would be nice to combine these two methods.
-template<>
-template<>
+template <>
+template <>
 inline void FlatBufferBuilder64::StartVector<Offset64, uint32_t>(
-    size_t len, size_t elemsize, size_t alignment) {
+    size_t len, size_t elemsize, size_t alignment)
+{
   CanAddOffset64();
   StartVector<EmptyOffset, uint32_t>(len, elemsize, alignment);
 }
 
-template<>
-template<>
+template <>
+template <>
 inline void FlatBufferBuilder64::StartVector<Offset64, uint64_t>(
-    size_t len, size_t elemsize, size_t alignment) {
+    size_t len, size_t elemsize, size_t alignment)
+{
   CanAddOffset64();
   StartVector<EmptyOffset, uint64_t>(len, elemsize, alignment);
 }
@@ -1449,17 +1600,19 @@ inline void FlatBufferBuilder64::StartVector<Offset64, uint64_t>(
 /// Helpers to get a typed pointer to objects that are currently being built.
 /// @warning Creating new objects will lead to reallocations and invalidates
 /// the pointer!
-template<typename T>
-T *GetMutableTemporaryPointer(FlatBufferBuilder &fbb, Offset<T> offset) {
+template <typename T>
+T *GetMutableTemporaryPointer(FlatBufferBuilder &fbb, Offset<T> offset)
+{
   return reinterpret_cast<T *>(fbb.GetCurrentBufferPointer() + fbb.GetSize() -
                                offset.o);
 }
 
-template<typename T>
-const T *GetTemporaryPointer(FlatBufferBuilder &fbb, Offset<T> offset) {
+template <typename T>
+const T *GetTemporaryPointer(FlatBufferBuilder &fbb, Offset<T> offset)
+{
   return GetMutableTemporaryPointer<T>(fbb, offset);
 }
 
-}  // namespace flatbuffers
+} // namespace flatbuffers
 
-#endif  // FLATBUFFERS_FLATBUFFER_BUILDER_H_
+#endif // FLATBUFFERS_FLATBUFFER_BUILDER_H_

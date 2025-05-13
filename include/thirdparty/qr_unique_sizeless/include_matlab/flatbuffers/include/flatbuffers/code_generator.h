@@ -30,10 +30,11 @@ struct CodeGenOptions {
 // A code generator interface for producing converting flatbuffer schema into
 // code.
 class CodeGenerator {
- public:
+public:
   virtual ~CodeGenerator() = default;
 
-  enum Status {
+  enum Status
+  {
     OK = 0,
     ERROR = 1,
     FAILED_VERIFICATION = 2,
@@ -51,7 +52,8 @@ class CodeGenerator {
   // Generate code from the provided `parser` and place it in the output.
   virtual Status GenerateCodeString(const Parser &parser,
                                     const std::string &filename,
-                                    std::string &output) {
+                                    std::string &output)
+  {
     (void)parser;
     (void)filename;
     (void)output;
@@ -83,15 +85,15 @@ class CodeGenerator {
 
   virtual std::string LanguageName() const = 0;
 
- protected:
+protected:
   CodeGenerator() = default;
 
- private:
+private:
   // Copying is not supported.
   CodeGenerator(const CodeGenerator &) = delete;
   CodeGenerator &operator=(const CodeGenerator &) = delete;
 };
 
-}  // namespace flatbuffers
+} // namespace flatbuffers
 
-#endif  // FLATBUFFERS_CODE_GENERATOR_H_
+#endif // FLATBUFFERS_CODE_GENERATOR_H_

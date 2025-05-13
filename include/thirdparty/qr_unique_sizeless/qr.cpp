@@ -10,9 +10,9 @@
 
 // Include files
 #include "qr.h"
+#include "coder_array.h"
 #include "rt_nonfinite.h"
 #include "xnrm2.h"
-#include "coder_array.h"
 #include <cmath>
 #include <emmintrin.h>
 

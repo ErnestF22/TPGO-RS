@@ -27,7 +27,7 @@ namespace flatbuffers {
 // A File interface to write data to file by default or
 // save only file names
 class FileManager {
- public:
+public:
   FileManager() = default;
   virtual ~FileManager() = default;
 
@@ -37,12 +37,12 @@ class FileManager {
   virtual bool LoadFile(const std::string &absolute_file_name,
                         std::string *buf) = 0;
 
- private:
+private:
   // Copying is not supported.
   FileManager(const FileManager &) = delete;
   FileManager &operator=(const FileManager &) = delete;
 };
 
-}  // namespace flatbuffers
+} // namespace flatbuffers
 
-#endif  // FLATBUFFERS_FILE_MANAGER_H_
+#endif // FLATBUFFERS_FILE_MANAGER_H_

@@ -1,5 +1,5 @@
 /*
-This file defines the class for the problem: 
+This file defines the class for the problem:
 Computing the karcher mean of SPD manifold, i.e.,
 min_{X \in SPD} (1 / 2 / num) sum_{i=1}^{num} dist^2(X, A_i)
 where A_i \in SPD and dist(A, B) = \|logm(A^{-1/2} B A^{-1/2})\|_F.
@@ -17,9 +17,11 @@ Problem --> SPDKarcherMean
 #include "others_def.h"
 
 /*Define the namespace*/
-namespace ROPTLIB{
+namespace ROPTLIB
+{
 
-	class SPDKarcherMean : public Problem{
+	class SPDKarcherMean : public Problem
+	{
 	public:
 		/*The sample SPD matrices Ai are stored as their Cholesky matrix, i.e., Ai = Li Li^T.
 		inLs is an array of Vectors with length innum.*/

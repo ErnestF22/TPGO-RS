@@ -9,9 +9,10 @@ More functions will be added in this class.
 #include "others_BlasLapackCppWrapper.h"
 
 /*Define the namespace */
-namespace ROPTLIB {
-	//#include <dasum.h>
-	//#include <daxpy.h>
+namespace ROPTLIB
+{
+	// #include <dasum.h>
+	// #include <daxpy.h>
 	void axpy_(integer *n, complexRopt *ca, complexRopt *cx, integer *incx, complexRopt *cy, integer *incy)
 	{
 #ifndef MATLAB_MEX_FILE
@@ -37,8 +38,8 @@ namespace ROPTLIB {
 #endif
 	};
 
-	//#include <dcabs1.h>
-	//#include <dcopy.h>
+	// #include <dcabs1.h>
+	// #include <dcopy.h>
 	void copy_(integer *n, complexRopt *cx, integer *incx, complexRopt *cy, integer *incy)
 	{
 #ifndef MATLAB_MEX_FILE
@@ -64,7 +65,7 @@ namespace ROPTLIB {
 #endif
 	};
 
-	//#include <ddot.h>
+	// #include <ddot.h>
 	doublerealRopt dot_(integer *n, doublerealRopt *dx, integer *incx, doublerealRopt *dy, integer *incy)
 	{
 		return ddot_(n, dx, incx, dy, incy);
@@ -73,7 +74,7 @@ namespace ROPTLIB {
 	{
 		return sdot_(n, dx, incx, dy, incy);
 	}
-	void dotu_(complexRopt * ret_val, integer *n, complexRopt *cx, integer *incx, complexRopt *cy, integer *incy)
+	void dotu_(complexRopt *ret_val, integer *n, complexRopt *cx, integer *incx, complexRopt *cy, integer *incy)
 	{
 #ifndef MATLAB_MEX_FILE
 		return cdotu_(ret_val, n, cx, incx, cy, incy);
@@ -81,7 +82,7 @@ namespace ROPTLIB {
 		ret_val[0] = cdotu_(n, (float *)cx, incx, (float *)cy, incy);
 #endif
 	};
-	void dotu_(doublecomplexRopt * ret_val, integer *n, doublecomplexRopt *cx, integer *incx, doublecomplexRopt *cy, integer *incy)
+	void dotu_(doublecomplexRopt *ret_val, integer *n, doublecomplexRopt *cx, integer *incx, doublecomplexRopt *cy, integer *incy)
 	{
 #ifndef MATLAB_MEX_FILE
 		return zdotu_(ret_val, n, cx, incx, cy, incy);
@@ -89,7 +90,7 @@ namespace ROPTLIB {
 		ret_val[0] = zdotu_(n, (double *)cx, incx, (double *)cy, incy);
 #endif
 	};
-	void dotc_(complexRopt * ret_val, integer *n, complexRopt *cx, integer *incx, complexRopt *cy, integer *incy)
+	void dotc_(complexRopt *ret_val, integer *n, complexRopt *cx, integer *incx, complexRopt *cy, integer *incy)
 	{
 #ifndef MATLAB_MEX_FILE
 		return cdotc_(ret_val, n, cx, incx, cy, incy);
@@ -97,7 +98,7 @@ namespace ROPTLIB {
 		ret_val[0] = cdotc_(n, (float *)cx, incx, (float *)cy, incy);
 #endif
 	};
-	void dotc_(doublecomplexRopt * ret_val, integer *n, doublecomplexRopt *cx, integer *incx, doublecomplexRopt *cy, integer *incy)
+	void dotc_(doublecomplexRopt *ret_val, integer *n, doublecomplexRopt *cx, integer *incx, doublecomplexRopt *cy, integer *incy)
 	{
 #ifndef MATLAB_MEX_FILE
 		return zdotc_(ret_val, n, cx, incx, cy, incy);
@@ -106,8 +107,8 @@ namespace ROPTLIB {
 #endif
 	};
 
-	//#include <dgbmv.h>
-	//#include <dgemm.h>
+	// #include <dgbmv.h>
+	// #include <dgemm.h>
 	void gemm_(char *transa, char *transb, integer *m, integer *n, integer *k, complexRopt *alpha, complexRopt *a, integer *lda, complexRopt *b, integer *ldb, complexRopt *beta, complexRopt *c__, integer *ldc)
 	{
 #ifndef MATLAB_MEX_FILE
@@ -133,7 +134,7 @@ namespace ROPTLIB {
 #endif
 	};
 
-	//#include <dgemv.h>
+	// #include <dgemv.h>
 	void gemv_(char *trans, integer *m, integer *n, complexRopt *alpha, complexRopt *a, integer *lda, complexRopt *x, integer *incx, complexRopt *beta, complexRopt *y, integer *incy)
 	{
 #ifndef MATLAB_MEX_FILE
@@ -159,8 +160,7 @@ namespace ROPTLIB {
 #endif
 	};
 
-
-	//#include <dger.h>
+	// #include <dger.h>
 	void ger_(integer *m, integer *n, doublerealRopt *alpha, doublerealRopt *x, integer *incx, doublerealRopt *y, integer *incy, doublerealRopt *a, integer *lda)
 	{
 		dger_(m, n, alpha, x, incx, y, incy, a, lda);
@@ -204,7 +204,7 @@ namespace ROPTLIB {
 #endif
 	};
 
-	//#include <dnrm2.h>
+	// #include <dnrm2.h>
 	doublerealRopt nrm2_(integer *n, doublerealRopt *x, integer *incx)
 	{
 		return dnrm2_(n, x, incx);
@@ -214,10 +214,10 @@ namespace ROPTLIB {
 		return snrm2_(n, x, incx);
 	};
 
-	//#include <drot.h>
-	//#include <drotg.h>
-	//#include <dsbmv.h>
-	//#include <dscal.h>
+	// #include <drot.h>
+	// #include <drotg.h>
+	// #include <dsbmv.h>
+	// #include <dscal.h>
 	void scal_(integer *n, complexRopt *ca, complexRopt *cx, integer *incx)
 	{
 #ifndef MATLAB_MEX_FILE
@@ -243,12 +243,12 @@ namespace ROPTLIB {
 #endif
 	};
 
-	//#include <dspmv.h>
-	//#include <dspr.h>
-	//#include <dspr2.h>
-	//#include <dswap.h>
-	//#include <dsymm.h>
-	//#include <dsymv.h>
+	// #include <dspmv.h>
+	// #include <dspr.h>
+	// #include <dspr2.h>
+	// #include <dswap.h>
+	// #include <dsymm.h>
+	// #include <dsymv.h>
 	void symv_(char *uplo, integer *n, complexRopt *alpha, complexRopt *a, integer *lda, complexRopt *x, integer *incx, complexRopt *beta, complexRopt *y, integer *incy)
 	{
 #ifndef MATLAB_MEX_FILE
@@ -274,17 +274,17 @@ namespace ROPTLIB {
 #endif
 	};
 
-	//#include <dsyr.h>
-	//#include <dsyr2.h>
-	//#include <dsyr2k.h>
-	//#include <dsyrk.h>
-	//#include <dtbmv.h>
-	//#include <dtbsv.h>
-	//#include <dtpmv.h>
-	//#include <dtpsv.h>
-	//#include <dtrmm.h>
-	//#include <dtrmv.h>
-	//#include <dtrsm.h>
+	// #include <dsyr.h>
+	// #include <dsyr2.h>
+	// #include <dsyr2k.h>
+	// #include <dsyrk.h>
+	// #include <dtbmv.h>
+	// #include <dtbsv.h>
+	// #include <dtpmv.h>
+	// #include <dtpsv.h>
+	// #include <dtrmm.h>
+	// #include <dtrmv.h>
+	// #include <dtrsm.h>
 	void trsm_(char *side, char *uplo, char *transa, char *diag, integer *m, integer *n, doublerealRopt *alpha, doublerealRopt *a, integer *lda, doublerealRopt *b, integer *ldb)
 	{
 		dtrsm_(side, uplo, transa, diag, m, n, alpha, a, lda, b, ldb);
@@ -293,47 +293,45 @@ namespace ROPTLIB {
 	{
 		strsm_(side, uplo, transa, diag, m, n, alpha, a, lda, b, ldb);
 	};
-    void trsm_(char *side, char *uplo, char *transa, char *diag, integer *m, integer *n, doublecomplexRopt *alpha, doublecomplexRopt *a, integer *lda, doublecomplexRopt *b, integer *ldb)
-    {
+	void trsm_(char *side, char *uplo, char *transa, char *diag, integer *m, integer *n, doublecomplexRopt *alpha, doublecomplexRopt *a, integer *lda, doublecomplexRopt *b, integer *ldb)
+	{
 #ifndef MATLAB_MEX_FILE
-        ztrsm_(side, uplo, transa, diag, m, n, alpha, a, lda, b, ldb);
+		ztrsm_(side, uplo, transa, diag, m, n, alpha, a, lda, b, ldb);
 #else
-        ztrsm_(side, uplo, transa, diag, m, n, (double *) alpha, (double *) a, lda, (double *) b, ldb);
+		ztrsm_(side, uplo, transa, diag, m, n, (double *)alpha, (double *)a, lda, (double *)b, ldb);
 #endif
-    };
-    void trsm_(char *side, char *uplo, char *transa, char *diag, integer *m, integer *n, complexRopt *alpha, complexRopt *a, integer *lda, complexRopt *b, integer *ldb)
-    {
+	};
+	void trsm_(char *side, char *uplo, char *transa, char *diag, integer *m, integer *n, complexRopt *alpha, complexRopt *a, integer *lda, complexRopt *b, integer *ldb)
+	{
 #ifndef MATLAB_MEX_FILE
-        ctrsm_(side, uplo, transa, diag, m, n, alpha, a, lda, b, ldb);
+		ctrsm_(side, uplo, transa, diag, m, n, alpha, a, lda, b, ldb);
 #else
-        ctrsm_(side, uplo, transa, diag, m, n, (float *) alpha, (float *) a, lda, (float *) b, ldb);
+		ctrsm_(side, uplo, transa, diag, m, n, (float *)alpha, (float *)a, lda, (float *)b, ldb);
 #endif
-    };
-	//#include <dtrsv.h>
-	//#include <dzasum.h>
-	//#include <dznrm2.h>
+	};
+	// #include <dtrsv.h>
+	// #include <dzasum.h>
+	// #include <dznrm2.h>
 
-
-
-	//#include <dbdsdc.h>
-	//#include <dbdsqr.h>
-	//#include <ddisna.h>
-	//#include <dgbbrd.h>
-	//#include <dgbcon.h>
-	//#include <dgbequ.h>
-	//#include <dgbrfs.h>
-	//#include <dgbsv.h>
-	//#include <dgbsvx.h>
-	//#include <dgbtf2.h>
-	//#include <dgbtrf.h>
-	//#include <dgbtrs.h>
-	//#include <dgebak.h>
-	//#include <dgebal.h>
-	//#include <dgebd2.h>
-	//#include <dgebrd.h>
-	//#include <dgecon.h>
-	//#include <dgeequ.h>
-	//#include <dgees.h>
+	// #include <dbdsdc.h>
+	// #include <dbdsqr.h>
+	// #include <ddisna.h>
+	// #include <dgbbrd.h>
+	// #include <dgbcon.h>
+	// #include <dgbequ.h>
+	// #include <dgbrfs.h>
+	// #include <dgbsv.h>
+	// #include <dgbsvx.h>
+	// #include <dgbtf2.h>
+	// #include <dgbtrf.h>
+	// #include <dgbtrs.h>
+	// #include <dgebak.h>
+	// #include <dgebal.h>
+	// #include <dgebd2.h>
+	// #include <dgebrd.h>
+	// #include <dgecon.h>
+	// #include <dgeequ.h>
+	// #include <dgees.h>
 	void gees_(char *jobvs, char *sort, L_fp select, integer *n, complexRopt *a, integer *lda, integer *sdim, complexRopt *w, complexRopt *vs, integer *ldvs, complexRopt *work, integer *lwork, realRopt *rwork, logical *bwork, integer *info)
 	{
 #ifndef MATLAB_MEX_FILE
@@ -359,23 +357,23 @@ namespace ROPTLIB {
 #endif
 	};
 
-	//#include <dgeesx.h>
-	//#include <dgeev.h>
-	//#include <dgeevx.h>
-	//#include <dgegs.h>
-	//#include <dgegv.h>
-	//#include <dgehd2.h>
-	//#include <dgehrd.h>
-	//#include <dgelq2.h>
-	//#include <dgelqf.h>
-	//#include <dgels.h>
-	//#include <dgelsd.h>
-	//#include <dgelss.h>
-	//#include <dgelsx.h>
-	//#include <dgelsy.h>
-	//#include <dgeql2.h>
-	//#include <dgeqlf.h>
-	//#include <dgeqp3.h>
+	// #include <dgeesx.h>
+	// #include <dgeev.h>
+	// #include <dgeevx.h>
+	// #include <dgegs.h>
+	// #include <dgegv.h>
+	// #include <dgehd2.h>
+	// #include <dgehrd.h>
+	// #include <dgelq2.h>
+	// #include <dgelqf.h>
+	// #include <dgels.h>
+	// #include <dgelsd.h>
+	// #include <dgelss.h>
+	// #include <dgelsx.h>
+	// #include <dgelsy.h>
+	// #include <dgeql2.h>
+	// #include <dgeqlf.h>
+	// #include <dgeqp3.h>
 	void geqp3_(integer *m, integer *n, complexRopt *a, integer *lda, integer *jpvt, complexRopt *tau, complexRopt *work, integer *lwork, realRopt *rwork, integer *info)
 	{
 #ifndef MATLAB_MEX_FILE
@@ -400,14 +398,14 @@ namespace ROPTLIB {
 		zgeqp3_(m, n, (double *)a, lda, jpvt, (double *)tau, (double *)work, lwork, rwork, info);
 #endif
 	};
-	//#include <dgeqpf.h>
-	//#include <dgeqr2.h>
-	//#include <dgeqrf.h>
-	//#include <dgerfs.h>
-	//#include <dgerq2.h>
-	//#include <dgerqf.h>
-	//#include <dgesc2.h>
-	//#include <dgesdd.h>
+	// #include <dgeqpf.h>
+	// #include <dgeqr2.h>
+	// #include <dgeqrf.h>
+	// #include <dgerfs.h>
+	// #include <dgerq2.h>
+	// #include <dgerqf.h>
+	// #include <dgesc2.h>
+	// #include <dgesdd.h>
 	void gesdd_(char *jobz, integer *m, integer *n, complexRopt *a, integer *lda, realRopt *s, complexRopt *u, integer *ldu, complexRopt *vt, integer *ldvt, complexRopt *work, integer *lwork, realRopt *rwork, integer *iwork, integer *info)
 	{
 #ifndef MATLAB_MEX_FILE
@@ -432,7 +430,7 @@ namespace ROPTLIB {
 		zgesdd_(jobz, m, n, (doublerealRopt *)a, lda, s, (doublerealRopt *)u, ldu, (doublerealRopt *)vt, ldvt, (doublerealRopt *)work, lwork, rwork, iwork, info);
 #endif
 	}
-	//#include <dgesv.h>
+	// #include <dgesv.h>
 	void gesv_(integer *n, integer *nrhs, complexRopt *a, integer *lda, integer *ipiv, complexRopt *b, integer *ldb, integer *info)
 	{
 #ifndef MATLAB_MEX_FILE
@@ -458,7 +456,7 @@ namespace ROPTLIB {
 #endif
 	};
 
-	//#include <dgesvd.h>
+	// #include <dgesvd.h>
 	void gesvd_(char *jobu, char *jobvt, integer *m, integer *n, complexRopt *a, integer *lda, realRopt *s, complexRopt *u, integer *ldu, complexRopt *vt, integer *ldvt, complexRopt *work, integer *lwork, realRopt *rwork, integer *info)
 	{
 #ifndef MATLAB_MEX_FILE
@@ -484,10 +482,10 @@ namespace ROPTLIB {
 #endif
 	};
 
-	//#include <dgesvx.h>
-	//#include <dgetc2.h>
-	//#include <dgetf2.h>
-	//#include <dgetrf.h>
+	// #include <dgesvx.h>
+	// #include <dgetc2.h>
+	// #include <dgetf2.h>
+	// #include <dgetrf.h>
 	void getrf_(integer *m, integer *n, complexRopt *a, integer *lda, integer *ipiv, integer *info)
 	{
 #ifndef MATLAB_MEX_FILE
@@ -513,7 +511,7 @@ namespace ROPTLIB {
 #endif
 	}
 
-	//#include <dgetri.h>
+	// #include <dgetri.h>
 	void getri_(integer *n, complexRopt *a, integer *lda, integer *ipiv, complexRopt *work, integer *lwork, integer *info)
 	{
 #ifndef MATLAB_MEX_FILE
@@ -539,7 +537,7 @@ namespace ROPTLIB {
 #endif
 	};
 
-	//#include <dgetrs.h>
+	// #include <dgetrs.h>
 	void getrs_(char *trans, integer *n, integer *nrhs, complexRopt *a, integer *lda, integer *ipiv, complexRopt *b, integer *ldb, integer *info)
 	{
 #ifndef MATLAB_MEX_FILE
@@ -564,79 +562,79 @@ namespace ROPTLIB {
 		zgetrs_(trans, n, nrhs, (doublerealRopt *)a, lda, ipiv, (doublerealRopt *)b, ldb, info);
 #endif
 	}
-	//#include <dggbak.h>
-	//#include <dggbal.h>
-	//#include <dgges.h>
-	//#include <dggesx.h>
-	//#include <dggev.h>
-	//#include <dggevx.h>
-	//#include <dggglm.h>
-	//#include <dgghrd.h>
-	//#include <dgglse.h>
-	//#include <dggqrf.h>
-	//#include <dggrqf.h>
-	//#include <dggsvd.h>
-	//#include <dggsvp.h>
-	//#include <dgtcon.h>
-	//#include <dgtrfs.h>
-	//#include <dgtsv.h>
-	//#include <dgtsvx.h>
-	//#include <dgttrf.h>
-	//#include <dgttrs.h>
-	//#include <dgtts2.h>
-	//#include <dhgeqz.h>
-	//#include <dhsein.h>
-	//#include <dhseqr.h>
-	//#include <dlabad.h>
-	//#include <dlabrd.h>
-	//#include <dlacon.h>
-	//#include <dlacpy.h>
-	//#include <dladiv.h>
-	//#include <dlae2.h>
-	//#include <dlaebz.h>
-	//#include <dlaed0.h>
-	//#include <dlaed1.h>
-	//#include <dlaed2.h>
-	//#include <dlaed3.h>
-	//#include <dlaed4.h>
-	//#include <dlaed5.h>
-	//#include <dlaed6.h>
-	//#include <dlaed7.h>
-	//#include <dlaed8.h>
-	//#include <dlaed9.h>
-	//#include <dlaeda.h>
-	//#include <dlaein.h>
-	//#include <dlaev2.h>
-	//#include <dlaexc.h>
-	//#include <dlag2.h>
-	//#include <dlags2.h>
-	//#include <dlagtf.h>
-	//#include <dlagtm.h>
-	//#include <dlagts.h>
-	//#include <dlagv2.h>
-	//#include <dlahqr.h>
-	//#include <dlahrd.h>
-	//#include <dlaic1.h>
-	//#include <dlaln2.h>
-	//#include <dlals0.h>
-	//#include <dlalsa.h>
-	//#include <dlalsd.h>
-	//#include <dlamch.h>
-	//#include <dlamrg.h>
-	//#include <dlangb.h>
-	//#include <dlange.h>
-	//#include <dlangt.h>
-	//#include <dlanhs.h>
-	//#include <dlansb.h>
-	//#include <dlansp.h>
-	//#include <dlanst.h>
-	//#include <dlansy.h>
-	//#include <dlantb.h>
-	//#include <dlantp.h>
-	//#include <dlantr.h>
-	//#include <dlanv2.h>
-	//#include <dlapll.h>
-	//#include <dlapmt.h>
+	// #include <dggbak.h>
+	// #include <dggbal.h>
+	// #include <dgges.h>
+	// #include <dggesx.h>
+	// #include <dggev.h>
+	// #include <dggevx.h>
+	// #include <dggglm.h>
+	// #include <dgghrd.h>
+	// #include <dgglse.h>
+	// #include <dggqrf.h>
+	// #include <dggrqf.h>
+	// #include <dggsvd.h>
+	// #include <dggsvp.h>
+	// #include <dgtcon.h>
+	// #include <dgtrfs.h>
+	// #include <dgtsv.h>
+	// #include <dgtsvx.h>
+	// #include <dgttrf.h>
+	// #include <dgttrs.h>
+	// #include <dgtts2.h>
+	// #include <dhgeqz.h>
+	// #include <dhsein.h>
+	// #include <dhseqr.h>
+	// #include <dlabad.h>
+	// #include <dlabrd.h>
+	// #include <dlacon.h>
+	// #include <dlacpy.h>
+	// #include <dladiv.h>
+	// #include <dlae2.h>
+	// #include <dlaebz.h>
+	// #include <dlaed0.h>
+	// #include <dlaed1.h>
+	// #include <dlaed2.h>
+	// #include <dlaed3.h>
+	// #include <dlaed4.h>
+	// #include <dlaed5.h>
+	// #include <dlaed6.h>
+	// #include <dlaed7.h>
+	// #include <dlaed8.h>
+	// #include <dlaed9.h>
+	// #include <dlaeda.h>
+	// #include <dlaein.h>
+	// #include <dlaev2.h>
+	// #include <dlaexc.h>
+	// #include <dlag2.h>
+	// #include <dlags2.h>
+	// #include <dlagtf.h>
+	// #include <dlagtm.h>
+	// #include <dlagts.h>
+	// #include <dlagv2.h>
+	// #include <dlahqr.h>
+	// #include <dlahrd.h>
+	// #include <dlaic1.h>
+	// #include <dlaln2.h>
+	// #include <dlals0.h>
+	// #include <dlalsa.h>
+	// #include <dlalsd.h>
+	// #include <dlamch.h>
+	// #include <dlamrg.h>
+	// #include <dlangb.h>
+	// #include <dlange.h>
+	// #include <dlangt.h>
+	// #include <dlanhs.h>
+	// #include <dlansb.h>
+	// #include <dlansp.h>
+	// #include <dlanst.h>
+	// #include <dlansy.h>
+	// #include <dlantb.h>
+	// #include <dlantp.h>
+	// #include <dlantr.h>
+	// #include <dlanv2.h>
+	// #include <dlapll.h>
+	// #include <dlapmt.h>
 	void lapmt_(logical *forwrd, integer *m, integer *n, complexRopt *x, integer *ldx, integer *k)
 	{
 #ifndef MATLAB_MEX_FILE
@@ -670,23 +668,23 @@ namespace ROPTLIB {
 #endif
 	};
 
-	//#include <dlapy2.h>
-	//#include <dlapy3.h>
-	//#include <dlaqgb.h>
-	//#include <dlaqge.h>
-	//#include <dlaqp2.h>
-	//#include <dlaqps.h>
-	//#include <dlaqsb.h>
-	//#include <dlaqsp.h>
-	//#include <dlaqsy.h>
-	//#include <dlaqtr.h>
-	//#include <dlar1v.h>
-	//#include <dlar2v.h>
-	//#include <dlarf.h>
-	//#include <dlarfb.h>
-	//#include <dlarfg.h>
-	//#include <dlarft.h>
-	//#include <dlarfx.h>
+	// #include <dlapy2.h>
+	// #include <dlapy3.h>
+	// #include <dlaqgb.h>
+	// #include <dlaqge.h>
+	// #include <dlaqp2.h>
+	// #include <dlaqps.h>
+	// #include <dlaqsb.h>
+	// #include <dlaqsp.h>
+	// #include <dlaqsy.h>
+	// #include <dlaqtr.h>
+	// #include <dlar1v.h>
+	// #include <dlar2v.h>
+	// #include <dlarf.h>
+	// #include <dlarfb.h>
+	// #include <dlarfg.h>
+	// #include <dlarft.h>
+	// #include <dlarfx.h>
 	void larfx_(char *side, integer *m, integer *n, complexRopt *v, complexRopt *tau, complexRopt *c__, integer *ldc, complexRopt *work)
 	{
 #ifndef MATLAB_MEX_FILE
@@ -711,66 +709,66 @@ namespace ROPTLIB {
 		zlarfx_(side, m, n, (doublerealRopt *)v, (doublerealRopt *)tau, (doublerealRopt *)c__, ldc, (doublerealRopt *)work);
 #endif
 	};
-	//#include <dlargv.h>
-	//#include <dlarnv.h>
-	//#include <dlarrb.h>
-	//#include <dlarre.h>
-	//#include <dlarrf.h>
-	//#include <dlarrv.h>
-	//#include <dlartg.h>
-	//#include <dlartv.h>
-	//#include <dlaruv.h>
-	//#include <dlarz.h>
-	//#include <dlarzb.h>
-	//#include <dlarzt.h>
-	//#include <dlas2.h>
-	//#include <dlascl.h>
-	//#include <dlasd0.h>
-	//#include <dlasd1.h>
-	//#include <dlasd2.h>
-	//#include <dlasd3.h>
-	//#include <dlasd4.h>
-	//#include <dlasd5.h>
-	//#include <dlasd6.h>
-	//#include <dlasd7.h>
-	//#include <dlasd8.h>
-	//#include <dlasd9.h>
-	//#include <dlasda.h>
-	//#include <dlasdq.h>
-	//#include <dlasdt.h>
-	//#include <dlaset.h>
-	//#include <dlasq1.h>
-	//#include <dlasq2.h>
-	//#include <dlasq3.h>
-	//#include <dlasq4.h>
-	//#include <dlasq5.h>
-	//#include <dlasq6.h>
-	//#include <dlasr.h>
-	//#include <dlasrt.h>
-	//#include <dlassq.h>
-	//#include <dlasv2.h>
-	//#include <dlaswp.h>
-	//#include <dlasy2.h>
-	//#include <dlasyf.h>
-	//#include <dlatbs.h>
-	//#include <dlatdf.h>
-	//#include <dlatps.h>
-	//#include <dlatrd.h>
-	//#include <dlatrs.h>
-	//#include <dlatrz.h>
-	//#include <dlatzm.h>
-	//#include <dlauu2.h>
-	//#include <dlauum.h>
-	//#include <dopgtr.h>
-	//#include <dopmtr.h>
-	//#include <dorg2l.h>
-	//#include <dorg2r.h>
-	//#include <dorgbr.h>
-	//#include <dorghr.h>
-	//#include <dorgl2.h>
-	//#include <dorglq.h>
-	//#include <dorgql.h>
-	//#include <dorgqr.h>
+	// #include <dlargv.h>
+	// #include <dlarnv.h>
+	// #include <dlarrb.h>
+	// #include <dlarre.h>
+	// #include <dlarrf.h>
+	// #include <dlarrv.h>
+	// #include <dlartg.h>
+	// #include <dlartv.h>
+	// #include <dlaruv.h>
+	// #include <dlarz.h>
+	// #include <dlarzb.h>
+	// #include <dlarzt.h>
+	// #include <dlas2.h>
+	// #include <dlascl.h>
+	// #include <dlasd0.h>
+	// #include <dlasd1.h>
+	// #include <dlasd2.h>
+	// #include <dlasd3.h>
+	// #include <dlasd4.h>
+	// #include <dlasd5.h>
+	// #include <dlasd6.h>
+	// #include <dlasd7.h>
+	// #include <dlasd8.h>
+	// #include <dlasd9.h>
+	// #include <dlasda.h>
+	// #include <dlasdq.h>
+	// #include <dlasdt.h>
+	// #include <dlaset.h>
+	// #include <dlasq1.h>
+	// #include <dlasq2.h>
+	// #include <dlasq3.h>
+	// #include <dlasq4.h>
+	// #include <dlasq5.h>
+	// #include <dlasq6.h>
+	// #include <dlasr.h>
+	// #include <dlasrt.h>
+	// #include <dlassq.h>
+	// #include <dlasv2.h>
+	// #include <dlaswp.h>
+	// #include <dlasy2.h>
+	// #include <dlasyf.h>
+	// #include <dlatbs.h>
+	// #include <dlatdf.h>
+	// #include <dlatps.h>
+	// #include <dlatrd.h>
+	// #include <dlatrs.h>
+	// #include <dlatrz.h>
+	// #include <dlatzm.h>
+	// #include <dlauu2.h>
+	// #include <dlauum.h>
+	// #include <dopgtr.h>
+	// #include <dopmtr.h>
+	// #include <dorg2l.h>
+	// #include <dorg2r.h>
+	// #include <dorgbr.h>
+	// #include <dorghr.h>
+	// #include <dorgl2.h>
+	// #include <dorglq.h>
+	// #include <dorgql.h>
+	// #include <dorgqr.h>
 	void orgqr_(integer *m, integer *n, integer *k, doublerealRopt *a, integer *lda, doublerealRopt *tau, doublerealRopt *work, integer *lwork, integer *info)
 	{
 		dorgqr_(m, n, k, a, lda, tau, work, lwork, info);
@@ -780,17 +778,17 @@ namespace ROPTLIB {
 		sorgqr_(m, n, k, a, lda, tau, work, lwork, info);
 	};
 
-	//#include <dorgr2.h>
-	//#include <dorgrq.h>
-	//#include <dorgtr.h>
-	//#include <dorm2l.h>
-	//#include <dorm2r.h>
-	//#include <dormbr.h>
-	//#include <dormhr.h>
-	//#include <dorml2.h>
-	//#include <dormlq.h>
-	//#include <dormql.h>
-	//#include <dormqr.h>
+	// #include <dorgr2.h>
+	// #include <dorgrq.h>
+	// #include <dorgtr.h>
+	// #include <dorm2l.h>
+	// #include <dorm2r.h>
+	// #include <dormbr.h>
+	// #include <dormhr.h>
+	// #include <dorml2.h>
+	// #include <dormlq.h>
+	// #include <dormql.h>
+	// #include <dormqr.h>
 	void ormqr_(char *side, char *trans, integer *m, integer *n, integer *k, doublerealRopt *a, integer *lda, doublerealRopt *tau, doublerealRopt *c__, integer *ldc, doublerealRopt *work, integer *lwork, integer *info)
 	{
 		dormqr_(side, trans, m, n, k, a, lda, tau, c__, ldc, work, lwork, info);
@@ -800,27 +798,27 @@ namespace ROPTLIB {
 		sormqr_(side, trans, m, n, k, a, lda, tau, c__, ldc, work, lwork, info);
 	};
 
-	//#include <dormr2.h>
-	//#include <dormr3.h>
-	//#include <dormrq.h>
-	//#include <dormrz.h>
-	//#include <dormtr.h>
-	//#include <dpbcon.h>
-	//#include <dpbequ.h>
-	//#include <dpbrfs.h>
-	//#include <dpbstf.h>
-	//#include <dpbsv.h>
-	//#include <dpbsvx.h>
-	//#include <dpbtf2.h>
-	//#include <dpbtrf.h>
-	//#include <dpbtrs.h>
-	//#include <dpocon.h>
-	//#include <dpoequ.h>
-	//#include <dporfs.h>
-	//#include <dposv.h>
-	//#include <dposvx.h>
-	//#include <dpotf2.h>
-	//#include <dpotrf.h>
+	// #include <dormr2.h>
+	// #include <dormr3.h>
+	// #include <dormrq.h>
+	// #include <dormrz.h>
+	// #include <dormtr.h>
+	// #include <dpbcon.h>
+	// #include <dpbequ.h>
+	// #include <dpbrfs.h>
+	// #include <dpbstf.h>
+	// #include <dpbsv.h>
+	// #include <dpbsvx.h>
+	// #include <dpbtf2.h>
+	// #include <dpbtrf.h>
+	// #include <dpbtrs.h>
+	// #include <dpocon.h>
+	// #include <dpoequ.h>
+	// #include <dporfs.h>
+	// #include <dposv.h>
+	// #include <dposvx.h>
+	// #include <dpotf2.h>
+	// #include <dpotrf.h>
 	void potrf_(char *uplo, integer *n, complexRopt *a, integer *lda, integer *info)
 	{
 #ifndef MATLAB_MEX_FILE
@@ -846,8 +844,8 @@ namespace ROPTLIB {
 #endif
 	};
 
-	//#include <dpotri.h>
-	//#include <dpotrs.h>
+	// #include <dpotri.h>
+	// #include <dpotrs.h>
 	void potrs_(char *uplo, integer *n, integer *nrhs, complexRopt *a, integer *lda, complexRopt *b, integer *ldb, integer *info)
 	{
 #ifndef MATLAB_MEX_FILE
@@ -873,59 +871,59 @@ namespace ROPTLIB {
 #endif
 	};
 
-	//#include <dppcon.h>
-	//#include <dppequ.h>
-	//#include <dpprfs.h>
-	//#include <dppsv.h>
-	//#include <dppsvx.h>
-	//#include <dpptrf.h>
-	//#include <dpptri.h>
-	//#include <dpptrs.h>
-	//#include <dptcon.h>
-	//#include <dpteqr.h>
-	//#include <dptrfs.h>
-	//#include <dptsv.h>
-	//#include <dptsvx.h>
-	//#include <dpttrf.h>
-	//#include <dpttrs.h>
-	//#include <dptts2.h>
-	//#include <drscl.h>
-	//#include <dsbev.h>
-	//#include <dsbevd.h>
-	//#include <dsbevx.h>
-	//#include <dsbgst.h>
-	//#include <dsbgv.h>
-	//#include <dsbgvd.h>
-	//#include <dsbgvx.h>
-	//#include <dsbtrd.h>
-	//#include <dsecnd.h>
-	//#include <dspcon.h>
-	//#include <dspev.h>
-	//#include <dspevd.h>
-	//#include <dspevx.h>
-	//#include <dspgst.h>
-	//#include <dspgv.h>
-	//#include <dspgvd.h>
-	//#include <dspgvx.h>
-	//#include <dsprfs.h>
-	//#include <dspsv.h>
-	//#include <dspsvx.h>
-	//#include <dsptrd.h>
-	//#include <dsptrf.h>
-	//#include <dsptri.h>
-	//#include <dsptrs.h>
-	//#include <dstebz.h>
-	//#include <dstedc.h>
-	//#include <dstegr.h>
-	//#include <dstein.h>
-	//#include <dsteqr.h>
-	//#include <dsterf.h>
-	//#include <dstev.h>
-	//#include <dstevd.h>
-	//#include <dstevr.h>
-	//#include <dstevx.h>
-	//#include <dsycon.h>
-	//#include <dsyev.h>
+	// #include <dppcon.h>
+	// #include <dppequ.h>
+	// #include <dpprfs.h>
+	// #include <dppsv.h>
+	// #include <dppsvx.h>
+	// #include <dpptrf.h>
+	// #include <dpptri.h>
+	// #include <dpptrs.h>
+	// #include <dptcon.h>
+	// #include <dpteqr.h>
+	// #include <dptrfs.h>
+	// #include <dptsv.h>
+	// #include <dptsvx.h>
+	// #include <dpttrf.h>
+	// #include <dpttrs.h>
+	// #include <dptts2.h>
+	// #include <drscl.h>
+	// #include <dsbev.h>
+	// #include <dsbevd.h>
+	// #include <dsbevx.h>
+	// #include <dsbgst.h>
+	// #include <dsbgv.h>
+	// #include <dsbgvd.h>
+	// #include <dsbgvx.h>
+	// #include <dsbtrd.h>
+	// #include <dsecnd.h>
+	// #include <dspcon.h>
+	// #include <dspev.h>
+	// #include <dspevd.h>
+	// #include <dspevx.h>
+	// #include <dspgst.h>
+	// #include <dspgv.h>
+	// #include <dspgvd.h>
+	// #include <dspgvx.h>
+	// #include <dsprfs.h>
+	// #include <dspsv.h>
+	// #include <dspsvx.h>
+	// #include <dsptrd.h>
+	// #include <dsptrf.h>
+	// #include <dsptri.h>
+	// #include <dsptrs.h>
+	// #include <dstebz.h>
+	// #include <dstedc.h>
+	// #include <dstegr.h>
+	// #include <dstein.h>
+	// #include <dsteqr.h>
+	// #include <dsterf.h>
+	// #include <dstev.h>
+	// #include <dstevd.h>
+	// #include <dstevr.h>
+	// #include <dstevx.h>
+	// #include <dsycon.h>
+	// #include <dsyev.h>
 	void syev_(char *jobz, char *uplo, integer *n, doublerealRopt *a, integer *lda, doublerealRopt *w, doublerealRopt *work, integer *lwork, integer *info)
 	{
 		dsyev_(jobz, uplo, n, a, lda, w, work, lwork, info);
@@ -935,7 +933,7 @@ namespace ROPTLIB {
 		ssyev_(jobz, uplo, n, a, lda, w, work, lwork, info);
 	};
 
-	//#include <dsyevd.h>
+	// #include <dsyevd.h>
 	void syevd_(char *jobz, char *uplo, integer *n, doublerealRopt *a, integer *lda, doublerealRopt *w, doublerealRopt *work, integer *lwork, integer *iwork, integer *liwork, integer *info)
 	{
 		dsyevd_(jobz, uplo, n, a, lda, w, work, lwork, iwork, liwork, info);
@@ -944,7 +942,7 @@ namespace ROPTLIB {
 	{
 		ssyevd_(jobz, uplo, n, a, lda, w, work, lwork, iwork, liwork, info);
 	};
-	//#include <dsyevr.h>
+	// #include <dsyevr.h>
 	void syevr_(char *jobz, char *range, char *uplo, integer *n, doublerealRopt *a, integer *lda, doublerealRopt *vl, doublerealRopt *vu, integer *il, integer *iu, doublerealRopt *abstol, integer *m, doublerealRopt *w, doublerealRopt *z__, integer *ldz, integer *isuppz, doublerealRopt *work, integer *lwork, integer *iwork, integer *liwork, integer *info)
 	{
 		dsyevr_(jobz, range, uplo, n, a, lda, vl, vu, il, iu, abstol, m, w, z__, ldz, isuppz, work, lwork, iwork, liwork, info);
@@ -953,7 +951,7 @@ namespace ROPTLIB {
 	{
 		ssyevr_(jobz, range, uplo, n, a, lda, vl, vu, il, iu, abstol, m, w, z__, ldz, isuppz, work, lwork, iwork, liwork, info);
 	};
-	//#include <dsyevx.h>
+	// #include <dsyevx.h>
 	void syevx_(char *jobz, char *range, char *uplo, integer *n, doublerealRopt *a, integer *lda, doublerealRopt *vl, doublerealRopt *vu, integer *il, integer *iu, doublerealRopt *abstol, integer *m, doublerealRopt *w, doublerealRopt *z__, integer *ldz, doublerealRopt *work, integer *lwork, integer *iwork, integer *ifail, integer *info)
 	{
 		dsyevx_(jobz, range, uplo, n, a, lda, vl, vu, il, iu, abstol, m, w, z__, ldz, work, lwork, iwork, ifail, info);
@@ -962,31 +960,31 @@ namespace ROPTLIB {
 	{
 		ssyevx_(jobz, range, uplo, n, a, lda, vl, vu, il, iu, abstol, m, w, z__, ldz, work, lwork, iwork, ifail, info);
 	};
-	//#include <dsygs2.h>
-	//#include <dsygst.h>
-	//#include <dsygv.h>
-	//#include <dsygvd.h>
-	//#include <dsygvx.h>
-	//#include <dsyrfs.h>
-	//#include <dsysv.h>
-	//#include <dsysvx.h>
-	//#include <dsytd2.h>
-	//#include <dsytf2.h>
-	//#include <dsytrd.h>
-	//#include <dsytrf.h>
-	//#include <dsytri.h>
-	//#include <dsytrs.h>
-	//#include <dtbcon.h>
-	//#include <dtbrfs.h>
-	//#include <dtbtrs.h>
-	//#include <dtgevc.h>
-	//#include <dtgex2.h>
-	//#include <dtgexc.h>
-	//#include <dtgsen.h>
-	//#include <dtgsja.h>
-	//#include <dtgsna.h>
-	//#include <dtgsy2.h>
-	//#include <dtgsyl.h>
+	// #include <dsygs2.h>
+	// #include <dsygst.h>
+	// #include <dsygv.h>
+	// #include <dsygvd.h>
+	// #include <dsygvx.h>
+	// #include <dsyrfs.h>
+	// #include <dsysv.h>
+	// #include <dsysvx.h>
+	// #include <dsytd2.h>
+	// #include <dsytf2.h>
+	// #include <dsytrd.h>
+	// #include <dsytrf.h>
+	// #include <dsytri.h>
+	// #include <dsytrs.h>
+	// #include <dtbcon.h>
+	// #include <dtbrfs.h>
+	// #include <dtbtrs.h>
+	// #include <dtgevc.h>
+	// #include <dtgex2.h>
+	// #include <dtgexc.h>
+	// #include <dtgsen.h>
+	// #include <dtgsja.h>
+	// #include <dtgsna.h>
+	// #include <dtgsy2.h>
+	// #include <dtgsyl.h>
 	void tgsyl_(char *trans, integer *ijob, integer *m, integer *n, complexRopt *a, integer *lda, complexRopt *b, integer *ldb, complexRopt *c__, integer *ldc, complexRopt *d__, integer *ldd, complexRopt *e, integer *lde, complexRopt *f, integer *ldf, realRopt *scale, realRopt *dif, complexRopt *work, integer *lwork, integer *iwork, integer *info)
 	{
 #ifndef MATLAB_MEX_FILE
@@ -1011,20 +1009,20 @@ namespace ROPTLIB {
 		ztgsyl_(trans, ijob, m, n, (double *)a, lda, (double *)b, ldb, (double *)c__, ldc, (double *)d__, ldd, (double *)e, lde, (double *)f, ldf, scale, dif, (double *)work, lwork, iwork, info);
 #endif
 	};
-	//#include <dtpcon.h>
-	//#include <dtprfs.h>
-	//#include <dtptri.h>
-	//#include <dtptrs.h>
-	//#include <dtrcon.h>
-	//#include <dtrevc.h>
-	//#include <dtrexc.h>
-	//#include <dtrrfs.h>
-	//#include <dtrsen.h>
-	//#include <dtrsna.h>
-	//#include <dtrsyl.h>
-	//#include <dtrti2.h>
-	//#include <dtrtri.h>
-	//#include <dtrtrs.h>
+	// #include <dtpcon.h>
+	// #include <dtprfs.h>
+	// #include <dtptri.h>
+	// #include <dtptrs.h>
+	// #include <dtrcon.h>
+	// #include <dtrevc.h>
+	// #include <dtrexc.h>
+	// #include <dtrrfs.h>
+	// #include <dtrsen.h>
+	// #include <dtrsna.h>
+	// #include <dtrsyl.h>
+	// #include <dtrti2.h>
+	// #include <dtrtri.h>
+	// #include <dtrtrs.h>
 	void trtrs_(char *uplo, char *trans, char *diag, integer *n, integer *nrhs, complexRopt *a, integer *lda, complexRopt *b, integer *ldb, integer *info)
 	{
 #ifndef MATLAB_MEX_FILE
@@ -1049,11 +1047,11 @@ namespace ROPTLIB {
 		ztrtrs_(uplo, trans, diag, n, nrhs, (double *)a, lda, (double *)b, ldb, info);
 #endif
 	};
-	//#include <dtzrqf.h>
-	//#include <dtzrzf.h>
-	//#include <dzsum1.h>
+	// #include <dtzrqf.h>
+	// #include <dtzrzf.h>
+	// #include <dzsum1.h>
 
-		//zgegs_
+	// zgegs_
 	void gegs_(char *jobvsl, char *jobvsr, integer *n, complexRopt *a, integer *lda, complexRopt *b, integer *ldb, complexRopt *alpha, complexRopt *beta, complexRopt *vsl, integer *ldvsl, complexRopt *vsr, integer *ldvsr, complexRopt *work, integer *lwork, realRopt *rwork, integer *info)
 	{
 #ifndef MATLAB_MEX_FILE
@@ -1071,7 +1069,7 @@ namespace ROPTLIB {
 #endif
 	};
 
-	//zunmqr_
+	// zunmqr_
 	void unmqr_(char *side, char *trans, integer *m, integer *n, integer *k, complexRopt *a, integer *lda, complexRopt *tau, complexRopt *c__, integer *ldc, complexRopt *work, integer *lwork, integer *info)
 	{
 #ifndef MATLAB_MEX_FILE
@@ -1089,7 +1087,7 @@ namespace ROPTLIB {
 #endif
 	};
 
-	//zpotri_
+	// zpotri_
 	void potri_(char *uplo, integer *n, complexRopt *a, integer *lda, integer *info)
 	{
 #ifndef MATLAB_MEX_FILE
@@ -1107,89 +1105,88 @@ namespace ROPTLIB {
 #endif
 	};
 
-
-    //zheev_
-    void heev_(char *jobz, char *uplo, integer *n, complexRopt *A, integer *LDA, realRopt *W, complexRopt *work, integer *lwork, realRopt *rwork, integer *info)
-    {
-    #ifndef MATLAB_MEX_FILE
-        cheev_(jobz, uplo, n, A, LDA, W, work, lwork, rwork, info);
-    #else
-        cheev_(jobz, uplo, n, (realRopt *) A, LDA, W, (realRopt *) work, lwork, rwork, info);
-    #endif
-    };
-
-    void heev_(char *jobz, char *uplo, integer *n, doublecomplexRopt *A, integer *LDA, doublerealRopt *W, doublecomplexRopt *work, integer *lwork, doublerealRopt *rwork, integer *info)
-    {
-    #ifndef MATLAB_MEX_FILE
-        zheev_(jobz, uplo, n, A, LDA, W, work, lwork, rwork, info);
-    #else
-        zheev_(jobz, uplo, n, (doublerealRopt *) A, LDA, W, (doublerealRopt *) work, lwork, rwork, info);
-    #endif
-    };
-
-    // zungqr_
-    void ungqr_(integer *m, integer *n, integer *k, complexRopt *a, integer *lda, complexRopt *tau, complexRopt *work, integer *lwork, integer *info)
-    {
+	// zheev_
+	void heev_(char *jobz, char *uplo, integer *n, complexRopt *A, integer *LDA, realRopt *W, complexRopt *work, integer *lwork, realRopt *rwork, integer *info)
+	{
 #ifndef MATLAB_MEX_FILE
-        cungqr_(m, n, k, a, lda, tau, work, lwork, info);
+		cheev_(jobz, uplo, n, A, LDA, W, work, lwork, rwork, info);
 #else
-        cungqr_(m, n, k, (realRopt *) a, lda, (realRopt *) tau, (realRopt *) work, lwork, info);
+		cheev_(jobz, uplo, n, (realRopt *)A, LDA, W, (realRopt *)work, lwork, rwork, info);
 #endif
-    };
+	};
 
-    void ungqr_(integer *m, integer *n, integer *k, doublecomplexRopt *a, integer *lda, doublecomplexRopt *tau, doublecomplexRopt *work, integer *lwork, integer *info)
-    {
+	void heev_(char *jobz, char *uplo, integer *n, doublecomplexRopt *A, integer *LDA, doublerealRopt *W, doublecomplexRopt *work, integer *lwork, doublerealRopt *rwork, integer *info)
+	{
 #ifndef MATLAB_MEX_FILE
-        zungqr_(m, n, k, a, lda, tau, work, lwork, info);
+		zheev_(jobz, uplo, n, A, LDA, W, work, lwork, rwork, info);
 #else
-        zungqr_(m, n, k, (doublerealRopt *) a, lda, (doublerealRopt *) tau, (doublerealRopt *) work, lwork, info);
+		zheev_(jobz, uplo, n, (doublerealRopt *)A, LDA, W, (doublerealRopt *)work, lwork, rwork, info);
 #endif
-    };
+	};
 
-	//BLAS_dusmm
+	// zungqr_
+	void ungqr_(integer *m, integer *n, integer *k, complexRopt *a, integer *lda, complexRopt *tau, complexRopt *work, integer *lwork, integer *info)
+	{
+#ifndef MATLAB_MEX_FILE
+		cungqr_(m, n, k, a, lda, tau, work, lwork, info);
+#else
+		cungqr_(m, n, k, (realRopt *)a, lda, (realRopt *)tau, (realRopt *)work, lwork, info);
+#endif
+	};
+
+	void ungqr_(integer *m, integer *n, integer *k, doublecomplexRopt *a, integer *lda, doublecomplexRopt *tau, doublecomplexRopt *work, integer *lwork, integer *info)
+	{
+#ifndef MATLAB_MEX_FILE
+		zungqr_(m, n, k, a, lda, tau, work, lwork, info);
+#else
+		zungqr_(m, n, k, (doublerealRopt *)a, lda, (doublerealRopt *)tau, (doublerealRopt *)work, lwork, info);
+#endif
+	};
+
+	// BLAS_dusmm
 	void BLAS_usmm(enum blas_order_type order, enum blas_trans_type transa,
-		int nrhs, float alpha, blas_sparse_matrix A, const float *b, int ldb,
-		float *c, int ldc)
+				   int nrhs, float alpha, blas_sparse_matrix A, const float *b, int ldb,
+				   float *c, int ldc)
 	{
 		BLAS_susmm(order, transa, nrhs, alpha, A, b, ldb, c, ldc);
 	};
 	void BLAS_usmm(enum blas_order_type order, enum blas_trans_type transa,
-		int nrhs, double alpha, blas_sparse_matrix A, const double *b,
-		int ldb, double *c, int ldc)
+				   int nrhs, double alpha, blas_sparse_matrix A, const double *b,
+				   int ldb, double *c, int ldc)
 	{
 		BLAS_dusmm(order, transa, nrhs, alpha, A, b, ldb, c, ldc);
 	};
 	void BLAS_usmm(enum blas_order_type order, enum blas_trans_type transa,
-		int nrhs, const complexRopt *alpha, blas_sparse_matrix A, const complexRopt *b,
-		int ldb, complexRopt *c, int ldc)
+				   int nrhs, const complexRopt *alpha, blas_sparse_matrix A, const complexRopt *b,
+				   int ldb, complexRopt *c, int ldc)
 	{
 		BLAS_cusmm(order, transa, nrhs, alpha, A, b, ldb, c, ldc);
 	};
 	void BLAS_usmm(enum blas_order_type order, enum blas_trans_type transa,
-		int nrhs, const doublecomplexRopt *alpha, blas_sparse_matrix A, const doublecomplexRopt *b,
-		int ldb, doublecomplexRopt *c, int ldc)
+				   int nrhs, const doublecomplexRopt *alpha, blas_sparse_matrix A, const doublecomplexRopt *b,
+				   int ldb, doublecomplexRopt *c, int ldc)
 	{
 		BLAS_zusmm(order, transa, nrhs, alpha, A, b, ldb, c, ldc);
 	};
-    
-//#if ! defined(__APPLE__) || defined(MATLAB_MEX_FILE)
-//	void BLAS_usmm(enum blas_order_type order, enum blas_trans_type transa, integer nrhs, float alpha, blas_sparse_matrix A, const float *b, integer ldb, float *c, integer ldc)
-//	{
-//		BLAS_susmm(order, transa, nrhs, alpha, A, b, ldb, c, ldc);
-//	};
-//	void BLAS_usmm(enum blas_order_type order, enum blas_trans_type transa, integer nrhs, double alpha, blas_sparse_matrix A, const double *b, integer ldb, double *c, integer ldc)
-//	{
-//		BLAS_dusmm(order, transa, nrhs, alpha, A, b, ldb, c, ldc);
-//	};
-//	void BLAS_usmm(enum blas_order_type order, enum blas_trans_type transa, integer nrhs, const complexRopt *alpha, blas_sparse_matrix A, const complexRopt *b, integer ldb, complexRopt *c, integer ldc)
-//	{
-//		BLAS_cusmm(order, transa, nrhs, alpha, A, b, ldb, c, ldc);
-//	};
-//	void BLAS_usmm(enum blas_order_type order, enum blas_trans_type transa, integer nrhs, const doublecomplexRopt *alpha, blas_sparse_matrix A, const doublecomplexRopt *b, integer ldb, doublecomplexRopt *c, integer ldc)
-//	{
-//		BLAS_zusmm(order, transa, nrhs, alpha, A, b, ldb, c, ldc);
-//	};
-//#endif
+
+	// #if ! defined(__APPLE__) || defined(MATLAB_MEX_FILE)
+	//	void BLAS_usmm(enum blas_order_type order, enum blas_trans_type transa, integer nrhs, float alpha, blas_sparse_matrix A, const float *b, integer ldb, float *c, integer ldc)
+	//	{
+	//		BLAS_susmm(order, transa, nrhs, alpha, A, b, ldb, c, ldc);
+	//	};
+	//	void BLAS_usmm(enum blas_order_type order, enum blas_trans_type transa, integer nrhs, double alpha, blas_sparse_matrix A, const double *b, integer ldb, double *c, integer ldc)
+	//	{
+	//		BLAS_dusmm(order, transa, nrhs, alpha, A, b, ldb, c, ldc);
+	//	};
+	//	void BLAS_usmm(enum blas_order_type order, enum blas_trans_type transa, integer nrhs, const complexRopt *alpha, blas_sparse_matrix A, const complexRopt *b, integer ldb, complexRopt *c, integer ldc)
+	//	{
+	//		BLAS_cusmm(order, transa, nrhs, alpha, A, b, ldb, c, ldc);
+	//	};
+	//	void BLAS_usmm(enum blas_order_type order, enum blas_trans_type transa, integer nrhs, const doublecomplexRopt *alpha, blas_sparse_matrix A, const doublecomplexRopt *b, integer ldb, doublecomplexRopt *c, integer ldc)
+	//	{
+	//		BLAS_zusmm(order, transa, nrhs, alpha, A, b, ldb, c, ldc);
+	//	};
+	// #endif
 
 	void BLAS_uscr_insert_entries(blas_sparse_matrix A, integer nz, const float *val, const integer *indx, const integer *jndx)
 	{
@@ -1240,22 +1237,22 @@ namespace ROPTLIB {
 		delete[] indxptr;
 	}
 
-//#if ! defined(__APPLE__) || defined(MATLAB_MEX_FILE)
-//	void BLAS_uscr_insert_entries(blas_sparse_matrix A, int nz, const float *val, const int *indx, const int *jndx)
-//	{
-//		BLAS_suscr_insert_entries(A, nz, val, indx, jndx);
-//	}
-//	void BLAS_uscr_insert_entries(blas_sparse_matrix A, int nz, const double *val, const int *indx, const int *jndx)
-//	{
-//		BLAS_duscr_insert_entries(A, nz, val, indx, jndx);
-//	}
-//	void BLAS_uscr_insert_entries(blas_sparse_matrix A, int nz, const complexRopt *val, const int *indx, const int *jndx)
-//	{
-//		BLAS_cuscr_insert_entries(A, nz, val, indx, jndx);
-//	}
-//	void BLAS_uscr_insert_entries(blas_sparse_matrix A, int nz, const doublecomplexRopt *val, const int *indx, const int *jndx)
-//	{
-//		BLAS_zuscr_insert_entries(A, nz, val, indx, jndx);
-//	}
-//#endif
+	// #if ! defined(__APPLE__) || defined(MATLAB_MEX_FILE)
+	//	void BLAS_uscr_insert_entries(blas_sparse_matrix A, int nz, const float *val, const int *indx, const int *jndx)
+	//	{
+	//		BLAS_suscr_insert_entries(A, nz, val, indx, jndx);
+	//	}
+	//	void BLAS_uscr_insert_entries(blas_sparse_matrix A, int nz, const double *val, const int *indx, const int *jndx)
+	//	{
+	//		BLAS_duscr_insert_entries(A, nz, val, indx, jndx);
+	//	}
+	//	void BLAS_uscr_insert_entries(blas_sparse_matrix A, int nz, const complexRopt *val, const int *indx, const int *jndx)
+	//	{
+	//		BLAS_cuscr_insert_entries(A, nz, val, indx, jndx);
+	//	}
+	//	void BLAS_uscr_insert_entries(blas_sparse_matrix A, int nz, const doublecomplexRopt *val, const int *indx, const int *jndx)
+	//	{
+	//		BLAS_zuscr_insert_entries(A, nz, val, indx, jndx);
+	//	}
+	// #endif
 }; /*end of ROPTLIB namespace*/

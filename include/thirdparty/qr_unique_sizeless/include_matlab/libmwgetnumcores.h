@@ -3,15 +3,15 @@
 #define _GETNUMCORES_H_
 
 #ifndef EXTERN_C
-#  ifdef __cplusplus
-#    define EXTERN_C extern "C"
-#  else
-#    define EXTERN_C extern
-#  endif
+#ifdef __cplusplus
+#define EXTERN_C extern "C"
+#else
+#define EXTERN_C extern
+#endif
 #endif
 
 #ifndef LIBMWGETNUMCORES_API
-#    define LIBMWGETNUMCORES_API
+#define LIBMWGETNUMCORES_API
 #endif
 
 #ifdef MATLAB_MEX_FILE
@@ -20,7 +20,6 @@
 #include "rtwtypes.h"
 #endif
 
-EXTERN_C LIBMWGETNUMCORES_API void getnumcores(
-        real64_T *proc);
+EXTERN_C LIBMWGETNUMCORES_API void getnumcores(real64_T *proc);
 
 #endif /* _GETNUMCORES_H_ */

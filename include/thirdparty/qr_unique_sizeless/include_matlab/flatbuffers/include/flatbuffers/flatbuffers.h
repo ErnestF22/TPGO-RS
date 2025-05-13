@@ -41,7 +41,8 @@ namespace flatbuffers {
 /// it is the opposite transformation of GetRoot().
 /// This may be useful if you want to pass on a root and have the recipient
 /// delete the buffer afterwards.
-inline const uint8_t *GetBufferStartFromRootPointer(const void *root) {
+inline const uint8_t *GetBufferStartFromRootPointer(const void *root)
+{
   auto table = reinterpret_cast<const Table *>(root);
   auto vtable = table->GetVTable();
   // Either the vtable is before the root or after the root.
@@ -76,8 +77,9 @@ inline const uint8_t *GetBufferStartFromRootPointer(const void *root) {
 }
 
 /// @brief This return the prefixed size of a FlatBuffer.
-template<typename SizeT = uoffset_t>
-inline SizeT GetPrefixedSize(const uint8_t *buf) {
+template <typename SizeT = uoffset_t>
+inline SizeT GetPrefixedSize(const uint8_t *buf)
+{
   return ReadScalar<SizeT>(buf);
 }
 
@@ -87,8 +89,9 @@ inline SizeT GetPrefixedSize(const uint8_t *buf) {
 //
 //  [size prefix][flatbuffer]
 //  |---------length--------|
-template<typename SizeT = uoffset_t>
-inline SizeT GetSizePrefixedBufferLength(const uint8_t *const buf) {
+template <typename SizeT = uoffset_t>
+inline SizeT GetSizePrefixedBufferLength(const uint8_t *const buf)
+{
   return ReadScalar<SizeT>(buf) + sizeof(SizeT);
 }
 
@@ -117,8 +120,9 @@ typedef std::function<hash_value_t(void *pointer)> rehasher_function_t;
 // Note: this function will return false for fields equal to the default
 // value, since they're not stored in the buffer (unless force_defaults was
 // used).
-template<typename T>
-bool IsFieldPresent(const T *table, typename T::FlatBuffersVTableOffset field) {
+template <typename T>
+bool IsFieldPresent(const T *table, typename T::FlatBuffersVTableOffset field)
+{
   // Cast, since Table is a private baseclass of any table types.
   return reinterpret_cast<const Table *>(table)->CheckField(
       static_cast<voffset_t>(field));
@@ -127,9 +131,11 @@ bool IsFieldPresent(const T *table, typename T::FlatBuffersVTableOffset field) {
 // Utility function for reverse lookups on the EnumNames*() functions
 // (in the generated C++ code)
 // names must be NULL terminated.
-inline int LookupEnum(const char **names, const char *name) {
+inline int LookupEnum(const char **names, const char *name)
+{
   for (const char **p = names; *p; p++)
-    if (!strcmp(*p, name)) return static_cast<int>(p - names);
+    if (!strcmp(*p, name))
+      return static_cast<int>(p - names);
   return -1;
 }
 
@@ -173,7 +179,13 @@ inline int LookupEnum(const char **names, const char *name) {
 // See minireflect.h for utilities using this functionality.
 
 // These types are organized slightly differently as the ones in idl.h.
-enum SequenceType { ST_TABLE, ST_STRUCT, ST_UNION, ST_ENUM };
+enum SequenceType
+{
+  ST_TABLE,
+  ST_STRUCT,
+  ST_UNION,
+  ST_ENUM
+};
 
 // Scalars have the same order as in idl.h
 // clang-format off
@@ -231,19 +243,19 @@ typedef const TypeTable *(*TypeFunction)();
 
 struct TypeTable {
   SequenceType st;
-  size_t num_elems;  // of type_codes, values, names (but not type_refs).
-  const TypeCode *type_codes;     // num_elems count
-  const TypeFunction *type_refs;  // less than num_elems entries (see TypeCode).
-  const int16_t *array_sizes;     // less than num_elems entries (see TypeCode).
-  const int64_t *values;  // Only set for non-consecutive enum/union or structs.
-  const char *const *names;  // Only set if compiled with --reflect-names.
+  size_t num_elems; // of type_codes, values, names (but not type_refs).
+  const TypeCode *type_codes;    // num_elems count
+  const TypeFunction *type_refs; // less than num_elems entries (see TypeCode).
+  const int16_t *array_sizes;    // less than num_elems entries (see TypeCode).
+  const int64_t *values; // Only set for non-consecutive enum/union or structs.
+  const char *const *names; // Only set if compiled with --reflect-names.
 };
 
 // String which identifies the current version of FlatBuffers.
-inline const char *flatbuffers_version_string() {
-  return "FlatBuffers " FLATBUFFERS_STRING(FLATBUFFERS_VERSION_MAJOR) "."
-      FLATBUFFERS_STRING(FLATBUFFERS_VERSION_MINOR) "."
-      FLATBUFFERS_STRING(FLATBUFFERS_VERSION_REVISION);
+inline const char *flatbuffers_version_string()
+{
+  return "FlatBuffers " FLATBUFFERS_STRING(FLATBUFFERS_VERSION_MAJOR) "." FLATBUFFERS_STRING(
+      FLATBUFFERS_VERSION_MINOR) "." FLATBUFFERS_STRING(FLATBUFFERS_VERSION_REVISION);
 }
 
 // clang-format off
@@ -281,4 +293,4 @@ inline const char *flatbuffers_version_string() {
 
 // clang-format on
 
-#endif  // FLATBUFFERS_H_
+#endif // FLATBUFFERS_H_

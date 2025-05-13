@@ -13,8 +13,9 @@ typedef unsigned int uint32_t;
 #include <stdint.h>
 #endif
 
-TOASYNCQUEUETGTAPPSVC_API_C int  startToAsyncQueueTgtAppSvc();
-TOASYNCQUEUETGTAPPSVC_API_C int  terminateToAsyncQueueTgtAppSvc();
-TOASYNCQUEUETGTAPPSVC_API_C void sendToAsyncQueueTgtAppSvc(uint32_t id, double time, void *data, uint32_t size);
+TOASYNCQUEUETGTAPPSVC_API_C int startToAsyncQueueTgtAppSvc();
+TOASYNCQUEUETGTAPPSVC_API_C int terminateToAsyncQueueTgtAppSvc();
+TOASYNCQUEUETGTAPPSVC_API_C void
+sendToAsyncQueueTgtAppSvc(uint32_t id, double time, void *data, uint32_t size);
 
 #endif

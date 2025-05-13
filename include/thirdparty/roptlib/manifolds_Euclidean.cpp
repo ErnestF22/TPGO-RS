@@ -2,11 +2,12 @@
 #include "manifolds_Euclidean.h"
 
 /*Define the namespace*/
-namespace ROPTLIB{
+namespace ROPTLIB
+{
 
-	Euclidean::Euclidean(integer r, integer c, integer n, const char *type)
-	{
-        if(strcmp(type, "realRopt") == 0) /*type == 'realRopt'*/
+    Euclidean::Euclidean(integer r, integer c, integer n, const char *type)
+    {
+        if (strcmp(type, "realRopt") == 0) /*type == 'realRopt'*/
         {
             iscomplex = false;
             row = r;
@@ -35,12 +36,12 @@ namespace ROPTLIB{
         Vector tmp(r, c, n, "complexRopt");
         EMPTYEXTR = tmp;
         EMPTYINTR = tmp;
-	};
+    };
 
-    Euclidean::Euclidean(integer r, integer c, const char * type)
+    Euclidean::Euclidean(integer r, integer c, const char *type)
     {
         integer n = 1;
-        if(strcmp(type, "realRopt") == 0) /*type == 'realRopt'*/
+        if (strcmp(type, "realRopt") == 0) /*type == 'realRopt'*/
         {
             iscomplex = false;
             row = r;
@@ -71,10 +72,10 @@ namespace ROPTLIB{
         EMPTYINTR = tmp;
     };
 
-    Euclidean::Euclidean(integer r, const char * type)
+    Euclidean::Euclidean(integer r, const char *type)
     {
         integer n = 1, c = 1;
-        if(strcmp(type, "realRopt") == 0) /*type == 'realRopt'*/
+        if (strcmp(type, "realRopt") == 0) /*type == 'realRopt'*/
         {
             iscomplex = false;
             row = r;
@@ -105,9 +106,8 @@ namespace ROPTLIB{
         EMPTYINTR = tmp;
     };
 
-	Euclidean::~Euclidean(void)
-	{
-	};
+    Euclidean::~Euclidean(void) {
+    };
 
     Variable Euclidean::RandominManifold(void) const
     {
@@ -116,39 +116,38 @@ namespace ROPTLIB{
         return result;
     };
 
-	void Euclidean::CheckParams(void) const
-	{
-		Manifold::CheckParams();
-		printf("%s PARAMETERS:\n", name.c_str());
-		if (col == 1 && num == 1)
-			printf("row           :%15d\n", row);
-		else
-			if (num == 1)
-			{
-				printf("row           :%15d,\t", row);
-				printf("col           :%15d\n", col);
-			}
-			else
-			{
-				printf("row           :%15d,\t", row);
-				printf("col           :%15d\n", col);
-				printf("num           :%15d\n", num);
-			}
-	};
+    void Euclidean::CheckParams(void) const
+    {
+        Manifold::CheckParams();
+        printf("%s PARAMETERS:\n", name.c_str());
+        if (col == 1 && num == 1)
+            printf("row           :%15d\n", row);
+        else if (num == 1)
+        {
+            printf("row           :%15d,\t", row);
+            printf("col           :%15d\n", col);
+        }
+        else
+        {
+            printf("row           :%15d,\t", row);
+            printf("col           :%15d\n", col);
+            printf("num           :%15d\n", num);
+        }
+    };
 
-	Vector &Euclidean::EucGradToGrad(const Variable &x, const Vector &egf, const Problem *prob, Vector *result) const
-	{
-        if(prob->GetUseHess())
+    Vector &Euclidean::EucGradToGrad(const Variable &x, const Vector &egf, const Problem *prob, Vector *result) const
+    {
+        if (prob->GetUseHess())
         {
             x.AddToFields("EGrad", egf);
         }
         *result = egf;
         return *result;
-	};
+    };
 
-	Vector &Euclidean::EucHvToHv(const Variable &x, const Vector &etax, const Vector &exix, const Problem *prob, Vector *result) const
-	{
+    Vector &Euclidean::EucHvToHv(const Variable &x, const Vector &etax, const Vector &exix, const Problem *prob, Vector *result) const
+    {
         *result = exix;
         return *result;
-	};
+    };
 }; /*end of ROPTLIB namespace*/

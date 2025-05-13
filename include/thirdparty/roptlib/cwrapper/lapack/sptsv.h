@@ -1,10 +1,11 @@
 #ifdef __cplusplus
-extern "C" { 
-#endif  
+extern "C"
+{
+#endif
 
-#include "f2c.h" 
+#include "f2c.h"
 
-int sptsv_(integer *n, integer *nrhs, realRopt *d__, realRopt *e, realRopt *b, integer *ldb, integer *info);
+    int sptsv_(integer *n, integer *nrhs, realRopt *d__, realRopt *e, realRopt *b, integer *ldb, integer *info);
 
 #ifdef __cplusplus
 }

@@ -10,8 +10,8 @@
 
 // Include files
 #include "diag.h"
-#include "rt_nonfinite.h"
 #include "coder_array.h"
+#include "rt_nonfinite.h"
 
 // Function Definitions
 namespace coder {

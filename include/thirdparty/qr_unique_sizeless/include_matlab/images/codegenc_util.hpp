@@ -1,13 +1,13 @@
 /**
-* @file         codegenc_util.h
-*
-* Purpose       export/import switch for C shared lib codegen functions
-*
-* Authors       Dinesh Iyer
-*
-* Copyright     2019-2020 The MathWorks, Inc.
-*
-*/
+ * @file         codegenc_util.h
+ *
+ * Purpose       export/import switch for C shared lib codegen functions
+ *
+ * Authors       Dinesh Iyer
+ *
+ * Copyright     2019-2020 The MathWorks, Inc.
+ *
+ */
 
 #ifdef SUPPORTS_PRAGMA_ONCE
 #pragma once
@@ -31,11 +31,10 @@
 /* For size_t, boolean_T, etc */
 #include "tmwtypes.h"
 
-#define IMAGESDATATYPESCODEGENC_API  DLL_EXPORT_SYM
+#define IMAGESDATATYPESCODEGENC_API DLL_EXPORT_SYM
 
 #else
 // #define IMAGESDATATYPESCODEGENC_API  DLL_IMPORT_SYM
-
 
 #ifndef EXTERN_C
 #ifdef __cplusplus

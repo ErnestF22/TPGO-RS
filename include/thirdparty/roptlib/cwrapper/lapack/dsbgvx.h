@@ -1,10 +1,11 @@
 #ifdef __cplusplus
-extern "C" { 
-#endif  
+extern "C"
+{
+#endif
 
-#include "f2c.h" 
+#include "f2c.h"
 
-int dsbgvx_(char *jobz, char *range, char *uplo, integer *n, integer *ka, integer *kb, doublerealRopt *ab, integer *ldab, doublerealRopt *bb, integer *ldbb, doublerealRopt *q, integer *ldq, doublerealRopt *vl, doublerealRopt *vu, integer *il, integer *iu, doublerealRopt *abstol, integer *m, doublerealRopt *w, doublerealRopt *z__, integer *ldz, doublerealRopt *work, integer *iwork, integer *ifail, integer *info);
+    int dsbgvx_(char *jobz, char *range, char *uplo, integer *n, integer *ka, integer *kb, doublerealRopt *ab, integer *ldab, doublerealRopt *bb, integer *ldbb, doublerealRopt *q, integer *ldq, doublerealRopt *vl, doublerealRopt *vu, integer *il, integer *iu, doublerealRopt *abstol, integer *m, doublerealRopt *w, doublerealRopt *z__, integer *ldz, doublerealRopt *work, integer *iwork, integer *ifail, integer *info);
 
 #ifdef __cplusplus
 }

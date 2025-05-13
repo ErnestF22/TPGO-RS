@@ -1,5 +1,6 @@
 /* Copyright 2020-2022 The MathWorks, Inc. */
-/* Copied from fullfile(matlabroot,'extern','include','coder','coder_array','coder_bounded_array.h')
+/* Copied from
+ * fullfile(matlabroot,'extern','include','coder','coder_array','coder_bounded_array.h')
  */
 
 #ifndef _mw_coder_bounded_array_h
@@ -20,13 +21,12 @@ typedef int32_t SizeType;
 // Bounded array
 template <typename T, SizeType UpperBoundSize, SizeType NumDims>
 struct bounded_array {
-    T data[UpperBoundSize];
-    SizeType size[NumDims];
+  T data[UpperBoundSize];
+  SizeType size[NumDims];
 };
 
-template <typename T, SizeType NumDims>
-struct empty_bounded_array {
-    SizeType size[NumDims];
+template <typename T, SizeType NumDims> struct empty_bounded_array {
+  SizeType size[NumDims];
 };
 } // namespace coder
 

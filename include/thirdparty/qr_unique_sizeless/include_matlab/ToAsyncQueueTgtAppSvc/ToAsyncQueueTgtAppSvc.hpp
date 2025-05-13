@@ -7,28 +7,30 @@
 #include "coder/target_services/Application.hpp"
 
 #ifdef BUILDING_LIBMWCODER_TOASYNCQUEUETGTAPPSVC
-#  include "coder/target_services/CommService.hpp"
+#include "coder/target_services/CommService.hpp"
 #else
-#  include "CommService.hpp"
+#include "CommService.hpp"
 #endif
 
-class TOASYNCQUEUETGTAPPSVC_API ToAsyncQueueTgtAppSvc : public coder::tgtsvc::Application
-{
-  public:
-    ToAsyncQueueTgtAppSvc();
-    ~ToAsyncQueueTgtAppSvc();
+class TOASYNCQUEUETGTAPPSVC_API ToAsyncQueueTgtAppSvc
+    : public coder::tgtsvc::Application {
+public:
+  ToAsyncQueueTgtAppSvc();
+  ~ToAsyncQueueTgtAppSvc();
 
-    void sendData(uint32_t id, double time, void *data, uint32_t sizeOfData);
-    void handleMessage(coder::tgtsvc::Message *message);
+  void sendData(uint32_t id, double time, void *data, uint32_t sizeOfData);
+  void handleMessage(coder::tgtsvc::Message *message);
 
-    uint8_t id() { return(coder::tgtsvc::Application::TO_ASYNC_QUEUE_ID); }
+  uint8_t id()
+  {
+    return (coder::tgtsvc::Application::TO_ASYNC_QUEUE_ID);
+  }
 
-    virtual void handleConnect(bool connected) {};
+  virtual void handleConnect(bool connected) {};
 
-  private:
-    ToAsyncQueueTgtAppSvc(const ToAsyncQueueTgtAppSvc &);                 
-    const ToAsyncQueueTgtAppSvc& operator=(const ToAsyncQueueTgtAppSvc &);
+private:
+  ToAsyncQueueTgtAppSvc(const ToAsyncQueueTgtAppSvc &);
+  const ToAsyncQueueTgtAppSvc &operator=(const ToAsyncQueueTgtAppSvc &);
 };
 
 #endif
-

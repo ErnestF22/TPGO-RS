@@ -21,6 +21,7 @@
 #include "rtwtypes.h"
 #endif
 
-EXTERN_C void storeArrayInPointerPool(void* dst, const void* src, int32_T numBytes);
+EXTERN_C void storeArrayInPointerPool(void *dst, const void *src,
+                                      int32_T numBytes);
 
 #endif /* mwslpointerutil_published_h */

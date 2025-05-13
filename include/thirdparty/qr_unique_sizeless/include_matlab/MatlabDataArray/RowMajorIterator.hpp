@@ -3,8 +3,8 @@
 #ifndef ROW_MAJOR_ITERATOR_HPP_
 #define ROW_MAJOR_ITERATOR_HPP_
 
-#include "detail/OrderedIterator.hpp"
 #include "detail/IteratorFactory.hpp"
+#include "detail/OrderedIterator.hpp"
 
 namespace matlab {
 namespace data {
@@ -14,7 +14,7 @@ using RowMajorIterator = detail::OrderedIterator<T, detail::RowMajorOrder>;
 
 using RowMajor = detail::IteratorFactory<RowMajorIterator>;
 
-}
-}
+} // namespace data
+} // namespace matlab
 
 #endif

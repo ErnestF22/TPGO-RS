@@ -2,7 +2,8 @@
 #include "solvers_RSD.h"
 
 /*Define the namespace*/
-namespace ROPTLIB{
+namespace ROPTLIB
+{
 
 	RSD::RSD(const Problem *prob, const Variable *initialx)
 	{
@@ -27,7 +28,7 @@ namespace ROPTLIB{
 	{
 		Prob->PreConditioner(x1, gf1, &Pgf1);
 		Mani->ScalarTimesVector(x1, -1, Pgf1, &eta1);
-		
+
 		if (Mani->Metric(x1, eta1, gf1) / ngf1 / ngf1 >= -std::sqrt(std::numeric_limits<realdp>::epsilon()))
 		{
 			printf("Warning:Preconditioner gives an non-decreasing direction!Reset the search direction to the negative gradient\n");

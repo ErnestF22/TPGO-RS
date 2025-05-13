@@ -1,13 +1,13 @@
 /**
-* @file         datatypes_util.h
-*
-* Purpose       export/import switch for images::datatypes::Image classes
-*
-* Authors       Dinesh Iyer
-*
-* Copyright 2021 The MathWorks, Inc.
-*
-*/
+ * @file         datatypes_util.h
+ *
+ * Purpose       export/import switch for images::datatypes::Image classes
+ *
+ * Authors       Dinesh Iyer
+ *
+ * Copyright 2021 The MathWorks, Inc.
+ *
+ */
 #ifdef SUPPORTS_PRAGMA_ONCE
 #pragma once
 #endif

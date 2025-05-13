@@ -17,13 +17,15 @@ Solvers --> SolversNSM --> SolversNSMSub --> SolversNSMSubLS --> RGS
 #include "others_def.h"
 
 /*Define the namespace*/
-namespace ROPTLIB{
+namespace ROPTLIB
+{
 
 	/*Compute min_{y in convex hull of gfs and prefgs are tangent vectors at the tangent space at x} ||y||
 	It is defined in SphereConvexHull.h and SphereConvexHull.cpp */
-    extern realdp MinPNormConHull(const Manifold *Mani, Variable x, Vector *Ys, integer LYs, Vector &outSoln);
+	extern realdp MinPNormConHull(const Manifold *Mani, Variable x, Vector *Ys, integer LYs, Vector &outSoln);
 
-	class RGS : public SolversNSMSubLS{
+	class RGS : public SolversNSMSubLS
+	{
 	public:
 		/*The contructor of RGS method. It calls the function Solvers::Initialization.
 		INPUT : prob is the problem which defines the cost function, gradient and possible the action of Hessian
@@ -38,9 +40,8 @@ namespace ROPTLIB{
 		virtual ~RGS();
 
 	protected:
-        
-        /*When one iteration, some algorithms need to update some information.*/
-        virtual void UpdateData(void);
+		/*When one iteration, some algorithms need to update some information.*/
+		virtual void UpdateData(void);
 
 		/*Compute the search direction */
 		virtual void GetSearchDir(void);

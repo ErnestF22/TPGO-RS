@@ -5,7 +5,7 @@ More functions will be added in this class.
 
 -----WH
 */
-#pragma   once  
+#pragma once
 #ifndef BLASLAPACKCPPWRAPPER_H
 #define BLASLAPACKCPPWRAPPER_H
 
@@ -168,9 +168,6 @@ BLAS */
 #include <thirdparty/roptlib/cwrapper/blas/ztrmv.h>
 #include <thirdparty/roptlib/cwrapper/blas/ztrsm.h>
 #include <thirdparty/roptlib/cwrapper/blas/ztrsv.h>
-
-
-
 
 /* LAPACK */
 #include <thirdparty/roptlib/cwrapper/lapack/cbdsqr.h>
@@ -1615,7 +1612,6 @@ BLAS */
 #define ztrsm_ ztrsm
 #define ztrsv_ ztrsv
 
-
 /* LAPACK */
 #define cbdsqr_ cbdsqr
 #define cgbbrd_ cgbbrd
@@ -2912,44 +2908,44 @@ BLAS */
 #endif /* end of ifdef MATLAB_MEX_FILE */
 
 /*Define the namespace*/
-namespace ROPTLIB{
-//#include <dasum.h>
-//#include <daxpy.h>
+namespace ROPTLIB
+{
+	// #include <dasum.h>
+	// #include <daxpy.h>
 	void axpy_(integer *n, complexRopt *ca, complexRopt *cx, integer *incx, complexRopt *cy, integer *incy);
 	void axpy_(integer *n, doublerealRopt *da, doublerealRopt *dx, integer *incx, doublerealRopt *dy, integer *incy);
 	void axpy_(integer *n, realRopt *sa, realRopt *sx, integer *incx, realRopt *sy, integer *incy);
 	void axpy_(integer *n, doublecomplexRopt *za, doublecomplexRopt *zx, integer *incx, doublecomplexRopt *zy, integer *incy);
 
-//#include <dcabs1.h>
-//#include <dcopy.h>
+	// #include <dcabs1.h>
+	// #include <dcopy.h>
 	void copy_(integer *n, complexRopt *cx, integer *incx, complexRopt *cy, integer *incy);
 	void copy_(integer *n, doublerealRopt *cx, integer *incx, doublerealRopt *cy, integer *incy);
 	void copy_(integer *n, realRopt *cx, integer *incx, realRopt *cy, integer *incy);
 	void copy_(integer *n, doublecomplexRopt *cx, integer *incx, doublecomplexRopt *cy, integer *incy);
 
-//#include <ddot.h>
+	// #include <ddot.h>
 	doublerealRopt dot_(integer *n, doublerealRopt *dx, integer *incx, doublerealRopt *dy, integer *incy);
 	realRopt dot_(integer *n, realRopt *dx, integer *incx, realRopt *dy, integer *incy);
-	void dotu_(complexRopt * ret_val, integer *n, complexRopt *cx, integer *incx, complexRopt *cy, integer *incy);
-	void dotu_(doublecomplexRopt * ret_val, integer *n, doublecomplexRopt *cx, integer *incx, doublecomplexRopt *cy, integer *incy);
-	void dotc_(complexRopt * ret_val, integer *n, complexRopt *cx, integer *incx, complexRopt *cy, integer *incy);
-	void dotc_(doublecomplexRopt * ret_val, integer *n, doublecomplexRopt *cx, integer *incx, doublecomplexRopt *cy, integer *incy);
+	void dotu_(complexRopt *ret_val, integer *n, complexRopt *cx, integer *incx, complexRopt *cy, integer *incy);
+	void dotu_(doublecomplexRopt *ret_val, integer *n, doublecomplexRopt *cx, integer *incx, doublecomplexRopt *cy, integer *incy);
+	void dotc_(complexRopt *ret_val, integer *n, complexRopt *cx, integer *incx, complexRopt *cy, integer *incy);
+	void dotc_(doublecomplexRopt *ret_val, integer *n, doublecomplexRopt *cx, integer *incx, doublecomplexRopt *cy, integer *incy);
 
-//#include <dgbmv.h>
-//#include <dgemm.h>
+	// #include <dgbmv.h>
+	// #include <dgemm.h>
 	void gemm_(char *transa, char *transb, integer *m, integer *n, integer *k, complexRopt *alpha, complexRopt *a, integer *lda, complexRopt *b, integer *ldb, complexRopt *beta, complexRopt *c__, integer *ldc);
 	void gemm_(char *transa, char *transb, integer *m, integer *n, integer *k, doublerealRopt *alpha, doublerealRopt *a, integer *lda, doublerealRopt *b, integer *ldb, doublerealRopt *beta, doublerealRopt *c__, integer *ldc);
 	void gemm_(char *transa, char *transb, integer *m, integer *n, integer *k, realRopt *alpha, realRopt *a, integer *lda, realRopt *b, integer *ldb, realRopt *beta, realRopt *c__, integer *ldc);
 	void gemm_(char *transa, char *transb, integer *m, integer *n, integer *k, doublecomplexRopt *alpha, doublecomplexRopt *a, integer *lda, doublecomplexRopt *b, integer *ldb, doublecomplexRopt *beta, doublecomplexRopt *c__, integer *ldc);
 
-//#include <dgemv.h>
+	// #include <dgemv.h>
 	void gemv_(char *trans, integer *m, integer *n, complexRopt *alpha, complexRopt *a, integer *lda, complexRopt *x, integer *incx, complexRopt *beta, complexRopt *y, integer *incy);
 	void gemv_(char *trans, integer *m, integer *n, doublerealRopt *alpha, doublerealRopt *a, integer *lda, doublerealRopt *x, integer *incx, doublerealRopt *beta, doublerealRopt *y, integer *incy);
 	void gemv_(char *trans, integer *m, integer *n, realRopt *alpha, realRopt *a, integer *lda, realRopt *x, integer *incx, realRopt *beta, realRopt *y, integer *incy);
 	void gemv_(char *trans, integer *m, integer *n, doublecomplexRopt *alpha, doublecomplexRopt *a, integer *lda, doublecomplexRopt *x, integer *incx, doublecomplexRopt *beta, doublecomplexRopt *y, integer *incy);
 
-
-//#include <dger.h>
+	// #include <dger.h>
 	void ger_(integer *m, integer *n, doublerealRopt *alpha, doublerealRopt *x, integer *incx, doublerealRopt *y, integer *incy, doublerealRopt *a, integer *lda);
 	void ger_(integer *m, integer *n, realRopt *alpha, realRopt *x, integer *incx, realRopt *y, integer *incy, realRopt *a, integer *lda);
 
@@ -2959,506 +2955,502 @@ namespace ROPTLIB{
 	void ger_(integer *m, integer *n, complexRopt *alpha, complexRopt *x, integer *incx, complexRopt *y, integer *incy, complexRopt *a, integer *lda);
 	void ger_(integer *m, integer *n, doublecomplexRopt *alpha, doublecomplexRopt *x, integer *incx, doublecomplexRopt *y, integer *incy, doublecomplexRopt *a, integer *lda);
 
-//#include <dnrm2.h>
+	// #include <dnrm2.h>
 	doublerealRopt nrm2_(integer *n, doublerealRopt *x, integer *incx);
 	realRopt nrm2_(integer *n, realRopt *x, integer *incx);
 
-//#include <drot.h>
-//#include <drotg.h>
-//#include <dsbmv.h>
-//#include <dscal.h>
+	// #include <drot.h>
+	// #include <drotg.h>
+	// #include <dsbmv.h>
+	// #include <dscal.h>
 	void scal_(integer *n, complexRopt *ca, complexRopt *cx, integer *incx);
 	void scal_(integer *n, doublerealRopt *ca, doublerealRopt *cx, integer *incx);
 	void scal_(integer *n, realRopt *ca, realRopt *cx, integer *incx);
 	void scal_(integer *n, doublecomplexRopt *ca, doublecomplexRopt *cx, integer *incx);
 
-//#include <dspmv.h>
-//#include <dspr.h>
-//#include <dspr2.h>
-//#include <dswap.h>
-//#include <dsymm.h>
-//#include <dsymv.h>
+	// #include <dspmv.h>
+	// #include <dspr.h>
+	// #include <dspr2.h>
+	// #include <dswap.h>
+	// #include <dsymm.h>
+	// #include <dsymv.h>
 	void symv_(char *uplo, integer *n, complexRopt *alpha, complexRopt *a, integer *lda, complexRopt *x, integer *incx, complexRopt *beta, complexRopt *y, integer *incy);
 	void symv_(char *uplo, integer *n, doublerealRopt *alpha, doublerealRopt *a, integer *lda, doublerealRopt *x, integer *incx, doublerealRopt *beta, doublerealRopt *y, integer *incy);
 	void symv_(char *uplo, integer *n, realRopt *alpha, realRopt *a, integer *lda, realRopt *x, integer *incx, realRopt *beta, realRopt *y, integer *incy);
 	void symv_(char *uplo, integer *n, doublecomplexRopt *alpha, doublecomplexRopt *a, integer *lda, doublecomplexRopt *x, integer *incx, doublecomplexRopt *beta, doublecomplexRopt *y, integer *incy);
 
-//#include <dsyr.h>
-//#include <dsyr2.h>
-//#include <dsyr2k.h>
-//#include <dsyrk.h>
-//#include <dtbmv.h>
-//#include <dtbsv.h>
-//#include <dtpmv.h>
-//#include <dtpsv.h>
-//#include <dtrmm.h>
-//#include <dtrmv.h>
-//#include <dtrsm.h>
+	// #include <dsyr.h>
+	// #include <dsyr2.h>
+	// #include <dsyr2k.h>
+	// #include <dsyrk.h>
+	// #include <dtbmv.h>
+	// #include <dtbsv.h>
+	// #include <dtpmv.h>
+	// #include <dtpsv.h>
+	// #include <dtrmm.h>
+	// #include <dtrmv.h>
+	// #include <dtrsm.h>
 	void trsm_(char *side, char *uplo, char *transa, char *diag, integer *m, integer *n, doublerealRopt *alpha, doublerealRopt *a, integer *lda, doublerealRopt *b, integer *ldb);
 	void trsm_(char *side, char *uplo, char *transa, char *diag, integer *m, integer *n, realRopt *alpha, realRopt *a, integer *lda, realRopt *b, integer *ldb);
-    void trsm_(char *side, char *uplo, char *transa, char *diag, integer *m, integer *n, doublecomplexRopt *alpha, doublecomplexRopt *a, integer *lda, doublecomplexRopt *b, integer *ldb);
-    void trsm_(char *side, char *uplo, char *transa, char *diag, integer *m, integer *n, complexRopt *alpha, complexRopt *a, integer *lda, complexRopt *b, integer *ldb);
-//#include <dtrsv.h>
-//#include <dzasum.h>
-//#include <dznrm2.h>
+	void trsm_(char *side, char *uplo, char *transa, char *diag, integer *m, integer *n, doublecomplexRopt *alpha, doublecomplexRopt *a, integer *lda, doublecomplexRopt *b, integer *ldb);
+	void trsm_(char *side, char *uplo, char *transa, char *diag, integer *m, integer *n, complexRopt *alpha, complexRopt *a, integer *lda, complexRopt *b, integer *ldb);
+	// #include <dtrsv.h>
+	// #include <dzasum.h>
+	// #include <dznrm2.h>
 
-
-
-//#include <dbdsdc.h>
-//#include <dbdsqr.h>
-//#include <ddisna.h>
-//#include <dgbbrd.h>
-//#include <dgbcon.h>
-//#include <dgbequ.h>
-//#include <dgbrfs.h>
-//#include <dgbsv.h>
-//#include <dgbsvx.h>
-//#include <dgbtf2.h>
-//#include <dgbtrf.h>
-//#include <dgbtrs.h>
-//#include <dgebak.h>
-//#include <dgebal.h>
-//#include <dgebd2.h>
-//#include <dgebrd.h>
-//#include <dgecon.h>
-//#include <dgeequ.h>
-//#include <dgees.h>
+	// #include <dbdsdc.h>
+	// #include <dbdsqr.h>
+	// #include <ddisna.h>
+	// #include <dgbbrd.h>
+	// #include <dgbcon.h>
+	// #include <dgbequ.h>
+	// #include <dgbrfs.h>
+	// #include <dgbsv.h>
+	// #include <dgbsvx.h>
+	// #include <dgbtf2.h>
+	// #include <dgbtrf.h>
+	// #include <dgbtrs.h>
+	// #include <dgebak.h>
+	// #include <dgebal.h>
+	// #include <dgebd2.h>
+	// #include <dgebrd.h>
+	// #include <dgecon.h>
+	// #include <dgeequ.h>
+	// #include <dgees.h>
 	void gees_(char *jobvs, char *sort, L_fp select, integer *n, complexRopt *a, integer *lda, integer *sdim, complexRopt *w, complexRopt *vs, integer *ldvs, complexRopt *work, integer *lwork, realRopt *rwork, logical *bwork, integer *info);
 	void gees_(char *jobvs, char *sort, L_fp select, integer *n, doublerealRopt *a, integer *lda, integer *sdim, doublerealRopt *wr, doublerealRopt *wi, doublerealRopt *vs, integer *ldvs, doublerealRopt *work, integer *lwork, logical *bwork, integer *info);
 	void gees_(char *jobvs, char *sort, L_fp select, integer *n, realRopt *a, integer *lda, integer *sdim, realRopt *wr, realRopt *wi, realRopt *vs, integer *ldvs, realRopt *work, integer *lwork, logical *bwork, integer *info);
 	void gees_(char *jobvs, char *sort, L_fp select, integer *n, doublecomplexRopt *a, integer *lda, integer *sdim, doublecomplexRopt *w, doublecomplexRopt *vs, integer *ldvs, doublecomplexRopt *work, integer *lwork, doublerealRopt *rwork, logical *bwork, integer *info);
 
-//#include <dgeesx.h>
-//#include <dgeev.h>
-//#include <dgeevx.h>
-//#include <dgegs.h>
-//#include <dgegv.h>
-//#include <dgehd2.h>
-//#include <dgehrd.h>
-//#include <dgelq2.h>
-//#include <dgelqf.h>
-//#include <dgels.h>
-//#include <dgelsd.h>
-//#include <dgelss.h>
-//#include <dgelsx.h>
-//#include <dgelsy.h>
-//#include <dgeql2.h>
-//#include <dgeqlf.h>
-//#include <dgeqp3.h>
+	// #include <dgeesx.h>
+	// #include <dgeev.h>
+	// #include <dgeevx.h>
+	// #include <dgegs.h>
+	// #include <dgegv.h>
+	// #include <dgehd2.h>
+	// #include <dgehrd.h>
+	// #include <dgelq2.h>
+	// #include <dgelqf.h>
+	// #include <dgels.h>
+	// #include <dgelsd.h>
+	// #include <dgelss.h>
+	// #include <dgelsx.h>
+	// #include <dgelsy.h>
+	// #include <dgeql2.h>
+	// #include <dgeqlf.h>
+	// #include <dgeqp3.h>
 	void geqp3_(integer *m, integer *n, complexRopt *a, integer *lda, integer *jpvt, complexRopt *tau, complexRopt *work, integer *lwork, realRopt *rwork, integer *info);
 	void geqp3_(integer *m, integer *n, doublerealRopt *a, integer *lda, integer *jpvt, doublerealRopt *tau, doublerealRopt *work, integer *lwork, integer *info);
 	void geqp3_(integer *m, integer *n, realRopt *a, integer *lda, integer *jpvt, realRopt *tau, realRopt *work, integer *lwork, integer *info);
 	void geqp3_(integer *m, integer *n, doublecomplexRopt *a, integer *lda, integer *jpvt, doublecomplexRopt *tau, doublecomplexRopt *work, integer *lwork, doublerealRopt *rwork, integer *info);
-//#include <dgeqpf.h>
-//#include <dgeqr2.h>
-//#include <dgeqrf.h>
-//#include <dgerfs.h>
-//#include <dgerq2.h>
-//#include <dgerqf.h>
-//#include <dgesc2.h>
-//#include <dgesdd.h>
+	// #include <dgeqpf.h>
+	// #include <dgeqr2.h>
+	// #include <dgeqrf.h>
+	// #include <dgerfs.h>
+	// #include <dgerq2.h>
+	// #include <dgerqf.h>
+	// #include <dgesc2.h>
+	// #include <dgesdd.h>
 	void gesdd_(char *jobz, integer *m, integer *n, complexRopt *a, integer *lda, realRopt *s, complexRopt *u, integer *ldu, complexRopt *vt, integer *ldvt, complexRopt *work, integer *lwork, realRopt *rwork, integer *iwork, integer *info);
 	void gesdd_(char *jobz, integer *m, integer *n, doublerealRopt *a, integer *lda, doublerealRopt *s, doublerealRopt *u, integer *ldu, doublerealRopt *vt, integer *ldvt, doublerealRopt *work, integer *lwork, integer *iwork, integer *info);
 	void gesdd_(char *jobz, integer *m, integer *n, realRopt *a, integer *lda, realRopt *s, realRopt *u, integer *ldu, realRopt *vt, integer *ldvt, realRopt *work, integer *lwork, integer *iwork, integer *info);
 	void gesdd_(char *jobz, integer *m, integer *n, doublecomplexRopt *a, integer *lda, doublerealRopt *s, doublecomplexRopt *u, integer *ldu, doublecomplexRopt *vt, integer *ldvt, doublecomplexRopt *work, integer *lwork, doublerealRopt *rwork, integer *iwork, integer *info);
-//#include <dgesv.h>
+	// #include <dgesv.h>
 	void gesv_(integer *n, integer *nrhs, complexRopt *a, integer *lda, integer *ipiv, complexRopt *b, integer *ldb, integer *info);
 	void gesv_(integer *n, integer *nrhs, doublerealRopt *a, integer *lda, integer *ipiv, doublerealRopt *b, integer *ldb, integer *info);
 	void gesv_(integer *n, integer *nrhs, realRopt *a, integer *lda, integer *ipiv, realRopt *b, integer *ldb, integer *info);
 	void gesv_(integer *n, integer *nrhs, doublecomplexRopt *a, integer *lda, integer *ipiv, doublecomplexRopt *b, integer *ldb, integer *info);
 
-//#include <dgesvd.h>
+	// #include <dgesvd.h>
 	void gesvd_(char *jobu, char *jobvt, integer *m, integer *n, complexRopt *a, integer *lda, realRopt *s, complexRopt *u, integer *ldu, complexRopt *vt, integer *ldvt, complexRopt *work, integer *lwork, realRopt *rwork, integer *info);
 	void gesvd_(char *jobu, char *jobvt, integer *m, integer *n, doublerealRopt *a, integer *lda, doublerealRopt *s, doublerealRopt *u, integer *ldu, doublerealRopt *vt, integer *ldvt, doublerealRopt *work, integer *lwork, integer *info);
 	void gesvd_(char *jobu, char *jobvt, integer *m, integer *n, realRopt *a, integer *lda, realRopt *s, realRopt *u, integer *ldu, realRopt *vt, integer *ldvt, realRopt *work, integer *lwork, integer *info);
 	void gesvd_(char *jobu, char *jobvt, integer *m, integer *n, doublecomplexRopt *a, integer *lda, doublerealRopt *s, doublecomplexRopt *u, integer *ldu, doublecomplexRopt *vt, integer *ldvt, doublecomplexRopt *work, integer *lwork, doublerealRopt *rwork, integer *info);
 
-//#include <dgesvx.h>
-//#include <dgetc2.h>
-//#include <dgetf2.h>
-//#include <dgetrf.h>
+	// #include <dgesvx.h>
+	// #include <dgetc2.h>
+	// #include <dgetf2.h>
+	// #include <dgetrf.h>
 	void getrf_(integer *m, integer *n, complexRopt *a, integer *lda, integer *ipiv, integer *info);
 	void getrf_(integer *m, integer *n, doublerealRopt *a, integer *lda, integer *ipiv, integer *info);
 	void getrf_(integer *m, integer *n, realRopt *a, integer *lda, integer *ipiv, integer *info);
 	void getrf_(integer *m, integer *n, doublecomplexRopt *a, integer *lda, integer *ipiv, integer *info);
 
-//#include <dgetri.h>
+	// #include <dgetri.h>
 	void getri_(integer *n, complexRopt *a, integer *lda, integer *ipiv, complexRopt *work, integer *lwork, integer *info);
 	void getri_(integer *n, doublerealRopt *a, integer *lda, integer *ipiv, doublerealRopt *work, integer *lwork, integer *info);
 	void getri_(integer *n, realRopt *a, integer *lda, integer *ipiv, realRopt *work, integer *lwork, integer *info);
 	void getri_(integer *n, doublecomplexRopt *a, integer *lda, integer *ipiv, doublecomplexRopt *work, integer *lwork, integer *info);
 
-//#include <dgetrs.h>
+	// #include <dgetrs.h>
 	void getrs_(char *trans, integer *n, integer *nrhs, complexRopt *a, integer *lda, integer *ipiv, complexRopt *b, integer *ldb, integer *info);
 	void getrs_(char *trans, integer *n, integer *nrhs, doublerealRopt *a, integer *lda, integer *ipiv, doublerealRopt *b, integer *ldb, integer *info);
 	void getrs_(char *trans, integer *n, integer *nrhs, realRopt *a, integer *lda, integer *ipiv, realRopt *b, integer *ldb, integer *info);
 	void getrs_(char *trans, integer *n, integer *nrhs, doublecomplexRopt *a, integer *lda, integer *ipiv, doublecomplexRopt *b, integer *ldb, integer *info);
-//#include <dggbak.h>
-//#include <dggbal.h>
-//#include <dgges.h>
-//#include <dggesx.h>
-//#include <dggev.h>
-//#include <dggevx.h>
-//#include <dggglm.h>
-//#include <dgghrd.h>
-//#include <dgglse.h>
-//#include <dggqrf.h>
-//#include <dggrqf.h>
-//#include <dggsvd.h>
-//#include <dggsvp.h>
-//#include <dgtcon.h>
-//#include <dgtrfs.h>
-//#include <dgtsv.h>
-//#include <dgtsvx.h>
-//#include <dgttrf.h>
-//#include <dgttrs.h>
-//#include <dgtts2.h>
-//#include <dhgeqz.h>
-//#include <dhsein.h>
-//#include <dhseqr.h>
-//#include <dlabad.h>
-//#include <dlabrd.h>
-//#include <dlacon.h>
-//#include <dlacpy.h>
-//#include <dladiv.h>
-//#include <dlae2.h>
-//#include <dlaebz.h>
-//#include <dlaed0.h>
-//#include <dlaed1.h>
-//#include <dlaed2.h>
-//#include <dlaed3.h>
-//#include <dlaed4.h>
-//#include <dlaed5.h>
-//#include <dlaed6.h>
-//#include <dlaed7.h>
-//#include <dlaed8.h>
-//#include <dlaed9.h>
-//#include <dlaeda.h>
-//#include <dlaein.h>
-//#include <dlaev2.h>
-//#include <dlaexc.h>
-//#include <dlag2.h>
-//#include <dlags2.h>
-//#include <dlagtf.h>
-//#include <dlagtm.h>
-//#include <dlagts.h>
-//#include <dlagv2.h>
-//#include <dlahqr.h>
-//#include <dlahrd.h>
-//#include <dlaic1.h>
-//#include <dlaln2.h>
-//#include <dlals0.h>
-//#include <dlalsa.h>
-//#include <dlalsd.h>
-//#include <dlamch.h>
-//#include <dlamrg.h>
-//#include <dlangb.h>
-//#include <dlange.h>
-//#include <dlangt.h>
-//#include <dlanhs.h>
-//#include <dlansb.h>
-//#include <dlansp.h>
-//#include <dlanst.h>
-//#include <dlansy.h>
-//#include <dlantb.h>
-//#include <dlantp.h>
-//#include <dlantr.h>
-//#include <dlanv2.h>
-//#include <dlapll.h>
-//#include <dlapmt.h>
+	// #include <dggbak.h>
+	// #include <dggbal.h>
+	// #include <dgges.h>
+	// #include <dggesx.h>
+	// #include <dggev.h>
+	// #include <dggevx.h>
+	// #include <dggglm.h>
+	// #include <dgghrd.h>
+	// #include <dgglse.h>
+	// #include <dggqrf.h>
+	// #include <dggrqf.h>
+	// #include <dggsvd.h>
+	// #include <dggsvp.h>
+	// #include <dgtcon.h>
+	// #include <dgtrfs.h>
+	// #include <dgtsv.h>
+	// #include <dgtsvx.h>
+	// #include <dgttrf.h>
+	// #include <dgttrs.h>
+	// #include <dgtts2.h>
+	// #include <dhgeqz.h>
+	// #include <dhsein.h>
+	// #include <dhseqr.h>
+	// #include <dlabad.h>
+	// #include <dlabrd.h>
+	// #include <dlacon.h>
+	// #include <dlacpy.h>
+	// #include <dladiv.h>
+	// #include <dlae2.h>
+	// #include <dlaebz.h>
+	// #include <dlaed0.h>
+	// #include <dlaed1.h>
+	// #include <dlaed2.h>
+	// #include <dlaed3.h>
+	// #include <dlaed4.h>
+	// #include <dlaed5.h>
+	// #include <dlaed6.h>
+	// #include <dlaed7.h>
+	// #include <dlaed8.h>
+	// #include <dlaed9.h>
+	// #include <dlaeda.h>
+	// #include <dlaein.h>
+	// #include <dlaev2.h>
+	// #include <dlaexc.h>
+	// #include <dlag2.h>
+	// #include <dlags2.h>
+	// #include <dlagtf.h>
+	// #include <dlagtm.h>
+	// #include <dlagts.h>
+	// #include <dlagv2.h>
+	// #include <dlahqr.h>
+	// #include <dlahrd.h>
+	// #include <dlaic1.h>
+	// #include <dlaln2.h>
+	// #include <dlals0.h>
+	// #include <dlalsa.h>
+	// #include <dlalsd.h>
+	// #include <dlamch.h>
+	// #include <dlamrg.h>
+	// #include <dlangb.h>
+	// #include <dlange.h>
+	// #include <dlangt.h>
+	// #include <dlanhs.h>
+	// #include <dlansb.h>
+	// #include <dlansp.h>
+	// #include <dlanst.h>
+	// #include <dlansy.h>
+	// #include <dlantb.h>
+	// #include <dlantp.h>
+	// #include <dlantr.h>
+	// #include <dlanv2.h>
+	// #include <dlapll.h>
+	// #include <dlapmt.h>
 	void lapmt_(logical *forwrd, integer *m, integer *n, complexRopt *x, integer *ldx, integer *k);
 	void lapmt_(logical *forwrd, integer *m, integer *n, doublerealRopt *x, integer *ldx, integer *k);
 	void lapmt_(logical *forwrd, integer *m, integer *n, realRopt *x, integer *ldx, integer *k);
 	void lapmt_(logical *forwrd, integer *m, integer *n, doublecomplexRopt *x, integer *ldx, integer *k);
 
-//#include <dlapy2.h>
-//#include <dlapy3.h>
-//#include <dlaqgb.h>
-//#include <dlaqge.h>
-//#include <dlaqp2.h>
-//#include <dlaqps.h>
-//#include <dlaqsb.h>
-//#include <dlaqsp.h>
-//#include <dlaqsy.h>
-//#include <dlaqtr.h>
-//#include <dlar1v.h>
-//#include <dlar2v.h>
-//#include <dlarf.h>
-//#include <dlarfb.h>
-//#include <dlarfg.h>
-//#include <dlarft.h>
-//#include <dlarfx.h>
+	// #include <dlapy2.h>
+	// #include <dlapy3.h>
+	// #include <dlaqgb.h>
+	// #include <dlaqge.h>
+	// #include <dlaqp2.h>
+	// #include <dlaqps.h>
+	// #include <dlaqsb.h>
+	// #include <dlaqsp.h>
+	// #include <dlaqsy.h>
+	// #include <dlaqtr.h>
+	// #include <dlar1v.h>
+	// #include <dlar2v.h>
+	// #include <dlarf.h>
+	// #include <dlarfb.h>
+	// #include <dlarfg.h>
+	// #include <dlarft.h>
+	// #include <dlarfx.h>
 	void larfx_(char *side, integer *m, integer *n, complexRopt *v, complexRopt *tau, complexRopt *c__, integer *ldc, complexRopt *work);
 	void larfx_(char *side, integer *m, integer *n, doublerealRopt *v, doublerealRopt *tau, doublerealRopt *c__, integer *ldc, doublerealRopt *work);
 	void larfx_(char *side, integer *m, integer *n, realRopt *v, realRopt *tau, realRopt *c__, integer *ldc, realRopt *work);
 	void larfx_(char *side, integer *m, integer *n, doublecomplexRopt *v, doublecomplexRopt *tau, doublecomplexRopt *c__, integer *ldc, doublecomplexRopt *work);
-//#include <dlargv.h>
-//#include <dlarnv.h>
-//#include <dlarrb.h>
-//#include <dlarre.h>
-//#include <dlarrf.h>
-//#include <dlarrv.h>
-//#include <dlartg.h>
-//#include <dlartv.h>
-//#include <dlaruv.h>
-//#include <dlarz.h>
-//#include <dlarzb.h>
-//#include <dlarzt.h>
-//#include <dlas2.h>
-//#include <dlascl.h>
-//#include <dlasd0.h>
-//#include <dlasd1.h>
-//#include <dlasd2.h>
-//#include <dlasd3.h>
-//#include <dlasd4.h>
-//#include <dlasd5.h>
-//#include <dlasd6.h>
-//#include <dlasd7.h>
-//#include <dlasd8.h>
-//#include <dlasd9.h>
-//#include <dlasda.h>
-//#include <dlasdq.h>
-//#include <dlasdt.h>
-//#include <dlaset.h>
-//#include <dlasq1.h>
-//#include <dlasq2.h>
-//#include <dlasq3.h>
-//#include <dlasq4.h>
-//#include <dlasq5.h>
-//#include <dlasq6.h>
-//#include <dlasr.h>
-//#include <dlasrt.h>
-//#include <dlassq.h>
-//#include <dlasv2.h>
-//#include <dlaswp.h>
-//#include <dlasy2.h>
-//#include <dlasyf.h>
-//#include <dlatbs.h>
-//#include <dlatdf.h>
-//#include <dlatps.h>
-//#include <dlatrd.h>
-//#include <dlatrs.h>
-//#include <dlatrz.h>
-//#include <dlatzm.h>
-//#include <dlauu2.h>
-//#include <dlauum.h>
-//#include <dopgtr.h>
-//#include <dopmtr.h>
-//#include <dorg2l.h>
-//#include <dorg2r.h>
-//#include <dorgbr.h>
-//#include <dorghr.h>
-//#include <dorgl2.h>
-//#include <dorglq.h>
-//#include <dorgql.h>
-//#include <dorgqr.h>
+	// #include <dlargv.h>
+	// #include <dlarnv.h>
+	// #include <dlarrb.h>
+	// #include <dlarre.h>
+	// #include <dlarrf.h>
+	// #include <dlarrv.h>
+	// #include <dlartg.h>
+	// #include <dlartv.h>
+	// #include <dlaruv.h>
+	// #include <dlarz.h>
+	// #include <dlarzb.h>
+	// #include <dlarzt.h>
+	// #include <dlas2.h>
+	// #include <dlascl.h>
+	// #include <dlasd0.h>
+	// #include <dlasd1.h>
+	// #include <dlasd2.h>
+	// #include <dlasd3.h>
+	// #include <dlasd4.h>
+	// #include <dlasd5.h>
+	// #include <dlasd6.h>
+	// #include <dlasd7.h>
+	// #include <dlasd8.h>
+	// #include <dlasd9.h>
+	// #include <dlasda.h>
+	// #include <dlasdq.h>
+	// #include <dlasdt.h>
+	// #include <dlaset.h>
+	// #include <dlasq1.h>
+	// #include <dlasq2.h>
+	// #include <dlasq3.h>
+	// #include <dlasq4.h>
+	// #include <dlasq5.h>
+	// #include <dlasq6.h>
+	// #include <dlasr.h>
+	// #include <dlasrt.h>
+	// #include <dlassq.h>
+	// #include <dlasv2.h>
+	// #include <dlaswp.h>
+	// #include <dlasy2.h>
+	// #include <dlasyf.h>
+	// #include <dlatbs.h>
+	// #include <dlatdf.h>
+	// #include <dlatps.h>
+	// #include <dlatrd.h>
+	// #include <dlatrs.h>
+	// #include <dlatrz.h>
+	// #include <dlatzm.h>
+	// #include <dlauu2.h>
+	// #include <dlauum.h>
+	// #include <dopgtr.h>
+	// #include <dopmtr.h>
+	// #include <dorg2l.h>
+	// #include <dorg2r.h>
+	// #include <dorgbr.h>
+	// #include <dorghr.h>
+	// #include <dorgl2.h>
+	// #include <dorglq.h>
+	// #include <dorgql.h>
+	// #include <dorgqr.h>
 	void orgqr_(integer *m, integer *n, integer *k, doublerealRopt *a, integer *lda, doublerealRopt *tau, doublerealRopt *work, integer *lwork, integer *info);
 	void orgqr_(integer *m, integer *n, integer *k, realRopt *a, integer *lda, realRopt *tau, realRopt *work, integer *lwork, integer *info);
 
-//#include <dorgr2.h>
-//#include <dorgrq.h>
-//#include <dorgtr.h>
-//#include <dorm2l.h>
-//#include <dorm2r.h>
-//#include <dormbr.h>
-//#include <dormhr.h>
-//#include <dorml2.h>
-//#include <dormlq.h>
-//#include <dormql.h>
-//#include <dormqr.h>
+	// #include <dorgr2.h>
+	// #include <dorgrq.h>
+	// #include <dorgtr.h>
+	// #include <dorm2l.h>
+	// #include <dorm2r.h>
+	// #include <dormbr.h>
+	// #include <dormhr.h>
+	// #include <dorml2.h>
+	// #include <dormlq.h>
+	// #include <dormql.h>
+	// #include <dormqr.h>
 	void ormqr_(char *side, char *trans, integer *m, integer *n, integer *k, doublerealRopt *a, integer *lda, doublerealRopt *tau, doublerealRopt *c__, integer *ldc, doublerealRopt *work, integer *lwork, integer *info);
 	void ormqr_(char *side, char *trans, integer *m, integer *n, integer *k, realRopt *a, integer *lda, realRopt *tau, realRopt *c__, integer *ldc, realRopt *work, integer *lwork, integer *info);
 
-//#include <dormr2.h>
-//#include <dormr3.h>
-//#include <dormrq.h>
-//#include <dormrz.h>
-//#include <dormtr.h>
-//#include <dpbcon.h>
-//#include <dpbequ.h>
-//#include <dpbrfs.h>
-//#include <dpbstf.h>
-//#include <dpbsv.h>
-//#include <dpbsvx.h>
-//#include <dpbtf2.h>
-//#include <dpbtrf.h>
-//#include <dpbtrs.h>
-//#include <dpocon.h>
-//#include <dpoequ.h>
-//#include <dporfs.h>
-//#include <dposv.h>
-//#include <dposvx.h>
-//#include <dpotf2.h>
-//#include <dpotrf.h>
+	// #include <dormr2.h>
+	// #include <dormr3.h>
+	// #include <dormrq.h>
+	// #include <dormrz.h>
+	// #include <dormtr.h>
+	// #include <dpbcon.h>
+	// #include <dpbequ.h>
+	// #include <dpbrfs.h>
+	// #include <dpbstf.h>
+	// #include <dpbsv.h>
+	// #include <dpbsvx.h>
+	// #include <dpbtf2.h>
+	// #include <dpbtrf.h>
+	// #include <dpbtrs.h>
+	// #include <dpocon.h>
+	// #include <dpoequ.h>
+	// #include <dporfs.h>
+	// #include <dposv.h>
+	// #include <dposvx.h>
+	// #include <dpotf2.h>
+	// #include <dpotrf.h>
 	void potrf_(char *uplo, integer *n, complexRopt *a, integer *lda, integer *info);
 	void potrf_(char *uplo, integer *n, doublerealRopt *a, integer *lda, integer *info);
 	void potrf_(char *uplo, integer *n, realRopt *a, integer *lda, integer *info);
 	void potrf_(char *uplo, integer *n, doublecomplexRopt *a, integer *lda, integer *info);
 
-//#include <dpotri.h>
-//#include <dpotrs.h>
+	// #include <dpotri.h>
+	// #include <dpotrs.h>
 	void potrs_(char *uplo, integer *n, integer *nrhs, complexRopt *a, integer *lda, complexRopt *b, integer *ldb, integer *info);
 	void potrs_(char *uplo, integer *n, integer *nrhs, doublerealRopt *a, integer *lda, doublerealRopt *b, integer *ldb, integer *info);
 	void potrs_(char *uplo, integer *n, integer *nrhs, realRopt *a, integer *lda, realRopt *b, integer *ldb, integer *info);
 	void potrs_(char *uplo, integer *n, integer *nrhs, doublecomplexRopt *a, integer *lda, doublecomplexRopt *b, integer *ldb, integer *info);
 
-//#include <dppcon.h>
-//#include <dppequ.h>
-//#include <dpprfs.h>
-//#include <dppsv.h>
-//#include <dppsvx.h>
-//#include <dpptrf.h>
-//#include <dpptri.h>
-//#include <dpptrs.h>
-//#include <dptcon.h>
-//#include <dpteqr.h>
-//#include <dptrfs.h>
-//#include <dptsv.h>
-//#include <dptsvx.h>
-//#include <dpttrf.h>
-//#include <dpttrs.h>
-//#include <dptts2.h>
-//#include <drscl.h>
-//#include <dsbev.h>
-//#include <dsbevd.h>
-//#include <dsbevx.h>
-//#include <dsbgst.h>
-//#include <dsbgv.h>
-//#include <dsbgvd.h>
-//#include <dsbgvx.h>
-//#include <dsbtrd.h>
-//#include <dsecnd.h>
-//#include <dspcon.h>
-//#include <dspev.h>
-//#include <dspevd.h>
-//#include <dspevx.h>
-//#include <dspgst.h>
-//#include <dspgv.h>
-//#include <dspgvd.h>
-//#include <dspgvx.h>
-//#include <dsprfs.h>
-//#include <dspsv.h>
-//#include <dspsvx.h>
-//#include <dsptrd.h>
-//#include <dsptrf.h>
-//#include <dsptri.h>
-//#include <dsptrs.h>
-//#include <dstebz.h>
-//#include <dstedc.h>
-//#include <dstegr.h>
-//#include <dstein.h>
-//#include <dsteqr.h>
-//#include <dsterf.h>
-//#include <dstev.h>
-//#include <dstevd.h>
-//#include <dstevr.h>
-//#include <dstevx.h>
-//#include <dsycon.h>
-//#include <dsyev.h>
+	// #include <dppcon.h>
+	// #include <dppequ.h>
+	// #include <dpprfs.h>
+	// #include <dppsv.h>
+	// #include <dppsvx.h>
+	// #include <dpptrf.h>
+	// #include <dpptri.h>
+	// #include <dpptrs.h>
+	// #include <dptcon.h>
+	// #include <dpteqr.h>
+	// #include <dptrfs.h>
+	// #include <dptsv.h>
+	// #include <dptsvx.h>
+	// #include <dpttrf.h>
+	// #include <dpttrs.h>
+	// #include <dptts2.h>
+	// #include <drscl.h>
+	// #include <dsbev.h>
+	// #include <dsbevd.h>
+	// #include <dsbevx.h>
+	// #include <dsbgst.h>
+	// #include <dsbgv.h>
+	// #include <dsbgvd.h>
+	// #include <dsbgvx.h>
+	// #include <dsbtrd.h>
+	// #include <dsecnd.h>
+	// #include <dspcon.h>
+	// #include <dspev.h>
+	// #include <dspevd.h>
+	// #include <dspevx.h>
+	// #include <dspgst.h>
+	// #include <dspgv.h>
+	// #include <dspgvd.h>
+	// #include <dspgvx.h>
+	// #include <dsprfs.h>
+	// #include <dspsv.h>
+	// #include <dspsvx.h>
+	// #include <dsptrd.h>
+	// #include <dsptrf.h>
+	// #include <dsptri.h>
+	// #include <dsptrs.h>
+	// #include <dstebz.h>
+	// #include <dstedc.h>
+	// #include <dstegr.h>
+	// #include <dstein.h>
+	// #include <dsteqr.h>
+	// #include <dsterf.h>
+	// #include <dstev.h>
+	// #include <dstevd.h>
+	// #include <dstevr.h>
+	// #include <dstevx.h>
+	// #include <dsycon.h>
+	// #include <dsyev.h>
 	void syev_(char *jobz, char *uplo, integer *n, doublerealRopt *a, integer *lda, doublerealRopt *w, doublerealRopt *work, integer *lwork, integer *info);
 	void syev_(char *jobz, char *uplo, integer *n, realRopt *a, integer *lda, realRopt *w, realRopt *work, integer *lwork, integer *info);
 
-//#include <dsyevd.h>
+	// #include <dsyevd.h>
 	void syevd_(char *jobz, char *uplo, integer *n, doublerealRopt *a, integer *lda, doublerealRopt *w, doublerealRopt *work, integer *lwork, integer *iwork, integer *liwork, integer *info);
 	void syevd_(char *jobz, char *uplo, integer *n, realRopt *a, integer *lda, realRopt *w, realRopt *work, integer *lwork, integer *iwork, integer *liwork, integer *info);
-//#include <dsyevr.h>
+	// #include <dsyevr.h>
 	void syevr_(char *jobz, char *range, char *uplo, integer *n, doublerealRopt *a, integer *lda, doublerealRopt *vl, doublerealRopt *vu, integer *il, integer *iu, doublerealRopt *abstol, integer *m, doublerealRopt *w, doublerealRopt *z__, integer *ldz, integer *isuppz, doublerealRopt *work, integer *lwork, integer *iwork, integer *liwork, integer *info);
 	void syevr_(char *jobz, char *range, char *uplo, integer *n, realRopt *a, integer *lda, realRopt *vl, realRopt *vu, integer *il, integer *iu, realRopt *abstol, integer *m, realRopt *w, realRopt *z__, integer *ldz, integer *isuppz, realRopt *work, integer *lwork, integer *iwork, integer *liwork, integer *info);
-//#include <dsyevx.h>
+	// #include <dsyevx.h>
 	void syevx_(char *jobz, char *range, char *uplo, integer *n, doublerealRopt *a, integer *lda, doublerealRopt *vl, doublerealRopt *vu, integer *il, integer *iu, doublerealRopt *abstol, integer *m, doublerealRopt *w, doublerealRopt *z__, integer *ldz, doublerealRopt *work, integer *lwork, integer *iwork, integer *ifail, integer *info);
 	void syevx_(char *jobz, char *range, char *uplo, integer *n, realRopt *a, integer *lda, realRopt *vl, realRopt *vu, integer *il, integer *iu, realRopt *abstol, integer *m, realRopt *w, realRopt *z__, integer *ldz, realRopt *work, integer *lwork, integer *iwork, integer *ifail, integer *info);
-//#include <dsygs2.h>
-//#include <dsygst.h>
-//#include <dsygv.h>
-//#include <dsygvd.h>
-//#include <dsygvx.h>
-//#include <dsyrfs.h>
-//#include <dsysv.h>
-//#include <dsysvx.h>
-//#include <dsytd2.h>
-//#include <dsytf2.h>
-//#include <dsytrd.h>
-//#include <dsytrf.h>
-//#include <dsytri.h>
-//#include <dsytrs.h>
-//#include <dtbcon.h>
-//#include <dtbrfs.h>
-//#include <dtbtrs.h>
-//#include <dtgevc.h>
-//#include <dtgex2.h>
-//#include <dtgexc.h>
-//#include <dtgsen.h>
-//#include <dtgsja.h>
-//#include <dtgsna.h>
-//#include <dtgsy2.h>
-//#include <dtgsyl.h>
+	// #include <dsygs2.h>
+	// #include <dsygst.h>
+	// #include <dsygv.h>
+	// #include <dsygvd.h>
+	// #include <dsygvx.h>
+	// #include <dsyrfs.h>
+	// #include <dsysv.h>
+	// #include <dsysvx.h>
+	// #include <dsytd2.h>
+	// #include <dsytf2.h>
+	// #include <dsytrd.h>
+	// #include <dsytrf.h>
+	// #include <dsytri.h>
+	// #include <dsytrs.h>
+	// #include <dtbcon.h>
+	// #include <dtbrfs.h>
+	// #include <dtbtrs.h>
+	// #include <dtgevc.h>
+	// #include <dtgex2.h>
+	// #include <dtgexc.h>
+	// #include <dtgsen.h>
+	// #include <dtgsja.h>
+	// #include <dtgsna.h>
+	// #include <dtgsy2.h>
+	// #include <dtgsyl.h>
 	void tgsyl_(char *trans, integer *ijob, integer *m, integer *n, complexRopt *a, integer *lda, complexRopt *b, integer *ldb, complexRopt *c__, integer *ldc, complexRopt *d__, integer *ldd, complexRopt *e, integer *lde, complexRopt *f, integer *ldf, realRopt *scale, realRopt *dif, complexRopt *work, integer *lwork, integer *iwork, integer *info);
 	void tgsyl_(char *trans, integer *ijob, integer *m, integer *n, doublerealRopt *a, integer *lda, doublerealRopt *b, integer *ldb, doublerealRopt *c__, integer *ldc, doublerealRopt *d__, integer *ldd, doublerealRopt *e, integer *lde, doublerealRopt *f, integer *ldf, doublerealRopt *scale, doublerealRopt *dif, doublerealRopt *work, integer *lwork, integer *iwork, integer *info);
 	void tgsyl_(char *trans, integer *ijob, integer *m, integer *n, realRopt *a, integer *lda, realRopt *b, integer *ldb, realRopt *c__, integer *ldc, realRopt *d__, integer *ldd, realRopt *e, integer *lde, realRopt *f, integer *ldf, realRopt *scale, realRopt *dif, realRopt *work, integer *lwork, integer *iwork, integer *info);
 	void tgsyl_(char *trans, integer *ijob, integer *m, integer *n, doublecomplexRopt *a, integer *lda, doublecomplexRopt *b, integer *ldb, doublecomplexRopt *c__, integer *ldc, doublecomplexRopt *d__, integer *ldd, doublecomplexRopt *e, integer *lde, doublecomplexRopt *f, integer *ldf, doublerealRopt *scale, doublerealRopt *dif, doublecomplexRopt *work, integer *lwork, integer *iwork, integer *info);
-//#include <dtpcon.h>
-//#include <dtprfs.h>
-//#include <dtptri.h>
-//#include <dtptrs.h>
-//#include <dtrcon.h>
-//#include <dtrevc.h>
-//#include <dtrexc.h>
-//#include <dtrrfs.h>
-//#include <dtrsen.h>
-//#include <dtrsna.h>
-//#include <dtrsyl.h>
-//#include <dtrti2.h>
-//#include <dtrtri.h>
-//#include <dtrtrs.h>
+	// #include <dtpcon.h>
+	// #include <dtprfs.h>
+	// #include <dtptri.h>
+	// #include <dtptrs.h>
+	// #include <dtrcon.h>
+	// #include <dtrevc.h>
+	// #include <dtrexc.h>
+	// #include <dtrrfs.h>
+	// #include <dtrsen.h>
+	// #include <dtrsna.h>
+	// #include <dtrsyl.h>
+	// #include <dtrti2.h>
+	// #include <dtrtri.h>
+	// #include <dtrtrs.h>
 	void trtrs_(char *uplo, char *trans, char *diag, integer *n, integer *nrhs, complexRopt *a, integer *lda, complexRopt *b, integer *ldb, integer *info);
 	void trtrs_(char *uplo, char *trans, char *diag, integer *n, integer *nrhs, doublerealRopt *a, integer *lda, doublerealRopt *b, integer *ldb, integer *info);
 	void trtrs_(char *uplo, char *trans, char *diag, integer *n, integer *nrhs, realRopt *a, integer *lda, realRopt *b, integer *ldb, integer *info);
 	void trtrs_(char *uplo, char *trans, char *diag, integer *n, integer *nrhs, doublecomplexRopt *a, integer *lda, doublecomplexRopt *b, integer *ldb, integer *info);
-//#include <dtzrqf.h>
-//#include <dtzrzf.h>
-//#include <dzsum1.h>
+	// #include <dtzrqf.h>
+	// #include <dtzrzf.h>
+	// #include <dzsum1.h>
 
-	//zgegs_
+	// zgegs_
 	void gegs_(char *jobvsl, char *jobvsr, integer *n, complexRopt *a, integer *lda, complexRopt *b, integer *ldb, complexRopt *alpha, complexRopt *beta, complexRopt *vsl, integer *ldvsl, complexRopt *vsr, integer *ldvsr, complexRopt *work, integer *lwork, realRopt *rwork, integer *info);
 	void gegs_(char *jobvsl, char *jobvsr, integer *n, doublecomplexRopt *a, integer *lda, doublecomplexRopt *b, integer *ldb, doublecomplexRopt *alpha, doublecomplexRopt *beta, doublecomplexRopt *vsl, integer *ldvsl, doublecomplexRopt *vsr, integer *ldvsr, doublecomplexRopt *work, integer *lwork, doublerealRopt *rwork, integer *info);
 
-	//zunmqr_
+	// zunmqr_
 	void unmqr_(char *side, char *trans, integer *m, integer *n, integer *k, complexRopt *a, integer *lda, complexRopt *tau, complexRopt *c__, integer *ldc, complexRopt *work, integer *lwork, integer *info);
 	void unmqr_(char *side, char *trans, integer *m, integer *n, integer *k, doublecomplexRopt *a, integer *lda, doublecomplexRopt *tau, doublecomplexRopt *c__, integer *ldc, doublecomplexRopt *work, integer *lwork, integer *info);
 
-	//zpotri_
+	// zpotri_
 	void potri_(char *uplo, integer *n, complexRopt *a, integer *lda, integer *info);
 	void potri_(char *uplo, integer *n, doublecomplexRopt *a, integer *lda, integer *info);
 
-    //zheev_
-    void heev_(char *jobz, char *uplo, integer *n, complexRopt *A, integer *LDA, realRopt *W, complexRopt *work, integer *lwork, realRopt *rwork, integer *info);
-    void heev_(char *jobz, char *uplo, integer *n, doublecomplexRopt *A, integer *LDA, doublerealRopt *W, doublecomplexRopt *work, integer *lwork, doublerealRopt *rwork, integer *info);
+	// zheev_
+	void heev_(char *jobz, char *uplo, integer *n, complexRopt *A, integer *LDA, realRopt *W, complexRopt *work, integer *lwork, realRopt *rwork, integer *info);
+	void heev_(char *jobz, char *uplo, integer *n, doublecomplexRopt *A, integer *LDA, doublerealRopt *W, doublecomplexRopt *work, integer *lwork, doublerealRopt *rwork, integer *info);
 
-    //zungqr_
-    void ungqr_(integer *m, integer *n, integer *k, complexRopt *a, integer *lda, complexRopt *tau, complexRopt *work, integer *lwork, integer *info);
-    void ungqr_(integer *m, integer *n, integer *k, doublecomplexRopt *a, integer *lda, doublecomplexRopt *tau, doublecomplexRopt *work, integer *lwork, integer *info);
+	// zungqr_
+	void ungqr_(integer *m, integer *n, integer *k, complexRopt *a, integer *lda, complexRopt *tau, complexRopt *work, integer *lwork, integer *info);
+	void ungqr_(integer *m, integer *n, integer *k, doublecomplexRopt *a, integer *lda, doublecomplexRopt *tau, doublecomplexRopt *work, integer *lwork, integer *info);
 
 	void BLAS_usmm(enum blas_order_type order, enum blas_trans_type transa, int nrhs, float alpha, blas_sparse_matrix A, const float *b, int ldb, float *c, int ldc);
-	void BLAS_usmm(enum blas_order_type order, enum blas_trans_type transa,	int nrhs, double alpha, blas_sparse_matrix A, const double *b, int ldb, double *c, int ldc);
-	void BLAS_usmm(enum blas_order_type order, enum blas_trans_type transa,	int nrhs, const complexRopt *alpha, blas_sparse_matrix A, const complexRopt *b,	int ldb, complexRopt *c, int ldc);
-	void BLAS_usmm(enum blas_order_type order, enum blas_trans_type transa,	int nrhs, const doublecomplexRopt *alpha, blas_sparse_matrix A, const doublecomplexRopt *b,	int ldb, doublecomplexRopt *c, int ldc);
+	void BLAS_usmm(enum blas_order_type order, enum blas_trans_type transa, int nrhs, double alpha, blas_sparse_matrix A, const double *b, int ldb, double *c, int ldc);
+	void BLAS_usmm(enum blas_order_type order, enum blas_trans_type transa, int nrhs, const complexRopt *alpha, blas_sparse_matrix A, const complexRopt *b, int ldb, complexRopt *c, int ldc);
+	void BLAS_usmm(enum blas_order_type order, enum blas_trans_type transa, int nrhs, const doublecomplexRopt *alpha, blas_sparse_matrix A, const doublecomplexRopt *b, int ldb, doublecomplexRopt *c, int ldc);
 
-//	void BLAS_usmm(enum blas_order_type order, enum blas_trans_type transa, integer nrhs, float alpha, blas_sparse_matrix A, const float *b, integer ldb, float *c, integer ldc);
-//	void BLAS_usmm(enum blas_order_type order, enum blas_trans_type transa, integer nrhs, double alpha, blas_sparse_matrix A, const double *b, integer ldb, double *c, integer ldc);
-//	void BLAS_usmm(enum blas_order_type order, enum blas_trans_type transa, integer nrhs, const complexRopt *alpha, blas_sparse_matrix A, const complexRopt *b, integer ldb, complexRopt *c, integer ldc);
-//	void BLAS_usmm(enum blas_order_type order, enum blas_trans_type transa, integer nrhs, const doublecomplexRopt *alpha, blas_sparse_matrix A, const doublecomplexRopt *b, integer ldb, doublecomplexRopt *c, integer ldc);
-
+	//	void BLAS_usmm(enum blas_order_type order, enum blas_trans_type transa, integer nrhs, float alpha, blas_sparse_matrix A, const float *b, integer ldb, float *c, integer ldc);
+	//	void BLAS_usmm(enum blas_order_type order, enum blas_trans_type transa, integer nrhs, double alpha, blas_sparse_matrix A, const double *b, integer ldb, double *c, integer ldc);
+	//	void BLAS_usmm(enum blas_order_type order, enum blas_trans_type transa, integer nrhs, const complexRopt *alpha, blas_sparse_matrix A, const complexRopt *b, integer ldb, complexRopt *c, integer ldc);
+	//	void BLAS_usmm(enum blas_order_type order, enum blas_trans_type transa, integer nrhs, const doublecomplexRopt *alpha, blas_sparse_matrix A, const doublecomplexRopt *b, integer ldb, doublecomplexRopt *c, integer ldc);
 
 	void BLAS_uscr_insert_entries(blas_sparse_matrix A, integer nz, const float *val, const integer *indx, const integer *jndx);
 	void BLAS_uscr_insert_entries(blas_sparse_matrix A, integer nz, const double *val, const integer *indx, const integer *jndx);
 	void BLAS_uscr_insert_entries(blas_sparse_matrix A, integer nz, const complexRopt *val, const integer *indx, const integer *jndx);
 	void BLAS_uscr_insert_entries(blas_sparse_matrix A, integer nz, const doublecomplexRopt *val, const integer *indx, const integer *jndx);
 
-
-//	void BLAS_uscr_insert_entries(blas_sparse_matrix A, int nz, const float *val, const int *indx, const int *jndx);
-//	void BLAS_uscr_insert_entries(blas_sparse_matrix A, int nz, const double *val, const int *indx, const int *jndx);
-//	void BLAS_uscr_insert_entries(blas_sparse_matrix A, int nz, const complexRopt *val, const int *indx, const int *jndx);
-//	void BLAS_uscr_insert_entries(blas_sparse_matrix A, int nz, const doublecomplexRopt *val, const int *indx, const int *jndx);
+	//	void BLAS_uscr_insert_entries(blas_sparse_matrix A, int nz, const float *val, const int *indx, const int *jndx);
+	//	void BLAS_uscr_insert_entries(blas_sparse_matrix A, int nz, const double *val, const int *indx, const int *jndx);
+	//	void BLAS_uscr_insert_entries(blas_sparse_matrix A, int nz, const complexRopt *val, const int *indx, const int *jndx);
+	//	void BLAS_uscr_insert_entries(blas_sparse_matrix A, int nz, const doublecomplexRopt *val, const int *indx, const int *jndx);
 
 }; /*end of ROPTLIB namespace*/
 

@@ -52,40 +52,40 @@
 
 /* linux, hpux - must be defined before any other include file */
 #if defined(__linux__)
-#	undef  _LARGEFILE64_SOURCE
-#	define _LARGEFILE64_SOURCE
+#undef _LARGEFILE64_SOURCE
+#define _LARGEFILE64_SOURCE
 #endif
 
 #include <stdio.h>
 #include <sys/stat.h>
 
 #if defined(_WIN32) /* windows */
-#	define getFilePos   fgetpos
-#	define setFilePos   fsetpos
-#	define structStat   struct _stati64
-#	define getFileStat  _stati64
-#	define getFileFstat _fstati64
-#	define fileno       _fileno
-#	define fpos_T       fpos_t
+#define getFilePos fgetpos
+#define setFilePos fsetpos
+#define structStat struct _stati64
+#define getFileStat _stati64
+#define getFileFstat _fstati64
+#define fileno _fileno
+#define fpos_T fpos_t
 #elif defined(__APPLE__) /* mac */
-#	define getFilePos   fgetpos
-#	define setFilePos   fsetpos
-#	define structStat   struct stat
-#	define getFileStat  stat
-#	define getFileFstat fstat
-#	define fpos_T       fpos_t
+#define getFilePos fgetpos
+#define setFilePos fsetpos
+#define structStat struct stat
+#define getFileStat stat
+#define getFileFstat fstat
+#define fpos_T fpos_t
 #elif defined(__linux__) || defined(__sun)
-#	if defined(__GNUC__) && (__GNUC__ >= 3)
-		/* fopen works for large files as-is */
-#	else
-#		define fopen fopen64
-#	endif
-#	define getFilePos   fgetpos64
-#	define setFilePos   fsetpos64
-#	define structStat   struct stat64
-#	define getFileStat  stat64
-#	define getFileFstat fstat64
-#	define fpos_T       fpos64_t
+#if defined(__GNUC__) && (__GNUC__ >= 3)
+/* fopen works for large files as-is */
+#else
+#define fopen fopen64
+#endif
+#define getFilePos fgetpos64
+#define setFilePos fsetpos64
+#define structStat struct stat64
+#define getFileStat stat64
+#define getFileFstat fstat64
+#define fpos_T fpos64_t
 #endif
 
 #endif /* __tmw__io64__h__ */

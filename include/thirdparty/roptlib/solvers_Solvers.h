@@ -18,7 +18,8 @@ Solvers
 #include "others_def.h"
 
 /*Define the namespace*/
-namespace ROPTLIB{
+namespace ROPTLIB
+{
 
 	/*Specify what information will be output in the algorithm.
 	The value should be assigned to the member variable: "Debug",
@@ -28,10 +29,18 @@ namespace ROPTLIB{
 	DETAILED: Output more than necessary information. Developers can put debug information for this mode.
 	The details of output information can be found in Appendix B of the User Manual.
 	*/
-	enum VERBOSEINFO{ NOOUTPUT, FINALRESULT, ITERRESULT, DETAILED, VERBOSELENGTH };
-    extern unsigned long starttime;    /*the start time of running the algorithm*/
+	enum VERBOSEINFO
+	{
+		NOOUTPUT,
+		FINALRESULT,
+		ITERRESULT,
+		DETAILED,
+		VERBOSELENGTH
+	};
+	extern unsigned long starttime; /*the start time of running the algorithm*/
 
-	class Solvers{
+	class Solvers
+	{
 	public:
 		/*Run the algorithm. In this class, this function only initialize debug information and output the name of algorithm.
 			This function has been overloaded for all the algorithms*/
@@ -93,7 +102,7 @@ namespace ROPTLIB{
 		/*Beside the three stopping criterion specified by the member variable "Stop_Criterion",
 		user also can define a stopping criterion by assigning the following function pointer.
 		The code always run this function pointer first if it is not a null pointer. */
-		bool(*StopPtr) (const Variable &x, const Vector &funSeries, integer lengthSeries, realdp finalval, realdp initval, const Problem *prob, const Solvers *solver);
+		bool (*StopPtr)(const Variable &x, const Vector &funSeries, integer lengthSeries, realdp finalval, realdp initval, const Problem *prob, const Solvers *solver);
 
 		/*Destructor. It is a pure virtual function*/
 		virtual ~Solvers(void) = 0;
@@ -140,48 +149,48 @@ namespace ROPTLIB{
 		/*Check whether a stopping criterion is satisfied or not*/
 		virtual bool IsStopped(void) = 0;
 
-        /*Print information in every few iterations specific to an algorithm*/
-        virtual void PrintInfo(void) = 0;
-        
-        /*Print last information in an algorithm*/
-        virtual void PrintFinalInfo(void) = 0;
+		/*Print information in every few iterations specific to an algorithm*/
+		virtual void PrintInfo(void) = 0;
+
+		/*Print last information in an algorithm*/
+		virtual void PrintFinalInfo(void) = 0;
 
 		/* algorithm-related variables: */
-        Vector gf1, gf2;    /*gf1: gradient at x1, gf2: gradient at x2*/
-		Variable x1, x2;	/*x1: current iterate, x2: next iterate*/
-		realdp f1, f2;		/*f1: function value at x1, f2: function value at x2*/
+		Vector gf1, gf2; /*gf1: gradient at x1, gf2: gradient at x2*/
+		Variable x1, x2; /*x1: current iterate, x2: next iterate*/
+		realdp f1, f2;	 /*f1: function value at x1, f2: function value at x2*/
 
 		/* Input parameters and functions */
-		const Manifold *Mani;	/*The manifold on which the cost function is*/
-		const Problem *Prob;	/*The problem which defines the cost function, gradient and probably action of Hessian*/
+		const Manifold *Mani; /*The manifold on which the cost function is*/
+		const Problem *Prob;  /*The problem which defines the cost function, gradient and probably action of Hessian*/
 
 		/* For debug information */
-		integer iter; /*number of iterations*/
-		realdp ComTime;	/*the computational time*/
+		integer iter;					 /*number of iterations*/
+		realdp ComTime;					 /*the computational time*/
 		integer nf, ng, nR, nV, nVp, nH; /*number of function evaluations
 										 number of gradient evaluations
 										 number of retraction evaluations
 										 number of vector transport (See GetnV(void) for details)
 										 number of vector transport (See GetnVp(void) for details)
 										 number of action of Hessian*/
-		Vector timeSeries, funSeries; /*three arrays to store the computational time, function values*/
-        integer lengthSeries;        /*the length of above three arrays, i.e., the length of timeSeries, funSeries, distSeries.*/
+		Vector timeSeries, funSeries;	 /*three arrays to store the computational time, function values*/
+		integer lengthSeries;			 /*the length of above three arrays, i.e., the length of timeSeries, funSeries, distSeries.*/
 
-		Vector SolverInfo;/*Other information for output*/
+		Vector SolverInfo; /*Other information for output*/
 
 		std::string SolverName; /*The name of the solver. This is assigned in the constructor function of each derived class*/
 
 		/*new memory for the realdp array Vs, type Vector, with length l*/
-		void NewVectors(Vector * &Vs, integer l);
+		void NewVectors(Vector *&Vs, integer l);
 
 		/*delete memory for the realdp array Vs, type Vector, with length l*/
-		void DeleteVectors(Vector * &Vs, integer l);
+		void DeleteVectors(Vector *&Vs, integer l);
 
 		/*new memory for the realdp array Xs, type Variable, with length l*/
-		void NewVariables(Vector * &Xs, integer l);
+		void NewVariables(Vector *&Xs, integer l);
 
 		/*delete memory for the realdp array Xs, type Variable, with length l*/
-		void DeleteVariables(Vector * &Xs, integer l);
+		void DeleteVariables(Vector *&Xs, integer l);
 	};
 
 }; /*end of ROPTLIB namespace*/

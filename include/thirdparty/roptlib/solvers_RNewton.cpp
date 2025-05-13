@@ -1,7 +1,8 @@
 #include "solvers_RNewton.h"
 
 /*Define the namespace*/
-namespace ROPTLIB{
+namespace ROPTLIB
+{
 
 	RNewton::RNewton(const Problem *prob, const Variable *initialx)
 	{
@@ -19,7 +20,7 @@ namespace ROPTLIB{
 	{
 		SolversSMLS::SetDefaultParams();
 		theta = 1;
-		kappa = static_cast<realdp> (0.1);
+		kappa = static_cast<realdp>(0.1);
 		Min_Inner_Iter = 0;
 		Max_Inner_Iter = 1000;
 		useRand = false;
@@ -68,39 +69,40 @@ namespace ROPTLIB{
 
 	void RNewton::PrintInfo(void)
 	{
-        printf("i:%d,f:%.3e,df/f:%.3e,", iter, f2, ((f1 - f2) / std::fabs(f2)));
+		printf("i:%d,f:%.3e,df/f:%.3e,", iter, f2, ((f1 - f2) / std::fabs(f2)));
 
-        printf("|gf|:%.3e,t0:%.2e,t:%.2e,s0:%.2e,s:%.2e,time:%.2g,", ngf2, initiallength, stepsize, initialslope, newslope, static_cast<realdp>(getTickCount() - starttime) / CLK_PS);
+		printf("|gf|:%.3e,t0:%.2e,t:%.2e,s0:%.2e,s:%.2e,time:%.2g,", ngf2, initiallength, stepsize, initialslope, newslope, static_cast<realdp>(getTickCount() - starttime) / CLK_PS);
 
-        printf("nf:%d,ng:%d,", nf, ng);
-        
-        if (nH != 0)
-            printf("nH:%d,", nH);
-        
-        printf("tCGstatus:%s,innerIter:%d,", tCGLSSMstatusSetnames[tCGLSSMstatus].c_str(), innerIter);
-        
-        printf("nR:%d,", nR);
-        
-        if (nV != 0)
-            printf("nV(nVp):%d(%d),", nV, nVp);
-        
-        printf("\n");
+		printf("nf:%d,ng:%d,", nf, ng);
+
+		if (nH != 0)
+			printf("nH:%d,", nH);
+
+		printf("tCGstatus:%s,innerIter:%d,", tCGLSSMstatusSetnames[tCGLSSMstatus].c_str(), innerIter);
+
+		printf("nR:%d,", nR);
+
+		if (nV != 0)
+			printf("nV(nVp):%d(%d),", nV, nVp);
+
+		printf("\n");
 	};
 
 	void RNewton::tCG_LS(void)
 	{
-        Vector Heta(eta1), r(Prob->GetDomain()->GetEMPTY()), z(r), delta(r), Hd(r);
+		Vector Heta(eta1), r(Prob->GetDomain()->GetEMPTY()), z(r), delta(r), Hd(r);
 		realdp r_r, norm_r, norm_r0, z_r, d_Hd, alphatemp, tempnum, zold_rold, betatemp;
 		integer j;
 
 		if (useRand)
 		{
-			Prob->HessianEta(x1, eta1, &Heta); nH++;
-            Mani->ScalarVectorAddVector(x1, 1, gf1, Heta, &r); /*r = gf1 + Heta*/
+			Prob->HessianEta(x1, eta1, &Heta);
+			nH++;
+			Mani->ScalarVectorAddVector(x1, 1, gf1, Heta, &r); /*r = gf1 + Heta*/
 		}
 		else
 		{
-            r = gf1;
+			r = gf1;
 		}
 
 		r_r = Mani->Metric(x1, r, r);
@@ -121,7 +123,8 @@ namespace ROPTLIB{
 
 		for (j = 0; j < Max_Inner_Iter; j++)
 		{
-			Prob->HessianEta(x1, delta, &Hd); nH++;
+			Prob->HessianEta(x1, delta, &Hd);
+			nH++;
 			d_Hd = Mani->Metric(x1, delta, Hd);
 			alphatemp = z_r / d_Hd;
 
@@ -130,8 +133,8 @@ namespace ROPTLIB{
 				tCGLSSMstatus = LSSM_NEGCURVTURE; /* negative curvature*/
 				break;
 			}
-            Mani->ScalarVectorAddVector(x1, alphatemp, delta, eta1, &eta1); /*eta1 = eta1 + alphatemp * delta*/
-            
+			Mani->ScalarVectorAddVector(x1, alphatemp, delta, eta1, &eta1); /*eta1 = eta1 + alphatemp * delta*/
+
 			new_modelv = Mani->Metric(x1, eta1, gf1) + 0.5 * Mani->Metric(x1, eta1, Heta);
 			if (new_modelv >= modelv || Mani->Metric(x1, eta1, gf1) >= -std::numeric_limits<realdp>::epsilon())
 			{
@@ -140,9 +143,9 @@ namespace ROPTLIB{
 			}
 
 			modelv = new_modelv;
-            
-            Mani->ScalarVectorAddVector(x1, alphatemp, Hd, r, &r); /*r = r + alphatemp * Hd*/
-            Mani->Projection(x1, r, &r);
+
+			Mani->ScalarVectorAddVector(x1, alphatemp, Hd, r, &r); /*r = r + alphatemp * Hd*/
+			Mani->Projection(x1, r, &r);
 
 			r_r = Mani->Metric(x1, r, r);
 			norm_r = sqrt(r_r);
@@ -157,16 +160,16 @@ namespace ROPTLIB{
 					tCGLSSMstatus = LSSM_SCON; /* superlinear convergence*/
 				break;
 			}
-            Prob->PreConditioner(x1, r, &z);
+			Prob->PreConditioner(x1, r, &z);
 			zold_rold = z_r;
 			z_r = Mani->Metric(x1, z, r);
 			betatemp = z_r / zold_rold;
-            Mani->ScalarTimesVector(x2, betatemp, delta, &delta);
-            Mani->ScalarVectorAddVector(x2, -1, z, delta, &delta); /*delta =  - z + betatemp * delta*/
+			Mani->ScalarTimesVector(x2, betatemp, delta, &delta);
+			Mani->ScalarVectorAddVector(x2, -1, z, delta, &delta); /*delta =  - z + betatemp * delta*/
 		}
 		innerIter = j;
 		if (j == 0)
-            eta1 = delta;
+			eta1 = delta;
 	};
 
 	void RNewton::SetParams(PARAMSMAP params)
@@ -175,30 +178,26 @@ namespace ROPTLIB{
 		PARAMSMAP::iterator iter;
 		for (iter = params.begin(); iter != params.end(); iter++)
 		{
-			if (iter->first == static_cast<std::string> ("useRand"))
+			if (iter->first == static_cast<std::string>("useRand"))
 			{
-				useRand = ((static_cast<integer> (iter->second)) != 0);
+				useRand = ((static_cast<integer>(iter->second)) != 0);
 			}
-			else
-				if (iter->first == static_cast<std::string> ("Max_Inner_Iter"))
-				{
-					Max_Inner_Iter = static_cast<integer> (iter->second);
-				}
-				else
-					if (iter->first == static_cast<std::string> ("Min_Inner_Iter"))
-					{
-						Min_Inner_Iter = static_cast<integer> (iter->second);
-					}
-					else
-						if (iter->first == static_cast<std::string> ("theta"))
-						{
-							theta = iter->second;
-						}
-						else
-							if (iter->first == static_cast<std::string> ("kappa"))
-							{
-								kappa = static_cast<realdp> (iter->second);
-							}
+			else if (iter->first == static_cast<std::string>("Max_Inner_Iter"))
+			{
+				Max_Inner_Iter = static_cast<integer>(iter->second);
+			}
+			else if (iter->first == static_cast<std::string>("Min_Inner_Iter"))
+			{
+				Min_Inner_Iter = static_cast<integer>(iter->second);
+			}
+			else if (iter->first == static_cast<std::string>("theta"))
+			{
+				theta = iter->second;
+			}
+			else if (iter->first == static_cast<std::string>("kappa"))
+			{
+				kappa = static_cast<realdp>(iter->second);
+			}
 		}
 	};
 }; /*end of ROPTLIB namespace*/

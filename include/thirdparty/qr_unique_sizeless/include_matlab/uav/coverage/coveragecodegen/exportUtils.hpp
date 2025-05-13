@@ -12,7 +12,8 @@
 
 #else
 
-#if defined(MATLAB_MEX_FILE) || defined(BUILDING_UNITTEST) || defined(MATLAB_BUILTINS)
+#if defined(MATLAB_MEX_FILE) || defined(BUILDING_UNITTEST) ||                  \
+    defined(MATLAB_BUILTINS)
 #include "tmwtypes.h"
 #else
 #include "rtwtypes.h"

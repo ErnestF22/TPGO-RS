@@ -17,21 +17,23 @@ In the current version, it only contains on function which prints a realdp array
 #define integer ptrdiff_t
 #endif
 
-
 /*Define the namespace*/
-namespace ROPTLIB{
+namespace ROPTLIB
+{
 
-    namespace GLOBAL{
+    namespace GLOBAL
+    {
         extern integer IZERO, IONE, ITWO;
         extern realdp DZERO, DONE, DTWO, DNONE, DNTWO;
         extern realdpcomplex ZZERO, ZONE, ZTWO, ZNONE;
         extern char *N, *T, *L, *R, *V, *C, *U, *A, *S, *O;
     };
 
-	class ForDebug{
-	public:
-		static void Print(const char *name, const realdp *M, integer row, integer col = 1, integer num = 1);
-		static realdp NormF(const realdp *V, integer length);
-	};
+    class ForDebug
+    {
+    public:
+        static void Print(const char *name, const realdp *M, integer row, integer col = 1, integer num = 1);
+        static realdp NormF(const realdp *V, integer length);
+    };
 }; /*end of ROPTLIB namespace*/
 #endif /* end of FORDEBUG_H */

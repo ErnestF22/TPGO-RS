@@ -5,29 +5,30 @@
 
 #include "detail/publish_util.hpp"
 
-#include <vector>
 #include <cstdlib>
+#include <vector>
 
 namespace matlab {
-    namespace data {
+namespace data {
 
-        using ArrayDimensions = std::vector<size_t>;
+using ArrayDimensions = std::vector<size_t>;
 
-        /**
-         * Determine the number of elements based on the ArrayDimensions.
-         *
-         * @param dims - the dimensions
-         * @return size_t - the number of elements
-         * @throw - none.
-         */
-        inline size_t getNumElements(const ArrayDimensions& dims) MW_NOEXCEPT {
-            size_t retVal = 1;
-            for (auto& elem : dims) {
-                retVal *= elem;
-            }
-            return retVal;
-        }
-    }
+/**
+ * Determine the number of elements based on the ArrayDimensions.
+ *
+ * @param dims - the dimensions
+ * @return size_t - the number of elements
+ * @throw - none.
+ */
+inline size_t getNumElements(const ArrayDimensions &dims) MW_NOEXCEPT
+{
+  size_t retVal = 1;
+  for (auto &elem : dims) {
+    retVal *= elem;
+  }
+  return retVal;
 }
+} // namespace data
+} // namespace matlab
 
 #endif

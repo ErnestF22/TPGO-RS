@@ -15,7 +15,9 @@ typedef unsigned int uint32_t;
 #else
 #include <stdint.h>
 #endif
-RTIOSTREAMTGTAPPSVC_API_C int8_t sendToCommSvc(const void *data, size_t size, size_t *size_sent);
-RTIOSTREAMTGTAPPSVC_API_C int8_t receiveFromCommSvc(void *data, size_t size, size_t *size_sent);
+RTIOSTREAMTGTAPPSVC_API_C int8_t sendToCommSvc(const void *data, size_t size,
+                                               size_t *size_sent);
+RTIOSTREAMTGTAPPSVC_API_C int8_t receiveFromCommSvc(void *data, size_t size,
+                                                    size_t *size_sent);
 
 #endif

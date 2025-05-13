@@ -1,5 +1,5 @@
 /*
-This file defines the class for 
+This file defines the class for
 min_{X \in S^{n-1}} tr((X.^2)^T W^T P W (X.^2)), where P is a N by N symmetric positive definite matrix
 and W is a N by n matrix.
 
@@ -19,11 +19,13 @@ Problem --> SphereConvexHull
 #include "others_def.h"
 
 /*Define the namespace*/
-namespace ROPTLIB{
+namespace ROPTLIB
+{
 
-    class SolversLSLPSub;
+	class SolversLSLPSub;
 
-	class SphereConvexHull : public Problem{
+	class SphereConvexHull : public Problem
+	{
 	public:
 		/*W is an array of vectors, which are tangent vectors in the tangent space at x, lengthW is the length of W.
 		HvRBFGSSub defines a linear mapping: P: v --> Pv. The manifold, Mani, of x and W is not necessary the same as the domain of this problem.*/
@@ -38,7 +40,7 @@ namespace ROPTLIB{
 		Vector *W;
 		integer lengthW;
 		SolversNSMSub *solver;
-        Vector &(SolversNSMSub::*Hv)(const Vector &v, Vector *result);
+		Vector &(SolversNSMSub::*Hv)(const Vector &v, Vector *result);
 	};
 
 }; /*end of ROPTLIB namespace*/

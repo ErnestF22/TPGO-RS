@@ -1,10 +1,11 @@
 #ifdef __cplusplus
-extern "C" { 
-#endif  
+extern "C"
+{
+#endif
 
-#include "f2c.h" 
+#include "f2c.h"
 
-int zpptri_(char *uplo, integer *n, doublecomplexRopt *ap, integer *info);
+    int zpptri_(char *uplo, integer *n, doublecomplexRopt *ap, integer *info);
 
 #ifdef __cplusplus
 }

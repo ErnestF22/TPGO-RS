@@ -1,10 +1,11 @@
 #ifdef __cplusplus
-extern "C" { 
-#endif  
+extern "C"
+{
+#endif
 
-#include "f2c.h" 
+#include "f2c.h"
 
-doublerealRopt dcabs1_(doublecomplexRopt *z__);
+    doublerealRopt dcabs1_(doublecomplexRopt *z__);
 
 #ifdef __cplusplus
 }

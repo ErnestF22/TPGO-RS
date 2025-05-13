@@ -24,20 +24,21 @@ norm point in a polytope and a pair of closest points in two polytopes.
 #define RIEMANNIANCONHULL /* RECURSIVEMETHOD */
 
 /*Define the namespace*/
-namespace ROPTLIB{
+namespace ROPTLIB
+{
 
-    class SolversNSMSub;
+	class SolversNSMSub;
 
 	/*Compute min_{y in convex hull of gfs, and gfs are tangent vectors at the tangent space at x} ||y||_2 */
 	extern realdp MinPNormConHull(const Manifold *Mani, Variable x, Vector *Ys, integer LYs, Vector &outSoln);
 
 	/*Compute min_{y in convex hull of gfs, and gfs are tangent vectors at the tangent space at x} ||y|| */
 	extern realdp MinPNormConHull(const Manifold *Mani, Variable x, Vector *Ys, integer LYs, SolversNSMSub *solver,
-		Vector &(SolversNSMSub::*Hv)(const Vector &v, Vector *result), Vector &outSoln);
+								  Vector &(SolversNSMSub::*Hv)(const Vector &v, Vector *result), Vector &outSoln);
 
 	/*Compute min_{y in convex hull of gfs, and gfs are tangent vectors at the tangent space at x} ||y|| */
 	extern realdp MinPNormConHullRMethod(const Manifold *Mani, Variable x, Vector *Ys, integer LYs, SolversNSMSub *solver,
-		Vector &(SolversNSMSub::*Hv)(const Vector &v, Vector *result), Vector &outSoln);
+										 Vector &(SolversNSMSub::*Hv)(const Vector &v, Vector *result), Vector &outSoln);
 }; /*end of ROPTLIB namespace*/
 
 #endif

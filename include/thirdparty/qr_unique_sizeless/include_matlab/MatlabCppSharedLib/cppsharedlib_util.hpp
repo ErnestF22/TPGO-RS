@@ -5,21 +5,22 @@
 
 #include "cppsharedlib_api.hpp"
 
-#include <mutex>
 #include <algorithm>
-#include <ratio>
 #include <cstring>
+#include <mutex>
+#include <ratio>
 
 namespace matlab {
-    namespace cpplib {
+namespace cpplib {
 
-        class MATLABLibrary;
+class MATLABLibrary;
 
-        enum class MATLABApplicationMode {
-            OUT_OF_PROCESS = 0,
-            IN_PROCESS = 1
-        };
-    }
-}
+enum class MATLABApplicationMode
+{
+  OUT_OF_PROCESS = 0,
+  IN_PROCESS = 1
+};
+} // namespace cpplib
+} // namespace matlab
 
-#endif //CPPSHAREDLIB_UTIL_HPP
+#endif // CPPSHAREDLIB_UTIL_HPP

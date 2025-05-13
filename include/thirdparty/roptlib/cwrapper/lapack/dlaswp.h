@@ -1,10 +1,11 @@
 #ifdef __cplusplus
-extern "C" { 
-#endif  
+extern "C"
+{
+#endif
 
-#include "f2c.h" 
+#include "f2c.h"
 
-int dlaswp_(integer *n, doublerealRopt *a, integer *lda, integer *k1, integer *k2, integer *ipiv, integer *incx);
+    int dlaswp_(integer *n, doublerealRopt *a, integer *lda, integer *k1, integer *k2, integer *ipiv, integer *incx);
 
 #ifdef __cplusplus
 }

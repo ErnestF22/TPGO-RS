@@ -14,12 +14,12 @@
 #undef VOID
 #include <windows.h>
 #elif __APPLE__
-    #include "TargetConditionals.h"
-    #if TARGET_OS_MAC
-    #include <unistd.h>
-    #include <sys/time.h>
-    #include <netinet/in.h>
-    #endif
+#include "TargetConditionals.h"
+#if TARGET_OS_MAC
+#include <unistd.h>
+#include <sys/time.h>
+#include <netinet/in.h>
+#endif
 #elif __linux
 #include <unistd.h>
 #include <sys/time.h>
@@ -29,8 +29,9 @@
 #define CLK_PS 1000000
 
 /*Define the namespace*/
-namespace ROPTLIB{
+namespace ROPTLIB
+{
 
-	unsigned long getTickCount(void);
+    unsigned long getTickCount(void);
 }; /*end of ROPTLIB namespace*/
 #endif

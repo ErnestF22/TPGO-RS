@@ -1,10 +1,11 @@
 #ifdef __cplusplus
-extern "C" { 
-#endif  
+extern "C"
+{
+#endif
 
-#include "f2c.h" 
+#include "f2c.h"
 
-int cher2k_(char *uplo, char *trans, integer *n, integer *k, complexRopt *alpha, complexRopt *a, integer *lda, complexRopt *b, integer *ldb, realRopt *beta, complexRopt *c__, integer *ldc);
+    int cher2k_(char *uplo, char *trans, integer *n, integer *k, complexRopt *alpha, complexRopt *a, integer *lda, complexRopt *b, integer *ldb, realRopt *beta, complexRopt *c__, integer *ldc);
 
 #ifdef __cplusplus
 }

@@ -1,13 +1,13 @@
 /**
-* @file         opencvutils_util.h
-*
-* Purpose       export/import switch for OpenCV utilities
-*
-* Authors       Dinesh Iyer
-*
-* Copyright     2019 The MathWorks, Inc.
-*
-*/
+ * @file         opencvutils_util.h
+ *
+ * Purpose       export/import switch for OpenCV utilities
+ *
+ * Authors       Dinesh Iyer
+ *
+ * Copyright     2019 The MathWorks, Inc.
+ *
+ */
 #ifdef SUPPORTS_PRAGMA_ONCE
 #pragma once
 #endif
@@ -19,7 +19,7 @@
 /* For DLL_EXPORT_SYM and EXTERN_C */
 #include "package.h"
 
-#define IMAGESDATATYPESOPENCVUTILS_API  DLL_EXPORT_SYM
+#define IMAGESDATATYPESOPENCVUTILS_API DLL_EXPORT_SYM
 
 #else
 // #define IMAGESDATATYPESOPENCVUTILS_API  DLL_IMPORT_SYM

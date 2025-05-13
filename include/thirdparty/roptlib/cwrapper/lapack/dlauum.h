@@ -1,10 +1,11 @@
 #ifdef __cplusplus
-extern "C" { 
-#endif  
+extern "C"
+{
+#endif
 
-#include "f2c.h" 
+#include "f2c.h"
 
-int dlauum_(char *uplo, integer *n, doublerealRopt *a, integer *lda, integer *info);
+    int dlauum_(char *uplo, integer *n, doublerealRopt *a, integer *lda, integer *info);
 
 #ifdef __cplusplus
 }

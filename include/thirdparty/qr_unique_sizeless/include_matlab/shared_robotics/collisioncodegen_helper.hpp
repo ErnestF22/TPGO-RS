@@ -18,14 +18,16 @@
 
 namespace shared_robotics {
 struct _idx_vec3_t {
-    std::size_t v[3];
+  std::size_t v[3];
 };
 typedef struct _idx_vec3_t idx_vec3_t;
 
-_ccd_inline void idxVec3Set(idx_vec3_t* v, std::size_t x, std::size_t y, std::size_t z) {
-    v->v[0] = x;
-    v->v[1] = y;
-    v->v[2] = z;
+_ccd_inline void idxVec3Set(idx_vec3_t *v, std::size_t x, std::size_t y,
+                            std::size_t z)
+{
+  v->v[0] = x;
+  v->v[1] = y;
+  v->v[2] = z;
 }
 
 } // namespace shared_robotics

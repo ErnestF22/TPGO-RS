@@ -25,14 +25,16 @@ namespace flatbuffers {
 // "tables" use an offset table (possibly shared) that allows fields to be
 // omitted and added at will, but uses an extra indirection to read.
 class Table {
- public:
-  const uint8_t *GetVTable() const {
+public:
+  const uint8_t *GetVTable() const
+  {
     return data_ - ReadScalar<soffset_t>(data_);
   }
 
   // This gets the field offset for any of the functions below it, or 0
   // if the field was not present.
-  voffset_t GetOptionalFieldOffset(voffset_t field) const {
+  voffset_t GetOptionalFieldOffset(voffset_t field) const
+  {
     // The vtable offset is always at the start.
     auto vtable = GetVTable();
     // The first element is the size of the vtable (fields + type id + itself).
@@ -42,88 +44,106 @@ class Table {
     return field < vtsize ? ReadScalar<voffset_t>(vtable + field) : 0;
   }
 
-  template<typename T> T GetField(voffset_t field, T defaultval) const {
+  template <typename T> T GetField(voffset_t field, T defaultval) const
+  {
     auto field_offset = GetOptionalFieldOffset(field);
     return field_offset ? ReadScalar<T>(data_ + field_offset) : defaultval;
   }
 
-  template<typename P, typename OffsetSize = uoffset_t>
-  P GetPointer(voffset_t field) {
+  template <typename P, typename OffsetSize = uoffset_t>
+  P GetPointer(voffset_t field)
+  {
     auto field_offset = GetOptionalFieldOffset(field);
     auto p = data_ + field_offset;
     return field_offset ? reinterpret_cast<P>(p + ReadScalar<OffsetSize>(p))
                         : nullptr;
   }
-  template<typename P, typename OffsetSize = uoffset_t>
-  P GetPointer(voffset_t field) const {
+  template <typename P, typename OffsetSize = uoffset_t>
+  P GetPointer(voffset_t field) const
+  {
     return const_cast<Table *>(this)->GetPointer<P, OffsetSize>(field);
   }
 
-  template<typename P> P GetPointer64(voffset_t field) {
+  template <typename P> P GetPointer64(voffset_t field)
+  {
     return GetPointer<P, uoffset64_t>(field);
   }
 
-  template<typename P> P GetPointer64(voffset_t field) const {
+  template <typename P> P GetPointer64(voffset_t field) const
+  {
     return GetPointer<P, uoffset64_t>(field);
   }
 
-  template<typename P> P GetStruct(voffset_t field) const {
+  template <typename P> P GetStruct(voffset_t field) const
+  {
     auto field_offset = GetOptionalFieldOffset(field);
     auto p = const_cast<uint8_t *>(data_ + field_offset);
     return field_offset ? reinterpret_cast<P>(p) : nullptr;
   }
 
-  template<typename Raw, typename Face>
-  flatbuffers::Optional<Face> GetOptional(voffset_t field) const {
+  template <typename Raw, typename Face>
+  flatbuffers::Optional<Face> GetOptional(voffset_t field) const
+  {
     auto field_offset = GetOptionalFieldOffset(field);
     auto p = data_ + field_offset;
     return field_offset ? Optional<Face>(static_cast<Face>(ReadScalar<Raw>(p)))
                         : Optional<Face>();
   }
 
-  template<typename T> bool SetField(voffset_t field, T val, T def) {
+  template <typename T> bool SetField(voffset_t field, T val, T def)
+  {
     auto field_offset = GetOptionalFieldOffset(field);
-    if (!field_offset) return IsTheSameAs(val, def);
+    if (!field_offset)
+      return IsTheSameAs(val, def);
     WriteScalar(data_ + field_offset, val);
     return true;
   }
-  template<typename T> bool SetField(voffset_t field, T val) {
+  template <typename T> bool SetField(voffset_t field, T val)
+  {
     auto field_offset = GetOptionalFieldOffset(field);
-    if (!field_offset) return false;
+    if (!field_offset)
+      return false;
     WriteScalar(data_ + field_offset, val);
     return true;
   }
 
-  bool SetPointer(voffset_t field, const uint8_t *val) {
+  bool SetPointer(voffset_t field, const uint8_t *val)
+  {
     auto field_offset = GetOptionalFieldOffset(field);
-    if (!field_offset) return false;
+    if (!field_offset)
+      return false;
     WriteScalar(data_ + field_offset,
                 static_cast<uoffset_t>(val - (data_ + field_offset)));
     return true;
   }
 
-  uint8_t *GetAddressOf(voffset_t field) {
+  uint8_t *GetAddressOf(voffset_t field)
+  {
     auto field_offset = GetOptionalFieldOffset(field);
     return field_offset ? data_ + field_offset : nullptr;
   }
-  const uint8_t *GetAddressOf(voffset_t field) const {
+  const uint8_t *GetAddressOf(voffset_t field) const
+  {
     return const_cast<Table *>(this)->GetAddressOf(field);
   }
 
-  bool CheckField(voffset_t field) const {
+  bool CheckField(voffset_t field) const
+  {
     return GetOptionalFieldOffset(field) != 0;
   }
 
   // Verify the vtable of this table.
   // Call this once per table, followed by VerifyField once per field.
-  bool VerifyTableStart(Verifier &verifier) const {
+  bool VerifyTableStart(Verifier &verifier) const
+  {
     return verifier.VerifyTableStart(data_);
   }
 
   // Verify a particular field.
-  template<typename T>
+  template <typename T>
   bool VerifyField(const Verifier &verifier, voffset_t field,
-                   size_t align) const {
+                   size_t align) const
+  {
     // Calling GetOptionalFieldOffset should be safe now thanks to
     // VerifyTable().
     auto field_offset = GetOptionalFieldOffset(field);
@@ -132,37 +152,42 @@ class Table {
   }
 
   // VerifyField for required fields.
-  template<typename T>
+  template <typename T>
   bool VerifyFieldRequired(const Verifier &verifier, voffset_t field,
-                           size_t align) const {
+                           size_t align) const
+  {
     auto field_offset = GetOptionalFieldOffset(field);
     return verifier.Check(field_offset != 0) &&
            verifier.VerifyField<T>(data_, field_offset, align);
   }
 
   // Versions for offsets.
-  template<typename OffsetT = uoffset_t>
-  bool VerifyOffset(const Verifier &verifier, voffset_t field) const {
+  template <typename OffsetT = uoffset_t>
+  bool VerifyOffset(const Verifier &verifier, voffset_t field) const
+  {
     auto field_offset = GetOptionalFieldOffset(field);
     return !field_offset || verifier.VerifyOffset<OffsetT>(data_, field_offset);
   }
 
-  template<typename OffsetT = uoffset_t>
-  bool VerifyOffsetRequired(const Verifier &verifier, voffset_t field) const {
+  template <typename OffsetT = uoffset_t>
+  bool VerifyOffsetRequired(const Verifier &verifier, voffset_t field) const
+  {
     auto field_offset = GetOptionalFieldOffset(field);
     return verifier.Check(field_offset != 0) &&
            verifier.VerifyOffset<OffsetT>(data_, field_offset);
   }
 
-  bool VerifyOffset64(const Verifier &verifier, voffset_t field) const {
+  bool VerifyOffset64(const Verifier &verifier, voffset_t field) const
+  {
     return VerifyOffset<uoffset64_t>(verifier, field);
   }
 
-  bool VerifyOffset64Required(const Verifier &verifier, voffset_t field) const {
+  bool VerifyOffset64Required(const Verifier &verifier, voffset_t field) const
+  {
     return VerifyOffsetRequired<uoffset64_t>(verifier, field);
   }
 
- private:
+private:
   // private constructor & copy constructor: you obtain instances of this
   // class by pointing to existing data only
   Table();
@@ -174,15 +199,16 @@ class Table {
 
 // This specialization allows avoiding warnings like:
 // MSVC C4800: type: forcing value to bool 'true' or 'false'.
-template<>
-inline flatbuffers::Optional<bool> Table::GetOptional<uint8_t, bool>(
-    voffset_t field) const {
+template <>
+inline flatbuffers::Optional<bool>
+Table::GetOptional<uint8_t, bool>(voffset_t field) const
+{
   auto field_offset = GetOptionalFieldOffset(field);
   auto p = data_ + field_offset;
   return field_offset ? Optional<bool>(ReadScalar<uint8_t>(p) != 0)
                       : Optional<bool>();
 }
 
-}  // namespace flatbuffers
+} // namespace flatbuffers
 
-#endif  // FLATBUFFERS_TABLE_H_
+#endif // FLATBUFFERS_TABLE_H_

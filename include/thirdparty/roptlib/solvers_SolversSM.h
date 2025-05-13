@@ -19,16 +19,24 @@ Solvers --> SolversSM
 #include "others_def.h"
 
 /*Define the namespace*/
-namespace ROPTLIB{
+namespace ROPTLIB
+{
 
 	/*The algorithm is stopped when a value (specified by ther parameter) is less than the "Tolerance" (a member variable)
 	The value should be assigned to the member variable: "Stop_Criterion" and the applicable values are
 	SM_FUN_REL: |f_k - f_{k+1}| / max(|f_k|, 1)
 	SM_GRAD_F: \|gf_k\|
 	SM_GRAD_F_0: \|gf_k\| / \|gf_0\|*/
-	enum StopCritSM{ SM_FUN_REL, SM_GRAD_F, SM_GRAD_F_0, STOPCRITSMLENGTH };
+	enum StopCritSM
+	{
+		SM_FUN_REL,
+		SM_GRAD_F,
+		SM_GRAD_F_0,
+		STOPCRITSMLENGTH
+	};
 
-	class SolversSM : public Solvers{
+	class SolversSM : public Solvers
+	{
 	public:
 		/*Run the algorithm.*/
 		virtual void Run(void);
@@ -73,12 +81,12 @@ namespace ROPTLIB{
 
 		/*Setting parameters (member variables) to be default values */
 		virtual void SetDefaultParams(void);
-        
-        /*Initialize the type of iterates x1, x2 and tangent vectors gf1, gf2 and obtian the problem and manifold information
-            INPUT:    prob is the problem which defines the cost function, gradient and possible the action of Hessian
-            and specifies the manifold of domain.
-            initialx is the initial iterate. */
-        virtual void SetProbX(const Problem *prob, const Variable *initialx);
+
+		/*Initialize the type of iterates x1, x2 and tangent vectors gf1, gf2 and obtian the problem and manifold information
+			INPUT:    prob is the problem which defines the cost function, gradient and possible the action of Hessian
+			and specifies the manifold of domain.
+			initialx is the initial iterate. */
+		virtual void SetProbX(const Problem *prob, const Variable *initialx);
 
 		/*When one iteration, some algorithms need to update some information. For example,
 			quasi-Newton methods need to update the Hessian approximation and nonlinear conjugate gradient
@@ -87,18 +95,18 @@ namespace ROPTLIB{
 
 		/*Check whether a stopping criterion is satisfied or not*/
 		virtual bool IsStopped(void);
-        
-        /*Print information in every few iterations specific to an algorithm*/
-        virtual void PrintInfo(void);
-        
-        /*Print last information in an algorithm*/
-        virtual void PrintFinalInfo(void);
+
+		/*Print information in every few iterations specific to an algorithm*/
+		virtual void PrintInfo(void);
+
+		/*Print last information in an algorithm*/
+		virtual void PrintFinalInfo(void);
 
 		/* algorithm-related variables: */
-		Vector Pgf1, Pgf2;	/*Pgf1: preconditioned gradient at x1, Pgf2: preconditioned gradient at x2, used in RCG and LRBFGS, LRTRSR1*/
+		Vector Pgf1, Pgf2;		 /*Pgf1: preconditioned gradient at x1, Pgf2: preconditioned gradient at x2, used in RCG and LRBFGS, LRTRSR1*/
 		realdp ngf0, ngf1, ngf2; /*ngf0: the norm of gradient at the initial iterate, ngf1: the norm of the gradient at x1, ngf2: the norm of the gradient at x2*/
-		Vector eta1, eta2; /*In Line search-based methods, eta1 is the search direction. eta2 is stepsize * eta1. In trust region-based methods, eta1 is the
-                             initial guess for solving the local model. eta2 is the result produced by solving the local model.*/
+		Vector eta1, eta2;		 /*In Line search-based methods, eta1 is the search direction. eta2 is stepsize * eta1. In trust region-based methods, eta1 is the
+								   initial guess for solving the local model. eta2 is the result produced by solving the local model.*/
 
 		/* For debug information */
 		Vector gradSeries; /*an array to store the norm of gradient after each iteration */

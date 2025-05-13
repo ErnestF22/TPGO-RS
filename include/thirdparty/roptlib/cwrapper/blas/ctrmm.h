@@ -1,10 +1,11 @@
 #ifdef __cplusplus
-extern "C" { 
-#endif  
+extern "C"
+{
+#endif
 
-#include "f2c.h" 
+#include "f2c.h"
 
-int ctrmm_(char *side, char *uplo, char *transa, char *diag, integer *m, integer *n, complexRopt *alpha, complexRopt *a, integer *lda, complexRopt *b, integer *ldb);
+    int ctrmm_(char *side, char *uplo, char *transa, char *diag, integer *m, integer *n, complexRopt *alpha, complexRopt *a, integer *lda, complexRopt *b, integer *ldb);
 
 #ifdef __cplusplus
 }

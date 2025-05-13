@@ -1,10 +1,11 @@
 #ifdef __cplusplus
-extern "C" { 
-#endif  
+extern "C"
+{
+#endif
 
-#include "f2c.h" 
+#include "f2c.h"
 
-int slaed5_(integer *i__, realRopt *d__, realRopt *z__, realRopt *delta, realRopt *rho, realRopt *dlam);
+    int slaed5_(integer *i__, realRopt *d__, realRopt *z__, realRopt *delta, realRopt *rho, realRopt *dlam);
 
 #ifdef __cplusplus
 }

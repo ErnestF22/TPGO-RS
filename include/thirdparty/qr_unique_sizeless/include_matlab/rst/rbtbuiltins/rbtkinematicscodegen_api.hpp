@@ -4,18 +4,18 @@
 #include "spec.hpp"
 
 typedef struct {
-    uint16_T PositionNumber;
-    uint16_T VelocityNumber;
-    uint8_T JointType;
-    real64_T JointAxis[3];
-    real64_T JointToParentTransform[16];
-    real64_T MotionSubspace[36];
-    real64_T ChildToJointTransform[16];
+  uint16_T PositionNumber;
+  uint16_T VelocityNumber;
+  uint8_T JointType;
+  real64_T JointAxis[3];
+  real64_T JointToParentTransform[16];
+  real64_T MotionSubspace[36];
+  real64_T ChildToJointTransform[16];
 } RigidBodyJoint;
 
 typedef struct {
-    int32_T ParentIndex;
-    RigidBodyJoint Joint;
+  int32_T ParentIndex;
+  RigidBodyJoint Joint;
 } RigidBody;
 
 /** Create a rigid body tree
@@ -32,12 +32,10 @@ typedef struct {
  * @returns rbt A generic pointer to a rigid body tree. Caller is responsible
  * for deallocating this instance.
  */
-EXTERN_C RBTCODEGEN_API void* rbtkinematicscodegen_makeRBT(const RigidBody rbarr[],
-                                                           const int32_T pdofmap[],
-                                                           const int32_T vdofmap[],
-                                                           real64_T numbodies,
-                                                           real64_T pdofmapsize,
-                                                           real64_T vdofmapsize);
+EXTERN_C RBTCODEGEN_API void *
+rbtkinematicscodegen_makeRBT(const RigidBody rbarr[], const int32_T pdofmap[],
+                             const int32_T vdofmap[], real64_T numbodies,
+                             real64_T pdofmapsize, real64_T vdofmapsize);
 
 /** Forward kinematics routine of a rigid body tree.
  *
@@ -52,10 +50,10 @@ EXTERN_C RBTCODEGEN_API void* rbtkinematicscodegen_makeRBT(const RigidBody rbarr
  * configuration in configarr, where each transformation corresponds to a
  * body in the tree.
  */
-EXTERN_C RBTCODEGEN_API void rbtkinematicscodegen_forwardKinematics(const void* rbt,
-                                                                    const real64_T configarr[],
-                                                                    real64_T numconfig,
-                                                                    real64_T tforms[]);
+EXTERN_C RBTCODEGEN_API void
+rbtkinematicscodegen_forwardKinematics(const void *rbt,
+                                       const real64_T configarr[],
+                                       real64_T numconfig, real64_T tforms[]);
 
 /** Geometric Jacobian routine of a rigid body tree.
  *
@@ -68,16 +66,16 @@ EXTERN_C RBTCODEGEN_API void rbtkinematicscodegen_forwardKinematics(const void* 
  * @param[out] jacout An array of geometric jacobians for every configuration
  * in configarr, where each jacobian corresponds to a body in the tree.
  */
-EXTERN_C RBTCODEGEN_API void rbtkinematicscodegen_geometricJacobians(const void* rbt,
-                                                                     const real64_T configarr[],
-                                                                     real64_T numconfig,
-                                                                     real64_T jacout[]);
+EXTERN_C RBTCODEGEN_API void
+rbtkinematicscodegen_geometricJacobians(const void *rbt,
+                                        const real64_T configarr[],
+                                        real64_T numconfig, real64_T jacout[]);
 
-
-EXTERN_C RBTCODEGEN_API real64_T rbtkinematicscodegen_getVelocityNumber(const void* rbt);
+EXTERN_C RBTCODEGEN_API real64_T
+rbtkinematicscodegen_getVelocityNumber(const void *rbt);
 /** Destruct an instance of a rigid body tree
  *
  * @param rbt An opaque pointer of a rigid body tree
  */
-EXTERN_C RBTCODEGEN_API void rbtkinematicscodegen_destruct(const void* rbt);
+EXTERN_C RBTCODEGEN_API void rbtkinematicscodegen_destruct(const void *rbt);
 #endif

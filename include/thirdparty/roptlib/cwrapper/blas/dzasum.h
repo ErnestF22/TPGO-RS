@@ -1,10 +1,11 @@
 #ifdef __cplusplus
-extern "C" { 
-#endif  
+extern "C"
+{
+#endif
 
-#include "f2c.h" 
+#include "f2c.h"
 
-doublerealRopt dzasum_(integer *n, doublecomplexRopt *zx, integer *incx);
+    doublerealRopt dzasum_(integer *n, doublecomplexRopt *zx, integer *incx);
 
 #ifdef __cplusplus
 }

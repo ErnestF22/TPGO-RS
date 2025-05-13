@@ -43,11 +43,11 @@
 
 #include <eigen3/Eigen/Dense>
 
-
 // Function Declarations
 extern int main(int argc, char **argv);
 
-extern void main_qr_unique(const Eigen::MatrixXd& Aeig, Eigen::MatrixXd &Qeig, Eigen::MatrixXd &Reig);
+extern void main_qr_unique(const Eigen::MatrixXd &Aeig, Eigen::MatrixXd &Qeig,
+                           Eigen::MatrixXd &Reig);
 
 #endif
 // End of code generation (main.h)

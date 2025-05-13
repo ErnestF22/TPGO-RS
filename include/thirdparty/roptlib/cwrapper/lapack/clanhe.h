@@ -1,10 +1,11 @@
 #ifdef __cplusplus
-extern "C" { 
-#endif  
+extern "C"
+{
+#endif
 
-#include "f2c.h" 
+#include "f2c.h"
 
-E_f clanhe_(char *norm, char *uplo, integer *n, complexRopt *a, integer *lda, realRopt *work);
+    E_f clanhe_(char *norm, char *uplo, integer *n, complexRopt *a, integer *lda, realRopt *work);
 
 #ifdef __cplusplus
 }

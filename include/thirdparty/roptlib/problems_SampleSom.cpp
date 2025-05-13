@@ -1273,7 +1273,7 @@ namespace ROPTLIB
             SomUtils::VecMatD vLambdaR(n, SomUtils::MatD::Zero(somSzNext.p_, somSzNext.d_));
             SomUtils::MatD vLambdaT(SomUtils::MatD::Zero(somSzNext.p_, somSzNext.n_));
             ProbPrev.setCostCurr(costLast);
-            for (auto& Rm : R)
+            for (auto &Rm : R)
                 ROFL_VAR1(ProbPrev.checkIsOnStiefel(Rm))
             ROFL_VAR1("Calling ProbPrev.rsomEscapeHessianGenprocEigen()")
             ProbPrev.rsomEscapeHessianGenprocEigen(R, T, Y0, lambda, vLambdaR, vLambdaT);

@@ -1,10 +1,11 @@
 #ifdef __cplusplus
-extern "C" { 
-#endif  
+extern "C"
+{
+#endif
 
-#include "f2c.h" 
+#include "f2c.h"
 
-int dsyr_(char *uplo, integer *n, doublerealRopt *alpha, doublerealRopt *x, integer *incx, doublerealRopt *a, integer *lda);
+    int dsyr_(char *uplo, integer *n, doublerealRopt *alpha, doublerealRopt *x, integer *incx, doublerealRopt *a, integer *lda);
 
 #ifdef __cplusplus
 }

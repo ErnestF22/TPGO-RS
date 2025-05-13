@@ -1,7 +1,8 @@
 #ifndef HALIDE_HALIDERUNTIMEQURT_H
 #define HALIDE_HALIDERUNTIMEQURT_H
 
-// Don't include HalideRuntime.h if the contents of it were already pasted into a generated header above this one
+// Don't include HalideRuntime.h if the contents of it were already pasted into
+// a generated header above this one
 #ifndef HALIDE_HALIDERUNTIME_H
 
 #include "HalideRuntime.h"
@@ -22,11 +23,12 @@ extern "C" {
 // @{
 extern int halide_qurt_hvx_lock(void *user_context);
 extern int halide_qurt_hvx_unlock(void *user_context);
-extern void halide_qurt_hvx_unlock_as_destructor(void *user_context, void * /*obj*/);
+extern void halide_qurt_hvx_unlock_as_destructor(void *user_context,
+                                                 void * /*obj*/);
 // @}
 
 #ifdef __cplusplus
-}  // End extern "C"
+} // End extern "C"
 #endif
 
-#endif  // HALIDE_HALIDERUNTIMEQURT_H
+#endif // HALIDE_HALIDERUNTIMEQURT_H

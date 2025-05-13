@@ -1,10 +1,11 @@
 #ifdef __cplusplus
-extern "C" { 
-#endif  
+extern "C"
+{
+#endif
 
-#include "f2c.h" 
+#include "f2c.h"
 
-int slasq2_(integer *n, realRopt *z__, integer *info);
+    int slasq2_(integer *n, realRopt *z__, integer *info);
 
 #ifdef __cplusplus
 }

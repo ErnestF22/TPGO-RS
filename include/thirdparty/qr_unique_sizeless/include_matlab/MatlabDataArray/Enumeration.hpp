@@ -4,9 +4,9 @@
 #define MATLAB_DATA_ENUMERATION_HPP
 
 namespace matlab {
-    namespace data {
-        class Enumeration {};
-    }
-}
+namespace data {
+class Enumeration {};
+} // namespace data
+} // namespace matlab
 
 #endif

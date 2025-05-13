@@ -1,12 +1,13 @@
 #ifdef __cplusplus
-extern "C" { 
-#endif  
+extern "C"
+{
+#endif
 
-#include "f2c.h" 
+#include "f2c.h"
 
-realRopt sdot_(integer *n, realRopt *sx, integer *incx, realRopt *sy, integer *incy);
+    realRopt sdot_(integer *n, realRopt *sx, integer *incx, realRopt *sy, integer *incy);
 
-//E_f sdot_(integer *n, realRopt *sx, integer *incx, realRopt *sy, integer *incy);
+    // E_f sdot_(integer *n, realRopt *sx, integer *incx, realRopt *sy, integer *incy);
 
 #ifdef __cplusplus
 }

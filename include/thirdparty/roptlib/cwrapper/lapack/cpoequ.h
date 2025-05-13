@@ -1,10 +1,11 @@
 #ifdef __cplusplus
-extern "C" { 
-#endif  
+extern "C"
+{
+#endif
 
-#include "f2c.h" 
+#include "f2c.h"
 
-int cpoequ_(integer *n, complexRopt *a, integer *lda, realRopt *s, realRopt *scond, realRopt *amax, integer *info);
+    int cpoequ_(integer *n, complexRopt *a, integer *lda, realRopt *s, realRopt *scond, realRopt *amax, integer *info);
 
 #ifdef __cplusplus
 }

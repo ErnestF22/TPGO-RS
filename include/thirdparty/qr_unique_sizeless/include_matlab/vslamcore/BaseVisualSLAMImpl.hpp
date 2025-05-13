@@ -9,393 +9,402 @@
 #ifndef BASEVISUALSLAMIMPL_HPP
 #define BASEVISUALSLAMIMPL_HPP
 
-#include <fstream>
 #include <algorithm>
-#include <string>
-#include <numeric>
 #include <cassert>
 #include <cmath>
+#include <fstream>
+#include <numeric>
+#include <string>
 #include <thread>
 
 #include "BaseVisualSLAMInterface.hpp"
 
 // Data Management
-#include "MapPointSet.hpp"
-#include "KeyFrameSet.hpp"
-#include "WorldPoint.hpp"
-#include "QueueInstance.hpp"
 #include "IMUInfo.hpp"
+#include "KeyFrameSet.hpp"
 #include "LoopClosureDatabase.hpp"
+#include "MapPointSet.hpp"
 #include "NodeIDGenerator.hpp"
+#include "QueueInstance.hpp"
+#include "WorldPoint.hpp"
 
 // Thread management
-#include <chrono>
-#include <mutex>
-#include <thread>
 #include "SafeQueue.hpp"
 #include "SafeX.hpp"
 #include "ThreadManager.hpp"
 #include "VSLAMLoggerBase.hpp"
+#include <chrono>
+#include <mutex>
+#include <thread>
 
 namespace vision {
-    namespace vslam {
+namespace vslam {
 
-        // Enum used for concurrency level
-        enum class VSlamConcurrency : int {
-            DEBUG,      // Single thread
-            THREAD_L1,  // One separate thread for Tracking, Mapping, Loop closing
-            THREAD_L2   // Three threads, one each for Tracking, Mapping, Loop closing
-        };
+// Enum used for concurrency level
+enum class VSlamConcurrency : int
+{
+  DEBUG,     // Single thread
+  THREAD_L1, // One separate thread for Tracking, Mapping, Loop closing
+  THREAD_L2  // Three threads, one each for Tracking, Mapping, Loop closing
+};
 
-        template <typename TQObj, typename TConfig>
-        class LIBMWVSLAMCORE_API BaseVisualSLAMImpl : public BaseVisualSLAMInterface {
+template <typename TQObj, typename TConfig>
+class LIBMWVSLAMCORE_API BaseVisualSLAMImpl : public BaseVisualSLAMInterface {
 
-        public:
-            BaseVisualSLAMImpl() = delete;
-            virtual ~BaseVisualSLAMImpl();
+public:
+  BaseVisualSLAMImpl() = delete;
+  virtual ~BaseVisualSLAMImpl();
 
-            /**
-            * @brief Constructor
-            */
-            BaseVisualSLAMImpl(const double fx,
-                const double fy,
-                const double cx,
-                const double cy,
-                const TConfig& configuration,
-                const char* vocabFile,
-                const VSlamConcurrency desiredLevel = VSlamConcurrency::THREAD_L2,
-                const cv::Matx44d& camToIMU = cv::Matx44d::eye());
+  /**
+   * @brief Constructor
+   */
+  BaseVisualSLAMImpl(
+      const double fx, const double fy, const double cx, const double cy,
+      const TConfig &configuration, const char *vocabFile,
+      const VSlamConcurrency desiredLevel = VSlamConcurrency::THREAD_L2,
+      const cv::Matx44d &camToIMU = cv::Matx44d::eye());
 
-            /**
-            * @brief Get the map points
-            *
-            * @return [X, Y, Z] map points represented as a vector of cv::Vec3d
-            *
-            */
-            std::vector<cv::Vec3d> getWorldPoints() override;
+  /**
+   * @brief Get the map points
+   *
+   * @return [X, Y, Z] map points represented as a vector of cv::Vec3d
+   *
+   */
+  std::vector<cv::Vec3d> getWorldPoints() override;
 
-            /**
-            * @brief Get the camera poses of key frames
-            *
-            * @return a pair of vectors containing view Ids and camera poses of the key frames
-            *
-            */
-            std::pair<std::vector<int>, std::vector<cv::Matx44d>> getCameraPoses() override;
+  /**
+   * @brief Get the camera poses of key frames
+   *
+   * @return a pair of vectors containing view Ids and camera poses of the key
+   * frames
+   *
+   */
+  std::pair<std::vector<int>, std::vector<cv::Matx44d>>
+  getCameraPoses() override;
 
-            /**
-            * @brief Get the key frame IDs
-            *
-            * @return a vector of key frame IDs
-            *
-            */
-            std::vector<int> getKeyFrameIndex() override;
+  /**
+   * @brief Get the key frame IDs
+   *
+   * @return a vector of key frame IDs
+   *
+   */
+  std::vector<int> getKeyFrameIndex() override;
 
-            /**
-            * @brief Get the view IDs
-            *
-            * @return a vector of view IDs
-            *
-            */
-            std::vector<int> getViewIDs() override;
+  /**
+   * @brief Get the view IDs
+   *
+   * @return a vector of view IDs
+   *
+   */
+  std::vector<int> getViewIDs() override;
 
-            /**
-            * @brief Get the number of tracked feature points/map points in the current frame
-            *
-            * @return number of points as an integer
-            *
-            */
-            int getNumTrackedPoints() override;
+  /**
+   * @brief Get the number of tracked feature points/map points in the current
+   * frame
+   *
+   * @return number of points as an integer
+   *
+   */
+  int getNumTrackedPoints() override;
 
-            /**
-            * @brief Check whether a new key frame is added
-            *
-            * @return flag indicating if new key frame is added
-            *
-            */
-            bool hasNewKeyFrame() override;
+  /**
+   * @brief Check whether a new key frame is added
+   *
+   * @return flag indicating if new key frame is added
+   *
+   */
+  bool hasNewKeyFrame() override;
 
-            /**
-            * @brief Check whether the visual SLAM object is done 
-            *        processing all added frames
-            *
-            * @return flag indicating all frames are processed
-            *
-            */
-            bool isDone() override;
+  /**
+   * @brief Check whether the visual SLAM object is done
+   *        processing all added frames
+   *
+   * @return flag indicating all frames are processed
+   *
+   */
+  bool isDone() override;
 
-            /**
-            * @brief Check if the map has been initialized
-            *
-            * @return flag indicating if map initialization is successful
-            *
-            */
-            bool getIsMapInitialized() const override;
+  /**
+   * @brief Check if the map has been initialized
+   *
+   * @return flag indicating if map initialization is successful
+   *
+   */
+  bool getIsMapInitialized() const override;
 
-            /**
-            * @brief Check if pose graph optimization was performed recently
-            *
-            * @return flag indicating if the loop was closed recently
-            *
-            */
-            bool getIsLoopRecentlyClosed(const bool reset = true) override;
+  /**
+   * @brief Check if pose graph optimization was performed recently
+   *
+   * @return flag indicating if the loop was closed recently
+   *
+   */
+  bool getIsLoopRecentlyClosed(const bool reset = true) override;
 
-            /**
-            * @brief Get verbose log filename
-            *
-            * @return log filename
-            *
-            */
-            std::string getLogFileName() const override;
+  /**
+   * @brief Get verbose log filename
+   *
+   * @return log filename
+   *
+   */
+  std::string getLogFileName() const override;
 
-            /**
-            * @brief Get the IMU measurements attached the the viewId
-            *
-            * param[in]: viewId, an integer representing the ID of a view.
-            * param[out]: a pair containing the gyroscope and accelerometer measurements attached the the viewId.
-            */
-            std::pair<std::vector<double>, std::vector<double>> getViewIMUMeasurements(const int viewId) const override;
-            
-            /**
-            * @brief Get the number of IMU measurements for the inputted viewId
-            *
-            * param[in] viewId, and integer representing the ID of a view.
-            *
-            * @return N, the number of IMU measurements (N-by-3) for the inputted viewId
-            */
-            int getNumIMUMeasurements(const int viewId) const override;
+  /**
+   * @brief Get the IMU measurements attached the the viewId
+   *
+   * param[in]: viewId, an integer representing the ID of a view.
+   * param[out]: a pair containing the gyroscope and accelerometer measurements
+   * attached the the viewId.
+   */
+  std::pair<std::vector<double>, std::vector<double>>
+  getViewIMUMeasurements(const int viewId) const override;
 
-            /**
-            * @brief Closes all internal processes and clears all data
-            *
-            */
-            void reset() override;
+  /**
+   * @brief Get the number of IMU measurements for the inputted viewId
+   *
+   * param[in] viewId, and integer representing the ID of a view.
+   *
+   * @return N, the number of IMU measurements (N-by-3) for the inputted viewId
+   */
+  int getNumIMUMeasurements(const int viewId) const override;
 
-        protected:
-            /**
-            * @brief Initialize threads if idle and not in DEBUG mode.
-            */
-            void startThreadsIfIdle();
+  /**
+   * @brief Closes all internal processes and clears all data
+   *
+   */
+  void reset() override;
 
-            /**
-            * @brief Push extracted features and points to the trackingQueue.
-            *
-            * @param[in] qObj
-            */
-            void addFrameToTrackingQueue(TQObj&& qObj);
+protected:
+  /**
+   * @brief Initialize threads if idle and not in DEBUG mode.
+   */
+  void startThreadsIfIdle();
 
-            /**
-            * @brief Set key frame properties during map initialization
-            */
-            void initializationKeyFrameAdded();
-            
-            /**
-            * @brief Push copy of current frame IMU data to buffers
-            *
-            * @param[in] imuG current gyroscope measurements represented as an N-by-3 cv::Mat
-            * @param[in] imuA current accelerometer measurements represented as an N-by-3 cv::Mat
-            */
-            void pushToIMUBuffers(const cv::Mat& imuG, const cv::Mat& imuA, std::vector<double>& gyro, std::vector<double>& accel);
+  /**
+   * @brief Push extracted features and points to the trackingQueue.
+   *
+   * @param[in] qObj
+   */
+  void addFrameToTrackingQueue(TQObj &&qObj);
 
-            /**
-            * Camera intrinsics matrix
-            */
-            const cv::Matx33d intrinsics;
+  /**
+   * @brief Set key frame properties during map initialization
+   */
+  void initializationKeyFrameAdded();
 
-            /**
-            * Configuration of the system
-            */
-            const TConfig config;
+  /**
+   * @brief Push copy of current frame IMU data to buffers
+   *
+   * @param[in] imuG current gyroscope measurements represented as an N-by-3
+   * cv::Mat
+   * @param[in] imuA current accelerometer measurements represented as an N-by-3
+   * cv::Mat
+   */
+  void pushToIMUBuffers(const cv::Mat &imuG, const cv::Mat &imuA,
+                        std::vector<double> &gyro, std::vector<double> &accel);
 
-            /**
-            * ID generator for poses and points
-            */
-            NodeIDGenerator generator;
+  /**
+   * Camera intrinsics matrix
+   */
+  const cv::Matx33d intrinsics;
 
-            /**
-            * Stores info related to IMU fusion
-            */
-            IMUInfo imuInfo;
+  /**
+   * Configuration of the system
+   */
+  const TConfig config;
 
-            /**
-            * Flag indicating if map initialization is successful
-            */
-            bool isMapInitialized{ false };
+  /**
+   * ID generator for poses and points
+   */
+  NodeIDGenerator generator;
 
-            /**
-            * Key frames
-            */
-            std::unique_ptr<KeyFrameSet> keyFrames;
+  /**
+   * Stores info related to IMU fusion
+   */
+  IMUInfo imuInfo;
 
-            /**
-            * Map points
-            */
-            std::unique_ptr<MapPointSet> mapPoints;
+  /**
+   * Flag indicating if map initialization is successful
+   */
+  bool isMapInitialized{false};
 
-            /**
-            * Loop closure detection database
-            */
-            std::unique_ptr<LoopClosureDatabase> loopDatabase;
+  /**
+   * Key frames
+   */
+  std::unique_ptr<KeyFrameSet> keyFrames;
 
-            /**
-        private:
-            /**
-            * @brief Pure virtual function for initializing map
-            */
-            virtual void initializeMap(TQObj& qObj) = 0;
+  /**
+   * Map points
+   */
+  std::unique_ptr<MapPointSet> mapPoints;
 
-            /**
-            * Pure virtual function for adding 3-D map points after adding a new key frame
-            */
-            virtual void addNewMapPoints(TQObj& qObj, std::vector<int>& refinedViewIds, std::vector<int>& fixedViewIds) = 0;
+  /**
+   * Loop closure detection database
+   */
+  std::unique_ptr<LoopClosureDatabase> loopDatabase;
 
-            /**
-            * Pure virtual function to remove recently-created map points that are observed by too few views.
-            * The purpose is to keep only map points with strong observability.
-            */
-            virtual void cullRecentMapPoints() = 0;
+  /**
+private:
+  /**
+  * @brief Pure virtual function for initializing map
+  */
+  virtual void initializeMap(TQObj &qObj) = 0;
 
-            /**
-            * @brief generate unique identifier for a pose
-            *
-            * @return new unique identifier
-            */
-            virtual int generateNewPoseID();
+  /**
+   * Pure virtual function for adding 3-D map points after adding a new key
+   * frame
+   */
+  virtual void addNewMapPoints(TQObj &qObj, std::vector<int> &refinedViewIds,
+                               std::vector<int> &fixedViewIds) = 0;
 
-            /**
-             * @brief Function for tracking thread
-             *
-             */
-            void trackingModule();
+  /**
+   * Pure virtual function to remove recently-created map points that are
+   * observed by too few views. The purpose is to keep only map points with
+   * strong observability.
+   */
+  virtual void cullRecentMapPoints() = 0;
 
-            /**
-             * @brief Function for mapping thread
-             *
-             */
-            void mappingModule();
+  /**
+   * @brief generate unique identifier for a pose
+   *
+   * @return new unique identifier
+   */
+  virtual int generateNewPoseID();
 
-            /**
-             * @brief Function for loop closing thread
-             *
-             */
-            void loopClosingModule();
+  /**
+   * @brief Function for tracking thread
+   *
+   */
+  void trackingModule();
 
-            /**
-            * @brief Reset variables and initialize threads
-            *
-            * @param[in] createThreads set true to create threads
-            * @param[in] resetData set true to reset internal data structures
-            */
-            void initialize(const bool createThreads, const bool resetData);
+  /**
+   * @brief Function for mapping thread
+   *
+   */
+  void mappingModule();
 
-            /**
-            * @brief Attaches the stored IMU data to the latest view
-            *
-            */
-            void setCurrentViewIMU();
+  /**
+   * @brief Function for loop closing thread
+   *
+   */
+  void loopClosingModule();
 
-            /**
-            * Vocabulary file path
-            */
-            const std::string vocabularyFilePath;
+  /**
+   * @brief Reset variables and initialize threads
+   *
+   * @param[in] createThreads set true to create threads
+   * @param[in] resetData set true to reset internal data structures
+   */
+  void initialize(const bool createThreads, const bool resetData);
 
-            /**
-            * This flag indicates whether we run in single thread or not
-            */
-            const VSlamConcurrency threadConcurrency;
+  /**
+   * @brief Attaches the stored IMU data to the latest view
+   *
+   */
+  void setCurrentViewIMU();
 
-            /**
-            * Flag indicating if the loop was closed recently
-            */
-            SafeX<bool> isLoopRecentlyClosed;
+  /**
+   * Vocabulary file path
+   */
+  const std::string vocabularyFilePath;
 
-            /**
-            * Indices and IDs used in the tracking process
-            */
-            int currFrameIndex{ 0 }, lastKeyFrameIndex{ 0 };
+  /**
+   * This flag indicates whether we run in single thread or not
+   */
+  const VSlamConcurrency threadConcurrency;
 
-            /**
-            * Number of key frames passed since last pose graph optimization
-            */
-            int numKeyFramesSinceLastLoop{ 0 };
+  /**
+   * Flag indicating if the loop was closed recently
+   */
+  SafeX<bool> isLoopRecentlyClosed;
 
-            /**
-            * Thread manager storing all threads
-            */
-            ThreadManager threadManager;
+  /**
+   * Indices and IDs used in the tracking process
+   */
+  int currFrameIndex{0}, lastKeyFrameIndex{0};
 
-            /**
-            * Queue to store extracted keypoints and feature pairs
-            */
-            SafeQueue< TQObj > trackingQueue;
+  /**
+   * Number of key frames passed since last pose graph optimization
+   */
+  int numKeyFramesSinceLastLoop{0};
 
-            /**
-            * Queue to store tracking artifacts
-            */
-            SafeQueue< TQObj > mappingQueue;
+  /**
+   * Thread manager storing all threads
+   */
+  ThreadManager threadManager;
 
-            /**
-            * Queue to store loop closing artifacts
-            */
-            SafeQueue< TQObj > loopClosingQueue;
+  /**
+   * Queue to store extracted keypoints and feature pairs
+   */
+  SafeQueue<TQObj> trackingQueue;
 
-            /**
-            * Buffer used to store gyroscope data while waiting for the next KF
-            */
-            std::vector<double> gyroBuffer;
+  /**
+   * Queue to store tracking artifacts
+   */
+  SafeQueue<TQObj> mappingQueue;
 
-            /**
-            * Buffer used to store accelerometer data while waiting for the next KF
-            */
-            std::vector<double> accelBuffer;
+  /**
+   * Queue to store loop closing artifacts
+   */
+  SafeQueue<TQObj> loopClosingQueue;
 
-            /**
-            * Integer identifiers for tracking, mapping, and loop closure threads
-            */
-            int trackingThreadIdx, mappingThreadIdx, loopClosingThreadIdx;
+  /**
+   * Buffer used to store gyroscope data while waiting for the next KF
+   */
+  std::vector<double> gyroBuffer;
 
-            /**
-            * This flag controls the life of running threads.
-            * If set to true, all threads will terminate
-            */
-            SafeX<bool> stopFlag;
+  /**
+   * Buffer used to store accelerometer data while waiting for the next KF
+   */
+  std::vector<double> accelBuffer;
 
-            /**
-            * Number of tracked points used for computing status of vslam
-            */
-            SafeX<int> numTrackedPoints;
+  /**
+   * Integer identifiers for tracking, mapping, and loop closure threads
+   */
+  int trackingThreadIdx, mappingThreadIdx, loopClosingThreadIdx;
 
-            /**
-            * This flag indicates whether tracking thread is processing
-            */
-            SafeX<bool> isTrackingInProgress;
+  /**
+   * This flag controls the life of running threads.
+   * If set to true, all threads will terminate
+   */
+  SafeX<bool> stopFlag;
 
-            /**
-            * This flag indicates whether mapping thread is processing
-            */
-            SafeX<bool> isMappingInProgress;
+  /**
+   * Number of tracked points used for computing status of vslam
+   */
+  SafeX<int> numTrackedPoints;
 
-            /**
-            * This flag indicates whether loop closure thread is processing
-            */
-            SafeX<bool> isLoopClosingInProgress;
+  /**
+   * This flag indicates whether tracking thread is processing
+   */
+  SafeX<bool> isTrackingInProgress;
 
-            /**
-            * This flag indicates whether loop detection was initiated
-            */
-            SafeX<bool> isLoopCorrectionInitiated;
+  /**
+   * This flag indicates whether mapping thread is processing
+   */
+  SafeX<bool> isMappingInProgress;
 
-            /**
-            * This flag indicates whether a new key frame is added
-            */
-            SafeX<bool> isNewKeyFrameAdded;
+  /**
+   * This flag indicates whether loop closure thread is processing
+   */
+  SafeX<bool> isLoopClosingInProgress;
 
-            /**
-            * Flag used to terminate BA when loop is detected
-            */
-            bool abortBA;
+  /**
+   * This flag indicates whether loop detection was initiated
+   */
+  SafeX<bool> isLoopCorrectionInitiated;
 
-        }; // class BaseVisualSLAMImpl
+  /**
+   * This flag indicates whether a new key frame is added
+   */
+  SafeX<bool> isNewKeyFrameAdded;
 
-    } // namespace vslam
+  /**
+   * Flag used to terminate BA when loop is detected
+   */
+  bool abortBA;
+
+}; // class BaseVisualSLAMImpl
+
+} // namespace vslam
 } // namespace vision
 #endif // BASEVISUALSLAMIMPL_HPP

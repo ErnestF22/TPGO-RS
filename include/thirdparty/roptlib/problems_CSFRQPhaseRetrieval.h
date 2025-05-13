@@ -25,9 +25,11 @@ Problem --> CSFRQPhaseRetrieval
 #ifdef ROPTLIB_WITH_FFTW
 
 /*Define the namespace*/
-namespace ROPTLIB{
+namespace ROPTLIB
+{
 
-	class CSFRQPhaseRetrieval : public Problem{
+	class CSFRQPhaseRetrieval : public Problem
+	{
 	public:
 		/*b \in R^m, m = n1*n2*l, masks \in C^{n \times l}*/
 		CSFRQPhaseRetrieval(Vector inb, Vector inmasks, realdp inkappa, integer inn1, integer inn2, integer inl, integer inr);
@@ -36,17 +38,17 @@ namespace ROPTLIB{
 		virtual realdp f(const Variable &x) const;
 
 		virtual Vector &EucGrad(const Variable &x, Vector *result) const;
-        
-        virtual Vector &EucHessianEta(const Variable &x, const Vector &etax, Vector *result) const;
-        
-        Vector b;
-        Vector masks;
-        
+
+		virtual Vector &EucHessianEta(const Variable &x, const Vector &etax, Vector *result) const;
+
+		Vector b;
+		Vector masks;
+
 		realdp kappa;
 
 		mutable integer n1;
-        mutable integer n2;
-        mutable integer n;
+		mutable integer n2;
+		mutable integer n;
 		mutable integer l;
 		mutable integer r;
 		mutable integer m;

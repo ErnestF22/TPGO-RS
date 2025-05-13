@@ -38,12 +38,15 @@ namespace flatbuffers {
 //  void Foo() { printf("%s", "Foo"); }
 //  void Bar() { printf("%s", "Bar"); }
 class CodeWriter {
- public:
+public:
   CodeWriter(std::string pad = std::string())
-      : pad_(pad), cur_ident_lvl_(0), ignore_ident_(false) {}
+      : pad_(pad), cur_ident_lvl_(0), ignore_ident_(false)
+  {
+  }
 
   // Clears the current "written" code.
-  void Clear() {
+  void Clear()
+  {
     stream_.str("");
     stream_.clear();
   }
@@ -51,11 +54,13 @@ class CodeWriter {
   // Associates a key with a value.  All subsequent calls to operator+=, where
   // the specified key is contained in {{ and }} delimiters will be replaced by
   // the given value.
-  void SetValue(const std::string &key, const std::string &value) {
+  void SetValue(const std::string &key, const std::string &value)
+  {
     value_map_[key] = value;
   }
 
-  std::string GetValue(const std::string &key) const {
+  std::string GetValue(const std::string &key) const
+  {
     const auto it = value_map_.find(key);
     return it == value_map_.end() ? "" : it->second;
   }
@@ -67,18 +72,29 @@ class CodeWriter {
   void operator+=(std::string text);
 
   // Returns the current contents of the CodeWriter as a std::string.
-  std::string ToString() const { return stream_.str(); }
-
-  // Increase ident level for writing code
-  void IncrementIdentLevel() { cur_ident_lvl_++; }
-  // Decrease ident level for writing code
-  void DecrementIdentLevel() {
-    if (cur_ident_lvl_) cur_ident_lvl_--;
+  std::string ToString() const
+  {
+    return stream_.str();
   }
 
-  void SetPadding(const std::string &padding) { pad_ = padding; }
+  // Increase ident level for writing code
+  void IncrementIdentLevel()
+  {
+    cur_ident_lvl_++;
+  }
+  // Decrease ident level for writing code
+  void DecrementIdentLevel()
+  {
+    if (cur_ident_lvl_)
+      cur_ident_lvl_--;
+  }
 
- private:
+  void SetPadding(const std::string &padding)
+  {
+    pad_ = padding;
+  }
+
+private:
   std::map<std::string, std::string> value_map_;
   std::stringstream stream_;
   std::string pad_;
@@ -90,7 +106,7 @@ class CodeWriter {
 };
 
 class BaseGenerator {
- public:
+public:
   virtual bool generate() = 0;
 
   static std::string NamespaceDir(const Parser &parser, const std::string &path,
@@ -101,17 +117,19 @@ class BaseGenerator {
                                 const std::string &file_name,
                                 const IDLOptions &options) const;
 
- protected:
+protected:
   BaseGenerator(const Parser &parser, const std::string &path,
                 const std::string &file_name, std::string qualifying_start,
                 std::string qualifying_separator, std::string default_extension)
-      : parser_(parser),
-        path_(path),
-        file_name_(file_name),
+      : parser_(parser), path_(path), file_name_(file_name),
         qualifying_start_(qualifying_start),
         qualifying_separator_(qualifying_separator),
-        default_extension_(default_extension) {}
-  virtual ~BaseGenerator() {}
+        default_extension_(default_extension)
+  {
+  }
+  virtual ~BaseGenerator()
+  {
+  }
 
   // No copy/assign.
   BaseGenerator &operator=(const BaseGenerator &);
@@ -130,7 +148,10 @@ class BaseGenerator {
   // c++, java and csharp returns a different namespace from
   // the following default (no early exit, always fully qualify),
   // which works for js and php
-  virtual const Namespace *CurrentNameSpace() const { return nullptr; }
+  virtual const Namespace *CurrentNameSpace() const
+  {
+    return nullptr;
+  }
 
   // Ensure that a type is prefixed with its namespace even within
   // its own namespace to avoid conflict between generated method
@@ -162,11 +183,13 @@ extern void GenComment(const std::vector<std::string> &dc,
                        const char *prefix = "");
 
 class FloatConstantGenerator {
- public:
-  virtual ~FloatConstantGenerator() {}
+public:
+  virtual ~FloatConstantGenerator()
+  {
+  }
   std::string GenFloatConstant(const FieldDef &field) const;
 
- private:
+private:
   virtual std::string Value(double v, const std::string &src) const = 0;
   virtual std::string Inf(double v) const = 0;
   virtual std::string NaN(double v) const = 0;
@@ -175,17 +198,17 @@ class FloatConstantGenerator {
   virtual std::string Inf(float v) const = 0;
   virtual std::string NaN(float v) const = 0;
 
-  template<typename T>
+  template <typename T>
   std::string GenFloatConstantImpl(const FieldDef &field) const;
 };
 
 class SimpleFloatConstantGenerator : public FloatConstantGenerator {
- public:
+public:
   SimpleFloatConstantGenerator(const char *nan_number,
                                const char *pos_inf_number,
                                const char *neg_inf_number);
 
- private:
+private:
   std::string Value(double v,
                     const std::string &src) const FLATBUFFERS_OVERRIDE;
   std::string Inf(double v) const FLATBUFFERS_OVERRIDE;
@@ -202,13 +225,13 @@ class SimpleFloatConstantGenerator : public FloatConstantGenerator {
 
 // C++, C#, Java like generator.
 class TypedFloatConstantGenerator : public FloatConstantGenerator {
- public:
+public:
   TypedFloatConstantGenerator(const char *double_prefix,
                               const char *single_prefix, const char *nan_number,
                               const char *pos_inf_number,
                               const char *neg_inf_number = "");
 
- private:
+private:
   std::string Value(double v,
                     const std::string &src) const FLATBUFFERS_OVERRIDE;
   std::string Inf(double v) const FLATBUFFERS_OVERRIDE;
@@ -233,6 +256,6 @@ std::string JavaCSharpMakeRule(const bool java, const Parser &parser,
                                const std::string &path,
                                const std::string &file_name);
 
-}  // namespace flatbuffers
+} // namespace flatbuffers
 
-#endif  // FLATBUFFERS_CODE_GENERATORS_H_
+#endif // FLATBUFFERS_CODE_GENERATORS_H_

@@ -25,20 +25,30 @@ namespace flatbuffers {
 // Convenient way to bundle a buffer and its length, to pass it around
 // typed by its root.
 // A BufferRef does not own its buffer.
-struct BufferRefBase {};  // for std::is_base_of
+struct BufferRefBase {}; // for std::is_base_of
 
-template<typename T> struct BufferRef : BufferRefBase {
-  BufferRef() : buf(nullptr), len(0), must_free(false) {}
+template <typename T> struct BufferRef : BufferRefBase {
+  BufferRef() : buf(nullptr), len(0), must_free(false)
+  {
+  }
   BufferRef(uint8_t *_buf, uoffset_t _len)
-      : buf(_buf), len(_len), must_free(false) {}
-
-  ~BufferRef() {
-    if (must_free) free(buf);
+      : buf(_buf), len(_len), must_free(false)
+  {
   }
 
-  const T *GetRoot() const { return flatbuffers::GetRoot<T>(buf); }
+  ~BufferRef()
+  {
+    if (must_free)
+      free(buf);
+  }
 
-  bool Verify() {
+  const T *GetRoot() const
+  {
+    return flatbuffers::GetRoot<T>(buf);
+  }
+
+  bool Verify()
+  {
     Verifier verifier(buf, len);
     return verifier.VerifyBuffer<T>(nullptr);
   }
@@ -48,6 +58,6 @@ template<typename T> struct BufferRef : BufferRefBase {
   bool must_free;
 };
 
-}  // namespace flatbuffers
+} // namespace flatbuffers
 
-#endif  // FLATBUFFERS_BUFFER_REF_H_
+#endif // FLATBUFFERS_BUFFER_REF_H_

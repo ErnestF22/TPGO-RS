@@ -16,12 +16,9 @@
 extern "C" {
 #endif
 
-EXTERN_C VIDEOCODERUTILS_API void coderPermute( const void* in,
-                                                void* out, 
-                                                size_t nDims, 
-                                                const size_t* inDims, 
-                                                const size_t* perm, 
-                                                size_t numBytesPerVal );
+EXTERN_C VIDEOCODERUTILS_API void
+coderPermute(const void *in, void *out, size_t nDims, const size_t *inDims,
+             const size_t *perm, size_t numBytesPerVal);
 #ifdef __cplusplus
 }
 #endif

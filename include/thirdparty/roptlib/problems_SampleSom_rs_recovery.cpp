@@ -1109,7 +1109,7 @@ namespace ROPTLIB
         std::cout << "Eigenvectors found:\n"
                   << eigvecs << std::endl;
 
-        auto vOut = eigvecs.real().col(0);        
+        auto vOut = eigvecs.real().col(0);
 
         /** */
 

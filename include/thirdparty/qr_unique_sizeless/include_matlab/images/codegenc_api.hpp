@@ -1,13 +1,13 @@
 /**
-* @file         codegenc_api.h
-*
-* Purpose       Entry points for C codegen support
-*
-* Authors       Dinesh Iyer
-*
-* Copyright     2019-2021 The MathWorks, Inc.
-*
-*/
+ * @file         codegenc_api.h
+ *
+ * Purpose       Entry points for C codegen support
+ *
+ * Authors       Dinesh Iyer
+ *
+ * Copyright     2019-2021 The MathWorks, Inc.
+ *
+ */
 
 #ifndef _IMAGES_DATATYPE_CODEGENC_API_HPP_
 #define _IMAGES_DATATYPE_CODEGENC_API_HPP_
@@ -25,29 +25,21 @@
 extern "C" {
 #endif
 
-typedef void* ImagePtr;
+typedef void *ImagePtr;
 
 IMAGESDATATYPESCODEGENC_API ImagePtr createNullImage();
 
 IMAGESDATATYPESCODEGENC_API ImagePtr createEmptyImage();
 
-IMAGESDATATYPESCODEGENC_API ImagePtr createImageUsingProps( unsigned int height, 
-                                                            unsigned int width,
-                                                            unsigned int numChannels,
-                                                            unsigned char datatype, 
-                                                            unsigned char colorFormat,
-                                                            unsigned char layout,
-                                                            char* error );
+IMAGESDATATYPESCODEGENC_API ImagePtr createImageUsingProps(
+    unsigned int height, unsigned int width, unsigned int numChannels,
+    unsigned char datatype, unsigned char colorFormat, unsigned char layout,
+    char *error);
 
-IMAGESDATATYPESCODEGENC_API ImagePtr createImageUsingPropsAndData( unsigned char* dataUnderlying,
-                                                                   unsigned int height, 
-                                                                   unsigned int width,
-                                                                   unsigned int numChannels,
-                                                                   unsigned char datatype, 
-                                                                   unsigned char colorFormat,
-                                                                   unsigned char layout,
-                                                                   char* error );
-
+IMAGESDATATYPESCODEGENC_API ImagePtr createImageUsingPropsAndData(
+    unsigned char *dataUnderlying, unsigned int height, unsigned int width,
+    unsigned int numChannels, unsigned char datatype, unsigned char colorFormat,
+    unsigned char layout, char *error);
 
 IMAGESDATATYPESCODEGENC_API unsigned int getHeight(const ImagePtr imPtr);
 
@@ -55,15 +47,18 @@ IMAGESDATATYPESCODEGENC_API unsigned int getWidth(const ImagePtr imPtr);
 
 IMAGESDATATYPESCODEGENC_API unsigned int getNumChannels(const ImagePtr imPtr);
 
-IMAGESDATATYPESCODEGENC_API unsigned char getUnderlyingType(const ImagePtr imPtr);
+IMAGESDATATYPESCODEGENC_API unsigned char
+getUnderlyingType(const ImagePtr imPtr);
 
 IMAGESDATATYPESCODEGENC_API unsigned char getColorFormat(const ImagePtr imPtr);
 
 IMAGESDATATYPESCODEGENC_API unsigned char getLayout(const ImagePtr imPtr);
 
-IMAGESDATATYPESCODEGENC_API unsigned char* getUnderlyingData(const ImagePtr imPtr);
+IMAGESDATATYPESCODEGENC_API unsigned char *
+getUnderlyingData(const ImagePtr imPtr);
 
-IMAGESDATATYPESCODEGENC_API ImagePtr deepCopy(const ImagePtr imPtr, char* error);
+IMAGESDATATYPESCODEGENC_API ImagePtr deepCopy(const ImagePtr imPtr,
+                                              char *error);
 
 IMAGESDATATYPESCODEGENC_API void destroyImage(ImagePtr imPtr);
 
@@ -71,5 +66,4 @@ IMAGESDATATYPESCODEGENC_API void destroyImage(ImagePtr imPtr);
 }
 #endif
 
-
-#endif  // _IMAGES_DATATYPE_CODEGENC_API_HPP_
+#endif // _IMAGES_DATATYPE_CODEGENC_API_HPP_
