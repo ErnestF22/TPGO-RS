@@ -149,6 +149,51 @@ namespace ROPTLIB
       // virtual Vector &EucHessianEta(const Variable &x, const Vector &etax, Vector *result) const;
 
       /**
+       * Compute one of the Genproc Hessian subparts
+       */
+      void computeHrr() const;
+
+      /**
+       * Compute one of the Genproc Hessian subparts
+       */
+      void computeHrlambdas() const;
+
+      /**
+       * Compute one of the Genproc Hessian subparts
+       */
+      void computeHrt() const;
+
+      /**
+       * Compute one of the Genproc Hessian subparts
+       */
+      void computeHtt() const;  
+
+      /**
+       * Compute one of the Genproc Hessian subparts
+       */
+      void computeHtr() const;
+      
+      /**
+       * Compute one of the Genproc Hessian subparts
+       */
+      void computeHtlambdas() const;
+
+      /**
+       * Compute one of the Genproc Hessian subparts
+       */
+      void computeHlambdasr() const;
+
+      /**
+       * Compute one of the Genproc Hessian subparts
+       */
+      void computeHlambdast() const;
+
+      /**
+       * Compute one of the Genproc Hessian subparts
+       */
+      void computeHlambdaslambdas() const;
+
+      /**
        * Hessian (Genproc) with Eigen I/O;
        * called internally by RieHessianEta()
        */
@@ -243,26 +288,6 @@ namespace ROPTLIB
        */
       void makeLrPrBr(const SomUtils::VecMatD &R, const SomUtils::MatD &Lambdas,
                       SomUtils::MatD &Lr, SomUtils::MatD &Pr, SomUtils::MatD &Br) const;
-
-      /**
-       * Compute one of the Genproc Hessian subparts
-       */
-      void computeHrr(const SomUtils::VecMatD &xR, const SomUtils::VecMatD &uR, const SomUtils::MatD &P, SomUtils::VecMatD &hRR) const;
-
-      /**
-       * Compute one of the Genproc Hessian subparts
-       */
-      void computeHtt(const SomUtils::MatD &uT, const SomUtils::MatD &LR, SomUtils::MatD &hTT) const;
-
-      /**
-       * Compute one of the Genproc Hessian subparts
-       */
-      void computeHrt(const SomUtils::VecMatD &xR, const SomUtils::MatD uT, SomUtils::VecMatD &hrt) const;
-
-      /**
-       * Compute one of the Genproc Hessian subparts
-       */
-      void computeHtr(const SomUtils::VecMatD &uR, SomUtils::MatD &htr) const;
 
       /**
        * Return p * d (size of a sigle Stiefel-rotation)
