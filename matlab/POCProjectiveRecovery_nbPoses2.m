@@ -1,5 +1,5 @@
 function POCProjectiveRecovery_nbPoses2()
-nbPoses=5;
+nbPoses=10;
 d = 3;
 Ti=randn(d,1,nbPoses);
 Tj=randn(d,2,nbPoses);
@@ -36,7 +36,7 @@ disp(normvec(multiprodN(Ri_tilde,tij,Lij)-Tij_tilde))
 
 disp('Test computation of Qx')
 disp(['It should align the last ' num2str(dimStair-2) ' rows of Tijtilde to zero'])
-Qx=align2d_EoF(Tij_tilde);
+Qx=align2d_nbPoses(Tij_tilde);
 
 disp(multiprod(Qx,Tij_tilde))
 
@@ -158,94 +158,11 @@ disp(Ri_est2)
 disp('Ri_est2 should fit the measurements')
 disp(normvec(multiprodN(Ri_est2,tij,Lij)-Tij_tilde))
 
+% disp('det(Ri_est(1:d, 1:d))')
+% disp(det(Ri_est(1:d, 1:d)))
+
+disp('det(Ri_est2(1:d, 1:d))')
+disp(det(Ri_est2(1:d, 1:d)))
+
 end %file function
 
-function mDiag=multiblkdiag(A,B)
-%Note: this function works only for 2 input arguments
-nbSlices=size(A,3);
-mDiag=zeros(...
-    size(A,1)+size(B,1),...
-    size(A,1)+size(B,1),...
-    nbSlices...
-    );
-for iSlice=1:nbSlices
-    mDiag(:,:,iSlice)=blkdiag(A(:,:,iSlice),B(:,:,iSlice));
-end
-end %function
-    
-function mDiag=multidiag(m)
-nbSlices=size(m,3);
-dVector=numel(m(:,:,1));
-mDiag=zeros(dVector,dVector,nbSlices);
-for iSlice=1:nbSlices
-    mDiag(:,:,iSlice)=diag(m(:,:,iSlice));
-end
-end %function
-
-function ab=multiprodN(a,b,varargin)
-ab=multiprod(a,b);
-for ivarargin=1:length(varargin)
-    ab=multiprod(ab,varargin{ivarargin});
-end
-end %function
-
-function n=normvec(m)
-n=norm(m(:),'fro');
-end %function
-
-function Ri_est=RbRecovery(Ri_tilde2,Tij_tilde)
-%Given Ri_tilde2 such that Ri_tilde2*tij*Lij-Tij_tilde, where Tij_tilde has
-%last p-3 rows to zero, return Ri_est that satisfies the same equation, but
-%has the last p-3 rows to zero
-%If the inputs have multiple slices, apply the algorithm independently for
-%each slice
-nbPoses=size(Ri_tilde2,3);
-d = size(Ri_tilde2, 2);
-p = size(Ri_tilde2, 1);
-if nbPoses>1
-    Ri_est=zeros(size(Ri_tilde2));
-    for iPose=1:nbPoses
-        Ri_est(:,:,iPose)=RbRecovery(Ri_tilde2(:,:,iPose),Tij_tilde(:,:,iPose));
-    end
-else
-    % base case, for single pose
-    if norm(Tij_tilde(4:end,:),'fro')/numel(Tij_tilde(4:end,:))>1e-5
-        error('Tij_tilde expected to have p-3 lines equal to zero')
-    end
-    Qx=align2d_EoF(Tij_tilde);
-    Qbot=Qx(:,d+1:end)';
-    Rcal_bot=Qx(3:end,:)*Ri_tilde2;
-    Qbot_right=Qbot(:,d:end);
-    [URCal_bot,~,~]=svd(Rcal_bot);
-    Rcal_bot_N=URCal_bot(:,2:end);
-    Rb_est=procrustes_R(Qbot_right',Rcal_bot_N);
-    Ri_est=Qx'*blkdiag(eye(2),Rb_est')*Qx*Ri_tilde2;
-end
-%disp('Get rotation that aligns last rows of Ri_tilde2 to zero')
-%Qy=fliplr(orthCompleteBasis(N2))';
-%disp(Qy*Ri_tilde2)
-
-%disp('Test to undo the invariance using a known Rb')
-%Qx'*blkdiag(eye(2),Rb')*Qx*Qy*Ri_tilde2
-end %function
-
-function R=procrustes_R(X,Y)
-nb_dim=size(X,1);
-[U,~,V]=svd(Y*X');
-R=U*diag([ones(nb_dim-1,1);det(U*V')])*V';
-end %function
-
-function Qx=align2d_EoF(v)
-nbPoses=size(v,3);
-Qx=repmat(zeros(size(v,1)),[1 1 nbPoses]);
-for iPose=1:nbPoses
-    Q=fliplr(orthComplement(v(:,:,iPose)));
-    Qx(:,:,iPose)=flipud(orthCompleteBasis(Q)');
-end
-end %function
-
-function Qalign=align3d(v)
-vFlat=reshape(v,size(v,1),[]);
-[U,~,~]=svd(vFlat);
-Qalign=fliplr(orthCompleteBasis(U(:,4:end)))';
-end %function

@@ -1,0 +1,13 @@
+function mDiag=multiblkdiag(A,B)
+%Note: this function works only for 2 input arguments
+nbSlices=size(A,3);
+mDiag=zeros(...
+    size(A,1)+size(B,1),...
+    size(A,1)+size(B,1),...
+    nbSlices...
+    );
+for iSlice=1:nbSlices
+    mDiag(:,:,iSlice)=blkdiag(A(:,:,iSlice),B(:,:,iSlice));
+end
+end %file function
+    
