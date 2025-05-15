@@ -12,7 +12,7 @@ disp('Check consistency between all generated data (28)')
 disp(normvec(multiprodN(Ri,tij,Lij)-Tij))
 
 % Go to higher dimension
-dimStair=8;
+dimStair=9;
 
 %Embed Ri, Tij in p-dimensional space
 low_deg = 2;

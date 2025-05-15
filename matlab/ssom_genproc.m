@@ -125,108 +125,108 @@ cost_manopt_out = ssom_cost(X_manopt_out, problem_data);
 disp("cost_manopt_out")
 disp(cost_manopt_out)
 
-% if staircase_step_idx > d+1
-% 
-%     if ~problem_data.noisy_test && staircase_step_idx > d+2
-%         save("rs_going_further.mat");
-%     end
-% 
-%     low_deg = 2; %TODO: not necessarily in more complex graph cases
-%     nodes_high_deg = problem_data.node_degrees > low_deg;
-% 
-%     [T_edges, ~] = make_T_edges(T_manopt_out, edges);
-% 
-%     RT_stacked_high_deg = [matStackH(R_manopt_out(:,:,nodes_high_deg)), T_edges];
-%     Qx_edges = POCRotateToMinimizeLastEntries(RT_stacked_high_deg);
-%     % RT_stacked_high_deg_poc = Qx_edges * RT_stacked_high_deg;
-% 
-%     R_tilde2_edges = multiprod(repmat(Qx_edges, 1, 1, sum(nodes_high_deg)), R_manopt_out(:,:,nodes_high_deg));
-% 
-%     R_recovered = zeros(d,d,N);
-%     R_recovered(:,:,nodes_high_deg) = R_tilde2_edges(1:d,:,:);
-%     nodes_low_deg = ~nodes_high_deg;
-% 
-%     if ~any(nodes_low_deg)
-%         disp('No nodes low deg!')
-%         T_diffs_shifted = Qx_edges * T_edges; %this has last row to 0
-%         T_recovered = edge_diffs_2_T(T_diffs_shifted(1:d,:), edges, N);
-%     else
-%         for node_id = 1:length(problem_data.node_degrees)
-%             node_deg = problem_data.node_degrees(node_id);
-% 
-% 
-%             if node_deg == low_deg
-%                 fprintf("Running recoverRitilde() on node %g\n", node_id);
-%                 R_i_tilde2 = R_manopt_out(:,:,node_id);
-% 
-% 
-%                 cost_gt = rsom_cost_base(X_gt, problem_data_next); 
-%                 disp("cost_gt")
-%                 disp(cost_gt)
-% 
-%                 cost_manopt_output = rsom_cost_base(X_manopt_out, problem_data_next); 
-%                 disp("cost_manopt_output")
-%                 disp(cost_manopt_output)
-% 
-%                 T_diffs_shifted = Qx_edges * T_edges; %this has last row to 0
-%                 [~, Tij1j2_tilde] = make_Tij1j2s_edges(node_id, T_diffs_shifted, tijs,edges,problem_data);
-% 
-%                 [RitildeEst1,RitildeEst2,~,~] = ...
-%                     recoverRitilde(Qx_edges* R_i_tilde2,Tij1j2_tilde);
-%                 disp('')
-%                 % TODO: how to decide between RitildeEst1,RitildeEst2??
-%                 det_RitildeEst1 = det(RitildeEst1(1:d,:));
-%                 det_RitildeEst2 = det(RitildeEst2(1:d,:));
-% 
-%                 use_positive_det = boolean(1);
-%                 if (sum(multidet(R_tilde2_edges(1:d,:,:))) < 0)
-%                     use_positive_det = boolean(0);
-%                 end
-% 
-%                 if (det_RitildeEst1 > 1 - 1e-5 && det_RitildeEst1 < 1 + 1e-5)
-%                     if use_positive_det
-%                         R_recovered(:,:,node_id) = RitildeEst1(1:d,:);
-%                     else 
-%                         R_recovered(:,:,node_id) = RitildeEst2(1:d,:);
-%                     end
-%                 elseif (det_RitildeEst2 > 1 - 1e-5 && det_RitildeEst2 < 1 + 1e-5)
-%                     if use_positive_det
-%                         R_recovered(:,:,node_id) = RitildeEst2(1:d,:);
-%                     else
-%                         R_recovered(:,:,node_id) = RitildeEst1(1:d,:);
-%                     end
-%                 else 
-%                     if ~problem_data.noisy_test
-%                         fprintf("ERROR in recovery: Ritilde DETERMINANTS ~= +-1\n")
-%                         save('data/zerodet_ws.mat')
-%                         rs_recovery_success = boolean(0);
-% %                     error("ERROR in recovery: Ritilde DETERMINANTS ~= +-1\n");
-%                     end
-%                 end            
-% 
-%                 T_recovered = edge_diffs_2_T(T_diffs_shifted(1:d,:), edges, N);
-%                 disp('')
-%             end
-%         end
-%     end
-% else
-%     % recovery is not actually performed but using the same variable names
-%     % for simplicity
-%     R_recovered = R_manopt_out;
-%     T_recovered = T_manopt_out;
-%     lambdas_recovered = lambdas_manopt_out;
-% end
+if staircase_step_idx > d+1
+
+    if ~problem_data.noisy_test && staircase_step_idx > d+2
+        save("rs_going_further.mat");
+    end
+
+    low_deg = 2; %TODO: maybe not necessarily in more complex graph cases?
+    nodes_high_deg = problem_data.node_degrees > low_deg;
+
+    [T_edges, ~] = make_T_edges(T_manopt_out, edges);
+
+    RT_stacked_high_deg = [matStackH(R_manopt_out(:,:,nodes_high_deg)), T_edges];
+    Qx_edges = POCRotateToMinimizeLastEntries(RT_stacked_high_deg);
+    % RT_stacked_high_deg_poc = Qx_edges * RT_stacked_high_deg;
+
+    R_tilde2_edges = multiprod(repmat(Qx_edges, 1, 1, sum(nodes_high_deg)), R_manopt_out(:,:,nodes_high_deg));
+
+    R_recovered = zeros(d,d,N);
+    R_recovered(:,:,nodes_high_deg) = R_tilde2_edges(1:d,:,:);
+    nodes_low_deg = ~nodes_high_deg;
+
+    if ~any(nodes_low_deg)
+        disp('No nodes low deg!')
+        T_diffs_shifted = Qx_edges * T_edges; %this has last row to 0
+        T_recovered = edge_diffs_2_T(T_diffs_shifted(1:d,:), edges, N);
+    else
+        for node_id = 1:length(problem_data.node_degrees)
+            node_deg = problem_data.node_degrees(node_id);
+
+
+            if node_deg == low_deg
+                fprintf("Running RbRecovery() on node %g\n", node_id);
+                R_i_tilde2 = R_manopt_out(:,:,node_id);
+
+
+                cost_gt = rsom_cost_base(X_gt, problem_data_next); 
+                disp("cost_gt")
+                disp(cost_gt)
+
+                cost_manopt_output = rsom_cost_base(X_manopt_out, problem_data_next); 
+                disp("cost_manopt_output")
+                disp(cost_manopt_output)
+
+                T_diffs_shifted = Qx_edges * T_edges; %this has last row to 0
+                [~, Tij1j2_tilde] = make_Tij1j2s_edges(node_id, T_diffs_shifted, tijs,edges,problem_data);
+
+                RitildeEst = RbRecovery(R_i_tilde2, Tij1j2_tilde);
+                disp('')
+                % TODO: how to decide between RitildeEst1,RitildeEst2??
+                det_RitildeEst1 = det(RitildeEst1(1:d,:));
+                det_RitildeEst2 = det(RitildeEst2(1:d,:));
+
+                use_positive_det = boolean(1);
+                if (sum(multidet(R_tilde2_edges(1:d,:,:))) < 0)
+                    use_positive_det = boolean(0);
+                end
+
+                if (det_RitildeEst1 > 1 - 1e-5 && det_RitildeEst1 < 1 + 1e-5)
+                    if use_positive_det
+                        R_recovered(:,:,node_id) = RitildeEst1(1:d,:);
+                    else 
+                        R_recovered(:,:,node_id) = RitildeEst2(1:d,:);
+                    end
+                elseif (det_RitildeEst2 > 1 - 1e-5 && det_RitildeEst2 < 1 + 1e-5)
+                    if use_positive_det
+                        R_recovered(:,:,node_id) = RitildeEst2(1:d,:);
+                    else
+                        R_recovered(:,:,node_id) = RitildeEst1(1:d,:);
+                    end
+                else 
+                    if ~problem_data.noisy_test
+                        fprintf("ERROR in recovery: Ritilde DETERMINANTS ~= +-1\n")
+                        save('data/zerodet_ws.mat')
+                        rs_recovery_success = boolean(0);
+%                     error("ERROR in recovery: Ritilde DETERMINANTS ~= +-1\n");
+                    end
+                end            
+
+                T_recovered = edge_diffs_2_T(T_diffs_shifted(1:d,:), edges, N);
+                disp('')
+            end
+        end
+    end
+else
+    % recovery is not actually performed but using the same variable names
+    % for simplicity
+    R_recovered = R_manopt_out;
+    T_recovered = T_manopt_out;
+    lambdas_recovered = lambdas_manopt_out;
+end
 
 save("ws2.mat")
 
-R_recovered = R_manopt_out;
-T_recovered = T_manopt_out;
-lambdas_recovered = lambdas_manopt_out;
+% R_recovered = R_manopt_out;
+% T_recovered = T_manopt_out;
+% lambdas_recovered = lambdas_manopt_out;
 
-% %checking that cost has not changed during "recovery"
-% X_recovered.T = T_recovered;
-% X_recovered.R = R_recovered;
-% X_recovered.lambda = lambdas_recovered;
+%checking that cost has not changed during "recovery"
+X_recovered.T = T_recovered;
+X_recovered.R = R_recovered;
+X_recovered.lambda = lambdas_recovered;
+%%
 problem_data_next = problem_data; %TODO: fix this line after
 % cost_out = ssom_cost(X_recovered, problem_data_next); 
 % disp("cost_out")
