@@ -25,15 +25,14 @@ namespace SomUtils
         int p_;
         int d_;
         int n_;
-        int e_;
 
-        SomSize() : p_(1), d_(1), n_(1), e_(0) {}
+        SomSize() : p_(1), d_(1), n_(1) {}
 
-        SomSize(int p, int d, int n) : p_(p), d_(d), n_(n), e_(0)
+        SomSize(int p, int d, int n) : p_(p), d_(d), n_(n)
         {
         }
 
-        SomSize(int p, int d, int n, int e) : p_(p), d_(d), n_(n), e_(e)
+        SomSize(int p, int d, int n, int e) : p_(p), d_(d), n_(n)
         {
         }
     };
