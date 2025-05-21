@@ -151,47 +151,56 @@ namespace ROPTLIB
       /**
        * Compute one of the Genproc Hessian subparts
        */
-      void computeHrr() const;
+      // void computeHrr() const; //ZEROS anyway
 
       /**
        * Compute one of the Genproc Hessian subparts
        */
-      void computeHrlambdas() const;
+      void computeHrlambdas(const SomUtils::MatD &lambdasDot, const SomUtils::MatD &T,
+                            SomUtils::VecMatD &h) const;
 
       /**
        * Compute one of the Genproc Hessian subparts
        */
-      void computeHrt() const;
+      void computeHrt(const SomUtils::MatD &lambdas, const SomUtils::MatD &Tdot,
+                      SomUtils::VecMatD &h) const;
 
       /**
        * Compute one of the Genproc Hessian subparts
        */
-      void computeHtt() const;  
+      void computeHtt(const SomUtils::MatD &lambdas, const SomUtils::VecMatD &xR, const SomUtils::MatD &uT,
+                      SomUtils::MatD &h) const;
 
       /**
        * Compute one of the Genproc Hessian subparts
        */
-      void computeHtr() const;
-      
-      /**
-       * Compute one of the Genproc Hessian subparts
-       */
-      void computeHtlambdas() const;
+      void computeHtr(const SomUtils::MatD &lambdas, const SomUtils::VecMatD &uR,
+                      SomUtils::MatD &h) const;
 
       /**
        * Compute one of the Genproc Hessian subparts
        */
-      void computeHlambdasr() const;
+      void computeHtlambdas(const SomUtils::VecMatD &xR, const SomUtils::MatD &uLambdas,
+                            SomUtils::MatD &h) const;
 
       /**
        * Compute one of the Genproc Hessian subparts
        */
-      void computeHlambdast() const;
+      void computeHlambdasr(const SomUtils::VecMatD &xR, const SomUtils::VecMatD &uR,
+                            const SomUtils::MatD &xT, const SomUtils::MatD &xLambdas,
+                            SomUtils::MatD &h) const;
 
       /**
        * Compute one of the Genproc Hessian subparts
        */
-      void computeHlambdaslambdas() const;
+      void computeHlambdast(const SomUtils::VecMatD &xR, const SomUtils::MatD &uT,
+                            SomUtils::MatD &h) const;
+
+      /**
+       * Compute one of the Genproc Hessian subparts
+       */
+      void computeHlambdaslambdas(const SomUtils::VecMatD &xR, const SomUtils::MatD &uLambdas,
+                                  SomUtils::MatD &h) const;
 
       /**
        * Hessian (Genproc) with Eigen I/O;
@@ -201,6 +210,32 @@ namespace ROPTLIB
                             const SomUtils::MatD &xT, const SomUtils::MatD &uT,
                             const SomUtils::MatD &xLambdas, const SomUtils::MatD &uLambdas,
                             SomUtils::VecMatD &rhR, SomUtils::MatD &rhT, SomUtils::MatD &rhLambdas) const;
+
+      /**SSOM egradR (used inside hessian computation) */
+      void ssomEgradR(const SomUtils::VecMatD &xR, const SomUtils::MatD &xT,
+                      const SomUtils::MatD &xLambdas, SomUtils::VecMatD &egR) const;
+
+      /**
+       * Useful for EHESS to RHESS CONVERSION (egrad also needed)
+       * Thanks to Manopt's stiefelfactory
+       * 3D Stiefel version
+       */
+      void manoptStiefelEhess2rhess(const SomUtils::VecMatD &X,
+                                    const SomUtils::VecMatD &egrad,
+                                    const SomUtils::VecMatD &ehess,
+                                    const SomUtils::VecMatD &eH,
+                                    SomUtils::VecMatD &rH) const;
+
+      /**
+       * Useful for EHESS to RHESS CONVERSION (egrad also needed)
+       * Thanks to Manopt's stiefelfactory
+       * 2D Stiefel version
+       */
+      void manoptStiefelEhess2rhess(const SomUtils::MatD &X,
+                                    const SomUtils::MatD &egrad,
+                                    const SomUtils::MatD &ehess,
+                                    const SomUtils::MatD &eH,
+                                    SomUtils::MatD &rH) const;
 
       /**
        * Hessian (Genproc) with Eigen I/O of f-(mu*u)
