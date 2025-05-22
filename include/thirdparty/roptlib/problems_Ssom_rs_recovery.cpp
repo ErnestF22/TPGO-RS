@@ -859,7 +859,7 @@ namespace ROPTLIB
                 // int translSz = szNext.p_;
 
                 int gElemIdx = 0;
-                // fill result with computed gradient values : R
+                // fill result with computed gradient values: R
                 for (int i = 0; i < sz_.n_; ++i)
                 {
                     // ROFL_VAR1(gElemIdx);
@@ -887,7 +887,7 @@ namespace ROPTLIB
                     gElemIdx++;
                 }
 
-                // fill result with computed gradient values : T
+                // fill result with computed gradient values: T
 
                 Vector TnextROPT(staircaseNextStepLevel, sz_.n_);
                 realdp *GroptlibWriteArray = TnextROPT.ObtainWriteEntireData();
@@ -903,6 +903,24 @@ namespace ROPTLIB
                     // TnextROPT.Print("TnextROPT after assignment");
                 }
                 TnextROPT.CopyTo(xIn.GetElement(gElemIdx));
+
+                gElemIdx++;
+
+                // fill result with computed gradient values: Lambdas
+                Vector LambdasNextROPT(numEdges_);
+                realdp *GroptlibWriteArray2 = LambdasNextROPT.ObtainWriteEntireData();
+                for (int j = 0; j < numEdges_; ++j)
+                {
+                    // TnextROPT.Print("TnextROPT before assignment");
+
+                    // ROFL_VAR1(RnextROPT.GetElement(j, 0));
+
+                    GroptlibWriteArray2[j] = LambdasNext.reshaped(numEdges_, 1)(j);
+
+                    // ROFL_VAR1("");
+                    // TnextROPT.Print("TnextROPT after assignment");
+                }
+                LambdasNextROPT.CopyTo(xIn.GetElement(gElemIdx));
             } // end of EigToRopt scope for xIn
 
             linesearchArmijoROPTLIB(xIn, szNext, Y0);
@@ -1014,7 +1032,7 @@ namespace ROPTLIB
                 // int translSz = szNext.p_;
 
                 int gElemIdx = 0;
-                // fill result with computed gradient values : R
+                // fill result with computed gradient values: R
                 for (int i = 0; i < sz_.n_; ++i)
                 {
                     // ROFL_VAR1(gElemIdx);
@@ -1042,7 +1060,7 @@ namespace ROPTLIB
                     gElemIdx++;
                 }
 
-                // fill result with computed gradient values : T
+                // fill result with computed gradient values: T
 
                 Vector TnextROPT(staircaseNextStepLevel, sz_.n_);
                 realdp *GroptlibWriteArray = TnextROPT.ObtainWriteEntireData();
@@ -1060,6 +1078,24 @@ namespace ROPTLIB
                 // TnextROPT.Print("line 1215");
                 // Y0.GetElement(gElemIdx).Print("line 1216");
                 TnextROPT.CopyTo(Y0.GetElement(gElemIdx));
+
+                gElemIdx++;
+
+                // fill result with computed gradient values: Lambdas
+                Vector LambdasNextROPT(numEdges_);
+                realdp *GroptlibWriteArray2 = LambdasNextROPT.ObtainWriteEntireData();
+                for (int j = 0; j < numEdges_; ++j)
+                {
+                    // TnextROPT.Print("TnextROPT before assignment");
+
+                    // ROFL_VAR1(RnextROPT.GetElement(j, 0));
+
+                    GroptlibWriteArray2[j] = LambdasNext.reshaped(numEdges_, 1)(j);
+
+                    // ROFL_VAR1("");
+                    // TnextROPT.Print("TnextROPT after assignment");
+                }
+                LambdasNextROPT.CopyTo(xIn.GetElement(gElemIdx));
             } // end of EigToRopt scope for xIn
         }
 
@@ -1315,7 +1351,7 @@ namespace ROPTLIB
             // int translSz = somSzNext.p_;
 
             int gElemIdx = 0;
-            // fill result with computed gradient values : R
+            // fill result with computed gradient values: R
             for (int i = 0; i < sz_.n_; ++i)
             {
                 // ROFL_VAR1(gElemIdx);
@@ -1343,7 +1379,7 @@ namespace ROPTLIB
                 gElemIdx++;
             }
 
-            // fill result with computed gradient values : T
+            // fill result with computed gradient values: T
 
             Vector TnextROPT(staircaseStepLevel, sz_.n_);
             realdp *GroptlibWriteArray = TnextROPT.ObtainWriteEntireData();
@@ -1361,6 +1397,24 @@ namespace ROPTLIB
             // TnextROPT.Print("line 1215");
             // Y0.GetElement(gElemIdx).Print("line 1216");
             TnextROPT.CopyTo(Y0.GetElement(gElemIdx));
+
+            gElemIdx++;
+
+            // fill result with computed gradient values: Lambdas
+            Vector LambdasNextROPT(numEdges_);
+            realdp *GroptlibWriteArray2 = LambdasNextROPT.ObtainWriteEntireData();
+            for (int j = 0; j < numEdges_; ++j)
+            {
+                // TnextROPT.Print("TnextROPT before assignment");
+
+                // ROFL_VAR1(RnextROPT.GetElement(j, 0));
+
+                GroptlibWriteArray2[j] = LambdasNext.reshaped(numEdges_, 1)(j);
+
+                // ROFL_VAR1("");
+                // TnextROPT.Print("TnextROPT after assignment");
+            }
+            LambdasNextROPT.CopyTo(xIn.GetElement(gElemIdx));
         } // end of EigToRopt scope for xIn
     }
 
@@ -1485,6 +1539,7 @@ namespace ROPTLIB
             // ROFL_VAR3(highestNormEigenval, vPimRshift[0], vPimTshift);
             vPimR = vPimRshift;
             vPimT = vPimTshift;
+            vPimLambdas = vPimLambdasShift;
             for (int i = 0; i < sz_.n_; ++i)
                 ROFL_VAR2(i, vPimR[i])
             ROFL_VAR1(vPimT)
@@ -1512,12 +1567,14 @@ namespace ROPTLIB
 
         Stiefel mani1(staircaseNextStepLevel, szNext.d_);
         mani1.ChooseParamsSet2();
-        integer numoftypes = 2; // 2 i.e. (3D) Stiefel + Euclidean
+        integer numoftypes = 3; // 2 i.e. (3D) Stiefel + Euclidean
 
         integer numofmani1 = szNext.n_; // num of Stiefel manifolds
         integer numofmani2 = 1;
+        integer numofmani3 = 1;
         Euclidean mani2(staircaseNextStepLevel, szNext.n_);
-        ProductManifold ProdManiNext(numoftypes, &mani1, numofmani1, &mani2, numofmani2);
+        Euclidean mani3(numEdges_);
+        ProductManifold ProdManiNext(numoftypes, &mani1, numofmani1, &mani2, numofmani2, &mani3, numofmani3);
 
         Vector xIn = ProdManiNext.RandominManifold(); //!! in other cases xIn would have been a pointer
 
@@ -1550,7 +1607,7 @@ namespace ROPTLIB
                 // int translSz = szNext.p_;
 
                 int gElemIdx = 0;
-                // fill result with computed gradient values : R
+                // fill result with computed gradient values: R
                 for (int i = 0; i < sz_.n_; ++i)
                 {
                     // ROFL_VAR1(gElemIdx);
@@ -1578,7 +1635,7 @@ namespace ROPTLIB
                     gElemIdx++;
                 }
 
-                // fill result with computed gradient values : T
+                // fill result with computed gradient values: T
 
                 Vector TnextROPT(staircaseNextStepLevel, sz_.n_);
                 realdp *GroptlibWriteArray = TnextROPT.ObtainWriteEntireData();
@@ -1594,6 +1651,23 @@ namespace ROPTLIB
                     // TnextROPT.Print("TnextROPT after assignment");
                 }
                 TnextROPT.CopyTo(xIn.GetElement(gElemIdx));
+                gElemIdx++;
+
+                // fill result with computed gradient values: Lambdas
+                Vector LambdasNextROPT(numEdges_);
+                realdp *GroptlibWriteArray2 = LambdasNextROPT.ObtainWriteEntireData();
+                for (int j = 0; j < numEdges_; ++j)
+                {
+                    // TnextROPT.Print("TnextROPT before assignment");
+
+                    // ROFL_VAR1(RnextROPT.GetElement(j, 0));
+
+                    GroptlibWriteArray2[j] = LambdasNext.reshaped(numEdges_, 1)(j);
+
+                    // ROFL_VAR1("");
+                    // TnextROPT.Print("TnextROPT after assignment");
+                }
+                LambdasNextROPT.CopyTo(xIn.GetElement(gElemIdx));
             } // end of EigToRopt scope for xIn
 
             linesearchArmijoROPTLIB(xIn, szNext, Y0);
@@ -1612,7 +1686,7 @@ namespace ROPTLIB
                 // int translSz = szNext.p_;
 
                 int gElemIdx = 0;
-                // fill result with computed gradient values : R
+                // fill result with computed gradient values: R
                 for (int i = 0; i < sz_.n_; ++i)
                 {
                     // ROFL_VAR1(gElemIdx);
@@ -1640,7 +1714,7 @@ namespace ROPTLIB
                     gElemIdx++;
                 }
 
-                // fill result with computed gradient values : T
+                // fill result with computed gradient values: T
 
                 Vector TnextROPT(staircaseNextStepLevel, sz_.n_);
                 realdp *GroptlibWriteArray = TnextROPT.ObtainWriteEntireData();
@@ -1658,6 +1732,23 @@ namespace ROPTLIB
                 // TnextROPT.Print("line 1215");
                 // Y0.GetElement(gElemIdx).Print("line 1216");
                 TnextROPT.CopyTo(Y0.GetElement(gElemIdx));
+                gElemIdx++;
+
+                // fill result with computed gradient values: Lambdas
+                Vector LambdasNextROPT(numEdges_);
+                realdp *GroptlibWriteArray2 = LambdasNextROPT.ObtainWriteEntireData();
+                for (int j = 0; j < numEdges_; ++j)
+                {
+                    // TnextROPT.Print("TnextROPT before assignment");
+
+                    // ROFL_VAR1(RnextROPT.GetElement(j, 0));
+
+                    GroptlibWriteArray2[j] = LambdasNext.reshaped(numEdges_, 1)(j);
+
+                    // ROFL_VAR1("");
+                    // TnextROPT.Print("TnextROPT after assignment");
+                }
+                LambdasNextROPT.CopyTo(xIn.GetElement(gElemIdx));
             } // end of EigToRopt scope for xIn
         }
     }
