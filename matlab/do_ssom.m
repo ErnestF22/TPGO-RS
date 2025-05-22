@@ -119,6 +119,8 @@ if params.enable_ssom
     testdata.sz = [d d N];
     testdata.edges = testdata.E; %edges field name is used in rsom/ssom project, E in testnetwork benchmark testdata generator
     testdata.tijs = G2T(testdata.gij);
+    testdata.noisy_test = params.noisy_test;
+    testdata.node_degrees = params.node_degrees;
     [transf_ssom, lambdas_ssom_out, rs_success_bool, cost_ssom] = ...
         ssom_genproc(testdata, transf_initguess, lambdas_initguess); %lambdas_ssom_out should be used somewhere (maybe already inside ssom_genproc)
     disp("cost_ssom")

@@ -3,7 +3,7 @@ clear;
 close all;
 
 N = 5;
-mindeg = 3;
+mindeg = 2;
 
 % 1a) PW TRANSLATION DATA INPUT: R, T are the gt, Tijs_nois are the input data
 testdata = testNetwork_params(3, N, 'banded', mindeg); %4 would be the default

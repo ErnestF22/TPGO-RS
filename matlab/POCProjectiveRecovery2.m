@@ -1,4 +1,4 @@
-function POCProjectiveRecovery()
+function POCProjectiveRecovery2()
 Ti=randn(3,1);
 Tj=randn(3,2);
 Ri=rot_randn(eye(3));

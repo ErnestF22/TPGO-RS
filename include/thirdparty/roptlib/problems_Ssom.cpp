@@ -182,6 +182,10 @@ namespace ROPTLIB
         SomUtils::MatD Lambdas(SomUtils::MatD::Zero(numEdges_, 1));
         getScales(xEig, Lambdas);
 
+        SomUtils::MatD TijsScaled(SomUtils::MatD::Zero(sz_.d_, numEdges_));
+        ROFL_VAR1("makeTijsScaled")
+        makeTijsScaled(Tijs_, Lambdas, TijsScaled);
+
         // P = zeros(nrs, d*N);
         SomUtils::MatD P(SomUtils::MatD::Zero(sz_.p_, sz_.d_ * sz_.n_));
         double frct = 0.0;
@@ -193,9 +197,9 @@ namespace ROPTLIB
         SomUtils::MatD Pr(SomUtils::MatD::Zero(sz_.n_, sz_.p_));
         SomUtils::MatD Br(SomUtils::MatD::Zero(sz_.d_, sz_.d_));
 
-        makePfrct(T, Lambdas, P, frct); //!! Lambdas get scaled inside here
+        makePfrct(T, Lambdas, TijsScaled, P, frct);
         // ROFL_VAR2(P, frct);
-        makeLrPrBr(R, Lambdas, Lr, Pr, Br); //!! Lambdas get scaled inside here
+        makeLrPrBr(R, Lambdas, TijsScaled, Lr, Pr, Br);
         // ROFL_VAR3(Lr, Pr, Br);
 
         SomUtils::VecMatD rgR(sz_.n_, SomUtils::MatD::Zero(sz_.p_, sz_.d_));
@@ -398,20 +402,6 @@ namespace ROPTLIB
         return -lambdaE + 1.0;
     }
 
-    // Vector &SsomProblem::EucHessianEta(const Variable &x, const Vector &etax, Vector *result) const
-    // {
-    //     // TODO: implement
-
-    //     result->NewMemoryOnWrite();
-
-    //     // h.R = rsom_rhess_rot_stiefel(R, Rdot, problem_structs) + hrt;
-    //     // h.T = rsom_rhess_transl_stiefel(T, Tdot, problem_structs) + htr;
-
-    //     result->Print("EucHessianEta: printing it just after NewMemoryOnWrite()");
-
-    //     return *result;
-    // };
-
     void SsomProblem::computeHrt(const SomUtils::MatD &lambdas, const SomUtils::MatD &Tdot,
                                  SomUtils::VecMatD &h) const
     {
@@ -511,7 +501,7 @@ namespace ROPTLIB
         SomUtils::MatD PR(SomUtils::MatD::Zero(sz_.n_, sz_.p_));
         SomUtils::MatD BR(SomUtils::MatD::Zero(sz_.d_, sz_.d_));
 
-        makeLrPrBr(xR, lambdas, LR, PR, BR); // TODO: PR, BR are not used
+        makeLrPrBr(xR, lambdas, TijsScaled, LR, PR, BR); // TODO: PR, BR are not used
         h = uT * (LR.transpose() + LR);
     }
 
@@ -529,7 +519,7 @@ namespace ROPTLIB
         SomUtils::MatD PR_dot(SomUtils::MatD::Zero(sz_.n_, sz_.p_));
         SomUtils::MatD Lr(SomUtils::MatD::Zero(sz_.n_, sz_.n_));
         SomUtils::MatD Br(SomUtils::MatD::Zero(sz_.d_, sz_.d_));
-        makeLrPrBr(uR, lambdas, Lr, PR_dot, Br); // TODO: Lr, Br are not used
+        makeLrPrBr(uR, lambdas, TijsScaled, Lr, PR_dot, Br); // TODO: Lr, Br are not used
         h = PR_dot.transpose();
     }
 
@@ -1141,7 +1131,7 @@ namespace ROPTLIB
         }
     }
 
-    void SsomProblem::makePfrct(const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
+    void SsomProblem::makePfrct(const SomUtils::MatD &T, const SomUtils::MatD &Lambdas, const SomUtils::MatD &TijsScaled,
                                 SomUtils::MatD &P, double &frct) const
     {
         // P = zeros(nrs, d*N);
@@ -1150,10 +1140,6 @@ namespace ROPTLIB
 
         P.setZero();
         frct = 0.0;
-
-        SomUtils::MatD TijsScaled(SomUtils::MatD::Zero(sz_.d_, numEdges_));
-        ROFL_VAR1("makeTijsScaled")
-        makeTijsScaled(Tijs_, Lambdas, TijsScaled);
 
         for (int e = 0; e < numEdges_; ++e)
         {
@@ -1172,7 +1158,7 @@ namespace ROPTLIB
         }
     }
 
-    void SsomProblem::makeLrPrBr(const SomUtils::VecMatD &R, const SomUtils::MatD &Lambdas,
+    void SsomProblem::makeLrPrBr(const SomUtils::VecMatD &R, const SomUtils::MatD &Lambdas, const SomUtils::MatD &TijsScaled,
                                  SomUtils::MatD &Lr, SomUtils::MatD &Pr, SomUtils::MatD &Br) const
     {
         // LR = zeros(N,N);
@@ -1184,10 +1170,6 @@ namespace ROPTLIB
         Lr.setZero();
         Pr.setZero();
         Br.setZero();
-
-        SomUtils::MatD TijsScaled(SomUtils::MatD::Zero(sz_.d_, numEdges_));
-        ROFL_VAR1("makeTijsScaled")
-        makeTijsScaled(Tijs_, Lambdas, TijsScaled);
 
         for (int e = 0; e < numEdges_; ++e)
         {
@@ -1417,7 +1399,7 @@ namespace ROPTLIB
                    SomUtils::MatD &lambdasOut,
                    int &staircaseStepIdx)
     {
-        ROFL_VAR1("Start of runRsomRS()")
+        ROFL_VAR1("Start of runSsom()")
         ROFL_VAR1(Prob.costEigen(Prob.Rgt_, Prob.Tgt_, Prob.LambdasGt_));
 
         // output the parameters of the manifold of domain
@@ -1521,13 +1503,14 @@ namespace ROPTLIB
                                                   &mani1next, numofmani1, &mani2next, numofmani2, &mani3, numofmani3);
             ROPTLIB::Vector Y0;
             double lambda;
-            SomUtils::VecMatD vLambdaR(n, SomUtils::MatD::Zero(somSzNext.p_, somSzNext.d_));
-            SomUtils::MatD vLambdaT(SomUtils::MatD::Zero(somSzNext.p_, somSzNext.n_));
+            SomUtils::VecMatD vR(n, SomUtils::MatD::Zero(somSzNext.p_, somSzNext.d_));
+            SomUtils::MatD vT(SomUtils::MatD::Zero(somSzNext.p_, somSzNext.n_));
+            SomUtils::MatD vLambdas(SomUtils::MatD::Zero(Prob.numEdges_, 1));
             ProbPrev.setCostCurr(costLast);
             // for (auto &Rm : R)
             //     ROFL_VAR1(ProbPrev.checkIsOnStiefel(Rm))
-            ROFL_VAR1("Calling ProbPrev.rsomEscapeHessianGenprocEigen()")
-            //     ProbPrev.rsomEscapeHessianGenprocEigen(R, T, Y0, lambda, vLambdaR, vLambdaT);
+            ROFL_VAR1("Calling ProbPrev.ssomEscapeHessianGenprocEigen()")
+            ProbPrev.ssomEscapeHessianGenprocEigen(R, T, Lambdas, Y0, lambda, vR, vT, vLambdas);
 
             if (lambda > -1e-2)
             {

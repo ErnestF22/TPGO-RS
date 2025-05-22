@@ -315,13 +315,13 @@ namespace ROPTLIB
       /**
        * Computes matrices used in rotation estimation cost
        */
-      void makePfrct(const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
+      void makePfrct(const SomUtils::MatD &T, const SomUtils::MatD &Lambdas, const SomUtils::MatD &TijsScaled,
                      SomUtils::MatD &P, double &frct) const;
 
       /**
        * Computes matrices used in translation estimation cost
        */
-      void makeLrPrBr(const SomUtils::VecMatD &R, const SomUtils::MatD &Lambdas,
+      void makeLrPrBr(const SomUtils::VecMatD &R, const SomUtils::MatD &Lambdas, const SomUtils::MatD &TijsScaled,
                       SomUtils::MatD &Lr, SomUtils::MatD &Pr, SomUtils::MatD &Br) const;
 
       /**
@@ -463,12 +463,12 @@ namespace ROPTLIB
       double costCurr_;
 
       /**
-       * Output of RSOM for R
+       * Output of ssom for R
        */
       SomUtils::VecMatD Rout_;
 
       /**
-       * Output of RSOM for T
+       * Output of ssom for T
        */
       SomUtils::MatD Tout_;
 
@@ -485,7 +485,9 @@ namespace ROPTLIB
        */
       bool eigencheckHessianGenproc(const double &lambda,
                                     const SomUtils::VecMatD &xR, const SomUtils::VecMatD &uR,
-                                    const SomUtils::MatD &xT, const SomUtils::MatD &uT, double thr = 1e-3) const;
+                                    const SomUtils::MatD &xT, const SomUtils::MatD &uT,
+                                    const SomUtils::MatD &xLambdas, const SomUtils::MatD &uLambdas,
+                                    double thr = 1e-3) const;
 
       /**
        * @brief Check and return boolean stating whether @param lambda and u are an eigencouple for
@@ -498,7 +500,9 @@ namespace ROPTLIB
        */
       bool eigencheckHessianGenprocShifted(const double &lambda,
                                            const SomUtils::VecMatD &xR, const SomUtils::VecMatD &uR,
-                                           const SomUtils::MatD &xT, const SomUtils::MatD &uT, double mu, double thr = 1e-3) const;
+                                           const SomUtils::MatD &xT, const SomUtils::MatD &uT,
+                                           const SomUtils::MatD &xLambdas, const SomUtils::MatD &uLambdas,
+                                           double mu, double thr = 1e-3) const;
       /**
        * @brief Check whether @param mTg is in the tangent space of @param m
        */
@@ -536,9 +540,11 @@ namespace ROPTLIB
        * @param thresh is used for early stopping conditions
        * Number of max iterations of PIM is set empirically to 2500
        */
-      void pimFunctionGenproc(const SomUtils::VecMatD &xR, const SomUtils::MatD &xT, const SomUtils::VecMatD &uR, const SomUtils::MatD &uT,
-                              double &lambdaMax, SomUtils::VecMatD &uOutR, SomUtils::MatD &uOutT, double thresh = 1e-5) const;
-
+      void ssomPimFunctionGenproc(const SomUtils::VecMatD &xR, const SomUtils::MatD &xT, const SomUtils::MatD &xLambdas,
+                                  const SomUtils::VecMatD &uR, const SomUtils::MatD &uT, const SomUtils::MatD &uLambdas,
+                                  double &lambdaMax,
+                                  SomUtils::VecMatD &uOutR, SomUtils::MatD &uOutT, SomUtils::MatD &uOutLambdas,
+                                  double thresh = 1e-5) const;
       /**
        * @brief Power iteration method of the genproc hessian shifted by @param mu
        * Hessian is considered as: H(x)[u] - mu*eye()
@@ -549,11 +555,15 @@ namespace ROPTLIB
        * @param thresh is used for early stopping conditions
        * Number of max iterations of PIM is set empirically to 2500
        */
-      void pimFunctionGenprocShifted(const SomUtils::VecMatD &xR, const SomUtils::MatD &xT, const SomUtils::VecMatD &uR, const SomUtils::MatD &uT, double mu,
-                                     double &lambdaMax, SomUtils::VecMatD &uOutR, SomUtils::MatD &uOutT, double thresh = 1e-5) const;
+      void ssomPimFunctionGenprocShifted(const SomUtils::VecMatD &xR, const SomUtils::MatD &xT, const SomUtils::MatD &xLambdas,
+                                         const SomUtils::VecMatD &uR, const SomUtils::MatD &uT, const SomUtils::MatD &uLambdas,
+                                         double mu,
+                                         double &lambdaMax,
+                                         SomUtils::VecMatD &uOutR, SomUtils::MatD &uOutT, SomUtils::MatD &uOutLambdas,
+                                         double thresh = 1e-5) const;
 
       /**
-       * For debug purposes, reduced version of rsomPimHessianGenproc, up to linesearch (excluded)
+       * For debug purposes, reduced version of ssomPimHessianGenproc, up to linesearch (excluded)
        * No outputs, just log prints
        *
        * @brief Power iteration method for R, T (generalized Procrustes) version of the problem
@@ -561,7 +571,7 @@ namespace ROPTLIB
        * @param thresh for PIM computation thresholds (eigencouple check, stopping conditions of PIM)
        * @param R, @param T are the starting points
        */
-      void rsomPimHessianGenprocSmall(double thresh, const SomUtils::VecMatD &R, const SomUtils::MatD &T) const;
+      void ssomPimHessianGenprocSmall(double thresh, const SomUtils::VecMatD &R, const SomUtils::MatD &T) const;
 
       /**
        * @brief Power iteration method for R, T (generalized Procrustes) version of the problem
@@ -573,8 +583,8 @@ namespace ROPTLIB
        * @param armijo (= false by default) indicates whether the linesearch method used is based
        * on ROPTLIB's Armijo-Goldstein (armijo = true) implementation of simply linesearchDummy (armijo = false)
        */
-      void rsomPimHessianGenprocEigen(double thresh,
-                                      const SomUtils::VecMatD &R, const SomUtils::MatD &T,
+      void ssomPimHessianGenprocEigen(double thresh,
+                                      const SomUtils::VecMatD &R, const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
                                       Vector &Y0, double &lambdaPimOut, SomUtils::VecMatD &vPimRout, SomUtils::MatD &vPimTout,
                                       bool armijo = false) const;
 
@@ -584,8 +594,9 @@ namespace ROPTLIB
        * @param Y0 reference output: new starting point for RS next step
        * @param lambdaPimOut, vPimRout, vPimTout reference outputs: associated eigencouple
        */
-      void rsomEscapeHessianGenprocEigen(const SomUtils::VecMatD &R, const SomUtils::MatD &T,
-                                         Vector &Y0, double &lambdaOut, SomUtils::VecMatD &vRout, SomUtils::MatD &vTout) const;
+      void ssomEscapeHessianGenprocEigen(const SomUtils::VecMatD &R, const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
+                                         Vector &Y0, double &lambdaOut,
+                                         SomUtils::VecMatD &vRout, SomUtils::MatD &vTout, SomUtils::MatD &vLambdasOut) const;
 
       /**
        * @brief Power iteration method for R, T (generalized Procrustes) version of the problem
@@ -596,7 +607,9 @@ namespace ROPTLIB
        * @param armijo (= false by default) indicates whether the linesearch method used is based
        * on ROPTLIB's Armijo-Goldstein (armijo = true) implementation of simply linesearchDummy (armijo = false)
        */
-      void rsomPimHessianGenproc(double thresh, const SomUtils::VecMatD &R, const SomUtils::MatD &T, Vector &Y0, bool armijo = false) const;
+      void ssomPimHessianGenproc(double thresh,
+                                 const SomUtils::VecMatD &R, const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
+                                 Vector &Y0, bool armijo = false) const;
 
       /**
        * @brief Linesearch for cost decrease based on Armijo conditions (see ROPTLIB documentation) from @param xIn starting point
@@ -816,8 +829,8 @@ namespace ROPTLIB
        * @return true if recovery is successful (determinant check); @return false otherwise
        */
       bool recoverySEdN(int staircaseStepIdx,
-                        const SomUtils::VecMatD &RmanoptOut, const SomUtils::MatD &TmanoptOut,
-                        SomUtils::VecMatD &Rrecovered, SomUtils::MatD &Trecovered);
+                        const SomUtils::VecMatD &RmanoptOut, const SomUtils::MatD &TmanoptOut, const SomUtils::MatD &LambdasManoptOut,
+                        SomUtils::VecMatD &Rrecovered, SomUtils::MatD &Trecovered, SomUtils::MatD &LambdasRecovered);
 
       /**
        * @brief Solve global gauge for recoverySEdN() outputs @param Rsedn and @param Tsedn,
@@ -826,8 +839,9 @@ namespace ROPTLIB
        * reciprocal distances between nodes
        * @return true if "globalization" is successful (determinant check); @return false otherwise
        */
-      bool globalize(int src, const SomUtils::VecMatD &Rsedn, const SomUtils::MatD &Tsedn,
-                     SomUtils::VecMatD &Rout, SomUtils::MatD &Tout);
+      bool globalize(int src,
+                     const SomUtils::VecMatD &Rsedn, const SomUtils::MatD &Tsedn, const SomUtils::MatD &LambdasIn,
+                     SomUtils::VecMatD &Rout, SomUtils::MatD &Tout, SomUtils::MatD &LambdasOut);
 
       /**
        * @brief Make Hmat matrix s.t. Hmat * u = H(x)[u] for all u in tangent space

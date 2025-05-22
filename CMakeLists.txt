@@ -89,6 +89,7 @@ include/thirdparty/roptlib/problems_SphereConvexHull.cpp
 include/thirdparty/roptlib/problems_SphereSparsestVector.cpp
 include/thirdparty/roptlib/problems_SphereTxRQ.cpp
 include/thirdparty/roptlib/problems_Ssom.cpp #ssom
+include/thirdparty/roptlib/problems_Ssom_rs_recovery.cpp #ssom
 include/thirdparty/roptlib/problems_StieBrockett.cpp
 include/thirdparty/roptlib/problems_StieSPCA.cpp
 include/thirdparty/roptlib/manifolds_SphereTx.cpp

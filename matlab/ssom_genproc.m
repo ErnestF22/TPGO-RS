@@ -6,7 +6,9 @@ function [transf_out, lambdas_ssom_out, rs_recovery_success, cost_out_global] = 
 %   thr=1e-5;
 % end
 
-num_edges = size(problem_data.E, 1);
+edges = problem_data.E;
+
+num_edges = size(edges, 1);
 
 if ~exist('lambdas_initguess','var')
    lambdas_initguess=ones(num_edges, 1);
@@ -148,65 +150,37 @@ if staircase_step_idx > d+1
 
     if ~any(nodes_low_deg)
         disp('No nodes low deg!')
-        T_diffs_shifted = Qx_edges * T_edges; %this has last row to 0
+        T_diffs_shifted = Qx_edges * T_edges; %this has last rows to 0
         T_recovered = edge_diffs_2_T(T_diffs_shifted(1:d,:), edges, N);
+        lambdas_recovered = lambdas_manopt_out;
     else
-        for node_id = 1:length(problem_data.node_degrees)
-            node_deg = problem_data.node_degrees(node_id);
-
-
-            if node_deg == low_deg
-                fprintf("Running RbRecovery() on node %g\n", node_id);
-                R_i_tilde2 = R_manopt_out(:,:,node_id);
-
-
-                cost_gt = rsom_cost_base(X_gt, problem_data_next); 
-                disp("cost_gt")
-                disp(cost_gt)
-
-                cost_manopt_output = rsom_cost_base(X_manopt_out, problem_data_next); 
-                disp("cost_manopt_output")
-                disp(cost_manopt_output)
-
-                T_diffs_shifted = Qx_edges * T_edges; %this has last row to 0
-                [~, Tij1j2_tilde] = make_Tij1j2s_edges(node_id, T_diffs_shifted, tijs,edges,problem_data);
-
-                RitildeEst = RbRecovery(R_i_tilde2, Tij1j2_tilde);
-                disp('')
-                % TODO: how to decide between RitildeEst1,RitildeEst2??
-                det_RitildeEst1 = det(RitildeEst1(1:d,:));
-                det_RitildeEst2 = det(RitildeEst2(1:d,:));
-
-                use_positive_det = boolean(1);
-                if (sum(multidet(R_tilde2_edges(1:d,:,:))) < 0)
-                    use_positive_det = boolean(0);
-                end
-
-                if (det_RitildeEst1 > 1 - 1e-5 && det_RitildeEst1 < 1 + 1e-5)
-                    if use_positive_det
-                        R_recovered(:,:,node_id) = RitildeEst1(1:d,:);
-                    else 
-                        R_recovered(:,:,node_id) = RitildeEst2(1:d,:);
-                    end
-                elseif (det_RitildeEst2 > 1 - 1e-5 && det_RitildeEst2 < 1 + 1e-5)
-                    if use_positive_det
-                        R_recovered(:,:,node_id) = RitildeEst2(1:d,:);
-                    else
-                        R_recovered(:,:,node_id) = RitildeEst1(1:d,:);
-                    end
-                else 
-                    if ~problem_data.noisy_test
-                        fprintf("ERROR in recovery: Ritilde DETERMINANTS ~= +-1\n")
-                        save('data/zerodet_ws.mat')
-                        rs_recovery_success = boolean(0);
-%                     error("ERROR in recovery: Ritilde DETERMINANTS ~= +-1\n");
-                    end
-                end            
-
-                T_recovered = edge_diffs_2_T(T_diffs_shifted(1:d,:), edges, N);
-                disp('')
+        tijs = problem_data.tijs; %TODO!! improve naming
+        Tijs_scaled = make_tijs_scaled(lambdas_manopt_out, tijs);
+        problem_data.d = d;
+        Tij_2deg_recovery = [];
+        Tij_tilde_2deg_recovery = [];
+        for node_id = 1:N
+            if problem_data.node_degrees(node_id) == low_deg
+                [Tij1j2, Tij1j2_tilde] = ...
+                    make_Tij1j2s_edges( ...
+                    node_id, T_edges, Tijs_scaled, edges, problem_data);
+                Tij_2deg_recovery = cat(3, Tij_2deg_recovery, Tij1j2);
+                Tij_tilde_2deg_recovery = cat( ...
+                    3, Tij_tilde_2deg_recovery, Tij1j2_tilde);
             end
         end
+        Qalign=align3d(Tij_tilde_2deg_recovery);
+        Tij_tilde_2deg_recovery=multiprod(Qalign, Tij_tilde_2deg_recovery);
+        RitildeEst = RbRecovery(multiprod(Qalign, R_manopt_out(:,:,nodes_low_deg)), Tij_tilde_2deg_recovery);
+        R_recovered(:,:,nodes_low_deg) = RitildeEst(1:d,:,:);
+
+        disp("multidet(R_recovered)")
+        disp(multidet(R_recovered))
+
+        T_diffs_shifted = Qalign * T_edges; %this has last rows to 0
+        % [~, Tij1j2_tilde] = make_Tij1j2s_edges(node_id, T_diffs_shifted, tijs,edges,problem_data);
+        T_recovered = edge_diffs_2_T(T_diffs_shifted(1:d,:), edges, N);
+        lambdas_recovered = lambdas_manopt_out;
     end
 else
     % recovery is not actually performed but using the same variable names
@@ -223,14 +197,14 @@ save("ws2.mat")
 % lambdas_recovered = lambdas_manopt_out;
 
 %checking that cost has not changed during "recovery"
-X_recovered.T = T_recovered;
 X_recovered.R = R_recovered;
+X_recovered.T = T_recovered;
 X_recovered.lambda = lambdas_recovered;
 %%
-problem_data_next = problem_data; %TODO: fix this line after
-% cost_out = ssom_cost(X_recovered, problem_data_next); 
-% disp("cost_out")
-% disp(cost_out)
+problem_data_next = problem_data; %TODO: fix this line after recovery works
+cost_out = ssom_cost(X_recovered, problem_data_next); 
+disp("cost_out")
+disp(cost_out)
 % 
 % 
 % disp("[matStackH(X_gt.R); matStackH(R_recovered)]");
