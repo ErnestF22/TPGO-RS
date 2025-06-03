@@ -1,4 +1,4 @@
-function Ri_est=RbRecovery(Ri_tilde2,Tij_tilde)
+function [Ri_est, Qx, Qb]=RbRecovery(Ri_tilde2,Tij_tilde)
 %Given Ri_tilde2 such that Ri_tilde2*tij*Lij-Tij_tilde, where Tij_tilde has
 %last p-3 rows to zero, return Ri_est that satisfies the same equation, but
 %has the last p-3 rows to zero
@@ -9,8 +9,11 @@ d = size(Ri_tilde2, 2);
 p = size(Ri_tilde2, 1);
 if nbPoses>1
     Ri_est=zeros(size(Ri_tilde2));
+    Qx=zeros(p,p);
+    Qb=zeros(p,p);
     for iPose=1:nbPoses
-        Ri_est(:,:,iPose)=RbRecovery(Ri_tilde2(:,:,iPose),Tij_tilde(:,:,iPose));
+        [Ri_est(:,:,iPose),Qx(:,:,iPose),Qb(:,:,iPose)]= ...
+            RbRecovery(Ri_tilde2(:,:,iPose),Tij_tilde(:,:,iPose));
     end
 else
     % base case, for single pose
@@ -24,7 +27,8 @@ else
     [URCal_bot,~,~]=svd(Rcal_bot);
     Rcal_bot_N=URCal_bot(:,2:end);
     Rb_est=procrustes_R(Qbot_right',Rcal_bot_N);
-    Ri_est=Qx'*blkdiag(eye(2),Rb_est')*Qx*Ri_tilde2;
+    Qb = blkdiag(eye(2),Rb_est');
+    Ri_est=Qx'*Qb*Qx*Ri_tilde2;
 end
 %disp('Get rotation that aligns last rows of Ri_tilde2 to zero')
 %Qy=fliplr(orthCompleteBasis(N2))';
