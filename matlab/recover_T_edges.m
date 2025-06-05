@@ -11,8 +11,8 @@ function T_edges_shifted = recover_T_edges(T_edges, edges, ...
         
         if ismember(ii, low_deg_nodes_ids) 
             id_low_deg = find(low_deg_nodes_ids == ii);
-            Qx = Qxs(:,:,id_low_deg);
-            Qb = Qbs(:,:,id_low_deg);
+            Qx = 1;
+            Qb = 1;
             tmp = Qx' * Qb * Qx * Qalign;
             T_edges_shifted(:,ee) = tmp * T_edges(:,ee);
         else

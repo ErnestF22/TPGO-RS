@@ -103,6 +103,21 @@ end
 X_manopt_out.R = R_manopt_out;
 X_manopt_out.T = T_manopt_out;
 
+%% GIF PLOT!
+testdata_plot = params.testdata;
+testdata_plot.gi = RT2G_stiefel(R_manopt_out, T_manopt_out);
+testdata_plot = testNetworkCompensate(testdata_plot);
+hold on;
+red=[65535	8567	0]/65535;
+opts_draw_camera={'Color1',red,'Color2',red};
+testNetworkDisplay(testdata_plot,'member','gi','optionsDrawCamera', opts_draw_camera)
+green=[15934	35723	14392]/65535/0.6;           %camera color
+opts_draw_camera={'Color1',green,'Color2',green};  %options to pass to drawCamera
+testNetworkDisplay(testdata_plot,'member','gitruth', 'optionsDrawCamera', opts_draw_camera)
+hold off;
+%% 
+
+
 if staircase_step_idx > d+1
 
     if ~params.noisy_test && staircase_step_idx > d+2
