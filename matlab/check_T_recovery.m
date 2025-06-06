@@ -97,7 +97,7 @@ disp("cost_out")
 disp(cost_out)
 
 %% Determinants
-testdata_plot = testdata;
+testdata_plot = problem_data;
 testdata_plot.gi = RT2G(R_recovered, T_recovered);
 testdata_plot = testNetworkCompensate(testdata_plot);
 hold on;
@@ -126,7 +126,7 @@ disp("[X_gt.T; T_recovered_global1]");
 T_recovered_global1 = R_global' * T_recovered - T_global;
 disp([X_gt.T; T_recovered_global1]);
 
-P = T_recovered_global1;
+P = T_recovered;
 Q = X_gt.T;
 % M = dot(Q, pinv(P));
 % M = [9.21899814e+00,  3.69605105e-06, -9.78543055e-04;
@@ -136,8 +136,17 @@ Q = X_gt.T;
 %      4.00195257e+00, -7.14620402e-02, -3.21304236e+01;
 %      8.95460285e-05, -1.11950144e-05,  9.21793369e+00];
 
+R_glob = eye(d);
+T_glob = zeros(d,1);
 % [R_glob, T_glob] = ethz_rigid_motion_computation(P, Q);
-T_glob_affine = procrustes_umeyama(P, Q, 3);
+% T_glob_affine = procrustes_umeyama(P, Q, 3);
+
+% tform = pcregistercorr(pointCloud(P'), pointCloud(Q'));
+% tform = pcregistercpd(pointCloud(P'), pointCloud(Q'));
+% tform = pcregisterfgr(pointCloud(P'), pointCloud(Q'));
+tform = pcregistericp(pointCloud(P'), pointCloud(Q'));
+% tform = pcregisterloam(pointCloud(P'), pointCloud(Q'));
+% tform = pcregisterndt(pointCloud(P'), pointCloud(Q'));
 T_recovered_global = R_glob * T_recovered_global1 + T_glob;
 
 for ii = 1:N
