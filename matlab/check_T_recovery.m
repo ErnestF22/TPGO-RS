@@ -136,8 +136,8 @@ Q = X_gt.T;
 %      4.00195257e+00, -7.14620402e-02, -3.21304236e+01;
 %      8.95460285e-05, -1.11950144e-05,  9.21793369e+00];
 
-[R_glob, T_glob] = ethz_rigid_motion_computation(P, Q);
-
+% [R_glob, T_glob] = ethz_rigid_motion_computation(P, Q);
+T_glob_affine = procrustes_umeyama(P, Q, 3);
 T_recovered_global = R_glob * T_recovered_global1 + T_glob;
 
 for ii = 1:N
