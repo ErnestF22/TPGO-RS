@@ -122,9 +122,23 @@ disp([matStackH(X_gt.R); matStackH(R_recovered_global)]);
 
 T_global = R_global * T_recovered(:,1) - X_gt.T(:,1); %!!
 % code for making all translation global at once
-disp("[X_gt.T; T_recovered]");
-T_recovered_global = R_global' * T_recovered - T_global;
-disp([X_gt.T; T_recovered_global]);
+disp("[X_gt.T; T_recovered_global1]");
+T_recovered_global1 = R_global' * T_recovered - T_global;
+disp([X_gt.T; T_recovered_global1]);
+
+P = T_recovered_global1;
+Q = X_gt.T;
+% M = dot(Q, pinv(P));
+% M = [9.21899814e+00,  3.69605105e-06, -9.78543055e-04;
+%        4.57852984e+00,  2.14676364e-01, -3.70826346e+01;
+%        9.55703117e-05, -8.20533917e-06,  9.21788195e+00];
+% M = [9.21900085e+00,  5.04273425e-06, -1.00185017e-03;
+%      4.00195257e+00, -7.14620402e-02, -3.21304236e+01;
+%      8.95460285e-05, -1.11950144e-05,  9.21793369e+00];
+
+[R_glob, T_glob] = ethz_rigid_motion_computation(P, Q);
+
+T_recovered_global = R_glob * T_recovered_global1 + T_glob;
 
 for ii = 1:N
     R_gt_i = X_gt.R(:,:,ii);
