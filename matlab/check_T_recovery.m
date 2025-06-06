@@ -154,6 +154,18 @@ for ii = 1:N
     end
 end
 
+lambda_factor = X_gt.lambda(1) / lambdas_recovered(1);
+lambdas_recovered_global = lambda_factor * lambdas_recovered;
+disp("[X_gt.lambda, lambdas_recovered_global]");
+disp([X_gt.lambda(:), lambdas_recovered_global]);
+disp("is_equal_floats(X_gt.lambda, lambdas_recovered_global)")
+disp(is_equal_floats(X_gt.lambda(:), lambdas_recovered_global))
+if (~is_equal_floats(X_gt.lambda(:), lambdas_recovered_global))
+%         error("transl found NOT equal")
+    fprintf("ERROR in recovery: LAMBDA GLOBAL\n");
+    rs_recovery_success = boolean(0);
+end
+
 fprintf("rs_recovery_success: %g\n", rs_recovery_success);
 X_recovered_global.R = R_recovered_global;
 X_recovered_global.T = T_recovered_global;
