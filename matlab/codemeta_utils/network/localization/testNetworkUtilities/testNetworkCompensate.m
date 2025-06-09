@@ -61,8 +61,8 @@ switch lower(mode)
     case 'translations'
         switch lower(method)
             case 'leastsquares'
-                Gtruth=cat(3,t_node.gitruth);
-                Gestimated=cat(3,t_node.gi);
+                Gtruth=cat(3,t_node.gitruth); %%!!
+                Gestimated=cat(3,t_node.gi); %%!!
 
                 if strcmp(methodAbsolutePoses,'pose')
                     for iNode=1:N
@@ -71,11 +71,12 @@ switch lower(mode)
                     end
                 end
                 
-                Ttruth=squeeze(Gtruth(1:3,4,nCamera));
-                Testimated=squeeze(Gestimated(1:3,4,nCamera));
+                Ttruth=squeeze(Gtruth(1:3,4,nCamera)); %%!!
+                Testimated=squeeze(Gestimated(1:3,4,nCamera)); %%!!
                 
                 if ~flagRansac
-                    [~, ~, transf] = procrustes(Ttruth', Testimated','reflection',false);
+                    [~, ~, transf] = ... %%!!
+                        procrustes(Ttruth', Testimated','reflection',false);
                 else
                     NTrials=100;
                     NPointsSelected=4;
@@ -95,12 +96,12 @@ switch lower(mode)
                         
                     
 
-                gGlobal=[transf.T' transf.c(1,:)'; zeros(1,3) 1];
+                gGlobal=[transf.T' transf.c(1,:)'; zeros(1,3) 1]; %%!!
 
-                Gnew=Gestimated;
-                for iNode=1:N
-                    Gnew(1:3,4,iNode)=Gnew(1:3,4,iNode)*transf.b;
-                    Gnew(:,:,iNode)=gGlobal*Gnew(:,:,iNode);
+                Gnew=Gestimated; %%!!
+                for iNode=1:N %%!!
+                    Gnew(1:3,4,iNode)=Gnew(1:3,4,iNode)*transf.b; %%!!
+                    Gnew(:,:,iNode)=gGlobal*Gnew(:,:,iNode); %%!!
                 end
                 
                 if strcmp(methodAbsolutePoses,'pose')

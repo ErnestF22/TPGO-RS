@@ -23,22 +23,30 @@ Tij_tilde_2deg_recovery=multiprod(Qalign, Tij_tilde_2deg_recovery);
 RitildeEst = RbRecovery(multiprod(Qalign, R_manopt_out(:,:,nodes_low_deg)), Tij_tilde_2deg_recovery);
 R_recovered(:,:,nodes_low_deg) = RitildeEst(1:d,:,:);
 
-[RitildeEst, Qx_rec, Qb_rec] = ...
-    RbRecovery(multiprod(Qalign, R_manopt_out(:,:,nodes_low_deg)), Tij_tilde_2deg_recovery);
-R_recovered(:,:,nodes_low_deg) = RitildeEst(1:d,:,:);
+% [RitildeEst, Qx_rec, Qb_rec] = ...
+%     RbRecovery(multiprod(Qalign, R_manopt_out(:,:,nodes_low_deg)), Tij_tilde_2deg_recovery);
+% R_recovered(:,:,nodes_low_deg) = RitildeEst(1:d,:,:);
 
 
 R_tilde2_edges = multiprod(repmat(Qalign, 1, 1, sum(nodes_high_deg)), R_manopt_out(:,:,nodes_high_deg));
 
-v1 = cross(Tij_tilde_2deg_recovery(1:d,1,1),Tij_tilde_2deg_recovery(1:d,2,1));
-v1versor = v1 / norm(v1);
-P1 = eye(d) - 2 * (v1versor * v1versor');
-R_recovered(:,:,1) = P1 * R_recovered(:,:,1);
-
-v5 = cross(Tij_tilde_2deg_recovery(1:d,1,2),Tij_tilde_2deg_recovery(1:d,2,2));
-v5versor = v5 / norm(v5);
-P5 = eye(d) - 2 * (v5versor * v5versor');
-R_recovered(:,:,5) = P5 * R_recovered(:,:,5);
+low_deg_nodes_ids = find(problem_data.node_degrees <= low_deg); %[1 5]'
+for ii = 1:N    
+    if ismember(ii, low_deg_nodes_ids) 
+        id_low_deg = find(low_deg_nodes_ids == ii);
+        P_i = recover_R_deg2(Tij_tilde_2deg_recovery, id_low_deg, d);
+        R_recovered(:,:,ii) = P_i * R_recovered(:,:,ii);    
+    end
+end
+% v1 = cross(Tij_tilde_2deg_recovery(1:d,1,1),Tij_tilde_2deg_recovery(1:d,2,1));
+% v1versor = v1 / norm(v1);
+% P1 = eye(d) - 2 * (v1versor * v1versor');
+% R_recovered(:,:,1) = P1 * R_recovered(:,:,1);
+% 
+% v5 = cross(Tij_tilde_2deg_recovery(1:d,1,2),Tij_tilde_2deg_recovery(1:d,2,2));
+% v5versor = v5 / norm(v5);
+% P5 = eye(d) - 2 * (v5versor * v5versor');
+% R_recovered(:,:,5) = P5 * R_recovered(:,:,5);
 
 R_recovered(:,:,nodes_high_deg) = R_tilde2_edges(1:d,:,:);
 nodes_low_deg = ~nodes_high_deg;
@@ -88,10 +96,10 @@ disp(multidet(R_recovered))
 % T_edges_recovered = recover_T_edges(Qalign * T_edges, edges, ...
 %     node_degrees, low_deg, Qxs, Qbs, Qalign, Qx_edges);
 T_diffs_shifted = Qalign * T_edges; %this has last row to 0
-% T_recovered_pre = recover_T_edges(T_diffs_shifted(1:d,:), ...
-%     edges, d, problem_data.node_degrees, low_deg, Tij_tilde_2deg_recovery, Qalign);
-% T_recovered = edge_diffs_2_T(T_recovered_pre, edges, N);
-T_recovered = edge_diffs_2_T(T_diffs_shifted(1:d, :), edges, N);
+T_recovered_pre = recover_T_edges(T_diffs_shifted(1:d,:), ...
+    edges, d, problem_data.node_degrees, low_deg, Tij_tilde_2deg_recovery);
+T_recovered = edge_diffs_2_T(T_recovered_pre, edges, N);
+% T_recovered = edge_diffs_2_T(T_diffs_shifted(1:d, :), edges, N);
 %%
 
 X_recovered.R = R_recovered;
@@ -128,15 +136,17 @@ R_recovered_global = multiprod(repmat(R_global', 1, 1, N), R_recovered);
 disp("[matStackH(X_gt.R); matStackH(R_recovered_global)]");
 disp([matStackH(X_gt.R); matStackH(R_recovered_global)]);
 
-T_recovered_global = zeros(size(T_recovered));
-for ii = 1:N
-    R_global_i = R_recovered(:,:,ii) * X_gt.R(:,:,ii)'; %!!
-    T_global_i = R_global_i' * T_recovered(:,ii) - X_gt.T(:,ii); %!!
-    % code for making all translation global at once
-    disp("[X_gt.T; T_recovered_global1]");
-    T_recovered_global(:,ii) = R_global_i' * T_recovered(:,ii) - T_global_i;
-end
-disp([X_gt.T; T_recovered_global]);
+% T_recovered_global = zeros(size(T_recovered));
+% for ii = 1:N
+%     R_global_i = R_recovered(:,:,ii) * X_gt.R(:,:,ii)'; %!!
+%     T_global_i = R_global_i' * T_recovered(:,ii) - X_gt.T(:,ii); %!!
+%     % code for making all translation global at once
+%     disp("[X_gt.T; T_recovered_global1]");
+%     T_recovered_global(:,ii) = R_global_i' * T_recovered(:,ii) - T_global_i;
+% end
+% disp([X_gt.T; T_recovered_global]);
+
+T_recovered_global1 = R_global' * T_recovered;
 
 % P = T_recovered;
 % Q = X_gt.T;
@@ -152,6 +162,7 @@ disp([X_gt.T; T_recovered_global]);
 % T_glob = zeros(d,1);
 % [R_glob, T_glob] = ethz_rigid_motion_computation(P, Q);
 % T_glob_affine = procrustes_umeyama(P, Q, 3);
+% T_recovered_global = R_glob * T_recovered_global1 + T_glob;
 
 % tform = pcregistercorr(pointCloud(P'), pointCloud(Q'));
 % tform = pcregistercpd(pointCloud(P'), pointCloud(Q'));
@@ -159,8 +170,28 @@ disp([X_gt.T; T_recovered_global]);
 % tform = pcregistericp(pointCloud(P'), pointCloud(Q'));
 % tform = pcregisterloam(pointCloud(P'), pointCloud(Q'));
 % tform = pcregisterndt(pointCloud(P'), pointCloud(Q'));
-% T_recovered_global = R_glob * T_recovered_global1 + T_glob;
 
+% T_recovered_global_scaled = tform.T * [T_recovered_global1; ones(1, size(T_recovered_global1, 2))];
+% T_recovered_global = repmat(T_recovered_global_scaled(d+1, :), d, 1) ./ T_recovered_global_scaled(1:d, :);
+
+T_recovered_global = T_recovered_global1;
+
+
+figure(2)
+testdata_plot2 = problem_data;
+testdata_plot2.gi = RT2G(R_recovered_global, T_recovered_global);
+testdata_plot2 = testNetworkCompensate(testdata_plot2);
+T_recovered_global = G2T(testdata_plot2.gi);
+hold on;
+red=[65535	8567	0]/65535;
+opts_draw_camera={'Color1',red,'Color2',red};
+testNetworkDisplay(testdata_plot2,'member','gi','optionsDrawCamera', opts_draw_camera)
+green=[15934	35723	14392]/65535/0.6;           %camera color
+opts_draw_camera={'Color1',green,'Color2',green};  %options to pass to drawCamera
+testNetworkDisplay(testdata_plot2,'member','gitruth', 'optionsDrawCamera', opts_draw_camera)
+hold off;
+
+rs_recovery_success = boolean(1);
 for ii = 1:N
     R_gt_i = X_gt.R(:,:,ii);
     R_recov_i_global = R_recovered_global(:,:,ii); %GLOBAL!
@@ -189,6 +220,9 @@ for ii = 1:N
     end
 end
 
+disp("[X_gt.T; T_recovered_global]");
+disp([X_gt.T; T_recovered_global]);
+
 lambda_factor = X_gt.lambda(1) / lambdas_recovered(1);
 lambdas_recovered_global = lambda_factor * lambdas_recovered;
 disp("[X_gt.lambda, lambdas_recovered_global]");
@@ -196,7 +230,7 @@ disp([X_gt.lambda(:), lambdas_recovered_global]);
 disp("is_equal_floats(X_gt.lambda, lambdas_recovered_global)")
 disp(is_equal_floats(X_gt.lambda(:), lambdas_recovered_global))
 if (~is_equal_floats(X_gt.lambda(:), lambdas_recovered_global))
-%         error("transl found NOT equal")
+%         error("scales found NOT equal")
     fprintf("ERROR in recovery: LAMBDA GLOBAL\n");
     rs_recovery_success = boolean(0);
 end
@@ -204,7 +238,7 @@ end
 fprintf("rs_recovery_success: %g\n", rs_recovery_success);
 X_recovered_global.R = R_recovered_global;
 X_recovered_global.T = T_recovered_global;
-X_recovered_global.lambda = lambdas_recovered;
+X_recovered_global.lambda = lambdas_recovered_global;
 cost_out_global = ssom_cost(X_recovered_global, problem_data_next); 
 disp("cost_out_global")
 disp(cost_out_global)
@@ -215,16 +249,3 @@ disp(multidet(R_recovered))
 
 disp('multidet(R_recovered_global)') 
 disp(multidet(R_recovered_global)) 
-
-figure(2)
-testdata_plot2 = problem_data;
-testdata_plot2.gi = RT2G(R_recovered_global, T_recovered_global);
-testdata_plot2 = testNetworkCompensate(testdata_plot2);
-hold on;
-red=[65535	8567	0]/65535;
-opts_draw_camera={'Color1',red,'Color2',red};
-testNetworkDisplay(testdata_plot2,'member','gi','optionsDrawCamera', opts_draw_camera)
-green=[15934	35723	14392]/65535/0.6;           %camera color
-opts_draw_camera={'Color1',green,'Color2',green};  %options to pass to drawCamera
-testNetworkDisplay(testdata_plot2,'member','gitruth', 'optionsDrawCamera', opts_draw_camera)
-hold off;
