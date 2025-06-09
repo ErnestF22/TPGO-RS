@@ -1,3 +1,7 @@
+close all;
+clear;
+clc;
+
 load("ws2.mat")
 
 RT_stacked_high_deg = [matStackH(R_manopt_out(:,:,nodes_high_deg)), T_edges];
@@ -84,7 +88,10 @@ disp(multidet(R_recovered))
 % T_edges_recovered = recover_T_edges(Qalign * T_edges, edges, ...
 %     node_degrees, low_deg, Qxs, Qbs, Qalign, Qx_edges);
 T_diffs_shifted = Qalign * T_edges; %this has last row to 0
-T_recovered = edge_diffs_2_T(T_diffs_shifted(1:d,:), edges, N);
+% T_recovered_pre = recover_T_edges(T_diffs_shifted(1:d,:), ...
+%     edges, d, problem_data.node_degrees, low_deg, Tij_tilde_2deg_recovery, Qalign);
+% T_recovered = edge_diffs_2_T(T_recovered_pre, edges, N);
+T_recovered = edge_diffs_2_T(T_diffs_shifted(1:d, :), edges, N);
 %%
 
 X_recovered.R = R_recovered;
@@ -97,6 +104,7 @@ disp("cost_out")
 disp(cost_out)
 
 %% Determinants
+figure(1)
 testdata_plot = problem_data;
 testdata_plot.gi = RT2G(R_recovered, T_recovered);
 testdata_plot = testNetworkCompensate(testdata_plot);
@@ -120,14 +128,18 @@ R_recovered_global = multiprod(repmat(R_global', 1, 1, N), R_recovered);
 disp("[matStackH(X_gt.R); matStackH(R_recovered_global)]");
 disp([matStackH(X_gt.R); matStackH(R_recovered_global)]);
 
-T_global = R_global * T_recovered(:,1) - X_gt.T(:,1); %!!
-% code for making all translation global at once
-disp("[X_gt.T; T_recovered_global1]");
-T_recovered_global1 = R_global' * T_recovered - T_global;
-disp([X_gt.T; T_recovered_global1]);
+T_recovered_global = zeros(size(T_recovered));
+for ii = 1:N
+    R_global_i = R_recovered(:,:,ii) * X_gt.R(:,:,ii)'; %!!
+    T_global_i = R_global_i' * T_recovered(:,ii) - X_gt.T(:,ii); %!!
+    % code for making all translation global at once
+    disp("[X_gt.T; T_recovered_global1]");
+    T_recovered_global(:,ii) = R_global_i' * T_recovered(:,ii) - T_global_i;
+end
+disp([X_gt.T; T_recovered_global]);
 
-P = T_recovered;
-Q = X_gt.T;
+% P = T_recovered;
+% Q = X_gt.T;
 % M = dot(Q, pinv(P));
 % M = [9.21899814e+00,  3.69605105e-06, -9.78543055e-04;
 %        4.57852984e+00,  2.14676364e-01, -3.70826346e+01;
@@ -136,18 +148,18 @@ Q = X_gt.T;
 %      4.00195257e+00, -7.14620402e-02, -3.21304236e+01;
 %      8.95460285e-05, -1.11950144e-05,  9.21793369e+00];
 
-R_glob = eye(d);
-T_glob = zeros(d,1);
+% R_glob = eye(d);
+% T_glob = zeros(d,1);
 % [R_glob, T_glob] = ethz_rigid_motion_computation(P, Q);
 % T_glob_affine = procrustes_umeyama(P, Q, 3);
 
 % tform = pcregistercorr(pointCloud(P'), pointCloud(Q'));
 % tform = pcregistercpd(pointCloud(P'), pointCloud(Q'));
 % tform = pcregisterfgr(pointCloud(P'), pointCloud(Q'));
-tform = pcregistericp(pointCloud(P'), pointCloud(Q'));
+% tform = pcregistericp(pointCloud(P'), pointCloud(Q'));
 % tform = pcregisterloam(pointCloud(P'), pointCloud(Q'));
 % tform = pcregisterndt(pointCloud(P'), pointCloud(Q'));
-T_recovered_global = R_glob * T_recovered_global1 + T_glob;
+% T_recovered_global = R_glob * T_recovered_global1 + T_glob;
 
 for ii = 1:N
     R_gt_i = X_gt.R(:,:,ii);
@@ -203,3 +215,16 @@ disp(multidet(R_recovered))
 
 disp('multidet(R_recovered_global)') 
 disp(multidet(R_recovered_global)) 
+
+figure(2)
+testdata_plot2 = problem_data;
+testdata_plot2.gi = RT2G(R_recovered_global, T_recovered_global);
+testdata_plot2 = testNetworkCompensate(testdata_plot2);
+hold on;
+red=[65535	8567	0]/65535;
+opts_draw_camera={'Color1',red,'Color2',red};
+testNetworkDisplay(testdata_plot2,'member','gi','optionsDrawCamera', opts_draw_camera)
+green=[15934	35723	14392]/65535/0.6;           %camera color
+opts_draw_camera={'Color1',green,'Color2',green};  %options to pass to drawCamera
+testNetworkDisplay(testdata_plot2,'member','gitruth', 'optionsDrawCamera', opts_draw_camera)
+hold off;
