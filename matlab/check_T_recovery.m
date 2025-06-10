@@ -108,7 +108,7 @@ X_recovered.lambda = lambdas_recovered;
 
 problem_data_next = problem_data; %TODO: fix this line after recovery works
 cost_out = ssom_cost(X_recovered, problem_data_next); 
-disp("cost_out")
+disp("cost_out AFTER RECOVERY")
 disp(cost_out)
 
 %% Determinants

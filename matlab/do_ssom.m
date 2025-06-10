@@ -125,6 +125,9 @@ if params.enable_ssom
         ssom_genproc(testdata, transf_initguess, lambdas_initguess); %lambdas_ssom_out should be used somewhere (maybe already inside ssom_genproc)
     disp("cost_ssom")
     disp(cost_ssom)
+    if cost_ssom > 1e-3
+        disp("cost out > 0")
+    end
 else
     rs_success_bool = boolean(0);
     transf_ssom = repmat(eye(d+1), 1, 1, N);
@@ -147,7 +150,7 @@ testdata.lambdaij = lambdas_ssom_out;
 [rotation_error_ssom,translation_error_ssom,...
     scale_ratios_ssom,transl_err_norm_ssom] = ...
     testNetworkComputeErrors(testdata);
-scale_ratios_ssom = (lambdas_ssom_out ./ transp(testdata.lambdaijtruth));
+% scale_ratios_ssom = (lambdas_ssom_out ./ transp(testdata.lambdaijtruth));
 
 
 

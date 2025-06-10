@@ -36,7 +36,7 @@ int main(int argc, char **argv)
     // Output mode (quat or aa)
     params.getParam<std::string>(
         "in", folderIn,
-        std::string("../matlab/data/ssom_testdata_noisy/harder/tdata_n5_mindeg2_sigma00/"));
+        std::string("../matlab/data/ssom_testdata_noisy/easy/"));
 
     params.getParam<int>("d", d, 3);
     // params.getParam<int>("numTestsPerInstance", numTestsPerInstance, 30);
@@ -145,11 +145,9 @@ int main(int argc, char **argv)
     ROPTLIB::Vector startX = ProdManiSsom.RandominManifold();
 
     if (readStartingPtFromFile)
-        if (!SomUtils::readCsvInitguess(folderIn + "ssom_x_start.csv", startX))
+        if (!SomUtils::readCsvInitguess(folderIn + "startXrtlambdas.csv", startX))
         {
-            // matlab/data/ssom_testdata_noisy/harder/tdata_n5_mindeg2_sigma00/ssom_x_start.csv
             ROFL_ERR("Error opening file")
-            ROFL_VAR1(folderIn + "ssom_x_start.csv")
             ROFL_ASSERT(0)
         }
 

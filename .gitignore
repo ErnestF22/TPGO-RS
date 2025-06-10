@@ -56,6 +56,7 @@ results_icp/
 matlab/data/cpp_testdata/
 matlab/data/cpp_testdata_noisy/
 matlab/data/big_testnetworks/
+matlab/data/ssom_testdata_noisy/harder/
 
 #include/thirdparty/qr_unique_sizeless/
 
