@@ -152,8 +152,46 @@ int main(int argc, char **argv)
             ROFL_VAR1(folderIn + "ssom_x_start.csv")
             ROFL_ASSERT(0)
         }
-
     startX.Print("startX");
+
+    // ROPTLIB::Vector startU = ProdManiSsom.RandominManifold();
+    // if (!SomUtils::readCsvInitguess(folderIn + "ssom_u_start.csv", startU))
+    // {
+    //     // matlab/data/ssom_testdata_noisy/harder/tdata_n5_mindeg2_sigma00/ssom_x_start.csv
+    //     ROFL_ERR("Error opening file")
+    //     ROFL_VAR1(folderIn + "ssom_u_start.csv")
+    //     ROFL_ASSERT(0)
+    // }
+    // startU.Print("startU");
+
+    // ROPTLIB::Vector rgradStart = ProdManiSsom.RandominManifold();
+    // Prob.RieGrad(startX, &rgradStart);
+    // rgradStart.Print("rgradStart");
+
+    // SomUtils::VecMatD xR(n, SomUtils::MatD::Identity(d, d));
+    // SomUtils::MatD xT(SomUtils::MatD::Zero(d, n));
+    // SomUtils::MatD xLambdas(SomUtils::MatD::Zero(numEdges, 1));
+    // SomUtils::MatD startXeig(SomUtils::MatD::Zero(n * d * d + d * n + numEdges, 1));
+    // Prob.RoptToEig(startX, startXeig);
+    // Prob.getRotations(startXeig, xR);
+    // Prob.getTranslations(startXeig, xT);
+    // Prob.getScales(startXeig, xLambdas);
+    // SomUtils::VecMatD uR(n, SomUtils::MatD::Identity(d, d));
+    // SomUtils::MatD uT(SomUtils::MatD::Zero(d, n));
+    // SomUtils::MatD uLambdas(SomUtils::MatD::Zero(numEdges, 1));
+    // SomUtils::MatD startUeig(SomUtils::MatD::Zero(n * d * d + d * n + numEdges, 1));
+    // Prob.RoptToEig(startU, startUeig);
+    // Prob.getRotations(startUeig, uR);
+    // Prob.getTranslations(startUeig, uT);
+    // Prob.getScales(startUeig, uLambdas);
+    // SomUtils::VecMatD hessRout(n, SomUtils::MatD::Identity(d, d));
+    // SomUtils::MatD hessTout(SomUtils::MatD::Zero(d, n));
+    // SomUtils::MatD hessLambdasOut(SomUtils::MatD::Zero(numEdges, 1));
+    // Prob.hessGenprocEigen(xR, uR, xT, uT, xLambdas, uLambdas, hessRout, hessTout, hessLambdasOut);
+    // for (auto &m : hessRout)
+    //     ROFL_VAR1(m)
+    // ROFL_VAR1(hessTout)
+    // ROFL_VAR1(hessLambdasOut)
 
     // RUN RSOM RS
     int srcNodeId = 0;

@@ -185,6 +185,8 @@ namespace ROPTLIB
         SomUtils::MatD TijsScaled(SomUtils::MatD::Zero(sz_.d_, numEdges_));
         ROFL_VAR1("makeTijsScaled")
         makeTijsScaled(Tijs_, Lambdas, TijsScaled);
+        ROFL_VAR1(Tijs_);
+        ROFL_VAR1(TijsScaled);
 
         // P = zeros(nrs, d*N);
         SomUtils::MatD P(SomUtils::MatD::Zero(sz_.p_, sz_.d_ * sz_.n_));
@@ -688,10 +690,18 @@ namespace ROPTLIB
         SomUtils::VecMatD hRT(sz_.n_, SomUtils::MatD::Zero(staircaseStep, sz_.d_));
         ROFL_VAR1("computeHrt")
         computeHrt(xLambdas, uT, hRT);
+        for (auto &hRTi : hRT)
+        {
+            ROFL_VAR1(hRTi);
+        }
 
         SomUtils::VecMatD hRLambdas(sz_.n_, SomUtils::MatD::Zero(staircaseStep, sz_.d_));
         ROFL_VAR1("computeHrlambdas")
         computeHrlambdas(uLambdas, xT, hRLambdas);
+        for (auto &hRlambdaI : hRLambdas)
+        {
+            ROFL_VAR1(hRlambdaI);
+        }
 
         /*htx*/
         SomUtils::MatD hTR(SomUtils::MatD::Zero(staircaseStep, sz_.n_));
@@ -734,7 +744,20 @@ namespace ROPTLIB
         auto egR = SomUtils::VecMatD(sz_.n_, SomUtils::MatD::Zero(sz_.p_, sz_.d_));
         ROFL_VAR1("ssomEgradR")
         ssomEgradR(xR, xT, xLambdas, egR);
+        for (auto &egRi : egR)
+        {
+            ROFL_VAR1(egRi);
+        }
+        for (auto &ehRi : ehR)
+        {
+            ROFL_VAR1(ehRi);
+        }
+        
         manoptStiefelEhess2rhess(xR, egR, ehR, uR, rhR);
+        for (auto &rhRi : rhR)
+        {
+            ROFL_VAR1(rhRi);
+        }
 
         rhT = hTR + hTT + hTLambdas;
         rhLambdas = hLambdasR + hLambdasT + hLambdasLambdas;
@@ -786,7 +809,7 @@ namespace ROPTLIB
     void SsomProblem::manoptStiefelEhess2rhess(const SomUtils::VecMatD &X,
                                                const SomUtils::VecMatD &egrad,
                                                const SomUtils::VecMatD &ehess,
-                                               const SomUtils::VecMatD &eH,
+                                               const SomUtils::VecMatD &Xdot,
                                                SomUtils::VecMatD &rH) const
     {
         // XtG = multiprod(multitransp(X), egrad);
@@ -795,20 +818,21 @@ namespace ROPTLIB
         // rhess = stiefel_tangentProj(X, ehess - HsymXtG);
         for (int i = 0; i < sz_.n_; ++i)
         {
-            manoptStiefelEhess2rhess(X[i], egrad[i], ehess[i], eH[i], rH[i]);
+            manoptStiefelEhess2rhess(X[i], egrad[i], ehess[i], Xdot[i], rH[i]);
         }
     }
 
     void SsomProblem::manoptStiefelEhess2rhess(const SomUtils::MatD &X,
                                                const SomUtils::MatD &egrad,
                                                const SomUtils::MatD &ehess,
-                                               const SomUtils::MatD &eH,
+                                               const SomUtils::MatD &Xdot,
                                                SomUtils::MatD &rH) const
     {
         auto XtG = X.transpose() * egrad;
-        auto symXtG = XtG + XtG.transpose();
-        auto HsymXtG = eH * symXtG;
-        rH = ehess - HsymXtG;
+        auto symXtG = 0.5 * (XtG + XtG.transpose());
+        auto HsymXtG = Xdot * symXtG;
+        auto tmp = ehess - HsymXtG;
+        SomUtils::stiefelTangentProj(X, tmp, rH);
     }
 
     void SsomProblem::hessGenprocEigenShifted(
@@ -1465,7 +1489,7 @@ namespace ROPTLIB
         auto tGt = Prob.Tgt_;
         auto lambdasGt = Prob.LambdasGt_;
 
-        for (staircaseStepIdx = r0; staircaseStepIdx <= d * n + 1; ++staircaseStepIdx)
+        for (staircaseStepIdx = r0; staircaseStepIdx <= d * d * n + 1; ++staircaseStepIdx)
         {
             ROFL_VAR1(staircaseStepIdx)
             ROFL_VAR1(costLast)
@@ -1512,7 +1536,7 @@ namespace ROPTLIB
             ROFL_VAR1("Calling ProbPrev.ssomEscapeHessianGenprocEigen()")
             ProbPrev.ssomEscapeHessianGenprocEigen(R, T, Lambdas, Y0, lambda, vR, vT, vLambdas);
 
-            if (lambda > -1e-2)
+            if (lambda > -1e-5)
             {
                 ROFL_VAR2(lambda, "R, T eigenvals > 0: exiting staircase")
                 // staircaseStepSkipped = 0;
@@ -1522,6 +1546,7 @@ namespace ROPTLIB
                 break;
             }
 
+            Y0.Print("Y0 before costNewStart");
             double costNewStart = ProbNext.f(Y0);
             ROFL_VAR1(costNewStart)
 
@@ -1554,7 +1579,7 @@ namespace ROPTLIB
 
             ROFL_VAR1(costLast)
 
-            XoptEigVec.resize(staircaseStepIdx * d * n + staircaseStepIdx * n, 1);
+            XoptEigVec.resize(staircaseStepIdx * d * n + staircaseStepIdx * n + e, 1);
             ProbNext.RoptToEig(XoptNext, XoptEigVec);
             XoptNext.Print("XoptNext");
             SomUtils::VecMatD XoptNextR(n, SomUtils::MatD::Zero(staircaseStepIdx, d));
@@ -1589,22 +1614,22 @@ namespace ROPTLIB
             TmanoptOutEig = XoptNextT;
             LambdaManoptOutEig = XoptNextLambdas;
 
-            // Rank stopping condition
-            ROFL_VAR1(staircaseStepIdx)
-            SomUtils::MatD XoutRhSt(SomUtils::MatD::Zero(staircaseStepIdx, d * n));
-            SomUtils::hstack(RmanoptOutEig, XoutRhSt);
-            Eigen::FullPivLU<SomUtils::MatD> luDecomp(XoutRhSt);
-            auto rank = luDecomp.rank();
-            if (rank < staircaseStepIdx)
-            {
-                staircaseStepIdx++;
-                ROFL_VAR1("Rank stopping condition reached -> Exiting RS");
-                break;
-            }
+            // // Rank stopping condition
+            // ROFL_VAR1(staircaseStepIdx)
+            // SomUtils::MatD XoutRhSt(SomUtils::MatD::Zero(staircaseStepIdx, d * n));
+            // SomUtils::hstack(RmanoptOutEig, XoutRhSt);
+            // Eigen::FullPivLU<SomUtils::MatD> luDecomp(XoutRhSt);
+            // auto rank = luDecomp.rank();
+            // if (rank < staircaseStepIdx)
+            // {
+            //     staircaseStepIdx++;
+            //     ROFL_VAR1("Rank stopping condition reached -> Exiting RS");
+            //     break;
+            // }
 
             delete RTRNewtonSolverNext;
 
-            //     // break; // TODO: For now, just 1 RS step allowed -> remove it later after fixing linesearch
+            // break; // TODO: For now, just 1 RS step allowed -> remove it later after fixing linesearch
         }
 
         // // Recovery procedure

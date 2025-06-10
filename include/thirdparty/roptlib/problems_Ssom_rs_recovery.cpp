@@ -927,9 +927,11 @@ namespace ROPTLIB
         }
         else
         {
-            SomUtils::MatD Y0T(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
             SomUtils::VecMatD Y0R(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
-            linesearchDummy(costCurr_, Rnext, Tnext, vPimRshift, vPimTshift, Y0R, Y0T);
+            SomUtils::MatD Y0T(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
+            SomUtils::MatD Y0Lambdas(SomUtils::MatD::Zero(numEdges_, 1));
+            linesearchDummySsom(costCurr_, Rnext, Tnext, LambdasNext,
+                                vPimRshift, vPimTshift, vPimLambdasShift, Y0R, Y0T, Y0Lambdas);
 
             // ls Dummy debug: save on file scope
             {
@@ -1095,7 +1097,7 @@ namespace ROPTLIB
                     // ROFL_VAR1("");
                     // TnextROPT.Print("TnextROPT after assignment");
                 }
-                LambdasNextROPT.CopyTo(xIn.GetElement(gElemIdx));
+                LambdasNextROPT.CopyTo(Y0.GetElement(gElemIdx));
             } // end of EigToRopt scope for xIn
         }
 
@@ -1123,7 +1125,7 @@ namespace ROPTLIB
         // Xvec = vectorizeXrt(X);
         // vecsz = length(Xvec);
         // Hmat = zeros(vecsz);
-        SomUtils::MatD Xvec(staircaseStepLevel * sz_.d_ * sz_.n_ + staircaseStepLevel * sz_.n_, 1);
+        SomUtils::MatD Xvec(staircaseStepLevel * sz_.d_ * sz_.n_ + staircaseStepLevel * sz_.n_ + numEdges_, 1);
         vectorizeRTLambdas(Rnext, Tnext, LambdasNext, Xvec);
 
         int vecsz = Xvec.rows();
@@ -1140,6 +1142,7 @@ namespace ROPTLIB
         {
             // Checking whether anti-symmetric part is zero
             ROFL_ERR("Hessian NOT symmetric")
+            ROFL_ERR((Hmat - Hmat.transpose()).cwiseAbs().maxCoeff())
             // ROFL_ASSERT(0)
         }
 
@@ -1205,6 +1208,7 @@ namespace ROPTLIB
         /** */
 
         lambdaOut = eigvals(0);
+        ROFL_VAR1("Get Rotations");
         ProbNext.getRotations(vOut, vRout);
         ProbNext.getTranslations(vOut, vTout);
         ProbNext.getScales(vOut, vLambdasOut);
@@ -1217,7 +1221,7 @@ namespace ROPTLIB
         // });
         // ProbNext.eigencheckHessianGenproc(lambdaOut, Rnext, minusVrOut, Tnext, -vTout);
 
-        if (lambdaOut > -1e-2)
+        if (lambdaOut > -1e-5)
         {
             // lambdaOut, vRout, vTout are already set before this check
             ROFL_VAR2(lambdaOut, "lambdaOut > 0 -> avoiding linesearch")
@@ -1237,18 +1241,21 @@ namespace ROPTLIB
 
         Stiefel mani1(staircaseStepLevel, somSzNext.d_);
         mani1.ChooseParamsSet2();
-        integer numoftypes = 2; // 2 i.e. (3D) Stiefel + Euclidean
+        integer numoftypes = 3; // 2 i.e. (3D) Stiefel + Euclidean
 
         integer numofmani1 = somSzNext.n_; // num of Stiefel manifolds
         integer numofmani2 = 1;
+        integer numofmani3 = 1;
         Euclidean mani2(staircaseStepLevel, somSzNext.n_);
-        ProductManifold ProdManiNext(numoftypes, &mani1, numofmani1, &mani2, numofmani2);
+        Euclidean mani3(numEdges_);
+        ProductManifold ProdManiNext(numoftypes, &mani1, numofmani1, &mani2, numofmani2, &mani3, numofmani3);
 
         Vector xIn = ProdManiNext.RandominManifold(); //!! in other cases xIn would have been a pointer
 
-        SomUtils::MatD Y0T(SomUtils::MatD::Zero(staircaseStepLevel, sz_.n_));
         SomUtils::VecMatD Y0R(sz_.n_, SomUtils::MatD::Zero(staircaseStepLevel, sz_.d_));
-        linesearchDummy(costCurr_, Rnext, Tnext, vRout, vTout, Y0R, Y0T);
+        SomUtils::MatD Y0T(SomUtils::MatD::Zero(staircaseStepLevel, sz_.n_));
+        SomUtils::MatD Y0Lambdas(SomUtils::MatD::Zero(numEdges_, 1));
+        linesearchDummySsom(costCurr_, Rnext, Tnext, LambdasNext, vRout, vTout, vLambdasOut, Y0R, Y0T, Y0Lambdas);
 
         // ls Dummy debug: save on file scope
         {
@@ -1414,7 +1421,9 @@ namespace ROPTLIB
                 // ROFL_VAR1("");
                 // TnextROPT.Print("TnextROPT after assignment");
             }
-            LambdasNextROPT.CopyTo(xIn.GetElement(gElemIdx));
+            LambdasNextROPT.Print("LambdasNextROPT before assignment");
+            Y0.GetElement(gElemIdx).Print("Y0.GetElement(gElemIdx) before LambdasNextROPT.CopyTo");
+            LambdasNextROPT.CopyTo(Y0.GetElement(gElemIdx));
         } // end of EigToRopt scope for xIn
     }
 
@@ -1674,9 +1683,10 @@ namespace ROPTLIB
         }
         else
         {
-            SomUtils::MatD Y0T(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
             SomUtils::VecMatD Y0R(sz_.n_, SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.d_));
-            linesearchDummy(costCurr_, Rnext, Tnext, vPimR, vPimT, Y0R, Y0T);
+            SomUtils::MatD Y0T(SomUtils::MatD::Zero(staircaseNextStepLevel, sz_.n_));
+            SomUtils::MatD Y0Lambdas(SomUtils::MatD::Zero(numEdges_, 1));
+            linesearchDummySsom(costCurr_, Rnext, Tnext, LambdasNext, vPimR, vPimT, vPimLambdas, Y0R, Y0T, Y0Lambdas);
             Y0 = ProdManiNext.RandominManifold();
             // ROFL_VAR1(Y0T);
 
@@ -1748,7 +1758,7 @@ namespace ROPTLIB
                     // ROFL_VAR1("");
                     // TnextROPT.Print("TnextROPT after assignment");
                 }
-                LambdasNextROPT.CopyTo(xIn.GetElement(gElemIdx));
+                LambdasNextROPT.CopyTo(Y0.GetElement(gElemIdx));
             } // end of EigToRopt scope for xIn
         }
     }
@@ -2002,7 +2012,7 @@ namespace ROPTLIB
 
     void SsomProblem::euclRetraction(const SomUtils::MatD &x, const SomUtils::MatD &d, SomUtils::MatD &y, double t) const
     {
-        ROFL_ASSERT(y.rows() == x.rows() && y.rows() == d.rows())
+        ROFL_ASSERT_VAR4(y.rows() == x.rows() && y.rows() == d.rows(), y.rows(), x.rows(), y.rows(), d.rows())
         ROFL_ASSERT(y.cols() == x.cols() && y.cols() == d.cols())
         y = x + t * d;
     }
@@ -2058,96 +2068,110 @@ namespace ROPTLIB
         }
     }
 
-    void SsomProblem::linesearchDummy(const double costInit,
-                                      const SomUtils::VecMatD &xRin, const SomUtils::MatD &xTin,
-                                      const SomUtils::VecMatD &vRin, const SomUtils::MatD &vTin,
-                                      SomUtils::VecMatD &Y0R, SomUtils::MatD &Y0T,
-                                      bool qr) const
+    void SsomProblem::linesearchDummySsom(const double costInit,
+                                          const SomUtils::VecMatD &xRin, const SomUtils::MatD &xTin, const SomUtils::MatD &xLambdasIn,
+                                          const SomUtils::VecMatD &vRin, const SomUtils::MatD &vTin, const SomUtils::MatD &vLambdasIn,
+                                          SomUtils::VecMatD &Y0R, SomUtils::MatD &Y0T, SomUtils::MatD &Y0Lambdas,
+                                          bool qr) const
     {
-        // ROFL_VAR1("Running linesearchDummy()")
+        ROFL_VAR1("Running linesearchDummySsom()")
 
-        // int nrs = xTin.rows();
-        // SomUtils::SomSize szNext(nrs, sz_.d_, sz_.n_);
+        int nrs = xTin.rows();
+        SomUtils::SomSize szNext(nrs, sz_.d_, sz_.n_);
 
-        // Y0R = xRin;
-        // Y0T = xTin;
+        Y0R = xRin;
+        Y0T = xTin;
+        Y0Lambdas = xLambdasIn;
 
-        // SomUtils::VecMatD Y0Rtry = Y0R;
-        // SomUtils::MatD Y0Ttry = Y0T;
+        SomUtils::VecMatD Y0Rtry = Y0R;
+        SomUtils::MatD Y0Ttry = Y0T;
+        SomUtils::MatD Y0LambdasTry = Y0Lambdas;
 
-        // int maxLsSteps = 25;            // TODO: add this as param
-        // double contractionFactor = 0.5; // TODO: add this as param
+        int maxLsSteps = 25;            // TODO: add this as param
+        double contractionFactor = 0.5; // TODO: add this as param
 
-        // SomUtils::MatD vVec(SomUtils::MatD::Zero(vRin[0].rows() * vRin[0].cols() * vRin.size() + vTin.rows() * vTin.cols(), 1));
-        // vectorizeRT(vRin, vTin, vVec);
+        SomUtils::MatD vVec(
+            SomUtils::MatD::Zero(
+                vRin[0].rows() * vRin[0].cols() * vRin.size() +
+                    vTin.rows() * vTin.cols() +
+                    vLambdasIn.rows() * vLambdasIn.cols(),
+                1));
+        vectorizeRTLambdas(vRin, vTin, vLambdasIn, vVec);
 
-        // double dnorm = vVec.norm();
+        double dnorm = vVec.norm();
 
-        // ROFL_VAR1(dnorm);
+        ROFL_VAR1(dnorm);
 
-        // double initialStepsize = dnorm;
-        // double alpha = initialStepsize / dnorm;
-        // double f0 = costInit;
+        double initialStepsize = dnorm;
+        double alpha = initialStepsize / dnorm;
+        double f0 = costInit;
 
-        // SomUtils::VecMatD alphaVrIn = vRin;
-        // std::for_each(alphaVrIn.begin(), alphaVrIn.end(), [alpha](SomUtils::MatD &x) { //^^^ take argument by reference: LAMBDA FUNCTION
-        //     // ROFL_VAR1(alpha)
-        //     x *= alpha;
-        // });
-        // if (qr)
-        //     stiefelRetractionQR(xRin, alphaVrIn, Y0Rtry);
-        // else
-        //     stiefelRetractionPolar(xRin, alphaVrIn, Y0Rtry);
-        // // ROFL_VAR1(Y0R[0]);
+        SomUtils::VecMatD alphaVrIn = vRin;
+        std::for_each(alphaVrIn.begin(), alphaVrIn.end(), [alpha](SomUtils::MatD &x) { //^^^ take argument by reference: LAMBDA FUNCTION
+            // ROFL_VAR1(alpha)
+            x *= alpha;
+        });
+        if (qr)
+            stiefelRetractionQR(xRin, alphaVrIn, Y0Rtry);
+        else
+            stiefelRetractionPolar(xRin, alphaVrIn, Y0Rtry);
+        // ROFL_VAR1(Y0R[0]);
 
-        // SomUtils::MatD alphaVtIn = alpha * vTin;
+        SomUtils::MatD alphaVtIn = alpha * vTin;
 
-        // euclRetraction(xTin, alphaVtIn, Y0Ttry);
-        // // ROFL_VAR1(Y0T)
+        euclRetraction(xTin, alphaVtIn, Y0Ttry);
+        // ROFL_VAR1(Y0T)
 
-        // double newf = costEigen(Y0Rtry, Y0Ttry);
-        // ROFL_VAR2(newf, f0)
+        SomUtils::MatD alphaVlambdasIn = alpha * vLambdasIn;
+        euclRetraction(xLambdasIn, alphaVlambdasIn, Y0LambdasTry);
 
-        // int costEvaluations = 1;
+        double newf = costEigen(Y0Rtry, Y0Ttry, Y0LambdasTry);
+        ROFL_VAR2(newf, f0)
 
-        // while (newf >= f0)
-        // {
-        //     // Reduce the step size,
-        //     alpha *= contractionFactor;
+        int costEvaluations = 1;
 
-        //     // and look closer down the line.
-        //     alphaVrIn = vRin;
-        //     // ROFL_VAR1(alpha)
-        //     std::for_each(alphaVrIn.begin(), alphaVrIn.end(), [alpha](SomUtils::MatD &x) { //^^^ take argument by reference: LAMBDA FUNCTION
-        //         // ROFL_VAR1(alpha)
-        //         x *= alpha;
-        //     });
-        //     alphaVtIn = alpha * vTin;
+        while (newf >= f0)
+        {
+            // Reduce the step size,
+            alpha *= contractionFactor;
 
-        //     if (qr)
-        //         stiefelRetractionQR(xRin, alphaVrIn, Y0Rtry);
-        //     else
-        //         stiefelRetractionPolar(xRin, alphaVrIn, Y0Rtry);
+            // and look closer down the line.
+            alphaVrIn = vRin;
+            // ROFL_VAR1(alpha)
+            std::for_each(alphaVrIn.begin(), alphaVrIn.end(), [alpha](SomUtils::MatD &x) { //^^^ take argument by reference: LAMBDA FUNCTION
+                // ROFL_VAR1(alpha)
+                x *= alpha;
+            });
+            alphaVtIn = alpha * vTin;
+            alphaVlambdasIn = alpha * vLambdasIn;
 
-        //     euclRetraction(xTin, alphaVtIn, Y0Ttry);
+            if (qr)
+                stiefelRetractionQR(xRin, alphaVrIn, Y0Rtry);
+            else
+                stiefelRetractionPolar(xRin, alphaVrIn, Y0Rtry);
 
-        //     newf = costEigen(Y0Rtry, Y0Ttry);
+            euclRetraction(xTin, alphaVtIn, Y0Ttry);
 
-        //     ROFL_VAR2(newf, f0)
+            euclRetraction(xLambdasIn, alphaVlambdasIn, Y0LambdasTry);
 
-        //     costEvaluations++;
+            newf = costEigen(Y0Rtry, Y0Ttry, Y0LambdasTry);
 
-        //     // make sure we don't run out of budget.
-        //     if (costEvaluations >= maxLsSteps)
-        //         break;
-        // }
+            ROFL_VAR2(newf, f0)
 
-        // if (newf <= f0)
-        // {
-        //     // accept step
-        //     Y0R = Y0Rtry;
-        //     Y0T = Y0Ttry;
-        // }
+            costEvaluations++;
+
+            // make sure we don't run out of budget.
+            if (costEvaluations >= maxLsSteps)
+                break;
+        }
+
+        if (newf <= f0)
+        {
+            // accept step
+            Y0R = Y0Rtry;
+            Y0T = Y0Ttry;
+            Y0Lambdas = Y0LambdasTry;
+        }
     }
 
     ////////////////////////////////////////RECOVERY////////////////////////////////////////

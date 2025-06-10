@@ -223,7 +223,7 @@ namespace ROPTLIB
       void manoptStiefelEhess2rhess(const SomUtils::VecMatD &X,
                                     const SomUtils::VecMatD &egrad,
                                     const SomUtils::VecMatD &ehess,
-                                    const SomUtils::VecMatD &eH,
+                                    const SomUtils::VecMatD &Xdot,
                                     SomUtils::VecMatD &rH) const;
 
       /**
@@ -234,7 +234,7 @@ namespace ROPTLIB
       void manoptStiefelEhess2rhess(const SomUtils::MatD &X,
                                     const SomUtils::MatD &egrad,
                                     const SomUtils::MatD &ehess,
-                                    const SomUtils::MatD &eH,
+                                    const SomUtils::MatD &Xdot,
                                     SomUtils::MatD &rH) const;
 
       /**
@@ -704,10 +704,10 @@ namespace ROPTLIB
        * @brief Call stiefelRetractionPolar, euclRetraction on szNext elements @param xRin, @param xTin, @param vRin, @param vTin
        * Return new point "Y0" in reference @param Y0R and @param Y0T
        */
-      void linesearchDummy(const double costInit,
-                           const SomUtils::VecMatD &xRin, const SomUtils::MatD &xTin,
-                           const SomUtils::VecMatD &vRin, const SomUtils::MatD &vTin,
-                           SomUtils::VecMatD &Y0R, SomUtils::MatD &Y0T,
+      void linesearchDummySsom(const double costInit,
+                           const SomUtils::VecMatD &xRin, const SomUtils::MatD &xTin, const SomUtils::MatD &xLambdasIn,
+                           const SomUtils::VecMatD &vRin, const SomUtils::MatD &vTin, const SomUtils::MatD &vLambdasIn,
+                           SomUtils::VecMatD &Y0R, SomUtils::MatD &Y0T, SomUtils::MatD &Y0Lambdas,
                            bool qr = true) const;
 
       ////////////////////////////////////////RECOVERY////////////////////////////////////////

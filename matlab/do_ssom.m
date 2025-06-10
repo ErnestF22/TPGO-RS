@@ -112,6 +112,7 @@ exectime_procrustes = toc(procrustes_start_time);
 
 % 3c) execute with step 1 through Manopt with Riemannian Staircase
 ssom_start_time = tic();
+save('tmp.mat')
 if params.enable_ssom
     testdata.R_gt = X_gt.R;
     testdata.T_gt = X_gt.T;
