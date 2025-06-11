@@ -705,10 +705,10 @@ namespace ROPTLIB
        * Return new point "Y0" in reference @param Y0R and @param Y0T
        */
       void linesearchDummySsom(const double costInit,
-                           const SomUtils::VecMatD &xRin, const SomUtils::MatD &xTin, const SomUtils::MatD &xLambdasIn,
-                           const SomUtils::VecMatD &vRin, const SomUtils::MatD &vTin, const SomUtils::MatD &vLambdasIn,
-                           SomUtils::VecMatD &Y0R, SomUtils::MatD &Y0T, SomUtils::MatD &Y0Lambdas,
-                           bool qr = true) const;
+                               const SomUtils::VecMatD &xRin, const SomUtils::MatD &xTin, const SomUtils::MatD &xLambdasIn,
+                               const SomUtils::VecMatD &vRin, const SomUtils::MatD &vTin, const SomUtils::MatD &vLambdasIn,
+                               SomUtils::VecMatD &Y0R, SomUtils::MatD &Y0T, SomUtils::MatD &Y0Lambdas,
+                               bool qr = true) const;
 
       ////////////////////////////////////////RECOVERY////////////////////////////////////////
 
@@ -853,6 +853,26 @@ namespace ROPTLIB
        * reference @param Hmat is the output matrix
        */
       void makeHmat(const SomUtils::MatD &XvecNext, const SomUtils::SomSize &szNext, SomUtils::MatD &Hmat) const;
+
+      void align3d(const SomUtils::MatD &v, SomUtils::MatD &Qalign) const;
+
+      void align2dNbPoses(const SomUtils::MatD &v, SomUtils::MatD &Qx) const;
+
+      void align2dNbPoses(const SomUtils::VecMatD &v, SomUtils::VecMatD &Qx) const;
+
+      void procrustesR(const SomUtils::MatD &X, const SomUtils::MatD &Y, SomUtils::MatD &R) const;
+
+      void RbRecovery(const SomUtils::MatD &RiTilde2, const SomUtils::MatD &TijTilde,
+                      SomUtils::MatD &RiEst, SomUtils::MatD &Qx, SomUtils::MatD &Qb) const;
+
+      void RbRecovery(const SomUtils::VecMatD &RiTilde2, const SomUtils::VecMatD &TijTilde,
+                      SomUtils::VecMatD &RiEst, SomUtils::VecMatD &Qx, SomUtils::VecMatD &Qb) const;
+
+      void recoverRdeg2(const SomUtils::VecMatD &TijTilde2degRecovery, int lowDegNodeId,
+                        SomUtils::MatD &P) const;
+
+      // void recoverRdeg2(const SomUtils::MatD &TijTilde2degRecovery, const SomUtils::MatD &low_deg_nodes_id, 
+      //                   const SomUtils::MatD &P) const;                       
    };
 
    /**

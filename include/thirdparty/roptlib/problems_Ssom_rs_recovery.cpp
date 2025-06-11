@@ -3030,4 +3030,167 @@ namespace ROPTLIB
         return rsRecoverySuccess_;
     }
 
+    void SsomProblem::align3d(const SomUtils::MatD &v, SomUtils::MatD &Qalign) const
+    {
+        // vFlat=reshape(v,size(v,1),[]);
+        SomUtils::MatD vFlat = v; // this is already flattened if v is a matrix; this step would be needed if v is a tensor
+        // [U,~,~]=svd(vFlat);
+        Eigen::JacobiSVD<SomUtils::MatD> svd(vFlat, Eigen::ComputeThinU | Eigen::ComputeThinV);
+        SomUtils::MatD U = svd.matrixU();
+        // Qalign=fliplr(orthCompleteBasis(U(:,4:end)))';
+        orthCompleteBasis(U.block(0, 3, U.rows(), U.cols() - 3), Qalign);
+        Qalign = Qalign.transpose(); // transpose to match the expected output format
+    }
+
+    void SsomProblem::align2dNbPoses(const SomUtils::MatD &v, SomUtils::MatD &Qx) const
+    {
+        // compute orthComplement(v(:,:,iPose)) size SCOPE
+        // function vOrth=orthComplement(v)
+        // r=size(v,2);
+        // [U,S,V]=svd(v);
+        // vOrth=U(:,r+1:end);
+        int tmp1rows = 0, tmp1cols = 0;
+        {
+            int r = v.cols();
+            Eigen::JacobiSVD<SomUtils::MatD> svd(v, Eigen::ComputeThinU | Eigen::ComputeThinV);
+            SomUtils::MatD U = svd.matrixU();
+            SomUtils::MatD vOrth = U.block(0, r, U.rows(), U.cols() - r);
+            tmp1rows = vOrth.rows();
+            tmp1cols = vOrth.cols();
+        } // end of SCOPE
+
+        // Q=fliplr(orthComplement(v(:,:,iPose)));
+
+        SomUtils::MatD tmp = SomUtils::MatD::Zero(tmp1rows, tmp1cols);
+        orthComplement(v, tmp);
+
+        SomUtils::MatD Q = SomUtils::MatD::Zero(tmp1rows, tmp1cols);
+        fliplr(tmp, Q);
+
+        int nr = 0, nc = 0;
+        { // compute orthCompleteBasis(Q) size SCOPE
+            // [n,p]=size(Q);
+            // [U,~,V]=svd([Q zeros(n,n-p)]);
+            // Q=U*V';
+            int n = Q.rows();
+            int p = Q.cols();
+            Eigen::JacobiSVD<SomUtils::MatD> svd(Q, Eigen::ComputeThinU | Eigen::ComputeThinV);
+            SomUtils::MatD U = svd.matrixU();
+            SomUtils::MatD V = svd.matrixV();
+            auto QQ = U * V.transpose();
+            nr = QQ.rows();
+            nc = QQ.cols();
+        } // end of SCOPE
+
+        SomUtils::MatD orthCompleteBasisQtransp = SomUtils::MatD::Zero(nr, nc);
+        orthCompleteBasis(Q, orthCompleteBasisQtransp);
+        auto orthCompleteBasisQ = orthCompleteBasisQtransp.transpose();
+
+        // Qx(:,:,iPose)=flipud(orthCompleteBasis(Q)');
+        flipud(orthCompleteBasisQ, Qx);
+    }
+
+    void SsomProblem::align2dNbPoses(const SomUtils::VecMatD &v, SomUtils::VecMatD &Qx) const
+    {
+        // nbPoses=size(v,3);
+        // Qx=repmat(zeros(size(v,1)),[1 1 nbPoses]);
+        // for iPose=1:nbPoses
+
+        Qx.resize(v.size(), SomUtils::MatD::Zero(v[0].rows(), v[0].rows()));
+        int nbPoses = v.size();
+        for (int iPose = 0; iPose < nbPoses; ++iPose)
+        {
+            align2dNbPoses(v[iPose], Qx[iPose]);
+        }
+    }
+
+    void SsomProblem::RbRecovery(const SomUtils::MatD &RiTilde2, const SomUtils::MatD &TijTilde,
+                                 SomUtils::MatD &RiEst, SomUtils::MatD &Qx, SomUtils::MatD &Qb) const
+    {
+        //     % base case, for single pose
+        //     if norm(Tij_tilde(4:end,:),'fro')/numel(Tij_tilde(4:end,:))>1e-5
+        //         error('Tij_tilde expected to have p-3 lines equal to zero')
+        if (TijTilde.rows() > 3 && TijTilde.block(3, 0, TijTilde.rows() - 3, TijTilde.cols()).norm() / (TijTilde.rows() - 3) > 1e-5)
+        {
+            ROFL_ERR("Tij_tilde expected to have p-3 lines equal to zero");
+            ROFL_ASSERT(false);
+        }
+
+        //     Qx=align2d_nbPoses(Tij_tilde);
+        //     Qbot=Qx(:,d+1:end)';
+        //     Rcal_bot=Qx(3:end,:)*Ri_tilde2;
+        //     Qbot_right=Qbot(:,d:end);
+        //     [URCal_bot,~,~]=svd(Rcal_bot);
+        //     Rcal_bot_N=URCal_bot(:,2:end);
+        //     Rb_est=procrustes_R(Qbot_right',Rcal_bot_N);
+        //     Qb = blkdiag(eye(2),Rb_est');
+        //     Ri_est=Qx'*Qb*Qx*Ri_tilde2;
+    }
+
+    void SsomProblem::procrustesR(const SomUtils::MatD &X, const SomUtils::MatD &Y, SomUtils::MatD &R) const
+    {
+        // function R=procrustesR(X,Y)
+        // nb_dim=size(X,1);
+        int nbDim = X.rows();
+        // [U,~,V]=svd(Y*X');
+        Eigen::JacobiSVD<SomUtils::MatD> svd(Y * X.transpose(), Eigen::ComputeThinU | Eigen::ComputeThinV);
+        SomUtils::MatD U = svd.matrixU();
+        SomUtils::MatD V = svd.matrixV();
+        // R=U*diag([ones(nb_dim-1,1);det(U*V')])*V';
+        SomUtils::MatD tmpDiag = SomUtils::MatD::Ones(nbDim, 1);
+        tmpDiag(nbDim - 1, 0) = (U * V.transpose()).determinant();
+        R = U * tmpDiag.asDiagonal() * V.transpose();
+    }
+
+    void SsomProblem::RbRecovery(const SomUtils::VecMatD &RiTilde2, const SomUtils::VecMatD &TijTilde,
+                                 SomUtils::VecMatD &RiEst, SomUtils::VecMatD &Qx, SomUtils::VecMatD &Qb) const
+    {
+        // nbPoses=size(Ri_tilde2, 3);
+        int nbPoses = RiTilde2.size();
+
+        // d = size(Ri_tilde2, 2);
+        int d = RiTilde2[0].cols(); // assuming all RiTilde2 matrices have the same number of cols
+        // p = size(Ri_tilde2, 1);
+        int p = RiTilde2[0].rows(); // assuming all RiTilde2 matrices have the same number of rows
+
+        RiEst.resize(nbPoses, SomUtils::MatD::Zero(p, d));
+
+        // if nbPoses>1
+        //     Ri_est=zeros(size(Ri_tilde2));
+        //     Qx=zeros(p,p);
+        //     Qb=zeros(p,p);
+        //     for iPose=1:nbPoses
+        //         [Ri_est(:,:,iPose),Qx(:,:,iPose),Qb(:,:,iPose)]= ...
+        //             RbRecovery(Ri_tilde2(:,:,iPose),Tij_tilde(:,:,iPose));
+        // if (nbPoses > 1) //TODO: add single pose case later
+
+        for (int iPose = 0; iPose < nbPoses; ++iPose)
+        {
+            SomUtils::MatD RiEstPose(SomUtils::MatD::Zero(p, d));
+            SomUtils::MatD QxPose(SomUtils::MatD::Zero(p, p));
+            SomUtils::MatD QbPose(SomUtils::MatD::Zero(p, p));
+            RbRecovery(RiTilde2[iPose], TijTilde[iPose], RiEstPose, QxPose, QbPose);
+            RiEst.push_back(RiEstPose);
+            Qx.push_back(QxPose);
+            Qb.push_back(QbPose);
+        }
+    }
+
+    void SsomProblem::recoverRdeg2(const SomUtils::VecMatD &TijTilde2degRecovery, int lowDegNodeId,
+                                   SomUtils::MatD &P) const
+    {
+        //!! this would not work for d!=3
+
+        // v = cross(Tij_tilde_2deg_recovery(1:d,1,low_deg_nodes_id),Tij_tilde_2deg_recovery(1:d,2,low_deg_nodes_id));
+        // v_versor = v / norm(v);
+        // P = eye(d) - 2 * (v_versor * v_versor');
+        Eigen::Vector3d tmp1 = TijTilde2degRecovery[lowDegNodeId].block(0, 0, sz_.d_, 1);
+        Eigen::Vector3d tmp2 = TijTilde2degRecovery[lowDegNodeId].block(0, 1, sz_.d_, 1);
+        Eigen::Vector3d v = tmp1.cross(tmp2);
+        Eigen::Vector3d vVersor = v.normalized();
+        P.resize(sz_.d_, sz_.d_);
+        P = Eigen::Matrix3d::Identity();
+        P -= 2 * (vVersor * vVersor.transpose()); 
+    }
+
 } // end of namespace ROPTLIB

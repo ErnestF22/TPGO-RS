@@ -151,6 +151,9 @@ target_link_libraries(test_check_recovery ${rofl_LIBRARIES} roptlib_local qru m 
 add_executable(test_check_retraction test/test_check_retraction.cpp include/som_utils.cpp)
 target_link_libraries(test_check_retraction ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
 
+add_executable(test_check_T_recovery_ssom test/test_check_T_recovery_ssom.cpp include/som_utils.cpp)
+target_link_libraries(test_check_T_recovery_ssom ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
+
 # add_executable(test_dijkstra_edges test/test_dijkstra_edges.cpp include/som_utils.cpp)
 # target_link_libraries(test_dijkstra_edges ${rofl_LIBRARIES} roptlib_local m blas lapack boost_iostreams boost_system boost_filesystem)
 
@@ -195,6 +198,9 @@ target_link_libraries(test_single_run_rsom_rs ${rofl_LIBRARIES} roptlib_local qr
 
 add_executable(test_single_run_ssom test/test_single_run_ssom.cpp include/som_utils.cpp)
 target_link_libraries(test_single_run_ssom ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
+
+add_executable(test_single_run_ssom_gt test/test_single_run_ssom_gt.cpp include/som_utils.cpp)
+target_link_libraries(test_single_run_ssom_gt ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
 
 add_executable(test_sparse_eigenvalues test/test_sparse_eigenvalues.cpp include/som_utils.cpp)
 target_link_libraries(test_sparse_eigenvalues ${rofl_LIBRARIES} boost_iostreams boost_system boost_filesystem)
