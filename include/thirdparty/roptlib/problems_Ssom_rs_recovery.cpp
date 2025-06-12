@@ -2038,7 +2038,7 @@ namespace ROPTLIB
         // [u, s, v] = svd(Y(:, :, kk), 'econ'); %#ok
         // Y(:, :, kk) = u*v';
 
-        Eigen::JacobiSVD<SomUtils::MatD> svd(xIn + e, Eigen::ComputeFullV | Eigen::ComputeThinU); // TODO: ComputeFullV flag can probably be removed
+        Eigen::JacobiSVD<SomUtils::MatD> svd(xIn + e, Eigen::ComputeFullV | Eigen::ComputeFullU); // TODO: ComputeFullV flag can probably be removed
         auto U = svd.matrixU();
         auto V = svd.matrixV();
         // ROFL_VAR3(xIn + e, U, V)
@@ -2274,7 +2274,7 @@ namespace ROPTLIB
         // r=size(v,2);
         int r = v.cols();
         // [U,S,V]=svd(v);
-        Eigen::JacobiSVD<SomUtils::MatD> svd(v, Eigen::ComputeFullV | Eigen::ComputeFullU); // TODO: ComputeFullV flag can probably be removed
+        Eigen::JacobiSVD<SomUtils::MatD> svd(v, Eigen::ComputeThinV | Eigen::ComputeFullU); // TODO: ComputeFullV flag can probably be removed
         auto U = svd.matrixU();
         // vOrth=U(:,r+1:end);
         vOrth = U.block(0, r, U.rows(), U.cols() - r);
@@ -3039,9 +3039,11 @@ namespace ROPTLIB
         Eigen::JacobiSVD<SomUtils::MatD> svd(vFlat, Eigen::ComputeThinU | Eigen::ComputeThinV);
         SomUtils::MatD U = svd.matrixU();
         // Qalign=fliplr(orthCompleteBasis(U(:,4:end)))';
-        orthCompleteBasis(U.block(0, 3, U.rows(), U.cols() - 3), Qalign);
+        auto QalignTmp = Qalign; // this is a local variable to hold the result before applying fliplr() on it
+        orthCompleteBasis(U.block(0, 3, U.rows(), U.cols() - 3), QalignTmp);
         ROFL_VAR2(Qalign.rows(), Qalign.cols());
-        Qalign.transposeInPlace(); // transpose to match the expected output format
+        fliplr(QalignTmp, Qalign); // flipping to match the expected output format
+        Qalign.transposeInPlace(); // transposing to match the expected output format
     }
 
     void SsomProblem::align2dNbPoses(const SomUtils::MatD &v, SomUtils::MatD &Qx) const
@@ -3054,11 +3056,13 @@ namespace ROPTLIB
         int tmp1rows = 0, tmp1cols = 0;
         {
             int r = v.cols();
-            Eigen::JacobiSVD<SomUtils::MatD> svd(v, Eigen::ComputeThinU | Eigen::ComputeThinV);
+            ROFL_VAR2(v.rows(), v.cols());
+            Eigen::JacobiSVD<SomUtils::MatD> svd(v, Eigen::ComputeFullU | Eigen::ComputeThinV);
             SomUtils::MatD U = svd.matrixU();
             SomUtils::MatD vOrth = U.block(0, r, U.rows(), U.cols() - r);
             tmp1rows = vOrth.rows();
             tmp1cols = vOrth.cols();
+            ROFL_VAR2(tmp1rows, tmp1cols);
         } // end of SCOPE
 
         // Q=fliplr(orthComplement(v(:,:,iPose)));
@@ -3066,7 +3070,9 @@ namespace ROPTLIB
         SomUtils::MatD tmp = SomUtils::MatD::Zero(tmp1rows, tmp1cols);
         orthComplement(v, tmp);
 
+        ROFL_VAR1("Calling fliplr(tmp, Q)")
         SomUtils::MatD Q = SomUtils::MatD::Zero(tmp1rows, tmp1cols);
+        ROFL_VAR4(tmp.rows(), Q.rows(), tmp.cols(), Q.cols());
         fliplr(tmp, Q);
 
         int nr = 0, nc = 0;
@@ -3082,6 +3088,7 @@ namespace ROPTLIB
             auto QQ = U * V.transpose();
             nr = QQ.rows();
             nc = QQ.cols();
+            ROFL_VAR2(nr, nc);
         } // end of SCOPE
 
         SomUtils::MatD orthCompleteBasisQtransp = SomUtils::MatD::Zero(nr, nc);
@@ -3112,21 +3119,39 @@ namespace ROPTLIB
         //     % base case, for single pose
         //     if norm(Tij_tilde(4:end,:),'fro')/numel(Tij_tilde(4:end,:))>1e-5
         //         error('Tij_tilde expected to have p-3 lines equal to zero')
-        if (TijTilde.rows() > 3 && TijTilde.block(3, 0, TijTilde.rows() - 3, TijTilde.cols()).norm() / (TijTilde.rows() - 3) > 1e-5)
+        // TODO: add assert check later
+        auto tmp = TijTilde.block(sz_.d_, 0, TijTilde.rows() - sz_.d_, TijTilde.cols());
+        if (TijTilde.rows() > sz_.d_ && tmp.norm() > 1e-5)
         {
-            ROFL_ERR("Tij_tilde expected to have p-3 lines equal to zero");
-            // ROFL_ASSERT(false);
+            ROFL_ERR("Tij_tilde expected to have p-d lines equal to zero");
+            ROFL_ASSERT(false);
         }
 
         //     Qx=align2d_nbPoses(Tij_tilde);
+        int p = Qx.rows();
+        align2dNbPoses(TijTilde, Qx);
         //     Qbot=Qx(:,d+1:end)';
+        auto Qbot = Qx.block(0, sz_.d_, Qx.rows(), Qx.cols() - sz_.d_).transpose();
         //     Rcal_bot=Qx(3:end,:)*Ri_tilde2;
+        auto RcalBot = Qx.block(2, 0, Qx.rows() - 2, Qx.cols()) * RiTilde2;
         //     Qbot_right=Qbot(:,d:end);
+        auto QbotRight = Qbot.block(0, sz_.d_ - 1, Qbot.rows(), Qbot.cols() - sz_.d_ + 1);
         //     [URCal_bot,~,~]=svd(Rcal_bot);
+        Eigen::JacobiSVD<SomUtils::MatD> svd(RcalBot, Eigen::ComputeFullU | Eigen::ComputeFullV);
+        SomUtils::MatD URCalBot = svd.matrixU();
         //     Rcal_bot_N=URCal_bot(:,2:end);
+        auto RcalBotN = URCalBot.block(0, 1, URCalBot.rows(), URCalBot.cols() - 1);
         //     Rb_est=procrustes_R(Qbot_right',Rcal_bot_N);
+        SomUtils::MatD RbEst = SomUtils::MatD::Zero(p-2, p-2);
+        procrustesR(QbotRight.transpose(), RcalBotN, RbEst);
         //     Qb = blkdiag(eye(2),Rb_est');
+        //     Qb = Eigen::MatrixXd::Identity(2, 2).block(0, 0, 2, 2);
+        Qb = Eigen::MatrixXd::Zero(p, p);
+        Qb.block(0, 0, 2, 2) = Eigen::MatrixXd::Identity(2, 2);
+        ROFL_VAR1(p)
+        Qb.block(2, 2, p - 2, p - 2) = Qb.block(0, 0, p - 2, p - 2);
         //     Ri_est=Qx'*Qb*Qx*Ri_tilde2;
+        RiEst = Qx.transpose() * Qb * Qx * RiTilde2;
     }
 
     void SsomProblem::procrustesR(const SomUtils::MatD &X, const SomUtils::MatD &Y, SomUtils::MatD &R) const
@@ -3135,7 +3160,7 @@ namespace ROPTLIB
         // nb_dim=size(X,1);
         int nbDim = X.rows();
         // [U,~,V]=svd(Y*X');
-        Eigen::JacobiSVD<SomUtils::MatD> svd(Y * X.transpose(), Eigen::ComputeThinU | Eigen::ComputeThinV);
+        Eigen::JacobiSVD<SomUtils::MatD> svd(Y * X.transpose(), Eigen::ComputeFullU | Eigen::ComputeFullV);
         SomUtils::MatD U = svd.matrixU();
         SomUtils::MatD V = svd.matrixV();
         // R=U*diag([ones(nb_dim-1,1);det(U*V')])*V';
@@ -3157,6 +3182,9 @@ namespace ROPTLIB
 
         RiEst.resize(nbPoses, SomUtils::MatD::Zero(p, d));
 
+        Qx.clear();
+        Qb.clear();
+
         // if nbPoses>1
         //     Ri_est=zeros(size(Ri_tilde2));
         //     Qx=zeros(p,p);
@@ -3172,7 +3200,7 @@ namespace ROPTLIB
             SomUtils::MatD QxPose(SomUtils::MatD::Zero(p, p));
             SomUtils::MatD QbPose(SomUtils::MatD::Zero(p, p));
             RbRecovery(RiTilde2[iPose], TijTilde[iPose], RiEstPose, QxPose, QbPose);
-            RiEst.push_back(RiEstPose);
+            RiEst[iPose] = RiEstPose;
             Qx.push_back(QxPose);
             Qb.push_back(QbPose);
         }
@@ -3192,7 +3220,7 @@ namespace ROPTLIB
         Eigen::Vector3d vVersor = v.normalized();
         P.resize(sz_.d_, sz_.d_);
         P = Eigen::Matrix3d::Identity();
-        P -= 2 * (vVersor * vVersor.transpose()); 
+        P -= 2 * (vVersor * vVersor.transpose());
     }
 
 } // end of namespace ROPTLIB

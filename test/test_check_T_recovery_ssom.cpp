@@ -212,6 +212,17 @@ int main(int argc, char **argv)
 
     // Qalign = align3d(RT_stacked_high_deg);
     SomUtils::MatD RTstackedHighDeg(SomUtils::MatD::Zero(p, d * numNodesHighDeg + numEdges));
+    SomUtils::MatD RstackedHighDeg(SomUtils::MatD::Zero(p, d * numNodesHighDeg));
+    SomUtils::VecMatD RmanoptOutHighDeg;
+    for (int i = 0; i < n; ++i)
+    {
+        if (nodesHighDeg(i, 0) != 0)
+            RmanoptOutHighDeg.push_back(RmanoptOut[i]);
+    }
+    ROFL_VAR1("hstack call from here");
+    SomUtils::hstack(RmanoptOutHighDeg, RstackedHighDeg);
+    RTstackedHighDeg.block(0, 0, p, d * numNodesHighDeg) = RstackedHighDeg;
+    RTstackedHighDeg.block(0, d * numNodesHighDeg, p, numEdges) = Tedges;
     SomUtils::MatD Qalign(SomUtils::MatD::Zero(p, p));
     Prob.align3d(RTstackedHighDeg, Qalign);
     ROFL_VAR1(Qalign)
@@ -244,7 +255,7 @@ int main(int argc, char **argv)
 
     // Tij_tilde_2deg_recovery=multiprod(Qalign, Tij_tilde_2deg_recovery);
     auto TijTilde2degRecoveryQalign = TijTilde2degRecovery;
-    auto RmanoptOutQalign = RmanoptOut;
+    SomUtils::VecMatD RmanoptOutQalign(lowDeg, SomUtils::MatD::Zero(p, d));
     lowDegIdx = 0;
     for (int nodeId = 0; nodeId < n; ++nodeId)
     {
@@ -259,11 +270,21 @@ int main(int argc, char **argv)
     SomUtils::VecMatD RitildeEst(numNodesLowDeg, SomUtils::MatD::Zero(p, d));
     SomUtils::VecMatD Qxs(numNodesLowDeg, SomUtils::MatD::Zero(p, p));
     SomUtils::VecMatD Qbs(numNodesLowDeg, SomUtils::MatD::Zero(p, p));
+    // ROFL_VAR3(RmanoptOutQalign.size(), TijTilde2degRecoveryQalign.size(), RitildeEst.size())
+    // ROFL_VAR2(Qxs.size(), Qbs.size())
+    // ROFL_VAR2(RmanoptOutQalign[0].rows(), RmanoptOutQalign[0].cols())
+    // ROFL_VAR2(RmanoptOutQalign[1].rows(), RmanoptOutQalign[1].cols())
+    // ROFL_VAR2(TijTilde2degRecoveryQalign[0].rows(), TijTilde2degRecoveryQalign[0].cols())
+    // ROFL_VAR2(TijTilde2degRecoveryQalign[1].rows(), TijTilde2degRecoveryQalign[1].cols())
+    // ROFL_VAR2(RitildeEst[0].rows(), RitildeEst[0].cols())
+    // ROFL_VAR2(RitildeEst[1].rows(), RitildeEst[1].cols())
+
+    // return 0;
     Prob.RbRecovery(RmanoptOutQalign, TijTilde2degRecoveryQalign, RitildeEst, Qxs, Qbs);
     ROFL_VAR1("RitildeEst")
     for (int i = 0; i < numNodesLowDeg; ++i)
     {
-        ROFL_VAR1(RitildeEst[i].transpose())
+        ROFL_VAR1(RitildeEst[i])
     }
 
     // R_recovered(:,:,nodes_low_deg) = RitildeEst(1:d,:,:);
@@ -281,6 +302,10 @@ int main(int argc, char **argv)
             auto tmp = Qalign * RmanoptOut[nodeId];
             Rrecovered[nodeId] = tmp.block(0, 0, d, d);
         }
+    }
+    for (int i = 0; i < n; ++i)
+    {
+        ROFL_VAR2(Rrecovered[i], Rrecovered[i].determinant())
     }
 
     // R_tilde2_edges = multiprod(repmat(Qalign, 1, 1, sum(nodes_high_deg)), R_manopt_out(:,:,nodes_high_deg));
