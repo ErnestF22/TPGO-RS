@@ -2,7 +2,7 @@ close all;
 clear;
 clc;
 
-load("ws2.mat")
+load("data/ssom_check_T_recovery.mat")
 
 RT_stacked_high_deg = [matStackH(R_manopt_out(:,:,nodes_high_deg)), T_edges];
 Qalign = align3d(RT_stacked_high_deg);

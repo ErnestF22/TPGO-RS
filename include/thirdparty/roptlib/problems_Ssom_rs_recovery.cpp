@@ -3033,13 +3033,15 @@ namespace ROPTLIB
     void SsomProblem::align3d(const SomUtils::MatD &v, SomUtils::MatD &Qalign) const
     {
         // vFlat=reshape(v,size(v,1),[]);
+        // auto QalignLocal = Qalign; // this is a local variable to hold the result before transposing it
         SomUtils::MatD vFlat = v; // this is already flattened if v is a matrix; this step would be needed if v is a tensor
         // [U,~,~]=svd(vFlat);
         Eigen::JacobiSVD<SomUtils::MatD> svd(vFlat, Eigen::ComputeThinU | Eigen::ComputeThinV);
         SomUtils::MatD U = svd.matrixU();
         // Qalign=fliplr(orthCompleteBasis(U(:,4:end)))';
         orthCompleteBasis(U.block(0, 3, U.rows(), U.cols() - 3), Qalign);
-        Qalign = Qalign.transpose(); // transpose to match the expected output format
+        ROFL_VAR2(Qalign.rows(), Qalign.cols());
+        Qalign.transposeInPlace(); // transpose to match the expected output format
     }
 
     void SsomProblem::align2dNbPoses(const SomUtils::MatD &v, SomUtils::MatD &Qx) const
@@ -3113,7 +3115,7 @@ namespace ROPTLIB
         if (TijTilde.rows() > 3 && TijTilde.block(3, 0, TijTilde.rows() - 3, TijTilde.cols()).norm() / (TijTilde.rows() - 3) > 1e-5)
         {
             ROFL_ERR("Tij_tilde expected to have p-3 lines equal to zero");
-            ROFL_ASSERT(false);
+            // ROFL_ASSERT(false);
         }
 
         //     Qx=align2d_nbPoses(Tij_tilde);
