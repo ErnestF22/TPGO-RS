@@ -2329,7 +2329,7 @@ namespace ROPTLIB
     void SsomProblem::align2d(const SomUtils::MatD &v, SomUtils::MatD &Qx) const
     {
         // Q=fliplr(orthComplement(v));
-        SomUtils::MatD ocv = SomUtils::MatD::Zero(4, 2);
+        SomUtils::MatD ocv = SomUtils::MatD::Zero(4, 2); //TODO: dynamic size
         orthComplement(v, ocv);
         SomUtils::MatD Q = SomUtils::MatD::Zero(ocv.rows(), ocv.cols());
         fliplr(ocv, Q);
@@ -2337,7 +2337,7 @@ namespace ROPTLIB
         ROFL_VAR3(v, ocv, Q)
 
         // Qx=flipud(orthCompleteBasis(Q)');
-        SomUtils::MatD ocb = SomUtils::MatD::Zero(4, 4);
+        SomUtils::MatD ocb = SomUtils::MatD::Zero(4, 4); //TODO: dynamic size
         orthCompleteBasis(Q, ocb);
         Qx.resize(ocb.cols(), ocb.rows()); // NOT an error!!
         flipud(ocb.transpose(), Qx);
@@ -3057,7 +3057,7 @@ namespace ROPTLIB
         {
             int r = v.cols();
             ROFL_VAR2(v.rows(), v.cols());
-            Eigen::JacobiSVD<SomUtils::MatD> svd(v, Eigen::ComputeFullU | Eigen::ComputeThinV);
+            Eigen::JacobiSVD<SomUtils::MatD> svd(v, Eigen::ComputeFullU | Eigen::ComputeFullV);
             SomUtils::MatD U = svd.matrixU();
             SomUtils::MatD vOrth = U.block(0, r, U.rows(), U.cols() - r);
             tmp1rows = vOrth.rows();
@@ -3082,7 +3082,9 @@ namespace ROPTLIB
             // Q=U*V';
             int n = Q.rows();
             int p = Q.cols();
-            Eigen::JacobiSVD<SomUtils::MatD> svd(Q, Eigen::ComputeThinU | Eigen::ComputeThinV);
+            SomUtils::MatD tmpQ(SomUtils::MatD::Zero(n, n));
+            tmpQ.block(0, 0, n, p) = Q; // filling the left part with Q
+            Eigen::JacobiSVD<SomUtils::MatD> svd(tmpQ, Eigen::ComputeFullU | Eigen::ComputeFullV);
             SomUtils::MatD U = svd.matrixU();
             SomUtils::MatD V = svd.matrixV();
             auto QQ = U * V.transpose();
@@ -3130,6 +3132,7 @@ namespace ROPTLIB
         //     Qx=align2d_nbPoses(Tij_tilde);
         int p = Qx.rows();
         align2dNbPoses(TijTilde, Qx);
+        ROFL_VAR1(Qx);
         //     Qbot=Qx(:,d+1:end)';
         auto Qbot = Qx.block(0, sz_.d_, Qx.rows(), Qx.cols() - sz_.d_).transpose();
         //     Rcal_bot=Qx(3:end,:)*Ri_tilde2;
@@ -3142,14 +3145,13 @@ namespace ROPTLIB
         //     Rcal_bot_N=URCal_bot(:,2:end);
         auto RcalBotN = URCalBot.block(0, 1, URCalBot.rows(), URCalBot.cols() - 1);
         //     Rb_est=procrustes_R(Qbot_right',Rcal_bot_N);
-        SomUtils::MatD RbEst = SomUtils::MatD::Zero(p-2, p-2);
+        SomUtils::MatD RbEst = SomUtils::MatD::Zero(p - 2, p - 2); //TODO: Dymanic size
         procrustesR(QbotRight.transpose(), RcalBotN, RbEst);
         //     Qb = blkdiag(eye(2),Rb_est');
-        //     Qb = Eigen::MatrixXd::Identity(2, 2).block(0, 0, 2, 2);
-        Qb = Eigen::MatrixXd::Zero(p, p);
+        Qb.setZero();
         Qb.block(0, 0, 2, 2) = Eigen::MatrixXd::Identity(2, 2);
         ROFL_VAR1(p)
-        Qb.block(2, 2, p - 2, p - 2) = Qb.block(0, 0, p - 2, p - 2);
+        Qb.block(2, 2, p - 2, p - 2) = RbEst.transpose();
         //     Ri_est=Qx'*Qb*Qx*Ri_tilde2;
         RiEst = Qx.transpose() * Qb * Qx * RiTilde2;
     }
