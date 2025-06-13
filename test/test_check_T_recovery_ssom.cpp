@@ -227,6 +227,10 @@ int main(int argc, char **argv)
     Prob.align3d(RTstackedHighDeg, Qalign);
     ROFL_VAR1(Qalign)
 
+    ROFL_VAR2(Qalign * RTstackedHighDeg, (Qalign * RTstackedHighDeg).block(d, 0, p-d, d * numNodesHighDeg + numEdges).cwiseAbs().maxCoeff());
+
+
+
     // Tij_2deg_recovery = [];
     // Tij_tilde_2deg_recovery = [];
     SomUtils::VecMatD Tij2degRecovery(numNodesLowDeg, SomUtils::MatD::Zero(p, d));
@@ -299,35 +303,69 @@ int main(int argc, char **argv)
         }
         else
         {
+            // R_tilde2_edges = multiprod(repmat(Qalign, 1, 1, sum(nodes_high_deg)), R_manopt_out(:,:,nodes_high_deg));
             auto tmp = Qalign * RmanoptOut[nodeId];
             Rrecovered[nodeId] = tmp.block(0, 0, d, d);
         }
     }
-    for (int i = 0; i < n; ++i)
-    {
-        ROFL_VAR2(Rrecovered[i], Rrecovered[i].determinant())
-    }
-
-    // R_tilde2_edges = multiprod(repmat(Qalign, 1, 1, sum(nodes_high_deg)), R_manopt_out(:,:,nodes_high_deg));
 
     // low_deg_nodes_ids = find(problem_data.node_degrees <= low_deg); %[1 5]'
     // for ii = 1:N
     //     if ismember(ii, low_deg_nodes_ids)
-    //         id_low_deg = find(low_deg_nodes_ids == ii);
-    //         P_i = recover_R_deg2(Tij_tilde_2deg_recovery, id_low_deg, d);
-    //         R_recovered(:,:,ii) = P_i * R_recovered(:,:,ii);
-    //     end
-    // end
+    lowDegIdx = 0;
+    for (int nodeId = 0; nodeId < n; ++nodeId)
+    {
+        ROFL_VAR2(nodeId, Rrecovered[nodeId].determinant())
+
+        if (nodeDegrees(nodeId, 0) == lowDeg)
+        {
+            // id_low_deg = find(low_deg_nodes_ids == ii);
+            // P_i = recover_R_deg2(Tij_tilde_2deg_recovery, id_low_deg, d);
+            // R_recovered(:,:,ii) = P_i * R_recovered(:,:,ii);
+
+            if (Rrecovered[nodeId].determinant() < 0)
+            {
+                SomUtils::MatD Pi = SomUtils::MatD::Zero(3, 3);
+                Prob.recoverRdeg2(TijTilde2degRecovery, lowDegIdx, Pi);
+                Rrecovered[nodeId] = Pi * Rrecovered[nodeId];
+            }
+            lowDegIdx++;
+        }
+    }
+
+    // disp("multidet(R_recovered)")
+    // disp(multidet(R_recovered))
+    for (int i = 0; i < n; ++i)
+    {
+        ROFL_VAR3(i, Rrecovered[i], Rrecovered[i].determinant())
+    }
 
     // R_recovered(:,:,nodes_high_deg) = R_tilde2_edges(1:d,:,:);
     // nodes_low_deg = ~nodes_high_deg;
 
-    // disp("multidet(R_recovered)")
-    // disp(multidet(R_recovered))
-
-    // % T_edges_recovered = recover_T_edges(Qalign * T_edges, edges, ...
-    // %     node_degrees, low_deg, Qxs, Qbs, Qalign, Qx_edges);
     // T_diffs_shifted = Qalign * T_edges; %this has last row to 0
+    SomUtils::MatD TedgesShifted(SomUtils::MatD::Zero(p, numEdges));
+    for (int i = 0; i < numEdges; ++i)
+    {
+        TedgesShifted.col(i) = Qalign * Tedges.col(i);
+    }
+    ROFL_VAR2(TedgesShifted, TedgesShifted.block(3, 0, p - 3, numEdges).cwiseAbs().maxCoeff());
+
+    SomUtils::MatD Trecovered(SomUtils::MatD::Zero(p, n));
+    Prob.edgeDiffs2T(0, TedgesShifted, n, Trecovered);
+
+    SomUtils::MatD LambdasRecovered(SomUtils::MatD::Zero(numEdges, 1));
+    double lambdasCoeff = LambdasGtEig(0, 0) / LambdasManoptOut(0, 0);
+    LambdasRecovered = lambdasCoeff * LambdasManoptOut;
+
+    ROFL_VAR2(LambdasRecovered.transpose(), LambdasGtEig.transpose())
+
+    ROFL_VAR1(Prob.costEigen(RgtEig, TgtEig, LambdasGtEig))
+
+    ROFL_VAR1(Prob.costEigen(RmanoptOut, TmanoptOut, LambdasManoptOut))
+
+    ROFL_VAR1(Prob.costEigen(Rrecovered, Trecovered.block(0, 0, d, n), LambdasRecovered))
+
     // T_recovered_pre = recover_T_edges(T_diffs_shifted(1:d,:), ...
     //     edges, d, problem_data.node_degrees, low_deg, Tij_tilde_2deg_recovery);
     // T_recovered = edge_diffs_2_T(T_recovered_pre, edges, N);
