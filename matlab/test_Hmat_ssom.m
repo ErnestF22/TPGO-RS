@@ -8,12 +8,15 @@ load('data/test_Hmat_ssom.mat', 'problem_data_next')
 % T = X.T;
 % Lambda = X.lambda;
 
+X_cat.R = cat_zero_rows_3d_array(X.R);
+X_cat.T = cat_zero_row(X.T);
+X_cat.lambda = X.lambda;
 
-Hmat_ssom = make_H_mat_ssom(X, problem_data_next);
+Hmat_ssom = make_H_mat_ssom(X_cat, problem_data_next);
 % disp('Hmat_ssom')
 % disp(Hmat_ssom)
 
-[eigenvals_Hmat_ssom, eigenvecs_Hmat_ssom] = eig(Hmat_ssom);
+[eigvals_Hmat_ssom, eigvecs_Hmat_ssom] = eig(Hmat_ssom);
 
 disp("max(abs(Hmat_ssom - Hmat_ssom'), [], ""all"")")
 disp(max(abs(Hmat_ssom - Hmat_ssom'), [], "all"))
@@ -21,8 +24,8 @@ disp(max(abs(Hmat_ssom - Hmat_ssom'), [], "all"))
 disp("lambda")
 disp(lambda)
 
-disp("min(eigenvals_Hmat_ssom)")
-disp(min(real(eigenvals_Hmat_ssom), [], "all"))
+disp("min(real(eigvals_Hmat_ssom), [], ""all"")")
+disp(min(real(eigvals_Hmat_ssom), [], "all"))
 
 
 

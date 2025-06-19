@@ -65,8 +65,10 @@ if lambda_pim>0
     highest_norm_eigenval = lambda_pim_after_shift + mu;
     ssom_eigencheck_hessian_genproc(highest_norm_eigenval, v_pim_after_shift, ...
         rhess_fun_han);
+    highest_norm_eigenval = lambda_pim_after_shift + mu;
 else
     v_pim_after_shift = v_pim; %variable name in this case is misleading since shift does not happen at all
+    highest_norm_eigenval = lambda_pim;
 end
 
 
@@ -75,7 +77,7 @@ end
 %     ' is an eigenval for initial function:'])
 % disp(['difference between highest_norm_eigenval*v_pim and H(v_pim) ' ...
 %     'should be in the order of the tolerance:'])
-highest_norm_eigenval = lambda_pim_after_shift + mu; %in case if (lambda_pim>0) FALSE
+ %in case if (lambda_pim>0) FALSE
 
 % eigencheck_hessian_genproc(highest_norm_eigenval, v_pim, rhess_fun_han);
 %%% scaling eigenvalue
