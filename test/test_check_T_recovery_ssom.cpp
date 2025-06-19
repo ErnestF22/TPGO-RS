@@ -16,7 +16,27 @@
 
 namespace fs = std::filesystem;
 
-void procrustesCodemeta(const SomUtils::MatD &X, const SomUtils::MatD &Y, SomUtils::MatD &T, bool doScaling = true, const std::string &doReflection = "best");
+struct procrustesOutput
+{
+    SomUtils::MatD T;
+    double b;
+    SomUtils::MatD c;
+
+    procrustesOutput(const SomUtils::MatD &T_, double b_, const SomUtils::MatD &c_)
+        : T(T_), b(b_), c(c_)
+    {
+    }
+    procrustesOutput() : T(SomUtils::MatD::Zero(1, 1)), b(0.0), c(SomUtils::MatD::Zero(1, 1)) {}
+
+    procrustesOutput(const procrustesOutput &other)
+        : T(other.T), b(other.b), c(other.c)
+    {
+    }
+
+    ~procrustesOutput() = default;
+};
+
+procrustesOutput procrustesCodemeta(const SomUtils::MatD &X, const SomUtils::MatD &Y, SomUtils::MatD &T, bool doScaling = true, const std::string &doReflection = "best");
 
 void devectorizeXeig(const SomUtils::MatD &xEig, SomUtils::VecMatD &R, SomUtils::MatD &T, SomUtils::MatD &Lambdas, int p, int d, int n, int numEdges);
 
@@ -375,7 +395,7 @@ int main(int argc, char **argv)
     return 0;
 }
 
-void procrustesCodemeta(const SomUtils::MatD &X, const SomUtils::MatD &Y, SomUtils::MatD &T, bool doScaling, std::string &doReflection)
+procrustesOutput procrustesCodemeta(const SomUtils::MatD &X, const SomUtils::MatD &Y, double &d, SomUtils::MatD &Z, bool doScaling, std::string &doReflection)
 {
     // bool doScaling=true;
     // doReflection='best';
@@ -564,6 +584,7 @@ void procrustesCodemeta(const SomUtils::MatD &X, const SomUtils::MatD &Y, SomUti
 
             // transform = struct('T',T, 'b',b, 'c',Zc);
         }
+        return procrustesOutput(T, d, Z);
     }
     else if (constX) //////////////////////////////////////////////////////////////
     {
@@ -573,6 +594,14 @@ void procrustesCodemeta(const SomUtils::MatD &X, const SomUtils::MatD &Y, SomUti
         //     Z = repmat(muX, n, 1);
         //     T = eye(my,m);
         //     transform = struct('T',T, 'b',0, 'c',Z);
+        double d = 0;
+        SomUtils::MatD T = SomUtils::MatD::Identity(ycols, xcols);
+        SomUtils::MatD Z = SomUtils::MatD::Zero(xrows, xcols);
+        for (int i = 0; i < xrows; ++i)
+        {
+            Z.row(i) = muX;
+        }
+        return procrustesOutput(T, d, Z);
     }
     else
     {
@@ -581,7 +610,17 @@ void procrustesCodemeta(const SomUtils::MatD &X, const SomUtils::MatD &Y, SomUti
         //     Z = repmat(muX, n, 1);
         //     T = eye(my,m);
         //     transform = struct('T',T, 'b',0, 'c',Z);
+        double d = 1;
+        SomUtils::MatD T = SomUtils::MatD::Identity(ycols, xcols);
+        SomUtils::MatD Z = SomUtils::MatD::Zero(xrows, xcols);
+        for (int i = 0; i < xrows; ++i)
+        {
+            Z.row(i) = muX;
+        }
+        return procrustesOutput(T, d, Z);
     }
+
+    return procrustesOutput(); // should never be reached
 }
 
 void devectorizeXeig(const SomUtils::MatD &xEig, SomUtils::VecMatD &R, SomUtils::MatD &T, SomUtils::MatD &Lambdas, int p, int d, int n, int numEdges)
