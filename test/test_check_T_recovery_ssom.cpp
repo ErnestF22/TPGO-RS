@@ -16,16 +16,9 @@
 
 namespace fs = std::filesystem;
 
-void devectorizeXeig(const SomUtils::MatD &xEig, SomUtils::VecMatD &R, SomUtils::MatD &T, SomUtils::MatD &Lambdas, int p, int d, int n, int numEdges)
-{
-    ROFL_ASSERT(xEig.size() == p * d * n + p * n + numEdges)
+void procrustesCodemeta(const SomUtils::MatD &X, const SomUtils::MatD &Y, SomUtils::MatD &T, bool doScaling = true, const std::string &doReflection = "best");
 
-    SomUtils::MatD RhSt = SomUtils::MatD::Zero(p, d * n);
-    RhSt = xEig.block(0, 0, p * d * n, 1).reshaped(p, d * n);
-    SomUtils::unStackH(RhSt, R, d);
-    T = xEig.block(p * d * n, 0, p * n, 1).reshaped(p, n);
-    Lambdas = xEig.block(p * d * n + p * n, 0, numEdges, 1);
-}
+void devectorizeXeig(const SomUtils::MatD &xEig, SomUtils::VecMatD &R, SomUtils::MatD &T, SomUtils::MatD &Lambdas, int p, int d, int n, int numEdges);
 
 int main(int argc, char **argv)
 {
@@ -227,9 +220,7 @@ int main(int argc, char **argv)
     Prob.align3d(RTstackedHighDeg, Qalign);
     ROFL_VAR1(Qalign)
 
-    ROFL_VAR2(Qalign * RTstackedHighDeg, (Qalign * RTstackedHighDeg).block(d, 0, p-d, d * numNodesHighDeg + numEdges).cwiseAbs().maxCoeff());
-
-
+    ROFL_VAR2(Qalign * RTstackedHighDeg, (Qalign * RTstackedHighDeg).block(d, 0, p - d, d * numNodesHighDeg + numEdges).cwiseAbs().maxCoeff());
 
     // Tij_2deg_recovery = [];
     // Tij_tilde_2deg_recovery = [];
@@ -382,4 +373,224 @@ int main(int argc, char **argv)
     // disp(cost_out)
 
     return 0;
+}
+
+void procrustesCodemeta(const SomUtils::MatD &X, const SomUtils::MatD &Y, SomUtils::MatD &T, bool doScaling, std::string &doReflection)
+{
+    // bool doScaling=true;
+    // doReflection='best';
+    // %optional parameters
+    // ivarargin=1;
+    // while(ivarargin<=length(varargin))
+    //     switch(lower(varargin{ivarargin}))
+    //         case 'scaling'
+    //             ivarargin=ivarargin+1;
+    //             doScaling=varargin{ivarargin};
+    //         case 'reflection'
+    //             ivarargin=ivarargin+1;
+    //             doReflection=varargin{ivarargin};
+    //         otherwise
+    //             error(['Argument ' varargin{ivarargin} ' not valid!'])
+    //     end
+    //     ivarargin=ivarargin+1;
+    // end
+
+    // [n, m]   = size(X);
+    // [ny, my] = size(Y);
+    int xrows = X.rows();
+    int xcols = X.cols();
+    int yrows = Y.rows();
+    int ycols = Y.cols();
+
+    // Check input sizes.
+    if (xrows <= 0 || xcols <= 0 || yrows <= 0 || ycols <= 0)
+        throw std::invalid_argument("procrustes:InputSizeMismatch: X and Y must be non-empty matrices.");
+
+    // if ny ~= n
+    //     error('procrustes:InputSizeMismatch',...
+    //         'X and Y must have the same number of rows (points).');
+    // elseif my > m
+    //     error('procrustes:InputSizeMismatch',...
+    //         'Y cannot have more columns (variables) than X.');
+    // end
+    if (yrows != xrows)
+        throw std::invalid_argument("procrustes:InputSizeMismatch: X and Y must have the same number of rows (points).");
+
+    if (ycols > xcols)
+        throw std::invalid_argument("procrustes:InputSizeMismatch: Y cannot have more columns (variables) than X.");
+
+    // % Center at the origin.
+    // muX = mean(X,1);
+    // muY = mean(Y,1);
+    // X0 = X - repmat(muX, n, 1);
+    // Y0 = Y - repmat(muY, n, 1);
+    SomUtils::MatD muX = X.colwise().mean();
+    SomUtils::MatD muY = Y.colwise().mean();
+    SomUtils::MatD X0 = X;
+    SomUtils::MatD Y0 = Y;
+    for (int i = 0; i < xrows; ++i)
+    {
+        X0.row(i) -= muX;
+        Y0.row(i) -= muY;
+    }
+    // ssqX = sum(X0.^2,1);
+    // ssqY = sum(Y0.^2,1);
+    // constX = all(ssqX <= abs(eps(class(X))*n*muX).^2);
+    // constY = all(ssqY <= abs(eps(class(X))*n*muY).^2);
+    // ssqX = sum(ssqX);
+    // ssqY = sum(ssqY);
+    double ssqX = X0.squaredNorm();
+    double ssqY = Y0.squaredNorm();
+    bool constX = (ssqX <= std::numeric_limits<double>::epsilon() * xrows * muX.array().abs().square().sum());
+    bool constY = (ssqY <= std::numeric_limits<double>::epsilon() * xrows * muY.array().abs().square().sum());
+    // HP) ssqX = sum(ssqX), ssqY = sum(ssqY) are never needed
+    //////////////////////////////////////////////////////////////
+
+    // if ~constX & ~constY
+    if (!constX && !constY)
+    {
+        //     % The "centered" Frobenius norm.
+        //     normX = sqrt(ssqX); % == sqrt(trace(X0*X0'))
+        //     normY = sqrt(ssqY); % == sqrt(trace(Y0*Y0'))
+        double normX = std::sqrt(ssqX); // == sqrt(trace(X0*X0'))
+        double normY = std::sqrt(ssqY); // == sqrt(trace(Y0*Y0'))
+
+        // % Scale to equal (unit) norm.
+        // X0 = X0 / normX;
+        // Y0 = Y0 / normY;
+        X0 /= normX;
+        Y0 /= normY;
+
+        // % If Y has fewer variables than X, pad it with zeros.
+        // % Make sure they're in the same dimension space.
+        // if my < m
+        //     Y0 = [Y0 zeros(n, m-my)];
+        if (ycols < xcols)
+            Y0.conservativeResize(Eigen::NoChange, xcols);
+
+        // % The optimum rotation matrix of Y.
+        // A = X0' * Y0;
+        SomUtils::MatD A = X0.transpose() * Y0;
+        // [L, D, M] = svd(A);
+        Eigen::JacobiSVD<SomUtils::MatD> svd(A, Eigen::ComputeFullU | Eigen::ComputeFullV);
+        SomUtils::MatD L = svd.matrixU();                     // Left singular vectors
+        SomUtils::MatD D = svd.singularValues().asDiagonal(); // Singular values
+        SomUtils::MatD M = svd.matrixV();                     // Right singular vectors
+        // T = M * L';
+        SomUtils::MatD T = M * L.transpose(); // Rotation matrix
+
+        // if isempty(doReflection) % 'best'
+        //     % Let the data decide if a reflection is needed.
+        // else
+        //     haveReflection = (det(T) < 0);
+        //     % If we don't have what was asked for ...
+        //     if (doReflection ~= haveReflection)
+        //         % ... then either force a reflection, or undo one.
+        //         M(:,end) = -M(:,end);
+        //         D(end,end) = -D(end,end);
+        //         T = M * L';
+        if (doReflection.empty())
+        {
+            // Let the data decide if a reflection is needed.
+        }
+        else
+        {
+            bool haveReflection = (T.determinant() < 0);
+            if (doReflection != "haveReflection")
+            {
+                M.col(xcols - 1) = -M.col(xcols - 1);
+                D(xcols - 1, xcols - 1) = -D(xcols - 1, xcols - 1);
+                T = M * L.transpose();
+            }
+        }
+
+        // % The minimized unstandardized distance D(X0,b*Y0*T) is
+        // % ||X0||^2 + b^2*||Y0||^2 - 2*b*trace(T*X0'*Y0)
+        // traceTA = sum(diag(D)); % == trace(sqrtm(A'*A)) when doReflection is 'best'
+        double traceTA = D.diagonal().sum();
+
+        // if doScaling
+        if (doScaling)
+        {
+            //     % The optimum scaling of Y.
+            //     b = traceTA * normX / normY;
+            double b = traceTA * normX / normY;
+            //     % The standardized distance between X and b*Y*T+c.
+            //     d = 1 - traceTA.^2;
+            double d = 1 - traceTA * traceTA;
+            //     if nargout > 1
+            //         Z = normX*traceTA * Y0 * T + repmat(muX, n, 1);
+            SomUtils::MatD Z = normX * traceTA * Y0 * T;
+            for (int i = 0; i < Z.rows(); ++i)
+            {
+                Z.row(i) += muX;
+            }
+            //     else % if ~doScaling
+            //         b = 1;
+            //         % The standardized distance between X and Y*T+c.
+            //         d = 1 + ssqY/ssqX - 2*traceTA*normY/normX;
+            //         if nargout > 1
+            //             Z = normY*Y0 * T + repmat(muX, n, 1);
+            if (!doScaling)
+            {
+                b = 1;
+                // The standardized distance between X and Y*T+c.
+                double d = 1 + ssqY / ssqX - 2 * traceTA * normY / normX;
+                Z = normY * Y0 * T;
+                for (int i = 0; i < Z.rows(); ++i)
+                {
+                    Z.row(i) += muX;
+                }
+            }
+
+            // if nargout > 2
+            //     if my < m
+            //         T = T(1:my,:);
+            //     c = muX - b*muY*T;
+            //     transform = struct('T',T, 'b',b, 'c',repmat(c, n, 1));
+            if (ycols < xcols)
+            {
+                auto tmp = T.block(0, 0, ycols, xcols);
+                T.resize(ycols, xcols);
+                T = tmp;
+            }
+            SomUtils::MatD c = muX - b * muY * T;
+            SomUtils::MatD Zc = SomUtils::MatD::Zero(xrows, xcols);
+            for (int i = 0; i < xrows; ++i)
+            {
+                Zc.row(i) = c.transpose();
+            }
+            T = Zc;
+
+            // transform = struct('T',T, 'b',b, 'c',Zc);
+        }
+    }
+    else if (constX) //////////////////////////////////////////////////////////////
+    {
+        // % The degenerate cases: X all the same, and Y all the same.
+        // elseif constX
+        //     d = 0;
+        //     Z = repmat(muX, n, 1);
+        //     T = eye(my,m);
+        //     transform = struct('T',T, 'b',0, 'c',Z);
+    }
+    else
+    {
+        // else % ~constX & constY
+        //     d = 1;
+        //     Z = repmat(muX, n, 1);
+        //     T = eye(my,m);
+        //     transform = struct('T',T, 'b',0, 'c',Z);
+    }
+}
+
+void devectorizeXeig(const SomUtils::MatD &xEig, SomUtils::VecMatD &R, SomUtils::MatD &T, SomUtils::MatD &Lambdas, int p, int d, int n, int numEdges)
+{
+    ROFL_ASSERT(xEig.size() == p * d * n + p * n + numEdges)
+
+    SomUtils::MatD RhSt = SomUtils::MatD::Zero(p, d * n);
+    RhSt = xEig.block(0, 0, p * d * n, 1).reshaped(p, d * n);
+    SomUtils::unStackH(RhSt, R, d);
+    T = xEig.block(p * d * n, 0, p * n, 1).reshaped(p, n);
+    Lambdas = xEig.block(p * d * n + p * n, 0, numEdges, 1);
 }
