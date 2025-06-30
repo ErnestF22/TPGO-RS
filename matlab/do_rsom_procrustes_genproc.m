@@ -105,6 +105,7 @@ manopt_genproc_start_time = tic();
 if params.enable_manopt_rs
     params.R_gt = X_gt.R;
     params.T_gt = X_gt.T;
+    % testdata.gitruth = 
     params.testdata = testdata; % !!
     [transf_manopt_rs, rs_success_bool, cost_manopt_rs] = ...
         rsom_genproc(T_globalframe_nois, Tijs_vec_nois, edges, params, transf_initguess);

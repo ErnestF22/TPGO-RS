@@ -41,8 +41,8 @@ X_gt.R = params.R_gt;
 
 checkhessian(problem, X_gt, X_gt);
 
-
-X = trustregions(problem);
+options.testdata = params.testdata;
+X = trustregions(problem, [], options);
 T_manopt_out = X.T;
 R_manopt_out = X.R;
 
@@ -83,8 +83,9 @@ for staircase_step_idx = r0:d*N+1
     problem_next.grad = @(x) grad_genproc(x, problem_data);
     problem_next.hess = @(x, u) hess_genproc(x, u, problem_data);
 
-    
-    X = trustregions(problem_next, Y_star);
+    options.testdata = params.testdata;
+
+    X = trustregions(problem_next, Y_star, options);
     T_manopt_out = X.T;
     R_manopt_out = X.R;
 
@@ -104,7 +105,7 @@ X_manopt_out.R = R_manopt_out;
 X_manopt_out.T = T_manopt_out;
 
 %% GIF PLOT!
-testdata_plot = params.testdata;
+testdata_plot = params;
 testdata_plot.gi = RT2G_stiefel(R_manopt_out, T_manopt_out);
 testdata_plot = testNetworkCompensate(testdata_plot);
 hold on;
