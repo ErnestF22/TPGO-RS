@@ -29,6 +29,7 @@ if staircase_step_idx > d+1
     nodes_high_deg = problem_data.node_degrees > low_deg;
 
     subgraph = [2,3,4]; %Make this automatic later
+    T_edges = make_T_edges(T_manopt_out, edges);
     T_edges_subgraph = make_T_edges_subgraph(T_manopt_out, edges, subgraph);
 
     RT_stacked_high_deg = [matStackH(R_manopt_out(:,:,nodes_high_deg)), T_edges_subgraph];
@@ -36,6 +37,7 @@ if staircase_step_idx > d+1
     % RT_stacked_high_deg_poc = Qx_edges * RT_stacked_high_deg;    
 
     R_recovered = eye3d(d,d,N);
+    T_recovered = zeros(d,N);
     
     nodes_low_deg = ~nodes_high_deg;
 
@@ -50,17 +52,17 @@ if staircase_step_idx > d+1
     % else
 
     Qalign = align3d(RT_stacked_high_deg);
+    % Qalign = POCRotateToMinimizeLastEntries(RT_stacked_high_deg);
     tijs = problem_data.tijs; %TODO!! improve naming
     Tijs_scaled = make_tijs_scaled(lambdas_manopt_out, tijs);
     problem_data.d = d;
     R_tilde2_edges_subgraph = multiprod(repmat(Qalign, 1, 1, sum(nodes_high_deg)), R_manopt_out(:,:,nodes_high_deg));
     R_recovered(:,:,nodes_high_deg) = R_tilde2_edges_subgraph(1:d,:,:);
     T_diffs_shifted = Qalign * T_edges_subgraph; %this has last rows to 0
-    T_recovered = edge_diffs_2_T_subgraph(T_diffs_shifted(1:d,:), edges, N, subgraph);
+    T_recovered(:,nodes_high_deg) = edge_diffs_2_T_subgraph(T_diffs_shifted(1:d,:), edges, N, subgraph - 1);
     lambdas_recovered = lambdas_manopt_out;
-        
-        
-    % end
+    
+
 else
     % recovery is not actually performed but using the same variable names
     % for simplicity
@@ -68,6 +70,15 @@ else
     T_recovered = T_manopt_out;
     lambdas_recovered = lambdas_manopt_out;
 end
+
+X_recovered_subgraph.R = R_recovered(:,:,nodes_high_deg);
+X_recovered_subgraph.T = T_recovered(:,nodes_high_deg);
+X_recovered_subgraph.lambda = lambdas_recovered;
+X_recovered.R(:,:,subgraph) = X_recovered_subgraph.R;
+X_recovered.T(:,subgraph) = X_recovered_subgraph.T;
+X_recovered.lambda = X_recovered_subgraph.lambda;
+disp("ssom_cost_subgraph")
+disp(ssom_cost_subgraph(X_recovered, problem_data, subgraph))
 
 % R_recovered = X_recovered.R;
 % T_recovered = X_recovered.T;
@@ -83,15 +94,13 @@ for ee = 1:size(edges, 1)
         subgraph_edge_id = subgraph_edge_id + 1;
     end
 end
-T_subgraph = T_manopt_out(:, subgraph);
-R_subgraph = R_manopt_out(:, :, subgraph);
 adj_mat_subgraph = make_adj_mat_from_edges(edges_subgraph - 1, size(subgraph, 3));
 testnet_subgraph = testNetwork_adj(3, adj_mat_subgraph);
 
 %gitruth, gi
 testnet_subgraph.gitruth = problem_data.gitruth(:,:,subgraph);
 % testnet_subgraph.gi = RT2G_stiefel(R_subgraph, T_subgraph);
-testnet_subgraph.gi = RT2G(R_recovered(:,:,subgraph), T_recovered(:,subgraph));
+testnet_subgraph.gi = RT2G(R_tilde2_edges_subgraph(1:d, :, :), T_recovered(:,subgraph));
 %gijtruth, lambdaijtruth, gij, lambdaij
 subgraph_edge_id = 1;
 for ee = 1:size(edges, 1)
@@ -102,7 +111,7 @@ for ee = 1:size(edges, 1)
             problem_data.gijtruth(:, :, ee);
         testnet_subgraph.lambdaijtruth(ee) = ...
             problem_data.lambdaijtruth(ee);
-        tmp_Tij = problem_data.gi(:,:,e_j) * inv(problem_data.gi(:,:,e_j));
+        tmp_Tij = problem_data.gi(:,:,e_j) * inv(problem_data.gi(:,:,e_i));
         testnet_subgraph.gij(:, :, ee) = ...
             tmp_Tij;
         testnet_subgraph.lambdaij(ee, :) = ...
@@ -121,18 +130,19 @@ R_global = R_recovered(:,:,1) * X_gt.R(:,:,2)'; %!!
 % code for making all rotations global at once
 R_recovered_global = multiprod(repmat(R_global', 1, 1, size(subgraph, 2)), R_recovered);
 
-T_global = R_global * T_recovered(:,2) - X_gt.T(:,2); %!!
+T_global = R_global * T_recovered(:,1) - X_gt.T(:,2); %!!
 % code for making all translation global at once
 disp("[X_gt.T; T_recovered]");
 T_recovered_global = R_global' * T_recovered - T_global;
 
 
-
-
+num_nodes_in_subgraph = size(subgraph, 2);
+subgraph_edge_id = 1;
+rs_recovery_success = boolean(1);
 for ii = 1:N
     if nodes_high_deg(ii) == 1
         R_gt_i = X_gt.R(:,:,ii);
-        R_recov_i_global = R_recovered_global(:,:,ii); %GLOBAL!
+        R_recov_i_global = R_recovered_global(:,:,subgraph_edge_id); %GLOBAL!
         fprintf("ii %g\n", ii);
         % rotations
         disp("R_gt_i, R_recov_i");
@@ -146,7 +156,7 @@ for ii = 1:N
         end
         % translations
         T_gt_i = X_gt.T(:,ii);
-        T_recov_i_global = T_recovered_global(:,ii);
+        T_recov_i_global = T_recovered_global(:,subgraph_edge_id);
         disp("[X_gt.T, T_recovered]");
         disp([T_gt_i, T_recov_i_global]);
         disp("is_equal_floats(T_gt_i, T_recov_i_global)")
@@ -156,11 +166,12 @@ for ii = 1:N
             fprintf("ERROR in recovery: T_GLOBAL\n");
             rs_recovery_success = boolean(0);
         end
+        subgraph_edge_id = subgraph_edge_id + 1;
     end
 end
 
-disp("[X_gt.T; T_recovered_global]");
-disp([X_gt.T; T_recovered_global]);
+disp("[X_gt.T, T_recovered_global]");
+disp([X_gt.T,  T_recovered_global]);
 
 lambda_factor = X_gt.lambda(1) / lambdas_recovered(1);
 lambdas_recovered_global = lambda_factor * lambdas_recovered;
@@ -174,8 +185,29 @@ if (~is_equal_floats(X_gt.lambda(:), lambdas_recovered_global))
     rs_recovery_success = boolean(0);
 end
 
+X_recovered_subgraph_global.R = R_recovered_global;
+X_recovered_subgraph_global.T = T_recovered_global;
+X_recovered_subgraph_global.lambda = lambdas_recovered_global;
+X_recovered_global.R(:,:,subgraph) = X_recovered_subgraph_global.R;
+X_recovered_global.T(:,subgraph) = X_recovered_subgraph_global.T;
+X_recovered_global.lambda = X_recovered_subgraph_global.lambda;
+disp("ssom_cost_subgraph_global")
+disp(ssom_cost_subgraph(X_recovered_global, problem_data, subgraph))
 
+R_pre_recovery_subgraph = R_tilde2_edges_subgraph(1:d, :, :);
+T_pre_recovery_subgraph = G2T(testnet_subgraph.gi);
+lambdas_pre_recovery_subgraph = G2T(testnet_subgraph.lambdaij);
 
+transf_pre_recovery_subgraph = RT2G(R_pre_recovery_subgraph, T_pre_recovery_subgraph);
+transf_recovered_subgraph = RT2G(R_recovered, T_recovered);
+
+for ii = 1:num_nodes_in_subgraph
+    disp("ii, transf_recovered_subgraph(:,:,ii) * inv(transf_pre_recovery_subgraph(:,:,ii))");
+    disp(ii)
+    disp(transf_recovered_subgraph(:,:,ii) * inv(transf_pre_recovery_subgraph(:,:,ii)));
+end
+
+% Qalign * R_manopt_out(:,:,1)
 
 %% low-deg nodes
 

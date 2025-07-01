@@ -8,7 +8,8 @@ nrs = size(T_diffs, 1);
 % booleans_T = boolean(0) * ones(N,1); % alg should stop when all these are 1
 % booleans_T(1) = boolean(1); % node 1 chosen as reference
 % d = size(T_diffs, 1);
-T = zeros(nrs, N);
+num_nodes_high_deg = size(subgraph, 2);
+T = zeros(nrs, num_nodes_high_deg);
 
 % edges_subgraph
 idx_edges_subgraph = 1;
@@ -21,11 +22,11 @@ for ii = 1:size(edges, 1)
     end
 end
 
-adjmat = edges2adjmatrix(edges_subgraph);
+adjmat = edges2adjmatrix(edges_subgraph); % !!
 g = digraph(adjmat(subgraph, subgraph));
-num_nodes_high_deg = size(subgraph, 2);
+
 for ii = 2:num_nodes_high_deg
-    [shortest_p, length, edge_path] = shortestpath(g, ii, 1);
+    [~, ~, edge_path] = shortestpath(g, ii, 1);
 %     fprintf("shortest_p for node %g\n", ii);
 %     disp(shortest_p)
 %     fprintf("length for node %g\n", ii);
