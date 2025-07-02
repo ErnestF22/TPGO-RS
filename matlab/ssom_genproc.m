@@ -325,6 +325,10 @@ cost_out_global = ssom_cost(X_recovered_global, problem_data_next);
 disp("cost_out_global")
 disp(cost_out_global)
 
+if ~is_equal_floats(cost_out_global, cost_manopt_out)
+    save("failed_recovery_global.mat")
+end
+
 transf_out = RT2G(X_recovered_global.R, X_recovered_global.T); %ssom_genproc() function output
 lambdas_ssom_out = lambdas_recovered_global;
 

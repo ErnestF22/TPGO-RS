@@ -1,7 +1,8 @@
 function test_recovery_subgraph
 
 % datafile = "data/failed_recovery2.mat";
-datafile = "failed_recovery.mat";
+% datafile = "failed_recovery.mat";
+datafile = "failed_recovery_global.mat";
 
 load(datafile, "problem_data");
 load(datafile, "X_recovered");
