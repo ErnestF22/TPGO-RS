@@ -1,15 +1,15 @@
 function test_recovery_subgraph
 
-load("failed_recovery2.mat", "problem_data");
-load("failed_recovery2.mat", "X_recovered");
-load("failed_recovery2.mat", "X_manopt_out");
-load("failed_recovery2.mat", "X_gt");
-load("failed_recovery2.mat", "edges");
-load("failed_recovery2.mat", "N");
-load("failed_recovery2.mat", "d");
-load("failed_recovery2.mat", "staircase_step_idx");
-% load("failed_recovery2.mat", "R_recovered_global");
-% load("failed_recovery2.mat", "T_recovered_global");
+load("data/failed_recovery2.mat", "problem_data");
+load("data/failed_recovery2.mat", "X_recovered");
+load("data/failed_recovery2.mat", "X_manopt_out");
+load("data/failed_recovery2.mat", "X_gt");
+load("data/failed_recovery2.mat", "edges");
+load("data/failed_recovery2.mat", "N");
+load("data/failed_recovery2.mat", "d");
+load("data/failed_recovery2.mat", "staircase_step_idx");
+% load("data/failed_recovery2.mat", "R_recovered_global");
+% load("data/failed_recovery2.mat", "T_recovered_global");
 
 R_manopt_out = X_manopt_out.R;
 T_manopt_out = X_manopt_out.T;
@@ -36,7 +36,7 @@ if staircase_step_idx > d+1
     
     % RT_stacked_high_deg_poc = Qx_edges * RT_stacked_high_deg;    
 
-    R_recovered = eye3d(d,d,N);
+    R_recovered = zeros(d,d,N);
     T_recovered = zeros(d,N);
     
     nodes_low_deg = ~nodes_high_deg;
@@ -114,26 +114,49 @@ for ee = 1:size(edges, 1)
         tmp_Tij = problem_data.gi(:,:,e_j) * inv(problem_data.gi(:,:,e_i));
         testnet_subgraph.gij(:, :, ee) = ...
             tmp_Tij;
-        testnet_subgraph.lambdaij(ee, :) = ...
-            lambdas_manopt_out(ee, :);
+        
         subgraph_edge_id = subgraph_edge_id + 1;
     end
+    testnet_subgraph.lambdaij(:, ee) = ...
+            lambdas_manopt_out(ee, :);
 end
 
-%% new stuff -> need multiplication by ...
+%% testNetworkCompensate()
 
 testnet_subgraph_comp = testNetworkCompensate(testnet_subgraph);
-R_recovered = G2R(testnet_subgraph_comp.gi);
-T_recovered = G2T(testnet_subgraph_comp.gi);
+R_recovered_high_deg = G2R(testnet_subgraph_comp.gi);
+T_recovered_high_deg = G2T(testnet_subgraph_comp.gi);
+lambdas_recovered = testnet_subgraph_comp.lambdaij;
 
-R_global = R_recovered(:,:,1) * X_gt.R(:,:,2)'; %!!
+% X_recovered.R(:,:,subgraph) = zeros(size(X_recovered.R(:,:,subgraph)));
+% X_recovered.T(:,subgraph) = zeros(size(T_recovered));
+% X_recovered.lambda = zeros(size(lambdas_recovered));
+X_recovered.R(:,:,subgraph) = R_recovered_high_deg;
+X_recovered.T(:,subgraph) = T_recovered_high_deg;
+lambda_factor = X_gt.lambda(1) / lambdas_recovered(1);
+lambdas_recovered_global = lambda_factor * lambdas_recovered;
+X_recovered.lambda = lambdas_recovered_global;
+disp("ssom_cost_subgraph")
+disp(ssom_cost_subgraph(X_recovered, problem_data, subgraph))
+
+%% globalization (subgraph)
+
+R_global_HD = R_recovered_high_deg(:,:,1) * X_gt.R(:,:,2)'; %!!
 % code for making all rotations global at once
-R_recovered_global = multiprod(repmat(R_global', 1, 1, size(subgraph, 2)), R_recovered);
+R_recovered_high_deg_global = multiprod(repmat(R_global_HD', 1, 1, size(subgraph, 2)), R_recovered_high_deg);
 
-T_global = R_global * T_recovered(:,1) - X_gt.T(:,2); %!!
+T_global_HD = R_global_HD * T_recovered_high_deg(:,1) - X_gt.T(:,2); %!!
 % code for making all translation global at once
-disp("[X_gt.T; T_recovered]");
-T_recovered_global = R_global' * T_recovered - T_global;
+T_recovered_high_deg_global = R_global_HD' * T_recovered_high_deg - T_global_HD;
+
+
+%% checking rs_recovery_success on HD subgraph
+
+R_recovered_global = zeros(d,d,N);
+T_recovered_global = ones(d,N);
+
+R_recovered_global(:,:,nodes_high_deg) = R_recovered_high_deg_global;
+T_recovered_global(:,nodes_high_deg) = T_recovered_high_deg_global;
 
 
 num_nodes_in_subgraph = size(subgraph, 2);
@@ -170,13 +193,13 @@ for ii = 1:N
     end
 end
 
+
 disp("[X_gt.T, T_recovered_global]");
 disp([X_gt.T,  T_recovered_global]);
 
-lambda_factor = X_gt.lambda(1) / lambdas_recovered(1);
-lambdas_recovered_global = lambda_factor * lambdas_recovered;
+
 disp("[X_gt.lambda, lambdas_recovered_global]");
-disp([X_gt.lambda(:), lambdas_recovered_global]);
+disp([X_gt.lambda(:), lambdas_recovered_global(:)]);
 disp("is_equal_floats(X_gt.lambda, lambdas_recovered_global)")
 disp(is_equal_floats(X_gt.lambda(:), lambdas_recovered_global))
 if (~is_equal_floats(X_gt.lambda(:), lambdas_recovered_global))
@@ -185,26 +208,38 @@ if (~is_equal_floats(X_gt.lambda(:), lambdas_recovered_global))
     rs_recovery_success = boolean(0);
 end
 
-X_recovered_subgraph_global.R = R_recovered_global;
-X_recovered_subgraph_global.T = T_recovered_global;
+disp("rs_recovery_success")
+disp(rs_recovery_success)
+
+
+X_recovered_subgraph_global.R = R_recovered_high_deg_global;
+X_recovered_subgraph_global.T = T_recovered_high_deg_global;
 X_recovered_subgraph_global.lambda = lambdas_recovered_global;
+X_recovered_global.R = zeros(d,d,N);
 X_recovered_global.R(:,:,subgraph) = X_recovered_subgraph_global.R;
+X_recovered_global.T = ones(d,N);
 X_recovered_global.T(:,subgraph) = X_recovered_subgraph_global.T;
 X_recovered_global.lambda = X_recovered_subgraph_global.lambda;
 disp("ssom_cost_subgraph_global")
 disp(ssom_cost_subgraph(X_recovered_global, problem_data, subgraph))
 
+%% finding recovery_R_HD
+
 R_pre_recovery_subgraph = R_tilde2_edges_subgraph(1:d, :, :);
 T_pre_recovery_subgraph = G2T(testnet_subgraph.gi);
-lambdas_pre_recovery_subgraph = G2T(testnet_subgraph.lambdaij);
+% lambdas_pre_recovery_subgraph = testnet_subgraph.lambdaij;
 
 transf_pre_recovery_subgraph = RT2G(R_pre_recovery_subgraph, T_pre_recovery_subgraph);
-transf_recovered_subgraph = RT2G(R_recovered, T_recovered);
+transf_recovered_subgraph = RT2G(R_recovered_high_deg, T_recovered_high_deg);
 
+low_deg_id = 1;
 for ii = 1:num_nodes_in_subgraph
+    
     disp("ii, transf_recovered_subgraph(:,:,ii) * inv(transf_pre_recovery_subgraph(:,:,ii))");
     disp(ii)
-    disp(transf_recovered_subgraph(:,:,ii) * inv(transf_pre_recovery_subgraph(:,:,ii)));
+    disp(transf_recovered_subgraph(:,:,low_deg_id) * inv(transf_pre_recovery_subgraph(:,:,low_deg_id)));
+    recovery_R_HD = G2R(transf_recovered_subgraph(:,:,low_deg_id) * inv(transf_pre_recovery_subgraph(:,:,low_deg_id)));
+    low_deg_id = low_deg_id + 1;
 end
 
 % Qalign * R_manopt_out(:,:,1)
@@ -233,22 +268,21 @@ R_recovered(:,:,nodes_low_deg) = RitildeEst(1:d,:,:);
 % R_recovered(:,:,nodes_low_deg) = RitildeEst(1:d,:,:);
 
 
-R_tilde2_edges_subgraph = multiprod(repmat(Qalign, 1, 1, sum(nodes_high_deg)), R_manopt_out(:,:,nodes_high_deg));
-R_recovered(:,:,nodes_high_deg) = R_tilde2_edges_subgraph(1:d,:,:);
+% R_tilde2_edges_subgraph = multiprod(repmat(Qalign, 1, 1, sum(nodes_high_deg)), R_manopt_out(:,:,nodes_high_deg));
+% R_recovered(:,:,nodes_high_deg) = R_tilde2_edges_subgraph(1:d,:,:);
 
-low_deg_nodes_ids = find(problem_data.node_degrees <= low_deg); %[1 5]'
-for ii = 1:N    
-    if ismember(ii, low_deg_nodes_ids) 
-        id_low_deg = find(low_deg_nodes_ids == ii);
-        P_i = recover_R_deg2(Tij_tilde_2deg_recovery, id_low_deg, d);
-        R_recovered(:,:,ii) = P_i * R_recovered(:,:,ii);
-    % else
-    %     if det(R_recovered(:,:,ii)) < 0
-    %         R_recovered(:,:,ii) = -R_recovered(:,:,ii);
-    %     end
+mdR = multidet(R_recovered(:,:,nodes_low_deg));
+
+if any(mdR < 0)
+    low_deg_nodes_ids = find(problem_data.node_degrees <= low_deg); %[1 5]'
+    for ii = 1:N    
+        if ismember(ii, low_deg_nodes_ids) 
+            id_low_deg = find(low_deg_nodes_ids == ii);
+            P_i = recover_R_deg2(Tij_tilde_2deg_recovery, id_low_deg, d);
+            R_recovered(:,:,ii) = P_i * R_recovered(:,:,ii);
+        end
     end
 end
-
 
 
 disp("multidet(R_recovered)")
@@ -262,41 +296,27 @@ T_recovered = edge_diffs_2_T(T_recovered_pre, edges, N);
 
 lambdas_recovered = X_manopt_out.lambda;
 
-%% Final Globalization (if needeed)
-
+R_recovered_low_deg_global = multiprod(repmat(R_global_HD' * recovery_R_HD, 1, 1, N - size(subgraph, 2)), R_recovered(:,:,nodes_low_deg));
+T_recovered_low_deg_global = R_global_HD' * recovery_R_HD * T_recovered(:,nodes_low_deg) - T_global_HD;
 
 problem_data_next = problem_data; %TODO: fix this line after recovery works
-cost_out = ssom_cost(X_recovered, problem_data_next); 
+X_recovered_global.R(:,:,nodes_low_deg) = R_recovered_low_deg_global;
+X_recovered_global.T(:,nodes_low_deg) = T_recovered_low_deg_global;
+% X_recovered.R(:,:,nodes_low_deg) = R_recovered(:,:,nodes_low_deg);
+cost_out = ssom_cost(X_recovered_global, problem_data_next); 
 disp("cost_out AFTER RECOVERY")
 disp(cost_out)
 
-% 
-% if ~is_equal_floats(cost_out, cost_manopt_out)
-%     save("failed_recovery.mat")
-% end
-% 
-
+%% Final Globalization (if needeed)
 
 disp("[matStackH(X_gt.R); matStackH(R_recovered)]");
 disp([matStackH(X_gt.R); matStackH(R_recovered)]);
 
-R_global = R_recovered(:,:,2) * X_gt.R(:,:,2)'; %!!
+R_global_HD = R_recovered(:,:,2) * X_gt.R(:,:,2)'; %!!
 % code for making all rotations global at once
-R_recovered_global = multiprod(repmat(R_global', 1, 1, N), R_recovered);
+R_recovered_global = multiprod(repmat(R_global_HD', 1, 1, N), R_recovered);
 disp("[matStackH(X_gt.R); matStackH(R_recovered_global)]");
 disp([matStackH(X_gt.R); matStackH(R_recovered_global)]);
-
-% T_recovered_global_nocomp = R_global' * T_recovered;
-% 
-% testdata_plot2 = problem_data;
-% testdata_plot2.gi = RT2G(R_recovered_global, T_recovered_global_nocomp);
-% testdata_plot2 = testNetworkCompensate(testdata_plot2);
-% T_recovered_global = G2T(testdata_plot2.gi);
-
-T_global = R_global * T_recovered(:,1) - X_gt.T(:,1); %!!
-% code for making all translation global at once
-disp("[X_gt.T; T_recovered]");
-T_recovered_global = R_global' * T_recovered - T_global;
 
 rs_recovery_success = boolean(1);
 for ii = 1:N
