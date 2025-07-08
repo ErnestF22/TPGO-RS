@@ -10,7 +10,7 @@ Dependencies:
 - CVX -> [link](http://cvxr.com/)
 
 \
-Brief description of the scripts/functions present in this folder (check subfolders README for more infos on those):\
+Brief description of the scripts/functions present in this folder (check subfolders README for more infos on those):
 
 - run\_manopt\_rsom\_genproc.m\
 Main executable that runs the simulated experiments on a graph generated through testNetwork
