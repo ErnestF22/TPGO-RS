@@ -71,13 +71,15 @@ if staircase_step_idx > d+1
     R_recovered = R_tilde2_edges(1:d,:,:);
     T_diffs_shifted = QalignHD * T_edges; %this has last rows to 0
     
-    offset = zeros(nrs, 1);
-    T_recovered = ...
-        edge_diffs_2_T(T_diffs_shifted, edges, N, offset);
-
-
     lambdas_recovered = lambdas_manopt_out;
     
+    offset = zeros(nrs, 1);
+    lambda_factor = X_gt.lambda(1) / lambdas_recovered(1);
+    lambdas_recovered_global = lambda_factor * lambdas_recovered;
+
+    T_recovered = ...
+        edge_diffs_2_T(lambda_factor * T_diffs_shifted, edges, N, offset);
+   
 
 else
     % recovery is not actually performed but using the same variable names
@@ -89,7 +91,7 @@ end
 
 X_recovered.R = R_recovered;
 X_recovered.T = T_recovered(1:d, :);
-X_recovered.lambda = lambdas_recovered;
+X_recovered.lambda = lambdas_recovered_global;
 disp("ssom_cost HD after HD recovery")
 disp(ssom_cost_subgraph(X_recovered, problem_data, subgraph_HD))
 
@@ -118,16 +120,16 @@ QalignLD=align3d(Tij_tilde);
 Tij_tilde=multiprod(QalignLD, Tij_tilde);
 
 
-RitildeEst = RbRecovery(multiprod(QalignLD, R_manopt_out(:,:,nodes_low_deg)), Tij_tilde);
+RitildeEstLD = RbRecovery(multiprod(QalignLD, R_manopt_out(:,:,nodes_low_deg)), Tij_tilde);
 
-disp("RitildeEst")
-disp(RitildeEst)
+% disp("RitildeEst")
+% disp(RitildeEst)
 
-disp("multidet(RitildeEst(1:d, 1:d, :))")
-disp(multidet(RitildeEst(1:d, 1:d, :)))
+disp("multidet(RitildeEstLD(1:d, 1:d, :))")
+disp(multidet(RitildeEstLD(1:d, 1:d, :)))
 
 
-R_recovered_low_deg = RitildeEst(1:d, :, :);
+R_recovered_low_deg = RitildeEstLD(1:d, :, :);
 mdR = multidet(R_recovered_low_deg);
 
 
@@ -169,14 +171,13 @@ X_recovered.R = R_recovered;
 disp("ssom_cost LD after LD recovery")
 disp(ssom_cost_subgraph(X_recovered, problem_data, subgraph_LD))
 
+disp("ssom_cost HD after LD recovery")
+disp(ssom_cost_subgraph(X_recovered, problem_data, subgraph_HD))
 
-lambda_factor = X_gt.lambda(1) / lambdas_recovered(1);
-T_recovered = ...
-    edge_diffs_2_T(lambda_factor * T_diffs_shifted, edges, N, offset);
 
-X_recovered.T = T_recovered(1:d, :);
+% lambdas_recovered_global = lambda_factor * lambdas_recovered;
+X_recovered.lambda = lambdas_recovered_global;
 
-X_recovered.lambda = lambdas_recovered;
 disp("ssom_cost after recovery")
 disp(ssom_cost(X_recovered, problem_data))
 
@@ -211,7 +212,7 @@ disp("is_equal_floats(T_recovered_global, X_gt.T)")
 disp(is_equal_floats(T_recovered_global, X_gt.T))
 
 
-lambdas_recovered_global = lambda_factor * lambdas_recovered;
+
 
 disp("T_recovered_global")
 disp(T_recovered_global)
