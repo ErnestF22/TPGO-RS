@@ -228,7 +228,14 @@ for node_id = 1:N
             3, Tij_tilde_2deg_recovery, Tij1j2_tilde);
     end
 end
-Tij_tilde_2deg_recovery=multiprod(tmp, Tij_tilde_2deg_recovery);
+
+
+
+% Tij_tilde_2deg_recovery=multiprod(tmp, Tij_tilde_2deg_recovery);
+QalignLD=align3d(Tij_tilde_2deg_recovery);
+Tij_tilde_2deg_recovery=multiprod(QalignLD, Tij_tilde_2deg_recovery);
+
+
 RitildeEst = RbRecovery(multiprod(tmp, R_manopt_out(:,:,nodes_low_deg)), Tij_tilde_2deg_recovery);
 R_recovered(:,:,nodes_low_deg) = RitildeEst(1:d,:,:);
 

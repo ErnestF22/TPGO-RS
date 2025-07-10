@@ -1,11 +1,11 @@
 function test_recovery_nosubgraph2
 
-load('data/ssom_recovery/ws2.mat', 'X_manopt_out')
-load('data/ssom_recovery/ws2.mat', 'problem_data')
-load('data/ssom_recovery/ws2.mat', 'X_gt')
-load('data/ssom_recovery/ws2.mat', 'staircase_step_idx')
-% load('data/ssom_recovery/ws2.mat', 'problem_data_next')
-% load('data/ssom_recovery/ws2.mat', 'N')
+load('data/failed_recovery.mat', 'X_manopt_out')
+load('data/failed_recovery.mat', 'problem_data')
+load('data/failed_recovery.mat', 'X_gt')
+load('data/failed_recovery.mat', 'staircase_step_idx')
+% load('data/failed_recovery.mat', 'problem_data_next')
+% load('data/failed_recovery.mat', 'N')
 
 R_manopt_out = X_manopt_out.R;
 T_manopt_out = X_manopt_out.T;
@@ -42,6 +42,63 @@ subgraph_LD = nodes_list(nodes_low_deg);
 
 T_edges = make_T_edges(T_manopt_out, edges);
 
+
+%% from ssom_genproc
+RT_stacked_high_deg = [matStackH(R_manopt_out(:,:,nodes_high_deg)), T_edges];
+Qalign = align3d(RT_stacked_high_deg);
+tijs = problem_data.tijs; %TODO!! improve naming
+Tijs_scaled = make_tijs_scaled(lambdas_manopt_out, tijs);
+problem_data.d = d;
+Tij_2deg_recovery = [];
+Tij_tilde_2deg_recovery = [];
+for node_id = 1:N
+    if problem_data.node_degrees(node_id) == low_deg
+        [Tij1j2, Tij1j2_tilde] = ...
+            make_Tij1j2s_edges( ...
+            node_id, T_edges, Tijs_scaled, edges, problem_data);
+        Tij_2deg_recovery = cat(3, Tij_2deg_recovery, Tij1j2);
+        Tij_tilde_2deg_recovery = cat( ...
+            3, Tij_tilde_2deg_recovery, Tij1j2_tilde);
+    end
+end
+Tij_tilde_2deg_recovery=multiprod(Qalign, Tij_tilde_2deg_recovery);
+RitildeEst = RbRecovery(multiprod(Qalign, R_manopt_out(:,:,nodes_low_deg)), Tij_tilde_2deg_recovery);
+R_recovered(:,:,nodes_low_deg) = RitildeEst(1:d,:,:);
+
+% [RitildeEst, Qx_rec, Qb_rec] = ...
+%     RbRecovery(multiprod(Qalign, R_manopt_out(:,:,nodes_low_deg)), Tij_tilde_2deg_recovery);
+% R_recovered(:,:,nodes_low_deg) = RitildeEst(1:d,:,:);
+
+
+R_tilde2_edges = multiprod(repmat(Qalign, 1, 1, sum(nodes_high_deg)), R_manopt_out(:,:,nodes_high_deg));
+R_recovered(:,:,nodes_high_deg) = R_tilde2_edges(1:d,:,:);
+
+low_deg_nodes_ids = find(problem_data.node_degrees <= low_deg); %[1 5]'
+for ii = 1:N    
+    if ismember(ii, low_deg_nodes_ids) 
+        id_low_deg = find(low_deg_nodes_ids == ii);
+        P_i = recover_R_deg2(Tij_tilde_2deg_recovery, id_low_deg, d);
+        R_recovered(:,:,ii) = P_i * R_recovered(:,:,ii);
+    % else
+    %     if det(R_recovered(:,:,ii)) < 0
+    %         R_recovered(:,:,ii) = -R_recovered(:,:,ii);
+    %     end
+    end
+end
+
+
+
+disp("multidet(R_recovered)")
+disp(multidet(R_recovered))
+
+T_diffs_shifted = Qalign * T_edges; %this has last rows to 0
+T_recovered_pre = recover_T_edges(T_diffs_shifted(1:d,:), ...
+    edges, d, problem_data.node_degrees, low_deg, Tij_tilde_2deg_recovery);
+T_recovered = edge_diffs_2_T(T_recovered_pre, edges, N);
+% T_recovered = edge_diffs_2_T(T_diffs_shifted(1:d, :), edges, N);
+        
+
+
 %% high-deg nodes R
 
 if staircase_step_idx > d+1
@@ -54,8 +111,6 @@ if staircase_step_idx > d+1
     nodes_high_deg = problem_data.node_degrees > low_deg;
 
     T_edges = make_T_edges(T_manopt_out, edges);
-
-    RT_stacked_high_deg = [matStackH(R_manopt_out(:,:,nodes_high_deg)), T_edges];
     
     % RT_stacked_high_deg_poc = Qx_edges * RT_stacked_high_deg;    
 
@@ -176,12 +231,12 @@ disp(ssom_cost_subgraph(X_recovered, problem_data, subgraph_HD))
 
 
 % lambdas_recovered_global = lambda_factor * lambdas_recovered;
-X_recovered.lambda = lambdas_recovered_global;
+X_recovered.lambda = lambdas_recovered;
 
 disp("ssom_cost after recovery")
 disp(ssom_cost(X_recovered, problem_data))
 
-
+%% globalization
 
 R_global_HD = R_recovered(:,:,2) * X_gt.R(:,:,2)'; %!!
 % code for making all rotations global at once
