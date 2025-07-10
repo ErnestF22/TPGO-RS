@@ -40,10 +40,10 @@ if staircase_step_idx > d+1
     
     % RT_stacked_high_deg_poc = Qx_edges * RT_stacked_high_deg;    
 
-    R_recovered = zeros(d,d,N);
+    % R_recovered = zeros(d,d,N);
     
     
-    nodes_low_deg = ~nodes_high_deg;
+    % nodes_low_deg = ~nodes_high_deg;
 
     Qalign = align3d(RT_stacked_high_deg);
     % Qalign = POCRotateToMinimizeLastEntries(RT_stacked_high_deg);
