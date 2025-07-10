@@ -33,7 +33,10 @@ problem.grad = @(x) ssom_rgrad(x, problem_data);
 problem.hess = @(x, u) ssom_rhess_genproc(x, u, problem_data);
 
 % checkgradient(problem);
-% checkhessian(problem);
+tmp.R = eye3d(nrs, d, N);
+tmp.T = zeros(nrs, N);
+tmp.lambda = ones(num_edges, 1);
+checkhessian(problem, tmp);
 
 %check that GT cost is 0
 % !! only works when tijs are gt
