@@ -32,7 +32,8 @@ if staircase_step_idx > d+1
     low_deg = 2; %TODO: maybe not necessarily in more complex graph cases?
     nodes_high_deg = problem_data.node_degrees > low_deg;
 
-    subgraph = [2,3,4]; %Make this automatic later
+    nodes_list = 1:N;
+    subgraph = nodes_list(nodes_high_deg);
     T_edges = make_T_edges(T_manopt_out, edges);
     T_edges_subgraph = make_T_edges_subgraph(T_manopt_out, edges, subgraph);
 
