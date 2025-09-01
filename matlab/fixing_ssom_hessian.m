@@ -12,7 +12,7 @@ else
     thr = 1e-5;
 end
 
-problem_data_next.rho = 0.0;
+% problem_data_next.rho = 0.0; %ok both ways
 
 d = 3;
 p = problem_data_next.sz(1);
@@ -21,8 +21,9 @@ e = size(problem_data_next.edges, 1);
 
 
 resetRands(0);
-X.R = eye3d(d,d,N);
+% X.R = eye3d(d,d,N);
 % X.R = zeros(p,d,N);
+X.R = make_rand_stiefel_3d_array(d,d,N);
 resetRands(0);
 X.T = rand(d,N);
 % X.T = zeros(p,n);
