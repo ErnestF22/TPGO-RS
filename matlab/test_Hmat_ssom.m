@@ -1,7 +1,6 @@
 function test_Hmat_ssom
 
 load('data/test_Hmat_ssom.mat', 'X')
-% load('data/test_Hmat_ssom.mat', 'lambda')
 load('data/test_Hmat_ssom.mat', 'problem_data_next')
 
 % problem_data_next.rho = -10.0;
@@ -10,15 +9,15 @@ load('data/test_Hmat_ssom.mat', 'problem_data_next')
 % T = X.T;
 % Lambda = X.lambda;
 
-X_cat.R = cat_zero_rows_3d_array(X.R);
-X_cat.T = cat_zero_row(X.T);
-X_cat.lambda = X.lambda;
+% X_cat.R = cat_zero_rows_3d_array(X.R);
+% X_cat.T = cat_zero_row(X.T);
+% X_cat.lambda = X.lambda;
 
 % X_cat.R = zeros(size(cat_zero_rows_3d_array(X.R)));
 % X_cat.T = rand(size(cat_zero_row(X.T)));
 % X_cat.lambda = rand(size(X.lambda));
 
-Hmat_ssom = make_Hmat_ssom(X_cat, problem_data_next);
+Hmat_ssom = make_Hmat_ssom(X, problem_data_next);
 % disp('Hmat_ssom')
 % disp(Hmat_ssom)
 
@@ -26,23 +25,26 @@ Hmat_ssom = make_Hmat_ssom(X_cat, problem_data_next);
 
 % check_make_H_mat(X_cat, Hmat_ssom, problem_data_next);
 
-[eigvals_Hmat_ssom] = eig(Hmat_ssom);
+[eigvecs_Hmat_ssom, eigvals_Hmat_ssom] = eig(Hmat_ssom);
 
 disp("max(abs(Hmat_ssom - Hmat_ssom'), [], ""all"")")
 disp(max(abs(Hmat_ssom - Hmat_ssom'), [], "all"))
 
-% disp("lambda")
-% disp(lambda)
+
+lambda = min(real(eigvals_Hmat_ssom), [], "all");
 
 disp("min(real(eigvals_Hmat_ssom), [], ""all"")")
-disp(min(real(eigvals_Hmat_ssom), [], "all"))
+disp(lambda);
 
-% disp("ismember(lambda, eigvals_Hmat_ssom)")
-% disp(ismember(lambda, eigvals_Hmat_ssom))
+lambda_index = find(lambda == diag(eigvals_Hmat_ssom));
 
-% tmp.R = eye3d(nrs, d, N)
-% tmp.T = zeros(nrs, N)
-% tmp.lambda = ones(num_edges, 1)
+v = eigvecs_Hmat_ssom(:, lambda_index);
+
+disp("v'")
+disp(v')
+
+
+
 
 end %file function
 

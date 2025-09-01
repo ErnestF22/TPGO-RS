@@ -18,7 +18,7 @@ if nbPoses>1
 else
     % base case, for single pose
     if norm(Tij_tilde(4:end,:),'fro')/numel(Tij_tilde(4:end,:))>1e-5
-        error('Tij_tilde expected to have p-3 lines equal to zero')
+        % error('Tij_tilde expected to have p-3 lines equal to zero')
     end
     Qx=align2d_nbPoses(Tij_tilde);
     Qbot=Qx(:,d+1:end)';

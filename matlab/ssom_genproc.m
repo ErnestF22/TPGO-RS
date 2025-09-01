@@ -44,6 +44,7 @@ problem.hess = @(x, u) ssom_rhess_genproc(x, u, problem_data);
 % tmpU.T = normalize(tmpU.T);
 % tmpU.lambda = rand(num_edges, 1);
 % tmpU.lambda = normalize(tmpU.lambda);
+close all;
 figure(10)
 % checkgradient(problem, tmp);
 checkgradient(problem)
@@ -62,7 +63,7 @@ disp(cost_gt)
 
 
 % X = trustregions(problem, X_gt);
-options.maxiter = 200;
+options.maxiter = 100;
 
 X_initguess.R = G2R(transf_initguess);
 X_initguess.T = G2T(transf_initguess);
@@ -88,35 +89,96 @@ thr = 1e-5;
 % 
 % cost_cpp = ssom_cost(x_opt_cpp, problem_data);
 
+ctr_equal = 0;
+% flag_pim_used = true;
 
-for staircase_step_idx = r0:d*N+1
+for staircase_step_idx = r0:num_edges*d*N+1
     problem_data_next.sz = [staircase_step_idx, d, N];
     problem_data_next.tijs = problem_data.tijs;
     problem_data_next.edges = problem_data.edges;
     problem_data_next.rho = problem_data.rho;
 
-    [Y_star, lambda, v] = ssom_pim_hessian_genproc( ...
-        X, problem_data_next, thr);
-    disp("v") %just to remove unused variable warning
-    disp(v)
+    % [Y_star, lambda, v] = ssom_pim_hessian_genproc( ...
+    %     X, problem_data_next, thr);
 
-    if lambda > 0
+    Xprev = X;
+    Xnext = X;
+    Xnext.R = cat_zero_rows_3d_array(X.R);
+    Xnext.T = cat_zero_rows_3d_array(X.T);
+    % X_cat.lambda = X.lambda;
+
+    Hmat_ssom = make_Hmat_ssom(Xnext, problem_data_next);
+
+    % Hmat_ssom = symm(Hmat_ssom);
+
+    [eigvecs_Hmat_ssom, eigvals_Hmat_ssom] = eig(Hmat_ssom);
+
+    disp("max(abs(Hmat_ssom - Hmat_ssom'), [], ""all"")")
+    disp(max(abs(Hmat_ssom - Hmat_ssom'), [], "all"))    
+    
+    lambda = min(real(eigvals_Hmat_ssom), [], "all");
+    
+    disp("min(real(eigvals_Hmat_ssom), [], ""all"")")
+    disp(lambda);
+    
+    lambda_index = find(lambda == diag(real(eigvals_Hmat_ssom)));
+    v = real(eigvecs_Hmat_ssom(:, lambda_index(1)));
+
+    % disp("v") %just to remove unused variable warning
+    % disp(v)
+
+    if lambda > -1e-3
         disp("R, T eigenvals > 0: exiting staircase")
         break;
     end
 
+    disp("Now performing linesearch...");
+    %Note: first output param of linesearch() would be "stepsize"
+    
     % next optimization iteration
     tuple_next.R = stiefelfactory(staircase_step_idx, d, N);
     tuple_next.T = euclideanfactory(staircase_step_idx, N);
     tuple_next.lambda = euclideanfactory(num_edges, 1);
     M_next = productmanifold(tuple_next);
     problem_next.M = M_next;    
-    problem_next.cost = @(x) ssom_cost(x, problem_data); %!! problem_data is the same
-    problem_next.grad = @(x) ssom_rgrad(x, problem_data);
-    problem_next.hess = @(x, u) ssom_rhess_genproc(x, u, problem_data);
+    problem_next.cost = @(x) ssom_cost(x, problem_data_next); %!! problem_data is the same
+    problem_next.grad = @(x) ssom_rgrad(x, problem_data_next);
+    problem_next.hess = @(x, u) ssom_rhess_genproc(x, u, problem_data_next);
+
+    disp("staircase_step_idx")
+    disp(staircase_step_idx)
+    disp("d")
+    disp(d)
+    disp("N")
+    disp(N)
+
+    disp("size(v)")
+    disp(size(v))
+
+    v_struct = convertXtoRTLambdas(v, staircase_step_idx, d, N);
+
+    options.ls_max_steps = 10000;
+    options.ls_initial_stepsize = 10;
+    options.ls_contraction_factor = 0.25;
+
+    ctr_equal_last = ssom_cost(Xnext,problem_data_next);
+
+    [~, Y_star] = linesearch_decrease(problem_next, ...
+        Xnext, v_struct, ssom_cost(Xnext,problem_data_next), 0, options);
 
 
     X = trustregions(problem_next, Y_star, options);
+
+    ctr_equal_new = ssom_cost(X,problem_data_next);
+
+
+    if is_equal_floats(ctr_equal_last, ctr_equal_new, 1e-5)
+        ctr_equal = ctr_equal + 1;
+    else 
+        ctr_equal = 0;
+        flag_pim_used = false;
+    end
+
     T_manopt_out = X.T;
     R_manopt_out = X.R;
     lambdas_manopt_out = X.lambda;
@@ -127,8 +189,34 @@ for staircase_step_idx = r0:d*N+1
     disp("cost_new")
     disp(cost_last)
 
-    if rank(matStackH(Y_star.R))<staircase_step_idx
-        break;
+    % if rank(matStackH(Y_star.R))<staircase_step_idx
+    %     break;
+    % end
+
+    if ctr_equal == d 
+        disp("too many equals")
+
+        ctr_equal = 0;
+
+        [Y0pim, lambda_pim_out, v_pim_out] = ...
+            ssom_pim_hessian_genproc(Xprev, problem_data_next);
+
+        if lambda_pim_out > -1e-3
+            disp("R, T eigenvals > 0: exiting staircase")
+            break;
+        end
+
+        X = trustregions(problem_next, Y0pim, options);
+
+        cost_after_pim_rtr = ssom_cost(X, problem_data_next); 
+        disp("cost_new")
+        disp(cost_after_pim_rtr)
+
+        if (is_equal_floats(cost_after_pim_rtr, cost_last))
+            break
+        else 
+            cost_last = cost_after_pim_rtr;
+        end
     end
 
 end
