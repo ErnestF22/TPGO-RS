@@ -1,4 +1,4 @@
-function h = ssom_ehess_lambda_lambda(lambdas, lambdasdot, R, problem_data)
+function h = ssom_ehess_lambda_lambda(R, T, lambdas, lambdas_dot, problem_data)
 % h_lambda_lambda = zeros(1,1)
 % lambdas_dot = Xdot.lambda;
 edges = problem_data.edges;
@@ -18,7 +18,8 @@ for ee = 1:num_edges
     R_i = R(:, :, ii);
     % a = T_i - T_j;
     b = R_i * tij_e;
-    h(ee) = 2*(b' * b) * lambdasdot(ee);
+    lambda_dot_ee = lambdas_dot(ee,:);
+    h(ee) = 2*lambda_dot_ee*(b' * b);
 end
 
 end

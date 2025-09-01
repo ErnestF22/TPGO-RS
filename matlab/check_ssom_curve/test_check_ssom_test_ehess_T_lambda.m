@@ -1,4 +1,5 @@
 function test_check_ssom_test_ehess_T_lambda()
+
 problem=test_check_ssom();
 % curve=test_check_ssom_curve(problem);
 
@@ -10,69 +11,30 @@ e = size(problem.edges,1);
 lambda0=rand(e,1,1);
 vLambda0=rand(e,1,1);
 
-R0 = eye3d(d,d,N); %first d with nrs later
-vR0 = eye3d(d,d,N);
+R0 = make_rand_stiefel_3d_array(d,d,N); %first d with nrs later
+% vR0 = eye3d(d,d,N);
 
 T0 = rand(d,N);
-vT0 = rand(d,N);
+% vT0 = rand(d,N);
 
-[lambda,dLambda,~,~,ddLambda]=real_geodFun(lambda0, vLambda0);
-[T,dT,~,~,ddT]=real_geodFun(T0, vT0);
-[R,~,~,~,~]=rot_geodFun(R0, vR0);
-
-curve.c=@(t) T(t);
-curve.dc=@(t) dT(t);
-curve.ddc=@(t) ddT(t);
+[lambda,dLambda,~,~,ddLambda]=real_randGeodFun(lambda0);
+% [T,~,~,~,~]=real_geodFun(T0, vT0);
+% [R,dR,~,~,ddR]=rot_geodFun(R0, vR0);
+% 
+curve.c=@(t) lambda(t);
+curve.dc=@(t) dLambda(t);
+curve.ddc=@(t) ddLambda(t);
 
 % f=@(t) problem.cost(curve.c(t));
-gradf=@(t) problem.egrad_T(T0);
-df=@(t) sum(stiefel_metric([],gradf(t),curve.dc(t)));
+gradf=@(t) vec(problem.rgrad_T(R0, T0, curve.c(t)));
+% df=@(t) sum(stiefel_metric([],gradf(t),curve.dc(t)));
 % funCheckDer(f,df)
-ehessf = @(t) problem.ssom_ehess_t_lambda(R0, T0, dLambda(t), ddLambda(t));
-ddf_1 = @(t) stiefel_metric([], ehessf(t), curve.dc(t), 'euclidean');
-ddf_2 = @(t) stiefel_metric([], gradf(t), curve.ddc(t), 'euclidean');
-ddf = @(t) sum(ddf_1(t) + ddf_2(t));    
-
-funCheckDer(df,ddf)
-
-%% version with fixed R0, vLambda0
-% problem=test_check_ssom();
-% % curve=test_check_ssom_curve(problem);
-% 
-% N = problem.sz(3);
-% % nrs = problem.sz(1);
-% d = problem.sz(2);
-% e = size(problem.edges,1);
-% 
-% lambda0=rand(e,1,1);
-% vLambda0=rand(e,1,1);
-% vLambda0 = vLambda0 / norm(vLambda0);
-% 
-% R0 = eye3d(d,d,N); %first d with nrs later
-% vR0 = rot_randTangentNormVector(R0);
-% 
-% T0 = rand(d,N);
-% vT0 = rand(d,N);
-% vT0 = vT0 / norm(vT0);
-% 
-% [~,~,~,~,~]=real_geodFun(lambda0, vLambda0);
-% [T,dT,~,~,ddT]=real_geodFun(T0, vT0);
-% [~,~,~,~,~]=rot_geodFun(R0, vR0);
-% 
-% curve.c=@(t) T(t);
-% curve.dc=@(t) dT(t);
-% curve.ddc=@(t) ddT(t);
-% 
-% % f=@(t) problem.cost(curve.c(t));
-% egradf=@(t) problem.egrad_T(curve.c(t),R0,lambda0);
-% df=@(t) sum(stiefel_metric([],egradf(t),curve.dc(t)));
-% % funCheckDer(f,df)
-% ehessf = @(t) problem.ssom_ehess_t_lambda(curve.c(t),curve.dc(t),R0, vLambda0);
+ehessf = @(t) vec(problem.ssom_ehess_T_lambda(R0, T0, curve.c(t), curve.dc(t)));
 % ddf_1 = @(t) stiefel_metric([], ehessf(t), curve.dc(t), 'euclidean');
-% ddf_2 = @(t) stiefel_metric([], egradf(t), curve.ddc(t), 'euclidean');
+% ddf_2 = @(t) stiefel_metric([], gradf(t), curve.ddc(t), 'euclidean');
 % ddf = @(t) sum(ddf_1(t) + ddf_2(t));    
-% 
-% funCheckDer(df,ddf)
 
+% funCheckDer(df,ddf,'angle')
+funCheckDer(gradf, ehessf)
 
-
+end %file function

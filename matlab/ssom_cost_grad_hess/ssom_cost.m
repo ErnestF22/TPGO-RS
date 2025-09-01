@@ -26,3 +26,5 @@ for ee = 1:num_edges
     cost_relu_ee = relu_som(ssom_relu_argument(lambda_e));
     cost_out = cost_out + cost_lambda_ee + rho * cost_relu_ee;
 end
+
+end %file function

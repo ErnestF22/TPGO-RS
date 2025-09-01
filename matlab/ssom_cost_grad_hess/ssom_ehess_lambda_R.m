@@ -1,10 +1,7 @@
-function eh = ssom_ehess_lambda_R(X, Xdot, problem_data)
+function eh = ssom_ehess_lambda_R(R, Rdot, T, lambdas, problem_data)
 
-R = X.R;
-Rdot = Xdot.R;
-T = X.T;
-lambdas = X.lambda;
-% h_lambda_t = zeros(size(h_lambda_lambda));
+
+% h_lambda_r = zeros(size(h_lambda_lambda));
 
 % x = X.lambda;
 % lambdas_dot = Xdot.lambda;

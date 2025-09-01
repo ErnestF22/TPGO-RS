@@ -1,9 +1,8 @@
-function g_lambda = ssom_grad_lambda(X, problem_data)
+function g_lambda = ssom_egrad_lambda(R, T, lambdas, problem_data)
     edges = problem_data.edges;
     tijs = problem_data.tijs;
     rho = problem_data.rho;
 
-    lambdas = X.lambda;
 
     g_lambda = zeros(length(lambdas), 1);
     
@@ -13,9 +12,9 @@ function g_lambda = ssom_grad_lambda(X, problem_data)
         jj = edges(ee, 2);
         lambda_e = lambdas(ee);
         tij_e = tijs(:, ee);
-        T_i = X.T(:, ii);
-        T_j = X.T(:, jj);
-        R_i = X.R(:, :, ii);
+        T_i = T(:, ii);
+        T_j = T(:, jj);
+        R_i = R(:, :, ii);
         a = T_i - T_j;
         b = R_i * tij_e;
         base_part = 2*(b' * b * lambda_e + a' * b);

@@ -29,14 +29,27 @@ M = productmanifold(tuple);
 % Setup the problem structure with manifold M and cost+grad functions.
 problem.M = M;
 problem.cost = @(x) ssom_cost(x, problem_data);
+% problem.egrad = @(x) ssom_egrad(x, problem_data);
 problem.grad = @(x) ssom_rgrad(x, problem_data);
+% problem.ehess = @(x, u) ssom_ehess_genproc(x, u, problem_data);
 problem.hess = @(x, u) ssom_rhess_genproc(x, u, problem_data);
 
 % checkgradient(problem);
-tmp.R = eye3d(nrs, d, N);
-tmp.T = zeros(nrs, N);
-tmp.lambda = ones(num_edges, 1);
-checkhessian(problem, tmp);
+% tmp.R = make_rand_stiefel_3d_array(nrs, d, N);
+% tmp.R = eye3d(nrs, d, N);
+% tmp.T = rand(nrs, N);
+% tmp.lambda = rand(num_edges, 1);
+% tmpU.R = zeros(nrs, d, N);
+% tmpU.T = rand(nrs, N);
+% tmpU.T = normalize(tmpU.T);
+% tmpU.lambda = rand(num_edges, 1);
+% tmpU.lambda = normalize(tmpU.lambda);
+figure(10)
+% checkgradient(problem, tmp);
+checkgradient(problem)
+figure(11)
+% checkhessian(problem, tmp);
+checkhessian(problem)
 
 %check that GT cost is 0
 % !! only works when tijs are gt
