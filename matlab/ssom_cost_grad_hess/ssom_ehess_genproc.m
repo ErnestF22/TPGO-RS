@@ -11,7 +11,7 @@ hrt = computeHrt(R, T, Tdot, lambdas, problem_data);
 htr = ssom_ehess_T_R(R, Rdot, T, lambdas, problem_data);
 
 % h_lambda_lambda = zeros(size(lambda));
-h_lambda_lambda = ssom_ehess_lambda_lambda(lambdas, lambdasdot, R, problem_data);
+h_lambda_lambda = ssom_ehess_lambda_lambda(R, T, lambdas, lambdasdot, problem_data);
 
 % h_r_lambda = zeros(size(hrt));
 % h_r_lambda = ssom_ehess_R_lambda(R, T, lambdas, lambdasdot, problem_data);

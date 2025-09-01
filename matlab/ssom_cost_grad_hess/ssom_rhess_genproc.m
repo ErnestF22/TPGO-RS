@@ -28,7 +28,7 @@ h_lambda_r = ssom_ehess_lambda_R(R, Rdot, T, lambdas, problem_data);
 % h_lambda_t = zeros(size(h_lambda_lambda));
 h_lambda_t = ssom_ehess_lambda_T(R, T, Tdot, lambdas, problem_data);
 
-h.R = stiefel_tangentProj(R, hrr) + hrt + h_r_lambda;
+h.R = stiefel_tangentProj(R, hrr + hrt + h_r_lambda);
 h.T = ssom_ehess_T_T(R, T, Tdot, lambdas, problem_data) + htr + h_t_lambda;
 h.lambda = h_lambda_lambda + h_lambda_r + h_lambda_t;
 

@@ -1,4 +1,4 @@
-function [lambda_max, x_max] = ssom_pim_function_genproc(f, x_start, normalization_fun, thresh)
+function [lambda_max, x_max] = ssom_pim_function_genproc(f, x_start, normalization_fun, thresh, num_max_iter)
 %PIM_FUNCTION (where PIM is an acronym for Power Iteration Method) 
 % Iterative method that returns an eigenvector associated to the maximum 
 % eigenvalue of matrix A
@@ -8,6 +8,10 @@ if ~exist('thresh','var')
   thresh=1e-10;
 end
 
+if ~exist('num_max_iter','var')
+  num_max_iter = 2000;
+end
+
 %% R
 iterative_change = 1e+6;
 xR = x_start.R;
@@ -15,7 +19,7 @@ xT = x_start.T;
 xLambda = x_start.lambda;
 xfull = [x_start.R(:); x_start.T(:); x_start.lambda(:)];
 iteration_num = 0;
-while (iteration_num < 2000) % && (abs(iterative_change) > thresh)
+while (iteration_num < num_max_iter) % && (abs(iterative_change) > thresh)
     iteration_num = iteration_num + 1;
     x_prev_R = xR;
     x_prev_T = xT;

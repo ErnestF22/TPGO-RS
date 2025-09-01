@@ -1,5 +1,5 @@
 function [Y0, lambda_pim_out, v_pim_out] = ssom_pim_hessian_genproc( ...
-    X, problem_struct_next, thresh)
+    X, problem_struct_next, thresh, num_max_iter)
 %RSOM_PIM_HESSIAN Return a new starting point Y0 with lower cost that R
 % This is based on a linesearch towards an eigenvector v_pim_out 
 % corresponding to negative eigenvalue lambda_pim_out.
@@ -10,6 +10,11 @@ function [Y0, lambda_pim_out, v_pim_out] = ssom_pim_hessian_genproc( ...
 if ~exist('thresh', 'var')
     thresh = 1e-6;
 end
+
+if ~exist('num_max_iter', 'var')
+    num_max_iter = 2000;
+end
+
 
 Rnext = cat_zero_rows_3d_array(X.R);
 Tnext = cat_zero_row(X.T);
@@ -26,7 +31,7 @@ u_start.T = rand(size(Tnext));
 u_start.T = stiefel_normalize_han(u_start.T);
 u_start.lambda = rand(size(Xnext.lambda));
 u_start.lambda = stiefel_normalize_han(u_start.lambda);
-[lambda_pim, v_pim] = ssom_pim_function_genproc(rhess_fun_han, u_start, stiefel_normalize_han, thresh);
+[lambda_pim, v_pim] = ssom_pim_function_genproc(rhess_fun_han, u_start, stiefel_normalize_han, thresh, num_max_iter);
 disp('Difference between lambda*v_max and H(v_max) should be in the order of the tolerance:')
 ssom_eigencheck_hessian_genproc(lambda_pim, v_pim, rhess_fun_han);
 
@@ -52,7 +57,7 @@ if lambda_pim>0
     u_start_second_iter.lambda = rand(size(Xnext.lambda));
     u_start_second_iter.lambda = stiefel_normalize_han(u_start.lambda);
     [lambda_pim_after_shift, v_pim_after_shift] = ssom_pim_function_genproc( ...
-        rhess_shifted_fun_han, u_start_second_iter, stiefel_normalize_han, thresh);
+        rhess_shifted_fun_han, u_start_second_iter, stiefel_normalize_han, thresh, num_max_iter);
     
     disp(['Difference between lambda_pim_after_shift*v_pim_after_shift ' ...
         'and H_SH(v_pim_after_shift) should be in the order of the tolerance:'])
