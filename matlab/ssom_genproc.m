@@ -61,6 +61,10 @@ cost_gt = ssom_cost(X_gt, problem_data);
 disp("cost_gt in ssom_genproc.m")
 disp(cost_gt)
 
+tg_element_test = M.randvec(X_gt);
+disp("check_is_tangent_stiefel(X_gt.R, tg_element_test.R)")
+disp(check_is_tangent_stiefel(X_gt.R, tg_element_test.R));
+
 
 % X = trustregions(problem, X_gt);
 options.maxiter = 100;

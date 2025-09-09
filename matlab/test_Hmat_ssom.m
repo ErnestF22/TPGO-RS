@@ -29,6 +29,8 @@ problem_data_next.rho = 0;
 Xvec = vectorizeXrtlambdas(X);
 X2 = convertXtoRTLambdas(Xvec, p, d, N);
 
+% checking vectorizeXrtlambdas() and convertXtoRTLambdas()
+disp("checking vectorizeXrtlambdas() and convertXtoRTLambdas()")
 disp("is_equal_floats(X.R, X2.R)")
 disp(is_equal_floats(X.R, X2.R))
 disp("is_equal_floats(X.T, X2.T)")
