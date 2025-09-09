@@ -1,12 +1,11 @@
-function g = ssom_egrad_T(R, T, lambdas, problem_data)
+function h = ssom_ehess_T_T(R, T, Tdot, lambdas, problem_data)
 
-% g = zeros(size(T));
 
 N = size(T, 2);
-nrs = size(T, 1);
+% nrs = size(T, 1);
 
 LR = zeros(N,N);
-PR = zeros(nrs,N);
+% PR = zeros(N,nrs);
 % BR_const = zeros(d,d);
 
 
@@ -17,13 +16,12 @@ for e = 1:num_edges
     bij = zeros(N,1);
     bij(ii, 1) = 1;
     bij(jj, 1) = -1;
-    tij = problem_data.tijs(:, e);
-    lambda_e = lambdas(e, 1);
+    % tij = problem_data.tijs(:, e);
+    % lambda_e = lambdas(e, 1);
     LR = LR + (bij * bij');
-    Ri = R(:,:,ii);
-    PR = PR + 2 * lambda_e * (Ri * tij * bij');
+    % Ri = R(:,:,ii);
+    % PR = PR + 2 * (bij * lambda_e * tij' * Ri');
 end
 
-g=T*(LR+LR')+(PR);
-
+h = Tdot*(LR' + LR);
 end

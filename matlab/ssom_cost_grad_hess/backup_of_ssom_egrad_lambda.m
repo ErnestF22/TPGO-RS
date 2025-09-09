@@ -15,8 +15,9 @@ function g_lambda = ssom_egrad_lambda(R, T, lambdas, problem_data)
         T_i = T(:, ii);
         T_j = T(:, jj);
         R_i = R(:, :, ii);
-        base_part = 2*(tij_e'*tij_e * lambda_e + ...
-            tij_e' * R_i' * T_i - tij_e' * R_i' * T_j);
+        a = T_i - T_j;
+        b = R_i * tij_e;
+        base_part = 2*(b' * b * lambda_e + a' * b);
         relu_part = 0.0;
         if (ssom_relu_argument(lambda_e)>0)
             relu_part = -1.0;

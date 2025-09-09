@@ -1,4 +1,4 @@
-function h = ssom_ehess_R_lambda(R, T, ~, lambdas_dot, problem_data)
+function h = ssom_rhess_R_lambda(R, T, ~, lambdas_dot, problem_data)
 
 nrs = size(T, 1);
 d = size(problem_data.tijs, 1);
@@ -16,9 +16,12 @@ for e = 1:num_edges
     Ti = T(:, ii);
     lambdadot_ij = lambdas_dot(e,:);
     tij = problem_data.tijs(:,e);
+    R_i = R(:,:,ii);
+    P_e = 2 * (Ti * lambdadot_ij * tij' - Tj * lambdadot_ij * tij');
     h(:, :, ii) = ...
-        h(:, :, ii) + 2 * lambdadot_ij * (Ti - Tj) * tij';
+        h(:, :, ii) + 2 * P_e - R_i * R_i' * P_e - R_i * P_e' * R_i ;
 end
 
+h = 0.5 * h;
 
 end

@@ -15,44 +15,47 @@ edges = table2array(G.Edges);
 
 tijs = 10 * rand(d, num_edges);
 
-lambdas = 10 * rand(num_edges, 1);
+% lambdas = 10 * rand(num_edges, 1);
 
 rho = 0.0; %TODO: make this rand() later
 
-tijs_scaled = make_tijs_scaled(lambdas, tijs); %!!
+% tijs_scaled = make_tijs_scaled(lambdas, tijs); %!!
 problem_data = struct('sz', sz, 'edges', edges, 'tijs', tijs);
 
 % variables random generation/init
-tuple.R = stiefelfactory(nrs, d, N);
-tuple.T = euclideanfactory(nrs, N);
-tuple.lambda = euclideanfactory(num_edges, 1);
-M = productmanifold(tuple);
+% tuple.R = stiefelfactory(nrs, d, N);
+% tuple.T = euclideanfactory(nrs, N);
+% tuple.lambda = euclideanfactory(num_edges, 1);
+% M = productmanifold(tuple);
 % problem.M = M;
-x = M.rand();
+% x = M.rand();
 % lambdas = x.lambda;
-T = x.T;
-R = x.R;
+% T = x.T;
+% R = x.R;
 
-%g.R
-[problem_data.P, problem_data.frct] = ...
-    make_step1_p_fct(T, tijs_scaled, edges);
-%g.T
-[problem_data.LR, problem_data.PR, problem_data.BR] = ...
-    make_LR_PR_BR_noloops(R, tijs_scaled, edges);
-%g.lambda
-[aL, bL, cL] = makeABClambda(x, problem_data);
-problem_data.aL = aL; problem_data.bL = bL; problem_data.cL = cL;
-
+% %g.R
+% [problem_data.P, problem_data.frct] = ...
+%     make_step1_p_fct(T, tijs_scaled, edges);
+% %g.T
+% [problem_data.LR, problem_data.PR, problem_data.BR] = ...
+%     make_LR_PR_BR_noloops(R, tijs_scaled, edges);
+% %g.lambda
+% [aL, bL, cL] = makeABClambda(x, problem_data);
+% problem_data.aL = aL; problem_data.bL = bL; problem_data.cL = cL;
+% 
 problem_data.rho = rho; %ReLU() part should not be needed for Hessian tests
 
 %% output (problem_curve_data) definition
 
 problem_data.edges = edges;
 problem_data.tijs = tijs;
-problem_data.cost_lambda=@(x) ssom_cost_lambda(x,problem_data);
+problem_data.cost=@(R,T,lambdas) cost_nostruct(R,T,lambdas,problem_data);
 % problem_data.cost_R=@(x) ssom_cost_rot(x,problem_data);
 % problem_data.cost_T=@(x) ssom_cost_transl(x,problem_data);
 % gradients
+problem_data.egrad_lambda=@(R,T,lambdas) ssom_egrad_lambda(R,T,lambdas,problem_data);
+problem_data.egrad_R=@(R,T,lambdas) ssom_egrad_R(R,T,lambdas,problem_data);
+problem_data.egrad_T=@(R,T,lambdas) ssom_egrad_T(R,T,lambdas,problem_data);
 problem_data.rgrad_lambda=@(R,T,lambdas) ssom_rgrad_lambda(R,T,lambdas,problem_data);
 problem_data.rgrad_R=@(R,T,lambdas) ssom_rgrad_R(R,T,lambdas,problem_data);
 problem_data.rgrad_T=@(R,T,lambdas) ssom_rgrad_T(R,T,lambdas,problem_data);
@@ -77,6 +80,12 @@ problem_data.ssom_ehess_lambda_T=...
 end %file function
 
 %% costs
+function cost_out = cost_nostruct(RR, TT, LL, problem_data)
+    XX.R = RR;
+    XX.T = TT;
+    XX.lambda = LL;
+    cost_out = ssom_cost(XX, problem_data);
+end
 % function c = ssom_cost_rot(x, problem_data)
 % xCost=matStack(multitransp(x));
 % c=trace(xCost*problem_data.P) + problem_data.frct;

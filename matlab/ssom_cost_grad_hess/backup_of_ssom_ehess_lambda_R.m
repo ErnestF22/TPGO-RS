@@ -19,14 +19,16 @@ num_edges = size(edges, 1);
 for ee = 1:num_edges
     ii = edges(ee, 1);
     jj = edges(ee, 2);
-    % lambda_e = lambdas(ee);
+    lambda_e = lambdas(ee);
     tij = tijs_vec(:, ee);
     T_i = T(:, ii);
     T_j = T(:, jj);
     R_i_dot = Rdot(:, :, ii);
-    % R_i = R(:, :, ii);
-    
-    e_th_elem_half = (tij' * R_i_dot') * (T_i - T_j);
+    R_i = R(:, :, ii);
+    a = T_i - T_j;
+    bdot = R_i_dot * tij;
+    b = R_i * tij;
+    e_th_elem_half = lambda_e * (bdot' * b + b' * bdot)  + a' * bdot;
 
     eh(ee) = 2 * e_th_elem_half;
 end

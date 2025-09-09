@@ -1,6 +1,6 @@
-function [Y0, lambda_pim_out, v_pim_out] = ssom_pim_hessian_genproc( ...
+function [Y0, lambda_pim_out, v_pim_out] = ssom_pim_ehess_genproc( ...
     X, problem_struct_next, thresh, num_max_iter)
-%SSOM_PIM_HESSIAN_GENPROC Return a new starting point Y0 with lower cost that R
+%SSOM_PIM_EHESS_GENPROC Return a new starting point Y0 with lower cost that R
 % This is based on a linesearch towards an eigenvector v_pim_out 
 % corresponding to negative eigenvalue lambda_pim_out.
 % If the Hessian does not have any negative eigenvalue (i.e., the two PIM
@@ -21,7 +21,7 @@ Tnext = cat_zero_row(X.T);
 Xnext.R = Rnext;
 Xnext.T = Tnext;
 Xnext.lambda = X.lambda;
-rhess_fun_han = @(u) ssom_rhess_genproc(Xnext,u,problem_struct_next);
+ehess_fun_han = @(u) ssom_ehess_genproc(Xnext,u,problem_struct_next);
 
 stiefel_normalize_han = @(x) x./ (norm(x(:))); %Note: this is basically eucl_normalize_han
 
@@ -31,9 +31,9 @@ u_start.T = rand(size(Tnext));
 u_start.T = stiefel_normalize_han(u_start.T);
 u_start.lambda = rand(size(Xnext.lambda));
 u_start.lambda = stiefel_normalize_han(u_start.lambda);
-[lambda_pim, v_pim] = ssom_pim_function_genproc(rhess_fun_han, u_start, stiefel_normalize_han, thresh, num_max_iter);
+[lambda_pim, v_pim] = ssom_pim_function_genproc(ehess_fun_han, u_start, stiefel_normalize_han, thresh, num_max_iter);
 disp('Difference between lambda*v_max and H(v_max) should be in the order of the tolerance:')
-ssom_eigencheck_hessian_genproc(lambda_pim, v_pim, rhess_fun_han);
+ssom_eigencheck_hessian_genproc(lambda_pim, v_pim, ehess_fun_han);
 
 
 
@@ -46,8 +46,8 @@ if lambda_pim>0
 
     mu = 1.1 * lambda_pim;
 
-    rhess_shifted_fun_han = ...
-        @(u) ssom_rhess_genproc_shifted(Xnext,u,mu,problem_struct_next);
+    ehess_shifted_fun_han = ...
+        @(u) ssom_ehess_genproc_shifted(Xnext,u,mu,problem_struct_next);
             
     %run shifted power iteration
     u_start_second_iter.R = stiefel_randTangentNormVector(Rnext);
@@ -57,19 +57,19 @@ if lambda_pim>0
     u_start_second_iter.lambda = rand(size(Xnext.lambda));
     u_start_second_iter.lambda = stiefel_normalize_han(u_start.lambda);
     [lambda_pim_after_shift, v_pim_after_shift] = ssom_pim_function_genproc( ...
-        rhess_shifted_fun_han, u_start_second_iter, stiefel_normalize_han, thresh, num_max_iter);
+        ehess_shifted_fun_han, u_start_second_iter, stiefel_normalize_han, thresh, num_max_iter);
     
     disp(['Difference between lambda_pim_after_shift*v_pim_after_shift ' ...
         'and H_SH(v_pim_after_shift) should be in the order of the tolerance:'])
     ssom_eigencheck_hessian_genproc(lambda_pim_after_shift, v_pim_after_shift, ...
-        rhess_shifted_fun_han);
+        ehess_shifted_fun_han);
 
     disp('Checking Eigenvalue shift:')
     disp(['difference between (lambda_pim_after_shift+mu)*v_pim_after_shift ' ...
         'and H(v_pim_after_shift) should be in the order of the tolerance:'])
     highest_norm_eigenval = lambda_pim_after_shift + mu;
     ssom_eigencheck_hessian_genproc(highest_norm_eigenval, v_pim_after_shift, ...
-        rhess_fun_han);
+        ehess_fun_han);
     highest_norm_eigenval = lambda_pim_after_shift + mu;
 else
     v_pim_after_shift = v_pim; %variable name in this case is misleading since shift does not happen at all
@@ -84,12 +84,12 @@ end
 %     'should be in the order of the tolerance:'])
  %in case if (lambda_pim>0) FALSE
 
-% eigencheck_hessian_genproc(highest_norm_eigenval, v_pim, rhess_fun_han);
+% eigencheck_hessian_genproc(highest_norm_eigenval, v_pim, ehess_fun_han);
 %%% scaling eigenvalue
-% if ~eigencheck_hessian(highest_norm_eigenval, v_pim, rhess_fun_han)
+% if ~eigencheck_hessian(highest_norm_eigenval, v_pim, ehess_fun_han)
 %     % scale_factor
 %     fac_1 = remove_quasi_zeros(highest_norm_eigenval*v_pim(:));
-%     hess_hne = rhess_fun_han(v_pim);
+%     hess_hne = ehess_fun_han(v_pim);
 %     fac_2 = remove_quasi_zeros(hess_hne(:));
 %     fac2_1 = fac_2 ./ fac_1;
 %     fac2_1_nums = fac2_1(~isnan(fac2_1));
@@ -97,7 +97,7 @@ end
 %     scale_factor = mode(fac2_1_finite);
 % 
 %     disp("Not even after scaling eigenval?")
-%     eigencheck_hessian(scale_factor * highest_norm_eigenval, v_pim, rhess_fun_han);
+%     eigencheck_hessian(scale_factor * highest_norm_eigenval, v_pim, ehess_fun_han);
 %     highest_norm_eigenval = scale_factor * highest_norm_eigenval;
 % end
 
@@ -141,53 +141,53 @@ for ii = 1:length(alphas)
     plot_vals(ii) = step2.cost(x_retr_ii);
 
     %grad
-    ssom_rg = ssom_rgrad(Xnext, problem_struct_next);
-    rgt_R = alphas(ii)* ...
+    ssom_eg = ssom_egrad(Xnext, problem_struct_next);
+    egt_R = alphas(ii)* ...
         sum(stiefel_metric( ...
         Rnext,v_pim_after_shift.R, ...
-            ssom_rg.R ,'euclidean'));
+            ssom_eg.R ,'euclidean'));
     egt_T = alphas(ii)* ...
         sum(stiefel_metric( ...
         Tnext,v_pim_after_shift.T, ...
-            ssom_rg.T,'euclidean'));
+            ssom_eg.T,'euclidean'));
     egt_lambdas = alphas(ii)* ...
         sum(stiefel_metric( ...
         Xnext.lambda,v_pim_after_shift.lambda, ...
-            ssom_rg.lambda,'euclidean'));
+            ssom_eg.lambda,'euclidean'));
 
 
-    ssom_rhess_var = ssom_rhess_genproc(Xnext, v_pim_after_shift, problem_struct_next);
+    ssom_ehess_var = ssom_ehess_genproc(Xnext, v_pim_after_shift, problem_struct_next);
     pvt_R = alphas(ii)^2/2* ...
         sum(stiefel_metric( ...
         Rnext,v_pim_after_shift.R, ...
-            ssom_rhess_var.R ,'euclidean'));
+            ssom_ehess_var.R ,'euclidean'));
     pvt_T = alphas(ii)^2/2* ...
         sum(stiefel_metric( ...
         Tnext,v_pim_after_shift.T, ...
-            ssom_rhess_var.T,'euclidean'));
+            ssom_ehess_var.T,'euclidean'));
     pvt_lambdas = alphas(ii)^2/2* ...
         sum(stiefel_metric( ...
         Xnext.lambda,v_pim_after_shift.lambda, ...
-            ssom_rhess_var.lambda,'euclidean'));
+            ssom_ehess_var.lambda,'euclidean'));
     
     % OBS. Also following terms are 0 if the curve is a geodesic
     curve_var_R = alphas(ii)^2/2* ...
         sum(stiefel_metric( ...
-        Rnext,ssom_rg.R, ...
+        Rnext,ssom_eg.R, ...
             ddxRt(0) ,'euclidean'));
     curve_var_T = alphas(ii)^2/2* ...
         sum(stiefel_metric( ...
-        Tnext,ssom_rg.T, ...
+        Tnext,ssom_eg.T, ...
             ddxTt(0),'euclidean'));
     curve_var_lambdas = alphas(ii)^2/2* ...
         sum(stiefel_metric( ...
-        Xnext.lambda,ssom_rg.lambda, ...
+        Xnext.lambda,ssom_eg.lambda, ...
             ddxLambdat(0),'euclidean'));
     
 
     
     plot_vals_taylor(ii) = step2.cost(Xnext) + ...
-        rgt_R + egt_T + egt_lambdas + ...
+        egt_R + egt_T + egt_lambdas + ...
         pvt_R + pvt_T + pvt_lambdas + ...
         curve_var_R + curve_var_T + curve_var_lambdas;
 end
