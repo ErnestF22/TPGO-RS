@@ -93,6 +93,10 @@ disp(lambda);
 disp("lambda_pim")
 disp(lambda_pim)
 
+disp("abs(lambda - lambda_pim)")
+disp(abs(lambda - lambda_pim))
+
+
 end %file function
 
 

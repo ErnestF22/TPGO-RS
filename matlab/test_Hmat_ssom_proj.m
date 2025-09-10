@@ -1,8 +1,5 @@
-function test_Hmat_ssom
+function test_Hmat_ssom_proj
 
-close all;
-
-% load('data/test_Hmat_ssom.mat', 'X')
 load('data/test_Hmat_ssom.mat', 'problem_data_next')
 p = problem_data_next.sz(1);
 d = problem_data_next.sz(2);
@@ -52,7 +49,7 @@ X_cat.lambda = X.lambda;
 % X_cat.T = rand(size(cat_zero_row(X.T)));
 % X_cat.lambda = rand(size(X.lambda));
 
-Hmat_ssom = make_Hmat_ssom_metric(X_cat, problem_data_next);
+Hmat_ssom = make_Hmat_ssom_proj(X_cat, problem_data_next);
 % disp('Hmat_ssom')
 % disp(Hmat_ssom)
 
@@ -115,36 +112,98 @@ disp(lambda);
 disp("lambda_pim")
 disp(lambda_pim)
 
-disp("abs(lambda - lambda_pim)")
-disp(abs(lambda - lambda_pim))
+
 
 end %file function
 
-
-
-function Hmat = check_make_Hmat(X, Hmat, problem_struct)
-% CHECK THE CONSISTENCY IN HMAT BUILDING
+function Hmat = make_Hmat_ssom_proj(X, problem_struct)
 Xvec = vectorizeXrtlambdas(X);
 vecsz = length(Xvec);
+Hmat = zeros(vecsz);
 p = size(X.R, 1);
 d = size(X.R, 2);
 n = size(X.R, 3);
 % e = size(problem_struct.edges, 1);
+
+basis_stiefel = stiefel_tangentBasis(X.R(:,:,2));
+
+num_asymmetries = 0;
+asymmetries_ij = [];
+asymmetries_mat = ones(vecsz, vecsz);
 for ii = 1:vecsz
-    e_i = zeros(vecsz, 1);
-    e_i(ii) = 1;
-    % e_i(1:p*d*n) = 1; %(p*d*n + 1:p*d*n + p*n), (p*d*n + p*n + 1:end)
-    % e_i(p*d*n + p*n + 1:end) = 1;
-    U_e_i = convertXtoRTLambdas(e_i, p, d, n);
-    % U_e_i.R = zeros(size(U_e_i.R));
-    % U_e_i.lambda = zeros(size(U_e_i.lambda));
-    Hgp_e_i = ssom_rhess_genproc(X, U_e_i, problem_struct);
-    Hgp_e_i_mat = Hmat * e_i;
-    if ~is_equal_floats(vectorizeXrtlambdas(Hgp_e_i), Hgp_e_i_mat)
-        disp(is_equal_floats(vectorizeXrtlambdas(Hgp_e_i), Hgp_e_i_mat))
-        disp([vectorizeXrtlambdas(Hgp_e_i), Hgp_e_i_mat])
-        error("found bug")
+    for jj = 1:vecsz
+
+        % if ~((jj > 45 && jj < 61) && (ii > 0 && ii < 46))
+        %     continue;
+        % end
+        d_i = zeros(vecsz, 1);
+        d_i(ii) = 1;
+        d_j = zeros(vecsz, 1);
+        d_j(jj) = 1;
+
+        disp("ii")
+        disp(ii)
+        disp("jj")
+        disp(jj)
+
+        % generate basis through projection of std basis (does not seem to
+        % be correct)
+        U_d_i = convertXtoRTLambdas(d_i, p, d, n);
+        U_d_i_proj = U_d_i;
+        U_d_i_proj.R = stiefel_tangentProj(X.R, U_d_i_proj.R);
+        U_d_j = convertXtoRTLambdas(d_j, p, d, n);
+        U_d_j_proj = U_d_j;
+        U_d_j_proj.R = stiefel_tangentProj(X.R, U_d_j_proj.R);
+
+
+        tmp_ij = d_i' * vectorizeXrtlambdas(ssom_rhess_genproc(X, U_d_j_proj, problem_struct));
+        tmp_ji = d_j' * vectorizeXrtlambdas(ssom_rhess_genproc(X, U_d_i_proj, problem_struct));
+        disp("[tmp_ij, tmp_ji]")
+        disp([tmp_ij, tmp_ji])
+
+        % cano
+        asd_ij = ssom_rhess_genproc(X, U_d_j_proj, problem_struct);
+        asd_ji = ssom_rhess_genproc(X, U_d_i_proj, problem_struct);
+        % check_i_tg = check_is_tangent_stiefel(X.R, U_d_i_proj.R);
+        % check_j_tg = check_is_tangent_stiefel(X.R, U_d_j_proj.R);
+        % disp("check_i_tg")
+        % disp(check_i_tg)
+        % disp("check_j_tg")
+        % disp(check_j_tg)
+        tmp_ij_cano_R = ...
+            sum(stiefel_metric(X.R, U_d_i_proj.R, asd_ij.R, 'canonical'));
+        tmp_ji_cano_R = ...
+            sum(stiefel_metric(X.R, U_d_j_proj.R, asd_ji.R, 'canonical'));
+        tmp_ij_cano_T = ...
+            sum(stiefel_metric(X.T, U_d_i_proj.T, asd_ij.T, 'euclidean'));
+        tmp_ji_cano_T = ...
+            sum(stiefel_metric(X.T, U_d_j_proj.T, asd_ji.T, 'euclidean'));
+        tmp_ij_cano_lambda = ...
+            sum(stiefel_metric(X.lambda, U_d_i_proj.lambda, asd_ij.lambda, 'euclidean'));
+        tmp_ji_cano_lambda = ...
+            sum(stiefel_metric(X.lambda, U_d_j_proj.lambda, asd_ji.lambda, 'euclidean'));
+        disp("[tmp_ij_cano, tmp_ji_cano]")
+        disp([tmp_ij_cano_R + tmp_ij_cano_T + tmp_ij_cano_lambda, tmp_ji_cano_R + tmp_ji_cano_T + tmp_ji_cano_lambda])
+
+        if ~is_equal_floats(tmp_ij, tmp_ji)
+            num_asymmetries = num_asymmetries + 1;
+            asymmetries_ij(:, num_asymmetries) = [ii;jj];
+            asymmetries_mat(ii, jj) = 0;
+        end
+        
+        Hmat(ii, jj) = tmp_ij;
     end
 end
-end
 
+disp("num_asymmetries")
+disp(num_asymmetries)
+
+disp("asymmetries_ij")
+disp(asymmetries_ij)
+
+
+colour0 = [0 1 0];
+colour1 = [1 0 0];
+figure(10); hAxes = gca; imagesc( asymmetries_mat )
+colormap( hAxes, [colour0; colour1] )
+end
