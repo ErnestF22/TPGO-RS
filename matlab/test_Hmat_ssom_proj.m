@@ -20,6 +20,8 @@ X.R = make_rand_stiefel_3d_array(p, d, N);
 X.T = 50 * rand(p,N);
 X.lambda = 5 * rand(num_edges, 1);
 
+stb = stiefel_tangentBasis(X.R(:,:,1));
+
 problem_data_next.rho = 0;
 
 
@@ -118,18 +120,29 @@ end %file function
 
 function Hmat = make_Hmat_ssom_proj(X, problem_struct)
 Xvec = vectorizeXrtlambdas(X);
-vecsz = length(Xvec);
-Hmat = zeros(vecsz);
-p = size(X.R, 1);
+
+nrs = size(X.R, 1);
 d = size(X.R, 2);
-n = size(X.R, 3);
+np= (nrs-d)*d+d*(d-1)/2;
+sz_stiefel_tang = d * np;
+
+N = size(X.R, 3);
+
 % e = size(problem_struct.edges, 1);
 
-basis_stiefel = stiefel_tangentBasis(X.R(:,:,2));
 
+stb_full = zeros(nrs, d, np, N);
+
+for ii = 1:N
+    stb_full(:,:,:,ii) = stiefel_tangentBasis(X.R(:,:,ii));
+end
 num_asymmetries = 0;
 asymmetries_ij = [];
+num_edges = size(X.lambda, 1);
+vecsz = np * N + nrs * N + num_edges;
 asymmetries_mat = ones(vecsz, vecsz);
+sizes_stiefel_tg_basis = 1:np:np*N;
+Hmat = zeros(vecsz);
 for ii = 1:vecsz
     for jj = 1:vecsz
 
@@ -137,7 +150,11 @@ for ii = 1:vecsz
         %     continue;
         % end
         d_i = zeros(vecsz, 1);
-        d_i(ii) = 1;
+        d_i(1:nrs*N) = vec(stb_full())
+        if ii <= np * N
+            d_i(1:nrs * d * np, 1) = vec(stb_full())
+        end
+        
         d_j = zeros(vecsz, 1);
         d_j(jj) = 1;
 
@@ -148,10 +165,10 @@ for ii = 1:vecsz
 
         % generate basis through projection of std basis (does not seem to
         % be correct)
-        U_d_i = convertXtoRTLambdas(d_i, p, d, n);
+        U_d_i = convertXtoRTLambdas(d_i, nrs, d, N);
         U_d_i_proj = U_d_i;
         U_d_i_proj.R = stiefel_tangentProj(X.R, U_d_i_proj.R);
-        U_d_j = convertXtoRTLambdas(d_j, p, d, n);
+        U_d_j = convertXtoRTLambdas(d_j, nrs, d, N);
         U_d_j_proj = U_d_j;
         U_d_j_proj.R = stiefel_tangentProj(X.R, U_d_j_proj.R);
 
