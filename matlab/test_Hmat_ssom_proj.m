@@ -114,7 +114,7 @@ disp(lambda);
 disp("lambda_pim")
 disp(lambda_pim)
 
-if (~is_equal_flots(lambda_pim, lambda))
+if (~is_equal_floats(lambda_pim, lambda))
     error("lambda_pim != lambda")
 end
 
