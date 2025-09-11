@@ -97,8 +97,8 @@ if (is_equal_floats(max(abs(Hmat_ssom - Hmat_ssom'), [], "all"), 0))
     
     v = eigvecs_Hmat_ssom(:, lambda_index);
     
-    disp("v'")
-    disp(v')
+    % disp("v'")
+    % disp(v')
     
     disp("min(real(eigvals_Hmat_ssom), [], ""all"")")
 else
@@ -114,6 +114,10 @@ disp(lambda);
 disp("lambda_pim")
 disp(lambda_pim)
 
+if (~is_equal_flots(lambda_pim, lambda))
+    error("lambda_pim != lambda")
+end
+
 
 
 end %file function
@@ -123,13 +127,12 @@ Xvec = vectorizeXrtlambdas(X);
 
 nrs = size(X.R, 1);
 d = size(X.R, 2);
-np= (nrs-d)*d+d*(d-1)/2;
+np = (nrs-d)*d+d*(d-1)/2;
 sz_stiefel_tang = d * np;
 
 N = size(X.R, 3);
 
 % e = size(problem_struct.edges, 1);
-
 
 stb_full = zeros(nrs, d, np, N);
 
@@ -141,74 +144,110 @@ asymmetries_ij = [];
 num_edges = size(X.lambda, 1);
 vecsz = np * N + nrs * N + num_edges;
 asymmetries_mat = ones(vecsz, vecsz);
-sizes_stiefel_tg_basis = 1:np:np*N;
-Hmat = zeros(vecsz);
-for ii = 1:vecsz
-    for jj = 1:vecsz
 
-        % if ~((jj > 45 && jj < 61) && (ii > 0 && ii < 46))
-        %     continue;
-        % end
-        d_i = zeros(vecsz, 1);
-        d_i(1:nrs*N) = vec(stb_full())
-        if ii <= np * N
-            d_i(1:nrs * d * np, 1) = vec(stb_full())
-        end
-        
-        d_j = zeros(vecsz, 1);
-        d_j(jj) = 1;
+Hmat = zeros(vecsz);
+np_ii = 1;
+N_ii = 1;
+
+ids_stiefel_start = 1:nrs*d:nrs*d*N;
+ids_stiefel_end = nrs*d:nrs*d:nrs*d*N;
+for ii = 1:vecsz
+    np_jj = 1;
+    N_jj = 1;
+    d_i = zeros(nrs*d*N + nrs * N + num_edges, 1);
+    if ii <= np * N         
+        d_i(ids_stiefel_start(N_ii):ids_stiefel_end(N_ii)) = ...
+            vec(stb_full(:,:,np_ii, N_ii));
+    else 
+        d_i(ii + nrs * d * N - np * N) = 1;
+    end
+    for jj = 1:vecsz
 
         disp("ii")
         disp(ii)
         disp("jj")
         disp(jj)
 
-        % generate basis through projection of std basis (does not seem to
-        % be correct)
+
+        % if ~((jj > nrs*d*N && jj < nrs*d*N + nrs * N + 1) && (ii > nrs*d*N && ii < nrs*d*N + nrs * N + 1))
+        %     continue;
+        % end
+
+        % if ~((jj < nrs*d*N + 1))
+        %     continue;
+        % end
+
+
+        d_j = zeros(nrs*d*N + nrs * N + num_edges, 1);
+        if jj <= np * N 
+            
+            d_j(ids_stiefel_start(N_jj):ids_stiefel_end(N_jj)) = ...
+                vec(stb_full(:,:,np_jj, N_jj));
+        else 
+            d_j(jj + nrs * d * N - np * N) = 1;
+        end
+        
         U_d_i = convertXtoRTLambdas(d_i, nrs, d, N);
-        U_d_i_proj = U_d_i;
-        U_d_i_proj.R = stiefel_tangentProj(X.R, U_d_i_proj.R);
         U_d_j = convertXtoRTLambdas(d_j, nrs, d, N);
-        U_d_j_proj = U_d_j;
-        U_d_j_proj.R = stiefel_tangentProj(X.R, U_d_j_proj.R);
 
+        rh_j = ssom_rhess_genproc(X, U_d_j, problem_struct);
+        rh_i = ssom_rhess_genproc(X, U_d_i, problem_struct);
 
-        tmp_ij = d_i' * vectorizeXrtlambdas(ssom_rhess_genproc(X, U_d_j_proj, problem_struct));
-        tmp_ji = d_j' * vectorizeXrtlambdas(ssom_rhess_genproc(X, U_d_i_proj, problem_struct));
-        disp("[tmp_ij, tmp_ji]")
-        disp([tmp_ij, tmp_ji])
+        val_ij = d_i' * vectorizeXrtlambdas(rh_j);
+        val_ji = d_j' * vectorizeXrtlambdas(rh_i);
+        disp("[val_ij, val_ji]")
+        disp([val_ij, val_ji])
 
-        % cano
-        asd_ij = ssom_rhess_genproc(X, U_d_j_proj, problem_struct);
-        asd_ji = ssom_rhess_genproc(X, U_d_i_proj, problem_struct);
-        % check_i_tg = check_is_tangent_stiefel(X.R, U_d_i_proj.R);
-        % check_j_tg = check_is_tangent_stiefel(X.R, U_d_j_proj.R);
-        % disp("check_i_tg")
-        % disp(check_i_tg)
-        % disp("check_j_tg")
-        % disp(check_j_tg)
-        tmp_ij_cano_R = ...
-            sum(stiefel_metric(X.R, U_d_i_proj.R, asd_ij.R, 'canonical'));
-        tmp_ji_cano_R = ...
-            sum(stiefel_metric(X.R, U_d_j_proj.R, asd_ji.R, 'canonical'));
-        tmp_ij_cano_T = ...
-            sum(stiefel_metric(X.T, U_d_i_proj.T, asd_ij.T, 'euclidean'));
-        tmp_ji_cano_T = ...
-            sum(stiefel_metric(X.T, U_d_j_proj.T, asd_ji.T, 'euclidean'));
-        tmp_ij_cano_lambda = ...
-            sum(stiefel_metric(X.lambda, U_d_i_proj.lambda, asd_ij.lambda, 'euclidean'));
-        tmp_ji_cano_lambda = ...
-            sum(stiefel_metric(X.lambda, U_d_j_proj.lambda, asd_ji.lambda, 'euclidean'));
-        disp("[tmp_ij_cano, tmp_ji_cano]")
-        disp([tmp_ij_cano_R + tmp_ij_cano_T + tmp_ij_cano_lambda, tmp_ji_cano_R + tmp_ji_cano_T + tmp_ji_cano_lambda])
+                
+        check_i_tg = check_is_tangent_stiefel(X.R, U_d_i.R);
+        check_j_tg = check_is_tangent_stiefel(X.R, U_d_j.R);
+        disp("check_i_tg")
+        disp(check_i_tg)
+        disp("check_j_tg")
+        disp(check_j_tg)
 
-        if ~is_equal_floats(tmp_ij, tmp_ji)
+        if ~(check_i_tg) || ~(check_j_tg)
+            error("Stiefel tangency error")
+        end
+
+        metric_ij_cano_R = ...
+            sum(stiefel_metric(X.R, U_d_i.R, rh_j.R, 'canonical'));
+        metric_ji_cano_R = ...
+            sum(stiefel_metric(X.R, U_d_j.R, rh_i.R, 'canonical'));
+        metric_ij_cano_T = ...
+            sum(stiefel_metric(X.T, U_d_i.T, rh_j.T, 'euclidean'));
+        metric_ji_cano_T = ...
+            sum(stiefel_metric(X.T, U_d_j.T, rh_i.T, 'euclidean'));
+        metric_ij_cano_lambda = ...
+            sum(stiefel_metric(X.lambda, U_d_i.lambda, rh_j.lambda, 'euclidean'));
+        metric_ji_cano_lambda = ...
+            sum(stiefel_metric(X.lambda, U_d_j.lambda, rh_i.lambda, 'euclidean'));
+        disp("[metric_ij_cano, metric_ji_cano]")
+        metric_ij_cano = metric_ij_cano_R + metric_ij_cano_T + metric_ij_cano_lambda;
+        metric_ji_cano = metric_ji_cano_R + metric_ji_cano_T + metric_ji_cano_lambda;
+        disp([metric_ij_cano, metric_ji_cano])
+
+        if ~is_equal_floats(val_ij, val_ji)
             num_asymmetries = num_asymmetries + 1;
             asymmetries_ij(:, num_asymmetries) = [ii;jj];
             asymmetries_mat(ii, jj) = 0;
         end
         
-        Hmat(ii, jj) = tmp_ij;
+        % Hmat(jj, ii) = val_ji;
+        Hmat(jj, ii) = metric_ji_cano_R + metric_ji_cano_T + metric_ji_cano_lambda;
+
+        np_jj = np_jj + 1;
+        if np_jj > np
+            np_jj = np_jj - np;
+            N_jj = N_jj + 1;
+        end
+        disp("[np_jj, N_jj]")
+        disp([np_jj, N_jj])
+    end
+    np_ii = np_ii + 1;
+    if np_ii > np
+        np_ii = np_ii - np;
+        N_ii = N_ii + 1;
     end
 end
 
