@@ -107,7 +107,7 @@ else
     disp("Hmat_ssom ASYMMETRIC!")
     disp("max(abs(imag(eigvals_Hmat_ssom)), [], ""all"")")
     disp(max(abs(imag(eigvals_Hmat_ssom)), [], "all"))
-    if max(abs(imag(eigvals_Hmat_ssom)), [], "all")
+    if ~is_equal_floats(max(abs(imag(eigvals_Hmat_ssom)), [], "all"), 0)
         imag_eigenvalues = false;
     end
     lambda = min(real(eigvals_Hmat_ssom), [], "all"); 
