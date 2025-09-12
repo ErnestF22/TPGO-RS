@@ -1,4 +1,4 @@
-function [Y0, lambda_pim_out, v_pim_out] = ssom_pim_hessian_genproc( ...
+function [Y0, lambda_pim_out, v_pim_out, eigenvalue_check_ok] = ssom_pim_hessian_genproc( ...
     X, problem_struct_next, thresh, num_max_iter)
 %SSOM_PIM_HESSIAN_GENPROC Return a new starting point Y0 with lower cost that R
 % This is based on a linesearch towards an eigenvector v_pim_out 
@@ -15,6 +15,7 @@ if ~exist('num_max_iter', 'var')
     num_max_iter = 2000;
 end
 
+eigenvalue_check_ok = false;
 
 Rnext = cat_zero_rows_3d_array(X.R);
 Tnext = cat_zero_row(X.T);
@@ -33,7 +34,7 @@ u_start.lambda = rand(size(Xnext.lambda));
 u_start.lambda = stiefel_normalize_han(u_start.lambda);
 [lambda_pim, v_pim] = ssom_pim_function_genproc(rhess_fun_han, u_start, stiefel_normalize_han, thresh, num_max_iter);
 disp('Difference between lambda*v_max and H(v_max) should be in the order of the tolerance:')
-ssom_eigencheck_hessian_genproc(lambda_pim, v_pim, rhess_fun_han);
+eigenvalue_check_ok = ssom_eigencheck_hessian_genproc(lambda_pim, v_pim, rhess_fun_han);
 
 
 
@@ -61,14 +62,14 @@ if lambda_pim>0
     
     disp(['Difference between lambda_pim_after_shift*v_pim_after_shift ' ...
         'and H_SH(v_pim_after_shift) should be in the order of the tolerance:'])
-    ssom_eigencheck_hessian_genproc(lambda_pim_after_shift, v_pim_after_shift, ...
+    eigenvalue_check_ok = ssom_eigencheck_hessian_genproc(lambda_pim_after_shift, v_pim_after_shift, ...
         rhess_shifted_fun_han);
 
     disp('Checking Eigenvalue shift:')
     disp(['difference between (lambda_pim_after_shift+mu)*v_pim_after_shift ' ...
         'and H(v_pim_after_shift) should be in the order of the tolerance:'])
     highest_norm_eigenval = lambda_pim_after_shift + mu;
-    ssom_eigencheck_hessian_genproc(highest_norm_eigenval, v_pim_after_shift, ...
+    eigenvalue_check_ok = ssom_eigencheck_hessian_genproc(highest_norm_eigenval, v_pim_after_shift, ...
         rhess_fun_han);
     highest_norm_eigenval = lambda_pim_after_shift + mu;
 else
