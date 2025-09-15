@@ -89,7 +89,7 @@ disp(max(abs(Hmat_ssom - Hmat_ssom'), [], "all"))
 [Y0_pim, lambda_pim, v_pim, pim_eigenvalue_check_ok] = ...
     ssom_pim_hessian_genproc(X, problem_data_next, 1e-6, 5000);
 
-imag_eigenvalues = true;
+imag_eigenvalues = false;
 
 if (is_equal_floats(max(abs(Hmat_ssom - Hmat_ssom'), [], "all"), 0))
     lambda = min(eigvals_Hmat_ssom, [], "all"); % !! HP) Hmat_ssom already symmetric
@@ -107,8 +107,8 @@ else
     disp("Hmat_ssom ASYMMETRIC!")
     disp("max(abs(imag(eigvals_Hmat_ssom)), [], ""all"")")
     disp(max(abs(imag(eigvals_Hmat_ssom)), [], "all"))
-    if ~is_equal_floats(max(abs(imag(eigvals_Hmat_ssom)), [], "all"), 0)
-        imag_eigenvalues = false;
+    if max(abs(imag(eigvals_Hmat_ssom)), [], "all") > 1e-5
+        imag_eigenvalues = true;
     end
     lambda = min(real(eigvals_Hmat_ssom), [], "all"); 
 end

@@ -1,4 +1,4 @@
-function script_tmp
+function test_Hmat_ssom_proj_rep
 
 for ii = 1:1000
     [lambda, lambda_pim, eigenvalue_check_ok, imaginary_eigenvalues] = ...
