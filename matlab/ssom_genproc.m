@@ -133,7 +133,9 @@ for staircase_step_idx = r0:num_edges*d*N+1
 
     lambda_index = find(lambda == diag(real(eigvals_Hmat_ssom)));
     
-    v = real(eigvecs_Hmat_ssom(:, lambda_index));
+    v_tg = real(eigvecs_Hmat_ssom(:, lambda_index));
+
+    v = recompose_eigenvector_from_Hmat(Xnext, v_tg);
     % 
     % % disp("v") %just to remove unused variable warning
     % % disp(v)
@@ -155,40 +157,40 @@ for staircase_step_idx = r0:num_edges*d*N+1
     problem_next.cost = @(x) ssom_cost(x, problem_data_next); %!! problem_data is the same
     problem_next.grad = @(x) ssom_rgrad(x, problem_data_next);
     problem_next.hess = @(x, u) ssom_rhess_genproc(x, u, problem_data_next);
-    % 
-    % disp("staircase_step_idx")
-    % disp(staircase_step_idx)
-    % disp("d")
-    % disp(d)
-    % disp("N")
-    % disp(N)
-    % 
-    % disp("size(v)")
-    % disp(size(v))
-    % 
+
+    disp("staircase_step_idx")
+    disp(staircase_step_idx)
+    disp("d")
+    disp(d)
+    disp("N")
+    disp(N)
+
+    disp("size(v)")
+    disp(size(v))
+
     % v_struct = convertXtoRTLambdas(v, staircase_step_idx, d, N);
-    % 
-    % options.ls_max_steps = 10000;
-    % options.ls_initial_stepsize = 10;
-    % options.ls_contraction_factor = 0.25;
-    % 
-    % ctr_equal_last = ssom_cost(Xnext,problem_data_next);
-    % 
-    % [~, Y_star] = linesearch_decrease(problem_next, ...
-    %     Xnext, v_struct, ssom_cost(Xnext,problem_data_next), 0, options);
+
+    options.ls_max_steps = 10000;
+    options.ls_initial_stepsize = 10;
+    options.ls_contraction_factor = 0.25;
+
+    ctr_equal_last = ssom_cost(Xnext,problem_data_next);
+
+    [~, Y_star] = linesearch_decrease(problem_next, ...
+        Xnext, v, ssom_cost(Xnext,problem_data_next), 0, options);
     % 
     % 
     X = trustregions(problem_next, Y_star, options);
 
-    % ctr_equal_new = ssom_cost(X,problem_data_next);
-    % 
-    % 
-    % if is_equal_floats(ctr_equal_last, ctr_equal_new, 1e-5)
-    %     ctr_equal = ctr_equal + 1;
-    % else 
-    %     ctr_equal = 0;
-    %     flag_pim_used = false;
-    % end
+    ctr_equal_new = ssom_cost(X,problem_data_next);
+
+
+    if is_equal_floats(ctr_equal_last, ctr_equal_new, 1e-5)
+        ctr_equal = ctr_equal + 1;
+    else 
+        ctr_equal = 0;
+        flag_pim_used = false;
+    end
 
     T_manopt_out = X.T;
     R_manopt_out = X.R;

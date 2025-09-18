@@ -39,10 +39,10 @@ for ii = 1:vecsz
     end
     for jj = 1:vecsz
 
-        disp("ii")
-        disp(ii)
-        disp("jj")
-        disp(jj)
+        % disp("ii")
+        % disp(ii)
+        % disp("jj")
+        % disp(jj)
 
 
         % if ~((jj > nrs*d*N && jj < nrs*d*N + nrs * N + 1) && (ii > nrs*d*N && ii < nrs*d*N + nrs * N + 1))
@@ -69,10 +69,10 @@ for ii = 1:vecsz
         rh_j = ssom_rhess_genproc(X, U_d_j, problem_struct);
         rh_i = ssom_rhess_genproc(X, U_d_i, problem_struct);
 
-        val_ij = d_i' * vectorizeXrtlambdas(rh_j);
-        val_ji = d_j' * vectorizeXrtlambdas(rh_i);
-        disp("[val_ij, val_ji]")
-        disp([val_ij, val_ji])
+        % val_ij = d_i' * vectorizeXrtlambdas(rh_j);
+        % val_ji = d_j' * vectorizeXrtlambdas(rh_i);
+        % disp("[val_ij, val_ji]")
+        % disp([val_ij, val_ji])
 
         % if ~is_equal_floats(val_ij, val_ji)
         %     num_asymmetries = num_asymmetries + 1;
@@ -83,10 +83,10 @@ for ii = 1:vecsz
                 
         check_i_tg = check_is_tangent_stiefel(X.R, U_d_i.R);
         check_j_tg = check_is_tangent_stiefel(X.R, U_d_j.R);
-        disp("check_i_tg")
-        disp(check_i_tg)
-        disp("check_j_tg")
-        disp(check_j_tg)
+        % disp("check_i_tg")
+        % disp(check_i_tg)
+        % disp("check_j_tg")
+        % disp(check_j_tg)
 
         if ~(check_i_tg) || ~(check_j_tg)
             error("Stiefel tangency error")
@@ -104,10 +104,10 @@ for ii = 1:vecsz
             sum(stiefel_metric(X.lambda, U_d_i.lambda, rh_j.lambda, 'euclidean'));
         metric_ji_cano_lambda = ...
             sum(stiefel_metric(X.lambda, U_d_j.lambda, rh_i.lambda, 'euclidean'));
-        disp("[metric_ij_cano, metric_ji_cano]")
         metric_ij_cano = metric_ij_cano_R + metric_ij_cano_T + metric_ij_cano_lambda;
         metric_ji_cano = metric_ji_cano_R + metric_ji_cano_T + metric_ji_cano_lambda;
-        disp([metric_ij_cano, metric_ji_cano])
+        % disp("[metric_ij_cano, metric_ji_cano]")
+        % disp([metric_ij_cano, metric_ji_cano])
 
         
         if ~is_equal_floats(metric_ij_cano, metric_ji_cano)
@@ -124,8 +124,8 @@ for ii = 1:vecsz
             np_jj = np_jj - np;
             N_jj = N_jj + 1;
         end
-        disp("[np_jj, N_jj]")
-        disp([np_jj, N_jj])
+        % disp("[np_jj, N_jj]")
+        % disp([np_jj, N_jj])
     end
     np_ii = np_ii + 1;
     if np_ii > np
@@ -134,11 +134,11 @@ for ii = 1:vecsz
     end
 end
 
-disp("num_asymmetries")
-disp(num_asymmetries)
-
-disp("asymmetries_ij")
-disp(asymmetries_ij)
+% disp("num_asymmetries")
+% disp(num_asymmetries)
+% 
+% disp("asymmetries_ij")
+% disp(asymmetries_ij)
 
 
 colour0 = [0 1 0];
