@@ -11,8 +11,8 @@ R = X.R;
 eh = ssom_ehess_genproc(X, Xdot, problem_data);
 
 nrs = size(R,1);
-d = size(R,1);
-N = size(R,1);
+d = size(R,2);
+N = size(R,3);
 
 num_edges = size(problem_data.edges, 1);
 

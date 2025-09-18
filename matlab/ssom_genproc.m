@@ -102,8 +102,8 @@ for staircase_step_idx = r0:num_edges*d*N+1
     problem_data_next.edges = problem_data.edges;
     problem_data_next.rho = problem_data.rho;
 
-    [Y_star, lambda, v] = ssom_pim_hessian_genproc( ...
-        X, problem_data_next, thr);
+    % [Y_star, lambda, v] = ssom_pim_hessian_genproc( ...
+    %     X, problem_data_next, thr);
 
     Xprev = X;
     Xnext = X;
@@ -111,22 +111,29 @@ for staircase_step_idx = r0:num_edges*d*N+1
     Xnext.T = cat_zero_rows_3d_array(X.T);
     % X_cat.lambda = X.lambda;
 
-    % Hmat_ssom = make_Hmat_ssom(Xnext, problem_data_next);
-    % 
-    % % Hmat_ssom = symm(Hmat_ssom);
-    % 
-    % [eigvecs_Hmat_ssom, eigvals_Hmat_ssom] = eig(Hmat_ssom);
-    % 
-    % disp("max(abs(Hmat_ssom - Hmat_ssom'), [], ""all"")")
-    % disp(max(abs(Hmat_ssom - Hmat_ssom'), [], "all"))    
-    % 
-    % lambda = min(real(eigvals_Hmat_ssom), [], "all");
-    % 
-    % disp("min(real(eigvals_Hmat_ssom), [], ""all"")")
-    % disp(lambda);
-    % 
-    % lambda_index = find(lambda == diag(real(eigvals_Hmat_ssom)));
-    % v = real(eigvecs_Hmat_ssom(:, lambda_index(1)));
+    Hmat_ssom = make_Hmat_ssom_proj(Xnext, problem_data_next);
+
+    % Hmat_ssom = symm(Hmat_ssom);
+
+    [eigvecs_Hmat_ssom, eigvals_Hmat_ssom] = eig(Hmat_ssom);
+
+    disp("max(abs(Hmat_ssom - Hmat_ssom'), [], ""all"")")
+    disp(max(abs(Hmat_ssom - Hmat_ssom'), [], "all"))    
+
+    lambda = min(real(eigvals_Hmat_ssom), [], "all");
+
+    disp("min(real(eigvals_Hmat_ssom), [], ""all"")")
+    disp(lambda);
+
+    imag_eigenvalues = false;
+    if max(abs(imag(eigvals_Hmat_ssom)), [], "all") > 1e-5
+        imag_eigenvalues = true;
+        error("Imag eigenvalues in ssom_genproc")
+    end
+
+    lambda_index = find(lambda == diag(real(eigvals_Hmat_ssom)));
+    
+    v = real(eigvecs_Hmat_ssom(:, lambda_index));
     % 
     % % disp("v") %just to remove unused variable warning
     % % disp(v)
