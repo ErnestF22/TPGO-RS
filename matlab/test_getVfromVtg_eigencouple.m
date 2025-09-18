@@ -1,5 +1,5 @@
 function test_getVfromVtg_eigencouple
-
+%% not useful for getting eigenvector
 load("data/getVfromVtg.mat")
 
 
