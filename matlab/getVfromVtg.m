@@ -1,4 +1,4 @@
-function rh_j = getVfromVtg(X, ~, lambda_index, problem_struct)
+function [rh_j, rh_i] = getVfromVtg(X, ~, lambda_index, problem_struct)
     nrs = size(X.R, 1);
     d = size(X.R, 2);
     N = size(X.R, 3);

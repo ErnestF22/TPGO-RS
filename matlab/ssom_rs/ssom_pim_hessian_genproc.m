@@ -122,7 +122,7 @@ step2.hess = @(x, u) ssom_ehess_genproc(x, u, problem_struct_next);
 [xTt,dxTt,~,~,ddxTt] = real_geodFun(Xnext.T, v_pim_after_shift.T);
 [xLambdat,dxLambdat,~,~,ddxLambdat] = real_geodFun(Xnext.lambda, v_pim_after_shift.lambda);
 
-alphas = linspace(-0.01,0.01,1001); %-0.2:0.01:0.2;
+alphas = linspace(-0.1,0.1,1001); %-0.2:0.01:0.2;
 plot_vals = zeros(size(alphas));
 plot_vals_taylor = zeros(size(alphas));
 for ii = 1:length(alphas)

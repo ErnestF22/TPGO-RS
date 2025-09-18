@@ -1,4 +1,4 @@
-function [lambda, lambda_pim, v_out_Hmat, v_out_pim, pim_eigenvalue_check_ok, imag_eigenvalues] = test_Hmat_ssom_proj
+function [lambda, lambda_pim, v_out_Hmat_struct, v_out_pim, pim_eigenvalue_check_ok, imag_eigenvalues] = test_Hmat_ssom_proj
 
 load('data/test_Hmat_ssom.mat', 'problem_data_next')
 problem_data = problem_data_next; % !!
@@ -97,9 +97,37 @@ disp(lambda_pim)
 
 %%
 rhess_fun_han = @(u) ssom_rhess_genproc(X_cat,u,problem_data_next);
-v_out_Hmat = getVfromVtg(X_cat, v_out_Hmat_tg, lambda_index, problem_data_next);
-disp('Difference between lambda*v_max and H(v_max) should be in the order of the tolerance:')
-eigenvalue_check_ok = ssom_eigencheck_hessian_genproc(lambda, v_out_Hmat, rhess_fun_han);
+% v_out_Hmat = getVfromVtg(X_cat, v_out_Hmat_tg, lambda_index, problem_data_next);
+% disp('Difference between lambda*v_max and H(v_max) should be in the order of the tolerance:')
 
+
+np = (p+1-d)*d+d*(d-1)/2;
+stb_full = zeros(p + 1, d, np, N);
+
+for ii = 1:N
+    stb_full(:,:,:,ii) = stiefel_tangentBasis(X_cat.R(:,:,ii));
+end
+
+v_out_Hmat.R = zeros((p + 1) * d * N, 1);
+v_out_Hmat.T = zeros((p + 1) *  N, 1);
+v_out_Hmat.lambda = zeros(num_edges, 1);
+
+
+np_ids_start = 1:np:np*N;
+np_ids_end = np:np:np*N;
+
+for ii = 1:np
+   elem_ii = v_out_Hmat_tg(np_ids_start(ii,:):np_ids_end(ii,:))' * vec(stb_full(:,:,ii,:));
+   v_out_Hmat.R = v_out_Hmat.R + elem_ii;
+end
+
+v_out_Hmat.T = v_out_Hmat_tg(np*N+1: np*N+1 + (p + 1) * N);
+
+
+v_out_Hmat.lambda = v_out_Hmat_tg(np*N+1 + (p + 1) * N + 1: end);
+
+v_out_Hmat_struct = convertXtoRTLambdas(v_out_Hmat, p+1, d, N);
+
+eigenvalue_check_ok = ssom_eigencheck_hessian_genproc(lambda, v_out_Hmat, rhess_fun_han);
 
 end %file function
