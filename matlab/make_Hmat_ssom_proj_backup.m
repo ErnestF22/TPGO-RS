@@ -1,12 +1,9 @@
-function Hmat = make_Hmat_ssom_proj(X, problem_struct)
+function Hmat = make_Hmat_ssom_proj_backup(X, problem_struct)
 % Xvec = vectorizeXrtlambdas(X);
-
-disp("Running make_Hmat_ssom_proj()")
-
 
 nrs = size(X.R, 1);
 d = size(X.R, 2);
-np = (nrs-d)*d+d*(d-1)/2; % size of stiefel tg basis
+np = (nrs-d)*d+d*(d-1)/2;
 % sz_stiefel_tang = d * np;
 
 N = size(X.R, 3);
@@ -18,11 +15,11 @@ stb_full = zeros(nrs, d, np, N);
 for ii = 1:N
     stb_full(:,:,:,ii) = stiefel_tangentBasis(X.R(:,:,ii));
 end
-% num_asymmetries = 0;
-% asymmetries_ij = [];
+num_asymmetries = 0;
+asymmetries_ij = [];
 num_edges = size(X.lambda, 1);
 vecsz = np * N + nrs * N + num_edges;
-% asymmetries_mat = ones(vecsz, vecsz);
+asymmetries_mat = ones(vecsz, vecsz);
 
 Hmat = zeros(vecsz);
 np_ii = 1;
@@ -69,7 +66,7 @@ for ii = 1:vecsz
         U_d_i = convertXtoRTLambdas(d_i, nrs, d, N);
         U_d_j = convertXtoRTLambdas(d_j, nrs, d, N);
 
-        % rh_j = ssom_rhess_genproc(X, U_d_j, problem_struct);
+        rh_j = ssom_rhess_genproc(X, U_d_j, problem_struct);
         rh_i = ssom_rhess_genproc(X, U_d_i, problem_struct);
 
         % val_ij = d_i' * vectorizeXrtlambdas(rh_j);
@@ -84,40 +81,40 @@ for ii = 1:vecsz
         % end
 
                 
-        % check_i_tg = check_is_tangent_stiefel(X.R, U_d_i.R);
-        % check_j_tg = check_is_tangent_stiefel(X.R, U_d_j.R);
+        check_i_tg = check_is_tangent_stiefel(X.R, U_d_i.R);
+        check_j_tg = check_is_tangent_stiefel(X.R, U_d_j.R);
         % disp("check_i_tg")
         % disp(check_i_tg)
         % disp("check_j_tg")
         % disp(check_j_tg)
 
-        % if ~(check_i_tg) || ~(check_j_tg)
-        %     error("Stiefel tangency error")
-        % end
+        if ~(check_i_tg) || ~(check_j_tg)
+            error("Stiefel tangency error")
+        end
 
-        % metric_ij_cano_R = ...
-        %     sum(stiefel_metric(X.R, U_d_i.R, rh_j.R, 'canonical'));
+        metric_ij_cano_R = ...
+            sum(stiefel_metric(X.R, U_d_i.R, rh_j.R, 'canonical'));
         metric_ji_cano_R = ...
             sum(stiefel_metric(X.R, U_d_j.R, rh_i.R, 'canonical'));
-        % metric_ij_cano_T = ...
-        %     sum(stiefel_metric(X.T, U_d_i.T, rh_j.T, 'euclidean'));
+        metric_ij_cano_T = ...
+            sum(stiefel_metric(X.T, U_d_i.T, rh_j.T, 'euclidean'));
         metric_ji_cano_T = ...
             sum(stiefel_metric(X.T, U_d_j.T, rh_i.T, 'euclidean'));
-        % metric_ij_cano_lambda = ...
-        %     sum(stiefel_metric(X.lambda, U_d_i.lambda, rh_j.lambda, 'euclidean'));
+        metric_ij_cano_lambda = ...
+            sum(stiefel_metric(X.lambda, U_d_i.lambda, rh_j.lambda, 'euclidean'));
         metric_ji_cano_lambda = ...
             sum(stiefel_metric(X.lambda, U_d_j.lambda, rh_i.lambda, 'euclidean'));
-        % metric_ij_cano = metric_ij_cano_R + metric_ij_cano_T + metric_ij_cano_lambda;
+        metric_ij_cano = metric_ij_cano_R + metric_ij_cano_T + metric_ij_cano_lambda;
         metric_ji_cano = metric_ji_cano_R + metric_ji_cano_T + metric_ji_cano_lambda;
         % disp("[metric_ij_cano, metric_ji_cano]")
         % disp([metric_ij_cano, metric_ji_cano])
 
         
-        % if ~is_equal_floats(metric_ij_cano, metric_ji_cano)
-        %     num_asymmetries = num_asymmetries + 1;
-        %     asymmetries_ij(:, num_asymmetries) = [ii;jj];
-        %     asymmetries_mat(ii, jj) = 0;
-        % end
+        if ~is_equal_floats(metric_ij_cano, metric_ji_cano)
+            num_asymmetries = num_asymmetries + 1;
+            asymmetries_ij(:, num_asymmetries) = [ii;jj];
+            asymmetries_mat(ii, jj) = 0;
+        end
         
         % Hmat(jj, ii) = val_ji;
         Hmat(jj, ii) = metric_ji_cano;
@@ -143,12 +140,9 @@ end
 % disp("asymmetries_ij")
 % disp(asymmetries_ij)
 
-% 
-% colour0 = [0 1 0];
-% colour1 = [1 0 0];
-% figure(10); hAxes = gca; imagesc( asymmetries_mat )
-% colormap( hAxes, [colour0; colour1] )
 
-disp("End of make_Hmat_ssom_proj()")
-
+colour0 = [0 1 0];
+colour1 = [1 0 0];
+figure(10); hAxes = gca; imagesc( asymmetries_mat )
+colormap( hAxes, [colour0; colour1] )
 end

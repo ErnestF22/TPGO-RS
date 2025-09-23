@@ -123,7 +123,7 @@ if params.enable_ssom
     testdata.noisy_test = params.noisy_test;
     testdata.node_degrees = params.node_degrees;
     [transf_ssom, lambdas_ssom_out, rs_success_bool, cost_ssom] = ...
-        ssom_genproc(testdata, transf_initguess, lambdas_initguess); %lambdas_ssom_out should be used somewhere (maybe already inside ssom_genproc)
+        ssom_genproc(testdata, transf_initguess, lambdas_initguess, params); %lambdas_ssom_out should be used somewhere (maybe already inside ssom_genproc)
     disp("cost_ssom")
     disp(cost_ssom)
     if cost_ssom > 1e-3

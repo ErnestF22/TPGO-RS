@@ -107,7 +107,8 @@ end
 nrs_next = problem_struct_next.sz(1);
 d = problem_struct_next.sz(2);
 N = problem_struct_next.sz(3);
-tuple_next.R = euclideanfactory([nrs_next, d, N]);
+% tuple_next.R = euclideanfactory([nrs_next, d, N]);
+tuple_next.R = stiefelfactory(nrs_next, d, N);
 tuple_next.T = euclideanfactory(nrs_next, N);
 num_edges = size(problem_struct_next.edges, 1);
 tuple_next.lambda = euclideanfactory(num_edges, 1);
@@ -115,8 +116,8 @@ M = productmanifold(tuple_next);
 step2.M = M;
 step2.sz = [nrs_next, d, N];
 step2.cost = @(x) ssom_cost(x, problem_struct_next);
-step2.grad = @(x) ssom_egrad(x, problem_struct_next);
-step2.hess = @(x, u) ssom_ehess_genproc(x, u, problem_struct_next);
+step2.grad = @(x) ssom_rgrad(x, problem_struct_next);
+step2.hess = @(x, u) ssom_rhess_genproc(x, u, problem_struct_next);
 
 [xRt,dxRt,~,~,ddxRt] = real_geodFun(Xnext.R, v_pim_after_shift.R);
 [xTt,dxTt,~,~,ddxTt] = real_geodFun(Xnext.T, v_pim_after_shift.T);
@@ -207,8 +208,23 @@ hold off
 disp("Now performing linesearch...");
 %Note: first output param of linesearch() would be "stepsize"
 
+options.ls_max_steps = 10000;
+options.ls_initial_stepsize = 10;
+options.ls_contraction_factor = 0.25;
+
 [~, Y0] = linesearch_decrease(step2, ...
-    Xnext, v_pim_after_shift, ssom_cost(Xnext,problem_struct_next));
+    Xnext, v_pim_after_shift, ssom_cost(Xnext,problem_struct_next), 0, options);
+
+
+
+if is_equal_floats(vectorizeXrtlambdas(Y0), vectorizeXrtlambdas(Xnext)) && highest_norm_eigenval < 0
+    options2.tolcost = -1e-10;
+    [v_ex, lambda_ex] = hessianextreme(step2, Xnext, 'min',v_pim_after_shift, options2);
+    [~, Y0] = linesearch_decrease(step2, ...
+        Xnext, v_ex, ssom_cost(Xnext,problem_struct_next), 0, options);
+    disp("is_equal_floats(vectorizeXrtlambdas(Y0), vectorizeXrtlambdas(Xnext))")
+    disp(is_equal_floats(vectorizeXrtlambdas(Y0), vectorizeXrtlambdas(Xnext)))
+end
 
 % cost_before_ls = ssom_cost(Xnext,problem_struct_next);
 % Rnext = Xnext.R(:);

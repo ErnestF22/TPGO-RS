@@ -8,7 +8,7 @@ mindeg = 3;
 % 1a) PW TRANSLATION DATA INPUT: R, T are the gt, Tijs_nois are the input data
 testdata = testNetwork_params(3, N, 'banded', mindeg); %4 would be the default
 
-testdata.rho = 1.0;
+testdata.rho = 0.5;
 
 % %som = ShapeOfMotion('testNetwork_params.csv'); %params reading is done directly in constructor
 % %copy the list below from the properties list
@@ -26,6 +26,7 @@ riem_grad_mode = 'manual'; %'auto' or 'manual'
 hessian_mode = 'manual'; 
 initguess_is_available = boolean(0);
 rand_initguess = boolean(1);
+use_pim = boolean(1);
 enable_manopt_icp = boolean(0);
 enable_procrustes = boolean(0);
 enable_ssom = boolean(1);
@@ -38,6 +39,7 @@ som_params = struct('N', N, 'd', d, 'd_aff', d_aff, ...
     'hessian_mode', hessian_mode, ...
     'initguess_is_available', initguess_is_available, ...
     'rand_initguess', rand_initguess, ...
+    'use_pim', use_pim, ...
     'enable_manopt_icp', enable_manopt_icp, ...
     'enable_procrustes', enable_procrustes, ...
     'enable_ssom', enable_ssom);

@@ -1,4 +1,5 @@
-function [transf_out, lambdas_ssom_out, rs_recovery_success, cost_out_global] = ssom_genproc(problem_data, transf_initguess, lambdas_initguess)
+function [transf_out, lambdas_ssom_out, rs_recovery_success, cost_out_global] = ...
+    ssom_genproc(problem_data, transf_initguess, lambdas_initguess, params)
 %RSOM_RS Rsom Manopt pipeline, with the addition of the Riemannian
 %Staircase ("RS")
 
@@ -67,7 +68,7 @@ disp(check_is_tangent_stiefel(X_gt.R, tg_element_test.R));
 
 
 % X = trustregions(problem, X_gt);
-options.maxiter = 100;
+options.maxiter = 500;
 
 X_initguess.R = G2R(transf_initguess);
 X_initguess.T = G2T(transf_initguess);
@@ -102,53 +103,6 @@ for staircase_step_idx = r0:num_edges*d*N+1
     problem_data_next.edges = problem_data.edges;
     problem_data_next.rho = problem_data.rho;
 
-    % [Y_star, lambda, v] = ssom_pim_hessian_genproc( ...
-    %     X, problem_data_next, thr);
-
-    Xprev = X;
-    Xnext = X;
-    Xnext.R = cat_zero_rows_3d_array(X.R);
-    Xnext.T = cat_zero_rows_3d_array(X.T);
-    % X_cat.lambda = X.lambda;
-
-    Hmat_ssom = make_Hmat_ssom_proj(Xnext, problem_data_next);
-
-    % Hmat_ssom = symm(Hmat_ssom);
-
-    [eigvecs_Hmat_ssom, eigvals_Hmat_ssom] = eig(Hmat_ssom);
-
-    disp("max(abs(Hmat_ssom - Hmat_ssom'), [], ""all"")")
-    disp(max(abs(Hmat_ssom - Hmat_ssom'), [], "all"))    
-
-    lambda = min(real(eigvals_Hmat_ssom), [], "all");
-
-    disp("min(real(eigvals_Hmat_ssom), [], ""all"")")
-    disp(lambda);
-
-    imag_eigenvalues = false;
-    if max(abs(imag(eigvals_Hmat_ssom)), [], "all") > 1e-5
-        imag_eigenvalues = true;
-        error("Imag eigenvalues in ssom_genproc")
-    end
-
-    lambda_index = find(lambda == diag(real(eigvals_Hmat_ssom)));
-    
-    v_tg = real(eigvecs_Hmat_ssom(:, lambda_index));
-
-    v = recompose_eigenvector_from_Hmat(Xnext, v_tg);
-    % 
-    % % disp("v") %just to remove unused variable warning
-    % % disp(v)
-    % 
-    if lambda > -1e-3
-        disp("R, T eigenvals > 0: exiting staircase")
-        break;
-    end
-
-    % disp("Now performing linesearch...");
-    % %Note: first output param of linesearch() would be "stepsize"
-    % 
-    % % next optimization iteration
     tuple_next.R = stiefelfactory(staircase_step_idx, d, N);
     tuple_next.T = euclideanfactory(staircase_step_idx, N);
     tuple_next.lambda = euclideanfactory(num_edges, 1);
@@ -158,28 +112,84 @@ for staircase_step_idx = r0:num_edges*d*N+1
     problem_next.grad = @(x) ssom_rgrad(x, problem_data_next);
     problem_next.hess = @(x, u) ssom_rhess_genproc(x, u, problem_data_next);
 
-    disp("staircase_step_idx")
-    disp(staircase_step_idx)
-    disp("d")
-    disp(d)
-    disp("N")
-    disp(N)
-
-    disp("size(v)")
-    disp(size(v))
-
-    % v_struct = convertXtoRTLambdas(v, staircase_step_idx, d, N);
-
-    options.ls_max_steps = 10000;
-    options.ls_initial_stepsize = 10;
-    options.ls_contraction_factor = 0.25;
-
+    Xnext = X;
+    Xnext.R = cat_zero_rows_3d_array(X.R);
+    Xnext.T = cat_zero_rows_3d_array(X.T);
     ctr_equal_last = ssom_cost(Xnext,problem_data_next);
 
-    [~, Y_star] = linesearch_decrease(problem_next, ...
-        Xnext, v, ssom_cost(Xnext,problem_data_next), 0, options);
+    if params.use_pim
+        [Y_star, lambda, v] = ssom_pim_hessian_genproc( ...
+            X, problem_data_next, thr);
+
+    else
+        Xprev = X;
+        
+        % X_cat.lambda = X.lambda;
+    
+        Hmat_ssom = make_Hmat_ssom_proj(Xnext, problem_data_next);
+    
+        % Hmat_ssom = symm(Hmat_ssom);
+    
+        [eigvecs_Hmat_ssom, eigvals_Hmat_ssom] = eig(Hmat_ssom);
+    
+        disp("max(abs(Hmat_ssom - Hmat_ssom'), [], ""all"")")
+        disp(max(abs(Hmat_ssom - Hmat_ssom'), [], "all"))    
+    
+        lambda = min(real(eigvals_Hmat_ssom), [], "all");
+    
+        disp("min(real(eigvals_Hmat_ssom), [], ""all"")")
+        disp(lambda);
+    
+        imag_eigenvalues = false;
+        if max(abs(imag(eigvals_Hmat_ssom)), [], "all") > 1e-5
+            imag_eigenvalues = true;
+            error("Imag eigenvalues in ssom_genproc")
+        end
+    
+        lambda_index = find(lambda == diag(real(eigvals_Hmat_ssom)));
+        
+        v_tg = real(eigvecs_Hmat_ssom(:, lambda_index));
+    
+        v = recompose_eigenvector_from_Hmat(Xnext, v_tg);
+        % 
+        % % disp("v") %just to remove unused variable warning
+        % % disp(v)
+        
+    
+        % disp("Now performing linesearch...");
+        % %Note: first output param of linesearch() would be "stepsize"
+        % 
+        % % next optimization iteration
+        
+    
+        disp("staircase_step_idx")
+        disp(staircase_step_idx)
+        disp("d")
+        disp(d)
+        disp("N")
+        disp(N)
+    
+        disp("size(v)")
+        disp(size(v))
+    
+        % v_struct = convertXtoRTLambdas(v, staircase_step_idx, d, N);
+    
+        options.ls_max_steps = 10000;
+        options.ls_initial_stepsize = 10;
+        options.ls_contraction_factor = 0.25;
+
+    
+        [~, Y_star] = linesearch_decrease(problem_next, ...
+            Xnext, v, ssom_cost(Xnext,problem_data_next), 0, options);
+    
+    end
+
     % 
-    % 
+    if lambda > 0
+        disp("R, T eigenvals > 0: exiting staircase")
+        break;
+    end
+    
     X = trustregions(problem_next, Y_star, options);
 
     ctr_equal_new = ssom_cost(X,problem_data_next);
@@ -245,7 +255,7 @@ disp(cost_manopt_out)
 if staircase_step_idx > d+1
 
     if ~problem_data.noisy_test && staircase_step_idx > d+2
-        save("rs_going_further.mat");
+        % save("rs_going_further.mat");
     end
 
     low_deg = 2; %TODO: maybe not necessarily in more complex graph cases?
