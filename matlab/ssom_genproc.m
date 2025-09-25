@@ -68,7 +68,7 @@ disp(check_is_tangent_stiefel(X_gt.R, tg_element_test.R));
 
 
 % X = trustregions(problem, X_gt);
-options.maxiter = 500;
+options.maxiter = 10000;
 
 X_initguess.R = G2R(transf_initguess);
 X_initguess.T = G2T(transf_initguess);
@@ -365,7 +365,7 @@ disp("cost_out AFTER RECOVERY")
 disp(cost_out)
 
 if ~is_equal_floats(cost_out, cost_manopt_out)
-    % save("failed_recovery.mat")
+    save("failed_recovery.mat")
 end
  
 % 

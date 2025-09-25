@@ -1,5 +1,5 @@
 function [Y0, lambda_pim_out, v_pim_out, eigenvalue_check_ok] = ssom_pim_hessian_genproc( ...
-    X, problem_struct_next, thresh, num_max_iter)
+    X, problem_struct_next, thresh, num_max_iter, second_iter)
 %SSOM_PIM_HESSIAN_GENPROC Return a new starting point Y0 with lower cost that R
 % This is based on a linesearch towards an eigenvector v_pim_out 
 % corresponding to negative eigenvalue lambda_pim_out.
@@ -13,6 +13,10 @@ end
 
 if ~exist('num_max_iter', 'var')
     num_max_iter = 2000;
+end
+
+if ~exist('second_iter', 'var')
+    second_iter = false;
 end
 
 eigenvalue_check_ok = false;
@@ -217,13 +221,19 @@ options.ls_contraction_factor = 0.25;
 
 
 
-if is_equal_floats(vectorizeXrtlambdas(Y0), vectorizeXrtlambdas(Xnext)) && highest_norm_eigenval < 0
-    options2.tolcost = -1e-10;
-    [v_ex, lambda_ex] = hessianextreme(step2, Xnext, 'min',v_pim_after_shift, options2);
-    [~, Y0] = linesearch_decrease(step2, ...
-        Xnext, v_ex, ssom_cost(Xnext,problem_struct_next), 0, options);
-    disp("is_equal_floats(vectorizeXrtlambdas(Y0), vectorizeXrtlambdas(Xnext))")
-    disp(is_equal_floats(vectorizeXrtlambdas(Y0), vectorizeXrtlambdas(Xnext)))
+% if is_equal_floats(vectorizeXrtlambdas(Y0), vectorizeXrtlambdas(Xnext)) && highest_norm_eigenval < 0
+%     options2.tolcost = -1e-10;
+%     [v_ex, lambda_ex] = hessianextreme(step2, Xnext, 'min',v_pim_after_shift, options2);
+%     [~, Y0] = linesearch_decrease(step2, ...
+%         Xnext, v_ex, ssom_cost(Xnext,problem_struct_next), 0, options);
+%     disp("is_equal_floats(vectorizeXrtlambdas(Y0), vectorizeXrtlambdas(Xnext))")
+%     disp(is_equal_floats(vectorizeXrtlambdas(Y0), vectorizeXrtlambdas(Xnext)))
+% end
+
+if is_equal_floats(vectorizeXrtlambdas(Y0), vectorizeXrtlambdas(Xnext)) && highest_norm_eigenval < 0 && ~second_iter
+    second_iter = true; 
+    [Y0, highest_norm_eigenval, v_pim_after_shift, eigenvalue_check_ok] = ssom_pim_hessian_genproc( ...
+        X, problem_struct_next, thresh, 20000, second_iter);
 end
 
 % cost_before_ls = ssom_cost(Xnext,problem_struct_next);
