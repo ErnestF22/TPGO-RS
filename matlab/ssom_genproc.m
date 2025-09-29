@@ -30,10 +30,10 @@ M = productmanifold(tuple);
 % Setup the problem structure with manifold M and cost+grad functions.
 problem.M = M;
 problem.cost = @(x) ssom_cost(x, problem_data);
-problem.egrad = @(x) ssom_egrad(x, problem_data);
-% problem.grad = @(x) ssom_rgrad(x, problem_data);
-problem.ehess = @(x, u) ssom_ehess_genproc(x, u, problem_data);
-% problem.hess = @(x, u) ssom_rhess_genproc(x, u, problem_data);
+% problem.egrad = @(x) ssom_egrad(x, problem_data);
+problem.grad = @(x) ssom_rgrad(x, problem_data);
+% problem.ehess = @(x, u) ssom_ehess_genproc(x, u, problem_data);
+problem.hess = @(x, u) ssom_rhess_genproc(x, u, problem_data);
 
 % checkgradient(problem);
 % tmp.R = make_rand_stiefel_3d_array(nrs, d, N);
@@ -68,7 +68,7 @@ disp(check_is_tangent_stiefel(X_gt.R, tg_element_test.R));
 
 
 % X = trustregions(problem, X_gt);
-options.maxiter = 10000;
+options.maxiter = 1000;
 
 X_initguess.R = G2R(transf_initguess);
 X_initguess.T = G2T(transf_initguess);
