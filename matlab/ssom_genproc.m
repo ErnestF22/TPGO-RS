@@ -188,6 +188,8 @@ for staircase_step_idx = r0:num_edges*d*N+1
     if lambda > 0
         disp("R, T eigenvals > 0: exiting staircase")
         break;
+    else
+        disp("RS actually useful")
     end
     
     X = trustregions(problem_next, Y_star, options);
