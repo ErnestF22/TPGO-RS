@@ -68,7 +68,7 @@ disp(check_is_tangent_stiefel(X_gt.R, tg_element_test.R));
 
 
 % X = trustregions(problem, X_gt);
-options.maxiter = 10000;
+options.maxiter = 1000;
 
 X_initguess.R = G2R(transf_initguess);
 X_initguess.T = G2T(transf_initguess);

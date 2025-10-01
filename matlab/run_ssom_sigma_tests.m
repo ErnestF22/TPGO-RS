@@ -2,7 +2,7 @@ clc;
 clear;
 close all;
 
-N = 10;
+N = 5;
 mindeg = 3;
 
 % 1a) PW TRANSLATION DATA INPUT: R, T are the gt, Tijs_nois are the input data
