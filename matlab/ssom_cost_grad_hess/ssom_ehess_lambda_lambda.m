@@ -18,7 +18,7 @@ for ee = 1:num_edges
     % R_i = R(:, :, ii);
     % a = T_i - T_j;
     lambda_dot_ee = lambdas_dot(ee,:);
-    h(ee) = 2*lambda_dot_ee*(tij_e' * tij_e);
+    h(ee) = 2*lambda_dot_ee*(tij_e' * tij_e) + 2* lambda_dot_ee *problem_data.rho;
 end
 
 end

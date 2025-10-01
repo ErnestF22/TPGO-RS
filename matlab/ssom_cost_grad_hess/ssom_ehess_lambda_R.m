@@ -26,7 +26,7 @@ for ee = 1:num_edges
     R_i_dot = Rdot(:, :, ii);
     % R_i = R(:, :, ii);
     
-    e_th_elem_half = (tij' * R_i_dot') * (T_i - T_j);
+    e_th_elem_half = (tij' * R_i_dot') * (T_i - T_j) ;
 
     eh(ee) = 2 * e_th_elem_half;
 end
