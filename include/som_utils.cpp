@@ -865,7 +865,7 @@ namespace SomUtils
         }
     }
 
-    double RElU(double x)
+    double ReLU(double x)
     {
         return (x > 0) ? x : 0;
     }

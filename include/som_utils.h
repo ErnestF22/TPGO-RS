@@ -326,7 +326,7 @@ namespace SomUtils
     /**
      * Apply ReLU to double input @param x and return the result
      */                                 
-    double RElU(double x);
+    double ReLU(double x);
 
 } // end of namespace SomUtils
 

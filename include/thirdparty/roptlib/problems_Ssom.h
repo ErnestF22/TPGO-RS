@@ -315,13 +315,13 @@ namespace ROPTLIB
       /**
        * Computes matrices used in rotation estimation cost
        */
-      void makePfrct(const SomUtils::MatD &T, const SomUtils::MatD &Lambdas, const SomUtils::MatD &TijsScaled,
+      void makePfrct(const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
                      SomUtils::MatD &P, double &frct) const;
 
       /**
        * Computes matrices used in translation estimation cost
        */
-      void makeLrPrBr(const SomUtils::VecMatD &R, const SomUtils::MatD &Lambdas, const SomUtils::MatD &TijsScaled,
+      void makeLrPrBr(const SomUtils::VecMatD &R, const SomUtils::MatD &Lambdas,
                       SomUtils::MatD &Lr, SomUtils::MatD &Pr, SomUtils::MatD &Br) const;
 
       /**
@@ -408,7 +408,7 @@ namespace ROPTLIB
        * (Estimated) Relative translations between nodes
        * Size: d x e
        */
-      SomUtils::MatD Tijs_;
+      SomUtils::MatD tijs_;
 
       /**
        * Edges

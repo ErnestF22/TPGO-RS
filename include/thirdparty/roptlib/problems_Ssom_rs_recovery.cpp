@@ -1133,7 +1133,7 @@ namespace ROPTLIB
 
         SomUtils::SomSize somSzNext(staircaseStepLevel, sz_.d_, sz_.n_);
 
-        ROPTLIB::SsomProblem ProbNext(somSzNext, Tijs_, edges_);
+        ROPTLIB::SsomProblem ProbNext(somSzNext, tijs_, edges_);
 
         ProbNext.makeHmat(Xvec, somSzNext, Hmat);
         ROFL_VAR1(Hmat)
@@ -1775,7 +1775,7 @@ namespace ROPTLIB
         Euclidean mani2(somSzLocal.p_, somSzLocal.n_);
         ProductManifold ProdMani(numoftypes, &mani1, numofmani1, &mani2, numofmani2);
 
-        SsomProblem ProbLS(somSzLocal, Tijs_, edges_);
+        SsomProblem ProbLS(somSzLocal, tijs_, edges_);
         ProbLS.SetDomain(&ProdMani);
 
         std::cout << "cost of LS input " << ProbLS.f(xIn) << std::endl; // x cost
@@ -2255,7 +2255,7 @@ namespace ROPTLIB
             // % e_j = edges(e, 2);
             if (eI == nodeId)
             {
-                Tij1j2.col(found) = Tijs_.col(e);
+                Tij1j2.col(found) = tijs_.col(e);
                 Tij1j2tilde.col(found) = -Tedges.col(e);
                 found++;
             }
