@@ -2,8 +2,8 @@ clc;
 clear;
 close all;
 
-N = 5;
-mindeg = 3;
+N = 18;
+mindeg = 2;
 
 % 1a) PW TRANSLATION DATA INPUT: R, T are the gt, Tijs_nois are the input data
 testdata = testNetwork_params(3, N, 'banded', mindeg); %4 would be the default
@@ -16,7 +16,7 @@ N = testdata.NNodes;
 d = 3;
 d_aff = d+1;
 global_camera_id = 1;
-num_tests_per_sigma = 5;
+num_tests_per_sigma = 50;
 transf_end_thresh = 1;
 max_icp_iterations = 10;
 num_edges_full = N*N;

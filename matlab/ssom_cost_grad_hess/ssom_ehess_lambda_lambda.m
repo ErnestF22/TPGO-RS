@@ -18,7 +18,15 @@ for ee = 1:num_edges
     % R_i = R(:, :, ii);
     % a = T_i - T_j;
     lambda_dot_ee = lambdas_dot(ee,:);
-    h(ee) = 2*lambda_dot_ee*(tij_e' * tij_e) + 2* lambda_dot_ee *problem_data.rho;
+
+
+    if ssom_relu_argument(lambdas(ee)) > 0
+        compensation_part = 2 * lambda_dot_ee;
+    else
+        compensation_part = 0.0;
+    end
+
+    h(ee) = 2*lambda_dot_ee*(tij_e' * tij_e) + problem_data.rho * compensation_part;
 end
 
 end

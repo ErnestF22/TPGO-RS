@@ -17,7 +17,13 @@ function g_lambda = ssom_egrad_lambda(R, T, lambdas, problem_data)
         R_i = R(:, :, ii);
         base_part = 2*(tij_e'*tij_e * lambda_e + ...
             tij_e' * R_i' * T_i - tij_e' * R_i' * T_j);
-        compensation_part = 2 * (lambda_e - 1);
+        
+        
+        if ssom_relu_argument(lambda_e) > 0
+            compensation_part = 2 * (lambda_e - 1);
+        else
+            compensation_part = 0.0;
+        end
         
         g_lambda(ee) = base_part + rho * compensation_part;
     end
