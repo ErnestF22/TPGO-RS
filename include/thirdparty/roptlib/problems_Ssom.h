@@ -168,13 +168,13 @@ namespace ROPTLIB
       /**
        * Compute one of the Genproc Hessian subparts
        */
-      void computeHtt(const SomUtils::MatD &lambdas, const SomUtils::VecMatD &xR, const SomUtils::MatD &uT,
+      void computeHtr(const SomUtils::MatD &lambdas, const SomUtils::VecMatD &uR,
                       SomUtils::MatD &h) const;
 
       /**
        * Compute one of the Genproc Hessian subparts
        */
-      void computeHtr(const SomUtils::MatD &lambdas, const SomUtils::VecMatD &uR,
+      void computeHtt(const SomUtils::MatD &lambdas, const SomUtils::VecMatD &xR, const SomUtils::MatD &uT,
                       SomUtils::MatD &h) const;
 
       /**
@@ -199,7 +199,7 @@ namespace ROPTLIB
       /**
        * Compute one of the Genproc Hessian subparts
        */
-      void computeHlambdaslambdas(const SomUtils::VecMatD &xR, const SomUtils::MatD &uLambdas,
+      void computeHlambdaslambdas(const SomUtils::MatD &xLambdas, const SomUtils::MatD &uLambdas,
                                   SomUtils::MatD &h) const;
 
       /**
@@ -871,8 +871,8 @@ namespace ROPTLIB
       void recoverRdeg2(const SomUtils::VecMatD &TijTilde2degRecovery, int lowDegNodeId,
                         SomUtils::MatD &P) const;
 
-      // void recoverRdeg2(const SomUtils::MatD &TijTilde2degRecovery, const SomUtils::MatD &low_deg_nodes_id, 
-      //                   const SomUtils::MatD &P) const;                       
+      // void recoverRdeg2(const SomUtils::MatD &TijTilde2degRecovery, const SomUtils::MatD &low_deg_nodes_id,
+      //                   const SomUtils::MatD &P) const;
    };
 
    /**
