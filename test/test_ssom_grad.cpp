@@ -194,35 +194,124 @@ int main(int argc, char **argv)
     // ROFL_VAR1(hessLambdasOut)
 
     // RUN SSOM RS
+    ROPTLIB::Vector randUvec = ProdManiSsom.RandominManifold();
+
+    if (!SomUtils::readCsvInitguess(folderIn + "randUvec.csv", randUvec))
+    {
+        // matlab/data/ssom_testdata_noisy/harder/tdata_n5_mindeg2_sigma00/ssom_x_start.csv
+        ROFL_ERR("Error opening file")
+        ROFL_VAR1(folderIn + "randUvec.csv")
+        ROFL_ASSERT(0)
+    }
 
     Prob.setRho(5.0);
 
-    double exectime = 0;
+    double exectimeGH = 0;
     {
         rofl::ScopedTimer timer("ssom grad");
 
-        startX = - 2 * startX; 
+        startX = -2 * startX;
         double cost = Prob.f(startX);
         ROFL_VAR1(cost)
+        startX.Print("startX before grad/hess");
 
         auto gradOut = Prob.GetDomain()->RandominManifold();
-
-        startX.Print("startX before grad");
 
         Prob.Grad(startX, &gradOut);
         // startX.Print("startX after grad");
         // ROFL_VAR1("ssom grad")
-
         gradOut.Print("gradOut");
-        exectime = timer.elapsedTimeMs();
+
+        auto hessOut = Prob.GetDomain()->RandominManifold();
+
+        Prob.RieHessianEta(startX, randUvec, &hessOut);
+        // startX.Print("startX after grad");
+        // ROFL_VAR1("ssom grad")
+        hessOut.Print("hessOut");
+
+        exectimeGH = timer.elapsedTimeMs();
     }
 
-    // std::vector<double> rotErrs(numEdges, 1e+6), translErrs(numEdges, 1e+6);
-    // SomUtils::computeErrorsSingleRsom(edges,
-    //                                   Rout, Tout,
-    //                                   RgtEig, TgtEig,
-    //                                   rotErrs, translErrs);
-    // ROFL_VAR1(exectime)
+    ROFL_VAR1(exectimeGH)
+
+    double exectimePIM = 0;
+    {
+        rofl::ScopedTimer timer("PIM");
+
+        int staircaseStepIdx = d + 1;
+        SomUtils::SomSize somSzNext(staircaseStepIdx, d, n);
+
+        ROPTLIB::SsomProblem ProbNext(somSzNext, Prob.tijs_, Prob.edges_);
+        ProbNext.SetDomain(&ProdManiSsom);
+
+        ROPTLIB::Stiefel mani1next(staircaseStepIdx, d);
+        mani1next.ChooseParamsSet2();
+        ROPTLIB::Euclidean mani2next(staircaseStepIdx, n);
+        ROPTLIB::ProductManifold ProdManiSsomNext(numoftypes,
+                                                  &mani1next, numofmani1, &mani2next, numofmani2, &mani3, numofmani3);
+        ROPTLIB::SsomProblem Prob(somSzD, Tijs, edges);
+
+        auto uStart = ProdManiSsomNext.RandominManifold();
+        if (!SomUtils::readCsvInitguess(folderIn + "uStartVec.csv", uStart))
+        {
+            // matlab/data/ssom_testdata_noisy/harder/tdata_n5_mindeg2_sigma00/ssom_x_start.csv
+            ROFL_ERR("Error opening file")
+            ROFL_VAR1(folderIn + "uStartVec.csv")
+            ROFL_ASSERT(0)
+        }
+
+        auto uStartSecondIter = ProdManiSsomNext.RandominManifold();
+        ProbNext.SetDomain(&ProdManiSsom);
+        if (!SomUtils::readCsvInitguess(folderIn + "uStartSecondIterVec.csv", uStart))
+        {
+            // matlab/data/ssom_testdata_noisy/harder/tdata_n5_mindeg2_sigma00/ssom_x_start.csv
+            ROFL_ERR("Error opening file")
+            ROFL_VAR1(folderIn + "uStartSecondIterVec.csv")
+            ROFL_ASSERT(0)
+        }
+
+        SomUtils::MatD startXeig(SomUtils::MatD::Zero(d * d * n + d * n + numEdges, 1));
+        Prob.RoptToEig(startX, startXeig);
+        SomUtils::VecMatD R(SomUtils::VecMatD(n, SomUtils::MatD::Zero(d, d)));
+        SomUtils::MatD T(SomUtils::MatD::Zero(d, n));
+        SomUtils::MatD Lambdas(SomUtils::MatD::Zero(numEdges, 1));
+        Prob.getRotations(startXeig, R);
+        Prob.getTranslations(startXeig, T);
+        Prob.getScales(startXeig, Lambdas);
+
+        ROPTLIB::Vector Y0out;
+        // Y0out = ProbNext.GetDomain()->RandominManifold();
+        double lambdaPimOut;
+
+        // double thresh,
+        // const SomUtils::VecMatD &R, const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
+        // Vector &Y0, double &lambdaPimOut,
+        // SomUtils::VecMatD &vPimRout, SomUtils::MatD &vPimTout, SomUtils::MatD &vPimLambdasOut,
+        // bool armijo = false
+
+        SomUtils::VecMatD vR(n, SomUtils::MatD::Zero(d, d));
+        SomUtils::MatD vT(SomUtils::MatD::Zero(d, n));
+        SomUtils::MatD vLambdas(SomUtils::MatD::Zero(numEdges, 1));
+
+        ProbNext.ssomPimHessianGenprocEigen(1e-5, R, T, Lambdas, Y0out, lambdaPimOut, vR, vT, vLambdas); //!! catZeroRows() increase is being done inside
+
+        // double lambdaPimMatlab = -384.979;
+        // // ProbNext.eigencheckHessianGenproc(lambdaPim, Rnext, vPimR, Tnext, vPimT, LambdasNext, vPimLambdas);
+        // // ProbNext.eigencheckHessianGenprocShifted(lambdaPim, Rnext, vPimR, Tnext, vPimT, LambdasNext, vPimLambdas);
+
+        // SomUtils::VecMatD Rnext(n, SomUtils::MatD::Zero(staircaseStepIdx, d));
+        // SomUtils::catZeroRow3dArray(R, Rnext);
+        // SomUtils::MatD Tnext(SomUtils::MatD::Zero(staircaseStepIdx, n));
+        // SomUtils::catZeroRow(T, Tnext);
+        // SomUtils::MatD LambdasNext = Lambdas;
+        // ProbNext.eigencheckHessianGenproc(lambdaPimMatlab, Rnext, vR, Tnext, vT, LambdasNext, vLambdas);
+
+        ROFL_VAR1(lambdaPimOut)
+
+        exectimePIM = timer.elapsedTimeMs();
+    }
+
+    ROFL_VAR1(exectimePIM)
 
     return 0;
 }

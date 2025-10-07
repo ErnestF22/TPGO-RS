@@ -1612,7 +1612,7 @@ namespace ROPTLIB
             if (Prob.usePIM_)
             {
                 ROFL_VAR1("Calling Prob.ssomEscapeHessianGenprocEigenPIM()")
-                ProbNext.ssomPimHessianGenprocEigen(1e-5, R, T, Lambdas, Y0, lambda, vR, vT, vLambdas);
+                ProbNext.ssomPimHessianGenprocEigen(1e-5, R, T, Lambdas, Y0, lambda, vR, vT, vLambdas); //!! catZeroRows() increase is being done inside
             }
             else
             {

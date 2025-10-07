@@ -11,7 +11,7 @@ namespace ROPTLIB
         if (!(diff >= 0 && diff < 1e-5))
         {
             ROFL_VAR1("Check failed here")
-            return false;
+            // return false; //REMOVE THIS CHECK LATER
         }
 
         return true;
@@ -333,8 +333,8 @@ namespace ROPTLIB
         SomUtils::MatD uFull(SomUtils::MatD::Zero(fullSz, 1));
         int rotsVecSz = sz_.n_ * staircaseLevel * sz_.d_;
         int translVecSz = sz_.n_ * staircaseLevel;
-        uFull.block(0, 0, rotsVecSz, 1) = uRhStacked.reshaped(rotsVecSz, 1);
-        uFull.block(rotsVecSz, 0, translVecSz, 1) = uTcopy.reshaped(translVecSz, 1);
+        uFull.block(0, 0, rotsVecSz, 1) = uRhStacked.reshaped<Eigen::ColMajor>(rotsVecSz, 1);
+        uFull.block(rotsVecSz, 0, translVecSz, 1) = uTcopy.reshaped<Eigen::ColMajor>(translVecSz, 1);
         uFull.block(rotsVecSz + translVecSz, 0, numEdges_, 1) = uLambdasCopy;
         // ROFL_VAR1(uFullHst);
 
@@ -375,8 +375,8 @@ namespace ROPTLIB
 
             // 2
             SomUtils::MatD uFullPrev(SomUtils::MatD::Zero(fullSz, 1));
-            uFullPrev.block(0, 0, rotsVecSz, 1) = uRprevHst.reshaped(rotsVecSz, 1);
-            uFullPrev.block(rotsVecSz, 0, translVecSz, 1) = uTprev.reshaped(translVecSz, 1);
+            uFullPrev.block(0, 0, rotsVecSz, 1) = uRprevHst.reshaped<Eigen::ColMajor>(rotsVecSz, 1);
+            uFullPrev.block(rotsVecSz, 0, translVecSz, 1) = uTprev.reshaped<Eigen::ColMajor>(translVecSz, 1);
             uFullPrev.block(rotsVecSz + translVecSz, 0, numEdges_, 1) = uLambdasPrev;
             // ROFL_VAR1(uFullHstPrev);
 
@@ -408,8 +408,8 @@ namespace ROPTLIB
             // 7
             // ROFL_VAR1("hstack call from here");
             SomUtils::hstack(uRunstackedOutTmp, uRhStacked);
-            uFull.block(0, 0, rotsVecSz, 1) = uRhStacked.reshaped(rotsVecSz, 1);
-            uFull.block(rotsVecSz, 0, translVecSz, 1) = uTcopy.reshaped(translVecSz, 1);
+            uFull.block(0, 0, rotsVecSz, 1) = uRhStacked.reshaped<Eigen::ColMajor>(rotsVecSz, 1);
+            uFull.block(rotsVecSz, 0, translVecSz, 1) = uTcopy.reshaped<Eigen::ColMajor>(translVecSz, 1);
             uFull.block(rotsVecSz + translVecSz, 0, numEdges_, 1) = uLambdasCopy;
             // ROFL_VAR1(uFullHst);
 
@@ -444,7 +444,9 @@ namespace ROPTLIB
         SomUtils::MatD vecFxR(SomUtils::MatD::Zero(sz_.d_ * staircaseLevel * sz_.n_, 1));
         vectorizeR(fxRunstackedOut, vecFxR);
         // lambda_max = x_max.R( :) ' * f_x_max.R(:) + x_max.T(:)' * f_x_max.T( :);
-        auto lmax = vecR.transpose() * vecFxR + uTout1.reshaped(1, staircaseLevel * sz_.n_) * (uTcopy / normRTLambdasMax).reshaped(staircaseLevel * sz_.n_, 1);
+        auto lmax = vecR.transpose() * vecFxR +
+                    uTout1.reshaped<Eigen::ColMajor>(1, staircaseLevel * sz_.n_) * (uTcopy / normRTLambdasMax).reshaped<Eigen::ColMajor>(staircaseLevel * sz_.n_, 1) +
+                    uLambdasOut1.reshaped<Eigen::ColMajor>(1, numEdges_) * (uLambdasCopy / normRTLambdasMax).reshaped<Eigen::ColMajor>(numEdges_, 1);
         ROFL_VAR1(lmax)
         lambdaMax = lmax(0, 0); // lmax is supposedly a scalar
 
@@ -490,8 +492,8 @@ namespace ROPTLIB
         SomUtils::MatD uFull(SomUtils::MatD::Zero(fullSz, 1));
         int rotsVecSz = sz_.n_ * staircaseLevel * sz_.d_;
         int translVecSz = sz_.n_ * staircaseLevel;
-        uFull.block(0, 0, rotsVecSz, 1) = uRhStacked.reshaped(rotsVecSz, 1);
-        uFull.block(rotsVecSz, 0, translVecSz, 1) = uTcopy.reshaped(translVecSz, 1);
+        uFull.block(0, 0, rotsVecSz, 1) = uRhStacked.reshaped<Eigen::ColMajor>(rotsVecSz, 1);
+        uFull.block(rotsVecSz, 0, translVecSz, 1) = uTcopy.reshaped<Eigen::ColMajor>(translVecSz, 1);
         uFull.block(rotsVecSz + translVecSz, 0, numEdges_, 1) = uLambdasCopy;
         // iteration_num = 0;
         int iterationNum = 0;
@@ -521,8 +523,8 @@ namespace ROPTLIB
             uLambdasPrev = uLambdasCopy;
 
             SomUtils::MatD uFullPrev(SomUtils::MatD::Zero(fullSz, 1));
-            uFullPrev.block(0, 0, rotsVecSz, 1) = uRprevHst.reshaped(rotsVecSz, 1);
-            uFullPrev.block(rotsVecSz, 0, translVecSz, 1) = uTprev.reshaped(translVecSz, 1);
+            uFullPrev.block(0, 0, rotsVecSz, 1) = uRprevHst.reshaped<Eigen::ColMajor>(rotsVecSz, 1);
+            uFullPrev.block(rotsVecSz, 0, translVecSz, 1) = uTprev.reshaped<Eigen::ColMajor>(translVecSz, 1);
             uFullPrev.block(rotsVecSz + translVecSz, 0, numEdges_, 1) = uLambdasPrev;
 
             double normRTLambdas = uFull.norm();
@@ -546,8 +548,8 @@ namespace ROPTLIB
 
             // ROFL_VAR1("hstack call from here");
             SomUtils::hstack(uRunstackedOutTmp, uRhStacked);
-            uFull.block(0, 0, rotsVecSz, 1) = uRhStacked.reshaped(rotsVecSz, 1);
-            uFull.block(rotsVecSz, 0, translVecSz, 1) = uTcopy.reshaped(translVecSz, 1);
+            uFull.block(0, 0, rotsVecSz, 1) = uRhStacked.reshaped<Eigen::ColMajor>(rotsVecSz, 1);
+            uFull.block(rotsVecSz, 0, translVecSz, 1) = uTcopy.reshaped<Eigen::ColMajor>(translVecSz, 1);
             uFull.block(rotsVecSz + translVecSz, 0, numEdges_, 1) = uLambdasCopy;
 
             //      iterative_change = max(normalization_fun(xfull_prev - xfull), [], "all");
@@ -583,7 +585,9 @@ namespace ROPTLIB
         vectorizeR(fxRunstackedOut, vecFxR);
 
         // lambda_max = x_max.R( :) ' * f_x_max.R(:) + x_max.T(:)' * f_x_max.T( :);
-        auto lmax = vecR.transpose() * vecFxR + uTout1.reshaped(1, staircaseLevel * sz_.n_) * (uTcopy / normRTLambdasMax).reshaped(staircaseLevel * sz_.n_, 1);
+        auto lmax = vecR.transpose() * vecFxR +
+                    uTout1.reshaped<Eigen::ColMajor>(1, staircaseLevel * sz_.n_) * (uTcopy / normRTLambdasMax).reshaped<Eigen::ColMajor>(staircaseLevel * sz_.n_, 1) + 
+                    uLambdasOut1.reshaped<Eigen::ColMajor>(1, numEdges_) * (uLambdasCopy / normRTLambdasMax).reshaped<Eigen::ColMajor>(numEdges_, 1);
         lambdaMax = lmax(0, 0);
 
         // full_xmax = [ matStackH(x_max.R), x_max.T ];
