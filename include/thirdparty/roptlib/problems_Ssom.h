@@ -472,6 +472,11 @@ namespace ROPTLIB
        */
       SomUtils::MatD Tout_;
 
+      /**
+       * Use PIM or Hmat for RS escape
+       */
+      bool usePIM_;
+
       ////////////////////////////////////////RS////////////////////////////////////////
 
       /**
@@ -585,7 +590,8 @@ namespace ROPTLIB
        */
       void ssomPimHessianGenprocEigen(double thresh,
                                       const SomUtils::VecMatD &R, const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
-                                      Vector &Y0, double &lambdaPimOut, SomUtils::VecMatD &vPimRout, SomUtils::MatD &vPimTout,
+                                      Vector &Y0, double &lambdaPimOut, 
+                                      SomUtils::VecMatD &vPimRout, SomUtils::MatD &vPimTout, SomUtils::MatD &vPimLambdasOut,
                                       bool armijo = false) const;
 
       /**
@@ -853,6 +859,8 @@ namespace ROPTLIB
        * reference @param Hmat is the output matrix
        */
       void makeHmat(const SomUtils::MatD &XvecNext, const SomUtils::SomSize &szNext, SomUtils::MatD &Hmat) const;
+
+      void makeHmatSsom(const SomUtils::MatD &XvecNext, const SomUtils::SomSize &szNext, SomUtils::MatD &Hmat) const;
 
       void align3d(const SomUtils::MatD &v, SomUtils::MatD &Qalign) const;
 
