@@ -288,7 +288,7 @@ namespace ROPTLIB
 
             // ROFL_VAR1(rhRiVec.GetElement(j, 0));
 
-            GroptlibWriteArray2[j] = rgLambdas.reshaped(numEdges_, 1)(j); // TODO: reshaped() call can probably be removed
+            GroptlibWriteArray2[j] = rgLambdas(j); // TODO: reshaped() call can probably be removed
 
             // ROFL_VAR1("");
             // rhTiVec.Print("rhTiVec after assignment");
@@ -375,7 +375,8 @@ namespace ROPTLIB
             auto Ri = R[i];
 
             // base_part = 2*(tij_e'*tij_e * lambda_e + tij_e' * R_i' * T_i - tij_e' * R_i' * T_j);
-            double basePart = 2 * (tij.transpose() * tij)(0, 0) * lambdaIJ + (tij.transpose() * Ri.transpose() * Ti)(0, 0) - (tij.transpose() * Ri.transpose() * Tj)(0, 0);
+            auto basePart = (tij.transpose() * tij) * lambdaIJ + (tij.transpose() * Ri.transpose() * Ti) - (tij.transpose() * Ri.transpose() * Tj);
+            // ROFL_VAR1(basePart)
 
             // if ssom_relu_argument(lambda_e) > 0
             //     compensation_part = 2 * (lambda_e - 1);
@@ -398,7 +399,7 @@ namespace ROPTLIB
             // }
 
             // g_lambda(ee) = base_part + rho * compensation_part;
-            rgLambdas(e, 0) = basePart + rho_ * compensationPart;
+            rgLambdas(e, 0) = 2 * basePart(0,0) + rho_ * compensationPart;
         }
     }
 
@@ -1234,7 +1235,7 @@ namespace ROPTLIB
 
             Lr += bij * bij.transpose();
 
-            Pr += 2 * Ri * tij * bij.transpose();
+            Pr += 2 * lambdaE * Ri * tij * bij.transpose();
 
             Br += lambdaE * lambdaE * tij * tij.transpose();
         }

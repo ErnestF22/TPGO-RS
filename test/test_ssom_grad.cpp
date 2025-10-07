@@ -194,21 +194,26 @@ int main(int argc, char **argv)
     // ROFL_VAR1(hessLambdasOut)
 
     // RUN SSOM RS
-    int srcNodeId = 0;
-    SomUtils::VecMatD Rout(n, SomUtils::MatD::Identity(d, d));
-    SomUtils::MatD Tout(SomUtils::MatD::Zero(d, n));
-    SomUtils::MatD lambdasOut(SomUtils::MatD::Zero(numEdges, 1));
-    int lastStaircaseStep;
+
+    Prob.setRho(5.0);
+
     double exectime = 0;
     {
-        Prob.setRho(5.0);
+        rofl::ScopedTimer timer("ssom grad");
 
-        rofl::ScopedTimer timer("ssomRS");
-        double costOut = ROPTLIB::runSsom(Prob, startX, srcNodeId,
-                                          Rout, Tout, lambdasOut,
-                                          lastStaircaseStep); // note: startX is needed (even if random) in ROPTLIB;
-        // ROPTLIB namespace is used even if runRsomRS() is not in SsomProblem class, nor in "original" ROPTLIB
-        ROFL_VAR1(costOut)
+        startX = - 2 * startX; 
+        double cost = Prob.f(startX);
+        ROFL_VAR1(cost)
+
+        auto gradOut = Prob.GetDomain()->RandominManifold();
+
+        startX.Print("startX before grad");
+
+        Prob.Grad(startX, &gradOut);
+        // startX.Print("startX after grad");
+        // ROFL_VAR1("ssom grad")
+
+        gradOut.Print("gradOut");
         exectime = timer.elapsedTimeMs();
     }
 
