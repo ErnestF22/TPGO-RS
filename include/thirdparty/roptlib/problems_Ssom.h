@@ -340,6 +340,16 @@ namespace ROPTLIB
       void setRho(double rho);
 
       /**
+       * Set usePIM_ class param
+       */
+      void setUsePIM(bool usePIM);
+
+      /**
+       * Set pimMaxIterations_ class param
+       */
+      void setPimMaxIterations(int numMaxIterations);
+
+      /**
        * @brief Return vectorized (following col-major order, like in MATLAB) version of @param R
        * in output reference @param RvecOut
        */
@@ -477,6 +487,11 @@ namespace ROPTLIB
        */
       bool usePIM_;
 
+      /**
+       * Max number of iterations for PIM
+       */
+      int pimMaxIterations_;
+
       ////////////////////////////////////////RS////////////////////////////////////////
 
       /**
@@ -590,9 +605,21 @@ namespace ROPTLIB
        */
       void ssomPimHessianGenprocEigen(double thresh,
                                       const SomUtils::VecMatD &R, const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
-                                      Vector &Y0, double &lambdaPimOut, 
+                                      Vector &Y0, double &lambdaPimOut,
                                       SomUtils::VecMatD &vPimRout, SomUtils::MatD &vPimTout, SomUtils::MatD &vPimLambdasOut,
                                       bool armijo = false) const;
+
+      /**
+       * Same as ssomPimHessianGenprocEigen(), but with PIM start tg vectors pre-computed and passed as function params
+       * Useful for debugging against Matlab implementation
+       */
+      void ssomPimHessianGenprocEigenWithStartingPts(double thresh,
+                                                     const SomUtils::VecMatD &R, const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
+                                                     const SomUtils::VecMatD &RnextTgNormStart, const SomUtils::MatD &TnextTgNormStart, const SomUtils::MatD &LambdasNextTgNormStart,
+                                                     const SomUtils::VecMatD &Rnext2ndTgNormStart, const SomUtils::MatD &Tnext2ndTgNormStart, const SomUtils::MatD &LambdasNext2ndTgNormStart,
+                                                     Vector &Y0, double &lambdaPimOut,
+                                                     SomUtils::VecMatD &vPimRout, SomUtils::MatD &vPimTout, SomUtils::MatD &vPimLambdasOut,
+                                                     bool armijo) const;
 
       /**
        * @brief Find minimum eigenvalue of Hessian H(x)[u] using a basis of the tangent space
@@ -615,7 +642,8 @@ namespace ROPTLIB
        */
       void ssomPimHessianGenproc(double thresh,
                                  const SomUtils::VecMatD &R, const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
-                                 Vector &Y0, bool armijo = false) const;
+                                 Vector &Y0,
+                                 bool armijo = false) const;
 
       /**
        * @brief Linesearch for cost decrease based on Armijo conditions (see ROPTLIB documentation) from @param xIn starting point

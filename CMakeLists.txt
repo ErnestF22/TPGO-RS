@@ -151,6 +151,9 @@ target_link_libraries(test_check_recovery ${rofl_LIBRARIES} roptlib_local qru m 
 add_executable(test_check_retraction test/test_check_retraction.cpp include/som_utils.cpp)
 target_link_libraries(test_check_retraction ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
 
+add_executable(test_check_ssom_grad_hess_pim test/test_check_ssom_grad_hess_pim.cpp include/som_utils.cpp)
+target_link_libraries(test_check_ssom_grad_hess_pim ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
+
 add_executable(test_check_T_recovery_ssom test/test_check_T_recovery_ssom.cpp include/som_utils.cpp)
 target_link_libraries(test_check_T_recovery_ssom ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
 
@@ -207,9 +210,6 @@ target_link_libraries(test_sparse_eigenvalues ${rofl_LIBRARIES} boost_iostreams 
 
 add_executable(test_som_procrustes test/test_som_procrustes.cpp include/som_utils.cpp include/som_procrustes.cpp)
 target_link_libraries(test_som_procrustes ${rofl_LIBRARIES} boost_system boost_filesystem)
-
-add_executable(test_ssom_grad test/test_ssom_grad.cpp include/som_utils.cpp)
-target_link_libraries(test_ssom_grad ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
 
 # add_executable(test_tsp test/test_tsp.cpp include/som_utils.cpp)
 # target_link_libraries(test_tsp ${rofl_LIBRARIES} roptlib_local m blas lapack boost_iostreams boost_system boost_filesystem)

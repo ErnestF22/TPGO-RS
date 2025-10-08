@@ -22,7 +22,9 @@ namespace ROPTLIB
 
         costCurr_ = 1e+10;
 
-        usePIM_ = true; // default to PIM; can be changed with a setter if needed
+        usePIM_ = true; // default to PIM; can be changed with setter if needed
+
+        pimMaxIterations_ = 5000; // default max iterations for PIM; can be changed with setter if needed
     }
 
     SsomProblem::SsomProblem(const SomUtils::SomSize somSz, const SomUtils::MatD &tijs, const Eigen::MatrixXi &edges)
@@ -44,6 +46,8 @@ namespace ROPTLIB
         costCurr_ = 1e+10;
 
         usePIM_ = true; // default to PIM; can be changed with a setter if needed
+
+        pimMaxIterations_ = 5000; // default max iterations for PIM; can be changed with a setter if needed
     }
 
     SsomProblem::~SsomProblem() {};
@@ -399,7 +403,7 @@ namespace ROPTLIB
             // }
 
             // g_lambda(ee) = base_part + rho * compensation_part;
-            rgLambdas(e, 0) = 2 * basePart(0,0) + rho_ * compensationPart;
+            rgLambdas(e, 0) = 2 * basePart(0, 0) + rho_ * compensationPart;
         }
     }
 
@@ -443,8 +447,8 @@ namespace ROPTLIB
             double lambdaE = lambdas(e, 0);
 
             auto P_e = 2 * lambdaE * (Ti_dot - Tj_dot) * tij.transpose();
-                // ROFL_VAR5(e, sz_.d_, sz_.p_, Ph.rows(), Ph.cols());
-                // ROFL_VAR2(P_e.rows(), P_e.cols());
+            // ROFL_VAR5(e, sz_.d_, sz_.p_, Ph.rows(), Ph.cols());
+            // ROFL_VAR2(P_e.rows(), P_e.cols());
             Ph.block(0, i * sz_.d_, Ph.rows(), sz_.d_) += P_e;
         }
         SomUtils::unStackH(Ph, h, sz_.d_);
@@ -1254,6 +1258,16 @@ namespace ROPTLIB
     void SsomProblem::setRho(double rho)
     {
         rho_ = rho;
+    }
+
+    void SsomProblem::setUsePIM(bool usePIM)
+    {
+        usePIM_ = usePIM;
+    }
+
+    void SsomProblem::setPimMaxIterations(int numMaxIterations)
+    {
+        pimMaxIterations_ = numMaxIterations;
     }
 
     void SsomProblem::vectorizeR(const SomUtils::VecMatD &R, SomUtils::MatD &RvecOut) const

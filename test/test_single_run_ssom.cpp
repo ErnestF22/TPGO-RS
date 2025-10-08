@@ -201,7 +201,10 @@ int main(int argc, char **argv)
     int lastStaircaseStep;
     double exectime = 0;
     {
+        /* Setting up Prob using setters */
         Prob.setRho(5.0);
+        Prob.setUsePIM(true); //same as default
+        Prob.setPimMaxIterations(5000); //same as default
 
         rofl::ScopedTimer timer("ssomRS");
         double costOut = ROPTLIB::runSsom(Prob, startX, srcNodeId,
