@@ -37,7 +37,7 @@ u_start.T = stiefel_normalize_han(u_start.T);
 u_start.lambda = rand(size(Xnext.lambda));
 u_start.lambda = stiefel_normalize_han(u_start.lambda);
 uStartVec = vectorizeXrtlambdas(u_start);
-    save("../matlab/data/ssom_testdata_noisy/harder/tdata_n5_mindeg2_sigma00/uStartVec.csv", "uStartVec", "-ascii");
+% save("../matlab/data/ssom_testdata_noisy/harder/tdata_n5_mindeg2_sigma00/uStartVec.csv", "uStartVec", "-ascii");
 [lambda_pim, v_pim] = ssom_pim_function_genproc(rhess_fun_han, u_start, stiefel_normalize_han, thresh, num_max_iter);
 disp('Difference between lambda*v_max and H(v_max) should be in the order of the tolerance:')
 eigenvalue_check_ok = ssom_eigencheck_hessian_genproc(lambda_pim, v_pim, rhess_fun_han);
@@ -64,7 +64,7 @@ if lambda_pim>0
     u_start_second_iter.lambda = rand(size(Xnext.lambda));
     u_start_second_iter.lambda = stiefel_normalize_han(u_start.lambda);
     uStartSecondIterVec = vectorizeXrtlambdas(u_start_second_iter);
-    save("../matlab/data/ssom_testdata_noisy/harder/tdata_n5_mindeg2_sigma00/uStartSecondIterVec.csv", "uStartSecondIterVec", "-ascii");
+    % save("../matlab/data/ssom_testdata_noisy/harder/tdata_n5_mindeg2_sigma00/uStartSecondIterVec.csv", "uStartSecondIterVec", "-ascii");
     [lambda_pim_after_shift, v_pim_after_shift] = ssom_pim_function_genproc( ...
         rhess_shifted_fun_han, u_start_second_iter, stiefel_normalize_han, thresh, num_max_iter);
     
