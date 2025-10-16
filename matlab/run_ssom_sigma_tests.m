@@ -25,7 +25,7 @@ procrustes_mode = 'som';
 riem_grad_mode = 'manual'; %'auto' or 'manual'
 hessian_mode = 'manual'; 
 initguess_is_available = boolean(0);
-rand_initguess = boolean(1);
+rand_initguess = boolean(0);
 use_pim = boolean(1);
 enable_manopt_icp = boolean(0);
 enable_procrustes = boolean(0);
@@ -50,7 +50,7 @@ sigmas = readmatrix("data/sigmas.txt"); %sigma = stdev, sigma.^2 = variance
 mus = readmatrix("data/mus.txt"); %OBS. generally, mus can be d-dimensional; here, we just assume them as scalar (i.e. a d-dimensional vector with all coordinates equal)
 
 % sigmas = sigmas(4);
-sigmas = 0.0;
+sigmas = 1.0;
 % mus = mus(2);
 
 node_degrees = sum(testdata.A, 2);

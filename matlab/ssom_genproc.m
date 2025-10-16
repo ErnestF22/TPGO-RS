@@ -349,13 +349,13 @@ end
 
 
 %checking that cost has not changed during "recovery"
-if sum(multidet(R_recovered)) < N
-    testdata_plot = problem_data;
-    testdata_plot.gi = RT2G(R_recovered, T_recovered);
-    testdata_plot = testNetworkCompensate(testdata_plot);
-    T_recovered = G2T(testdata_plot.gi);
-    R_recovered = G2R(testdata_plot.gi);
-end
+% if sum(multidet(R_recovered)) < N
+%     testdata_plot = problem_data;
+%     testdata_plot.gi = RT2G(R_recovered, T_recovered);
+%     testdata_plot = testNetworkCompensate(testdata_plot);
+%     T_recovered = G2T(testdata_plot.gi);
+%     R_recovered = G2R(testdata_plot.gi);
+% end
 
 X_recovered.R = R_recovered;
 X_recovered.T = T_recovered;
@@ -382,12 +382,15 @@ R_recovered_global = multiprod(repmat(R_global', 1, 1, N), R_recovered);
 disp("[matStackH(X_gt.R); matStackH(R_recovered_global)]");
 disp([matStackH(X_gt.R); matStackH(R_recovered_global)]);
 
-T_recovered_global_nocomp = R_global' * T_recovered;
+% T_recovered_global_nocomp = R_global' * T_recovered;
 
-testdata_plot2 = problem_data;
-testdata_plot2.gi = RT2G(R_recovered_global, T_recovered_global_nocomp);
-testdata_plot2 = testNetworkCompensate(testdata_plot2);
-T_recovered_global = G2T(testdata_plot2.gi);
+% testdata_plot2 = problem_data;
+% testdata_plot2.gi = RT2G(R_recovered_global, T_recovered_global_nocomp);
+% testdata_plot2 = testNetworkCompensate(testdata_plot2);
+if staircase_step_idx == d+1
+    T_recovered_global = T_recovered;
+end
+% lambdas_recovered_global = lambdas_recovered;
 
 rs_recovery_success = boolean(1);
 for ii = 1:N
