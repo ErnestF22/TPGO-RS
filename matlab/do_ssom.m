@@ -59,6 +59,9 @@ disp(cost_gt)
 sigma_transl = sigma;
 tijs_nois = tijs + sigma_transl.*randn(size(tijs)) + ...
     mu * ones(size(tijs));
+for ii = 1:num_edges
+    tijs_nois(:,ii) = tijs_nois(:,ii) / norm(tijs_nois(:,ii));
+end
 
 T_globalframe = G2T(testdata.gitruth);
 T_globalframe_nois = T_globalframe + sigma_transl.*randn(size(T_globalframe)) + ...
@@ -119,7 +122,8 @@ if params.enable_ssom
     testdata.lambda_gt = X_gt.lambda;
     testdata.sz = [d d N];
     testdata.edges = testdata.E; %edges field name is used in rsom/ssom project, E in testnetwork benchmark testdata generator
-    testdata.tijs = G2T(testdata.gij);
+    testdata.tijs_gt = G2T(testdata.gij);
+    testdata.tijs = tijs_nois;
     testdata.noisy_test = params.noisy_test;
     testdata.node_degrees = params.node_degrees;
     [transf_ssom, lambdas_ssom_out, rs_success_bool, cost_ssom] = ...

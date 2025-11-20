@@ -24,7 +24,7 @@ for ee = 1:num_edges
         a = T_i - T_j;
         b = R_i * tij_e;
         cost_lambda_ee = trace(a' * a + 2 * lambda_e * (a' * b) + lambda_e^2 * (b' * b)); 
-        cost_relu_ee = relu_som(ssom_relu_argument(lambda_e));
-        cost_out = cost_out + cost_lambda_ee + rho * cost_relu_ee;
+        scale_compensation_ee = relu_som(ssom_relu_argument(lambda_e));
+        cost_out = cost_out + cost_lambda_ee + rho * scale_compensation_ee * scale_compensation_ee;
     end
 end

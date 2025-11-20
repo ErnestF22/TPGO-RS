@@ -276,8 +276,8 @@ if staircase_step_idx > d+1
     if ~any(nodes_low_deg)
         disp('No nodes low deg!')
         Qx_edges = POCRotateToMinimizeLastEntries(RT_stacked_high_deg);
-        R_tilde2_edges = multiprod(repmat(Qx_edges, 1, 1, sum(nodes_high_deg)), R_manopt_out(:,:,nodes_high_deg));
-        R_recovered(:,:,nodes_high_deg) = R_tilde2_edges(1:d,:,:);
+        R_tilde2_HD = multiprod(repmat(Qx_edges, 1, 1, sum(nodes_high_deg)), R_manopt_out(:,:,nodes_high_deg));
+        R_recovered(:,:,nodes_high_deg) = R_tilde2_HD(1:d,:,:);
         T_diffs_shifted = Qx_edges * T_edges; %this has last rows to 0
         T_recovered = edge_diffs_2_T(T_diffs_shifted(1:d,:), edges, N);
         lambdas_recovered = lambdas_manopt_out;
@@ -307,8 +307,8 @@ if staircase_step_idx > d+1
         % R_recovered(:,:,nodes_low_deg) = RitildeEst(1:d,:,:);
         
         
-        R_tilde2_edges = multiprod(repmat(Qalign, 1, 1, sum(nodes_high_deg)), R_manopt_out(:,:,nodes_high_deg));
-        R_recovered(:,:,nodes_high_deg) = R_tilde2_edges(1:d,:,:);
+        R_tilde2_HD = multiprod(repmat(Qalign, 1, 1, sum(nodes_high_deg)), R_manopt_out(:,:,nodes_high_deg));
+        R_recovered(:,:,nodes_high_deg) = R_tilde2_HD(1:d,:,:);
 
         low_deg_nodes_ids = find(problem_data.node_degrees <= low_deg); %[1 5]'
         for ii = 1:N    
@@ -362,11 +362,11 @@ X_recovered.T = T_recovered;
 X_recovered.lambda = lambdas_recovered;
 %%
 problem_data_next = problem_data; %TODO: fix this line after recovery works
-cost_out = ssom_cost(X_recovered, problem_data_next); 
+cost_out_after_recovery = ssom_cost(X_recovered, problem_data_next); 
 disp("cost_out AFTER RECOVERY")
-disp(cost_out)
+disp(cost_out_after_recovery)
 
-if ~is_equal_floats(cost_out, cost_manopt_out)
+if ~is_equal_floats(cost_out_after_recovery, cost_manopt_out)
     save("failed_recovery.mat")
 end
  
@@ -376,9 +376,38 @@ end
 disp("[matStackH(X_gt.R); matStackH(R_recovered)]");
 disp([matStackH(X_gt.R); matStackH(R_recovered)]);
 
-R_global = R_recovered(:,:,1) * X_gt.R(:,:,1)'; %!!
+base_node_id = 1; %TODO: make this settable from params
+
+R_global = R_recovered(:,:,base_node_id) * X_gt.R(:,:,base_node_id)'; %!!
 % code for making all rotations global at once
 R_recovered_global = multiprod(repmat(R_global', 1, 1, N), R_recovered);
+disp("[matStackH(X_gt.R); matStackH(R_recovered_global)]");
+disp([matStackH(X_gt.R); matStackH(R_recovered_global)]);
+
+lambda_factor = X_gt.lambda(1) / lambdas_recovered(1); %should be the same for all edges
+lambdas_recovered_global = lambda_factor * lambdas_recovered;
+disp("[X_gt.lambda, lambdas_recovered_global]");
+disp([X_gt.lambda(:), lambdas_recovered_global]);
+disp("is_equal_floats(X_gt.lambda, lambdas_recovered_global)")
+disp(is_equal_floats(X_gt.lambda(:), lambdas_recovered_global))
+
+%%
+[T_edges, ~] = make_T_edges(T_recovered, edges);
+
+T_edges_scaled = make_tijs_scaled(lambda_factor * ones(num_edges, 1), T_edges);
+T_edges_scaled2 = T_edges_scaled;
+for ii = 1:num_edges
+    T_edges_scaled2(:,ii) = R_global' * T_edges_scaled(:,ii);
+end
+
+T_recovered_global_pre_shift = edge_diffs_2_T(T_edges_scaled2, edges, N);
+T_recovered_global = T_recovered_global_pre_shift;
+for ii = 1:N
+    T_recovered_global(:, ii) = T_recovered_global_pre_shift(:,ii) + X_gt.T(:,base_node_id);
+end
+
+disp([X_gt.T; T_recovered_global]);
+
 disp("[matStackH(X_gt.R); matStackH(R_recovered_global)]");
 disp([matStackH(X_gt.R); matStackH(R_recovered_global)]);
 
@@ -387,9 +416,9 @@ disp([matStackH(X_gt.R); matStackH(R_recovered_global)]);
 % testdata_plot2 = problem_data;
 % testdata_plot2.gi = RT2G(R_recovered_global, T_recovered_global_nocomp);
 % testdata_plot2 = testNetworkCompensate(testdata_plot2);
-if staircase_step_idx == d+1
-    T_recovered_global = T_recovered;
-end
+% if staircase_step_idx == d+1
+%     T_recovered_global = T_recovered;
+% end
 % lambdas_recovered_global = lambdas_recovered;
 
 rs_recovery_success = boolean(1);
@@ -424,8 +453,7 @@ end
 disp("[X_gt.T; T_recovered_global]");
 disp([X_gt.T; T_recovered_global]);
 
-lambda_factor = X_gt.lambda(1) / lambdas_recovered(1);
-lambdas_recovered_global = lambda_factor * lambdas_recovered;
+
 disp("[X_gt.lambda, lambdas_recovered_global]");
 disp([X_gt.lambda(:), lambdas_recovered_global]);
 disp("is_equal_floats(X_gt.lambda, lambdas_recovered_global)")
@@ -464,6 +492,12 @@ end
 transf_out = RT2G(X_recovered_global.R, X_recovered_global.T); %ssom_genproc() function output
 lambdas_ssom_out = lambdas_recovered_global;
 
+disp("max(abs(R_recovered_global(:)-X_gt.R(:)), [], ""all"")")
+disp(max(abs(R_recovered_global(:)-X_gt.R(:)), [], "all"))
+disp("max(abs(T_recovered_global(:)-X_gt.T(:)), [], ""all"")")
+disp(max(abs(T_recovered_global(:)-X_gt.T(:)), [], "all"))
+disp("max(abs(lambdas_recovered_global(:)-X_gt.lambda(:)), [], ""all"")")
+disp(max(abs(lambdas_recovered_global(:)-X_gt.lambda(:)), [], "all"))
 
 disp('multidet(X_recovered_global.R)') 
 disp(multidet(X_recovered_global.R)) 

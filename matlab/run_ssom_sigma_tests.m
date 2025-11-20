@@ -2,13 +2,13 @@ clc;
 clear;
 close all;
 
-N = 18;
+N = 4;
 mindeg = 2;
 
 % 1a) PW TRANSLATION DATA INPUT: R, T are the gt, Tijs_nois are the input data
 testdata = testNetwork_params(3, N, 'banded', mindeg); %4 would be the default
 
-testdata.rho = 0.5;
+testdata.rho = 10;
 
 % %som = ShapeOfMotion('testNetwork_params.csv'); %params reading is done directly in constructor
 % %copy the list below from the properties list
@@ -50,7 +50,7 @@ sigmas = readmatrix("data/sigmas.txt"); %sigma = stdev, sigma.^2 = variance
 mus = readmatrix("data/mus.txt"); %OBS. generally, mus can be d-dimensional; here, we just assume them as scalar (i.e. a d-dimensional vector with all coordinates equal)
 
 % sigmas = sigmas(4);
-sigmas = 1.0;
+sigmas = 0.1;
 % mus = mus(2);
 
 node_degrees = sum(testdata.A, 2);

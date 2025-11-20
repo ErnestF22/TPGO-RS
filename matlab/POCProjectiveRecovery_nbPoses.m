@@ -220,11 +220,6 @@ end
 %disp('Test to undo the invariance using a known Rb')
 %Qx'*blkdiag(eye(2),Rb')*Qx*Qy*Ri_tilde2
 
-function R=procrustes_R(X,Y)
-nb_dim=size(X,1);
-[U,~,V]=svd(Y*X');
-R=U*diag([ones(nb_dim-1,1);det(U*V')])*V';
-
 
 function Qx=align2d_EoF(v)
 nbPoses=size(v,3);

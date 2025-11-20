@@ -26,7 +26,7 @@ while(ivarargin<=length(varargin))
         case 'identityrot'
             flagIdentityRot=true;
         case 'translperturbation'
-            flagTranslPertubation=true;
+            flagTranslPerturbation=true;
         case 'references'
             methodAbsolutePoses='reference';
         case 'poses'
