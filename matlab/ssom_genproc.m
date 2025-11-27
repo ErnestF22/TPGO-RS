@@ -62,6 +62,9 @@ cost_gt = ssom_cost(X_gt, problem_data);
 disp("cost_gt in ssom_genproc.m")
 disp(cost_gt)
 
+disp("cost gt _no_compensation(X_recovered, problem_data_next)")
+disp(ssom_cost_no_compensation(X_gt, problem_data))
+
 tg_element_test = M.randvec(X_gt);
 disp("check_is_tangent_stiefel(X_gt.R, tg_element_test.R)")
 disp(check_is_tangent_stiefel(X_gt.R, tg_element_test.R));
@@ -390,6 +393,10 @@ disp("[X_gt.lambda, lambdas_recovered_global]");
 disp([X_gt.lambda(:), lambdas_recovered_global]);
 disp("is_equal_floats(X_gt.lambda, lambdas_recovered_global)")
 disp(is_equal_floats(X_gt.lambda(:), lambdas_recovered_global))
+
+
+disp("cost_ssom_no_compensation(X_recovered, problem_data_next)")
+disp(ssom_cost_no_compensation(X_recovered, problem_data))
 
 %%
 [T_edges, ~] = make_T_edges(T_recovered, edges);

@@ -6,7 +6,8 @@ N = 4;
 mindeg = 2;
 
 % 1a) PW TRANSLATION DATA INPUT: R, T are the gt, Tijs_nois are the input data
-testdata = testNetwork_params(3, N, 'banded', mindeg); %4 would be the default
+% testdata = testNetwork_params(3, N, 'banded', mindeg); %4 would be the default
+testdata = testNetwork_params_translpert(3, N, 'banded', mindeg); 
 
 testdata.rho = 10;
 
