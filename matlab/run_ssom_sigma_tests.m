@@ -2,7 +2,7 @@ clc;
 clear;
 close all;
 
-N = 4;
+N = 5;
 mindeg = 2;
 
 % 1a) PW TRANSLATION DATA INPUT: R, T are the gt, Tijs_nois are the input data
@@ -31,6 +31,7 @@ use_pim = boolean(1);
 enable_manopt_icp = boolean(0);
 enable_procrustes = boolean(0);
 enable_ssom = boolean(1);
+perform_globalization = true;
 som_params = struct('N', N, 'd', d, 'd_aff', d_aff, ...
     'global_camera_id', global_camera_id, ...
     'num_tests_per_sigma', num_tests_per_sigma, 'transf_end_thresh', transf_end_thresh, ...
@@ -43,7 +44,8 @@ som_params = struct('N', N, 'd', d, 'd_aff', d_aff, ...
     'use_pim', use_pim, ...
     'enable_manopt_icp', enable_manopt_icp, ...
     'enable_procrustes', enable_procrustes, ...
-    'enable_ssom', enable_ssom);
+    'enable_ssom', enable_ssom, ...
+    'perform_globalization', perform_globalization);
 
 % 0b) Noise PARAMS
 %NOTE: sigmas, mus can be seen as couples for each test
