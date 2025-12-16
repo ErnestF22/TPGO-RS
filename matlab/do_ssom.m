@@ -3,7 +3,7 @@ function [rotation_error_manopt,translation_error_manopt, ...
     rotation_error_ssom,translation_error_ssom, ...
     exectime_manopt,exectime_procrustes,exectime_ssom, ...
     scale_ratios_ssom,transl_err_norm_ssom, ...
-    rs_success_bool] = ...
+    rs_success_bool, R_out, T_out, lambdas_out] = ...
         do_ssom(testdata, sigma, mu, params)
 %DO_SOM_PROCRUSTES_MANOPT_RIEMANNIAN_STAIRCASE
 %Function that executes the Shape of Motion algorithms through
@@ -88,6 +88,10 @@ if params.rand_initguess
     T_initguess = 10 * rand(params.d, params.N);
     % lambdas_initguess = ones(num_edges, 1);
     % T_globalframe_nois = 10 * rand(params.d, params.N);
+else
+    R_initguess = params.R_initguess;
+    T_initguess = params.T_initguess;
+    lambdas_initguess = params.lambdas_initguess;
 end
 transf_initguess = RT2G(R_initguess, T_initguess);
 
@@ -138,6 +142,9 @@ else
     transf_ssom = repmat(eye(d+1), 1, 1, N);
 end
 exectime_ssom = toc(ssom_start_time);
+R_out = G2R(transf_ssom);
+T_out = G2T(transf_ssom);
+lambdas_out = lambdas_ssom_out;
 
 %% 4) Compare output results
 

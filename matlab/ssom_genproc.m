@@ -500,21 +500,21 @@ if params.perform_globalization
     transf_out = RT2G(X_recovered_global.R, X_recovered_global.T); %ssom_genproc() function output
     lambdas_ssom_out = lambdas_recovered_global;
     
-    disp("max(abs(R_recovered_global(:)-X_gt.R(:)), [], ""all"")")
-    disp(max(abs(R_recovered_global(:)-X_gt.R(:)), [], "all"))
-    disp("max(abs(T_recovered_global(:)-X_gt.T(:)), [], ""all"")")
-    disp(max(abs(T_recovered_global(:)-X_gt.T(:)), [], "all"))
-    disp("max(abs(lambdas_recovered_global(:)-X_gt.lambda(:)), [], ""all"")")
-    disp(max(abs(lambdas_recovered_global(:)-X_gt.lambda(:)), [], "all"))
-    
-    disp('multidet(X_recovered_global.R)') 
-    disp(multidet(X_recovered_global.R)) 
+    % disp("max(abs(R_recovered_global(:)-X_gt.R(:)), [], ""all"")")
+    % disp(max(abs(R_recovered_global(:)-X_gt.R(:)), [], "all"))
+    % disp("max(abs(T_recovered_global(:)-X_gt.T(:)), [], ""all"")")
+    % disp(max(abs(T_recovered_global(:)-X_gt.T(:)), [], "all"))
+    % disp("max(abs(lambdas_recovered_global(:)-X_gt.lambda(:)), [], ""all"")")
+    % disp(max(abs(lambdas_recovered_global(:)-X_gt.lambda(:)), [], "all"))
+    % 
+    % disp('multidet(X_recovered_global.R)') 
+    % disp(multidet(X_recovered_global.R)) 
 
 else
 
     R_recovered_global = R_recovered;
     T_recovered_global = T_recovered;
-    % lambdas_recovered_global = lambdas_recovered;
+    lambdas_recovered_global = lambdas_recovered;
     lambdas_ssom_out = lambdas_recovered;
 
     transf_out = RT2G(R_recovered_global, T_recovered_global);
@@ -523,6 +523,16 @@ else
 
     rs_recovery_success = true;
 end
+
+disp("max(abs(R_recovered_global(:)-X_gt.R(:)), [], ""all"")")
+disp(max(abs(R_recovered_global(:)-X_gt.R(:)), [], "all"))
+disp("max(abs(T_recovered_global(:)-X_gt.T(:)), [], ""all"")")
+disp(max(abs(T_recovered_global(:)-X_gt.T(:)), [], "all"))
+disp("max(abs(lambdas_recovered_global(:)-X_gt.lambda(:)), [], ""all"")")
+disp(max(abs(lambdas_recovered_global(:)-X_gt.lambda(:)), [], "all"))
+
+disp('multidet(R_recovered_global)') 
+disp(multidet(R_recovered_global)) 
 
 end %file function
 

@@ -9,7 +9,7 @@ mindeg = 2;
 % testdata = testNetwork_params(3, N, 'banded', mindeg); %4 would be the default
 testdata = testNetwork_params_translpert(3, N, 'banded', mindeg); 
 
-testdata.rho = 10;
+testdata.rho = 1000;
 
 % %som = ShapeOfMotion('testNetwork_params.csv'); %params reading is done directly in constructor
 % %copy the list below from the properties list
@@ -26,7 +26,7 @@ procrustes_mode = 'som';
 riem_grad_mode = 'manual'; %'auto' or 'manual'
 hessian_mode = 'manual'; 
 initguess_is_available = boolean(0);
-rand_initguess = boolean(0);
+rand_initguess = boolean(1);
 use_pim = boolean(1);
 enable_manopt_icp = boolean(0);
 enable_procrustes = boolean(0);
@@ -53,7 +53,7 @@ sigmas = readmatrix("data/sigmas.txt"); %sigma = stdev, sigma.^2 = variance
 mus = readmatrix("data/mus.txt"); %OBS. generally, mus can be d-dimensional; here, we just assume them as scalar (i.e. a d-dimensional vector with all coordinates equal)
 
 % sigmas = sigmas(4);
-sigmas = 0.1;
+sigmas = 0.2;
 % mus = mus(2);
 
 node_degrees = sum(testdata.A, 2);
