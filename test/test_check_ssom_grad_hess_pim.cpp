@@ -236,9 +236,6 @@ int main(int argc, char **argv)
 
     ROFL_VAR1(exectimeGH)
 
-
-
-
     double exectimePIM = 0;
     {
         rofl::ScopedTimer timer("PIM");
@@ -334,11 +331,13 @@ int main(int argc, char **argv)
         ProbNext.getTranslations(uStart2ndEig, Tnext2ndTgNormStart);
         ProbNext.getScales(uStart2ndEig, LambdasNext2ndTgNormStart);
 
+        // ProbNext.ssomPimHessianGenprocEigenWithStartingPts(1e-5, R, T, Lambdas,
+        //                                                    RnextTgNormStart, TnextTgNormStart, LambdasNextTgNormStart,
+        //                                                    Rnext2ndTgNormStart, Tnext2ndTgNormStart, LambdasNext2ndTgNormStart,
+        //                                                    Y0out, lambdaPimOut, vR, vT, vLambdas, false);
 
-        ProbNext.ssomPimHessianGenprocEigenWithStartingPts(1e-5, R, T, Lambdas,
-                                                           RnextTgNormStart, TnextTgNormStart, LambdasNextTgNormStart,
-                                                           Rnext2ndTgNormStart, Tnext2ndTgNormStart, LambdasNext2ndTgNormStart,
-                                                           Y0out, lambdaPimOut, vR, vT, vLambdas, false);
+        ProbNext.ssomPimHessianGenprocEigen(1e-5, R, T, Lambdas,
+                                            Y0out, lambdaPimOut, vR, vT, vLambdas, false);
 
         ROFL_VAR1(lambdaPimOut)
 

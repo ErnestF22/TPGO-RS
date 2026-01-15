@@ -206,6 +206,7 @@ int main(int argc, char **argv)
         Prob.setUsePIM(true); //same as default
         Prob.setPimMaxIterations(5000); //same as default
 
+
         rofl::ScopedTimer timer("ssomRS");
         double costOut = ROPTLIB::runSsom(Prob, startX, srcNodeId,
                                           Rout, Tout, lambdasOut,

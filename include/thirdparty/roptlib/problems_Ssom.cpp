@@ -1578,6 +1578,8 @@ namespace ROPTLIB
         auto tGt = Prob.Tgt_;
         auto lambdasGt = Prob.LambdasGt_;
 
+        double costOut = std::numeric_limits<double>::infinity();
+
         for (staircaseStepIdx = r0; staircaseStepIdx <= d * d * n + 1; ++staircaseStepIdx)
         {
             ROFL_VAR1(staircaseStepIdx)
@@ -1634,13 +1636,16 @@ namespace ROPTLIB
                 ProbPrev.ssomEscapeHessianGenprocEigen(R, T, Lambdas, Y0, lambda, vR, vT, vLambdas);
             }
 
-            if (lambda > -1e-5)
+            if (lambda > -1e-8)
             {
                 ROFL_VAR2(lambda, "R, T eigenvals > 0: exiting stsaircase")
                 // staircaseStepSkipped = 0;
                 RmanoptOutEig = R;
                 TmanoptOutEig = T;
                 LambdaManoptOutEig = Lambdas;
+
+                costOut = costLast;
+
                 break;
             }
 
@@ -1727,26 +1732,30 @@ namespace ROPTLIB
 
             delete RTRNewtonSolverNext;
 
-            // break; // TODO: For now, just 1 RS step allowed -> remove it later after fixing linesearch
+            // break; // uncomment this to run only one step of staircase
         }
 
         // // Recovery procedure
 
-        // ROFL_VAR1("Running recovery procedure")
+        ROFL_VAR1("Running recovery procedure")
 
-        // // back to SE(d)^N
-        // SomUtils::VecMatD Rrecovered(n, SomUtils::MatD::Zero(d, d));
-        // SomUtils::MatD Trecovered(SomUtils::MatD::Zero(d, n));
-        // bool recSEDNsuccess = ProbPrev.recoverySEdN(staircaseStepIdx,
-        //                                             RmanoptOutEig, TmanoptOutEig,
-        //                                             Rrecovered, Trecovered);
+        // back to SE(d)^N
 
-        // ROFL_VAR1("Printing R, T SE(d)^N")
-        // for (auto &m : Rrecovered)
-        //     ROFL_VAR1(m)
-        // ROFL_VAR1(Trecovered)
+        
+        SomUtils::VecMatD Rrecovered(n, SomUtils::MatD::Zero(d, d));
+        SomUtils::MatD Trecovered(SomUtils::MatD::Zero(d, n));
+        SomUtils::MatD LambdasRecovered(SomUtils::MatD::Zero(e, 1));
+        bool recSEDNsuccess = ProbPrev.recoverySEdN(staircaseStepIdx,
+                                                    RmanoptOutEig, TmanoptOutEig, LambdaManoptOutEig,
+                                                    Rrecovered, Trecovered, LambdasRecovered);
 
-        // ROFL_VAR1(recSEDNsuccess)
+        ROFL_VAR1("Printing R, T, lambdas after recovery")
+        for (auto &m : Rrecovered)
+            ROFL_VAR1(m)
+        ROFL_VAR1(Trecovered)
+        ROFL_VAR1(LambdasRecovered)
+
+        ROFL_VAR1(recSEDNsuccess)
 
         // // globalize
 
@@ -1758,7 +1767,7 @@ namespace ROPTLIB
         //                                                 Rout, Tout);
         // ROFL_VAR1(globalRecoverySuccess)
 
-        return costLast;
+        return costOut;
     }
 
 } // end of namespace ROPTLIB

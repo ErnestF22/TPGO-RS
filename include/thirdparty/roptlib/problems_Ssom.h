@@ -776,7 +776,7 @@ namespace ROPTLIB
        * for node @param nodeId
        * using input params @param nodeDegrees, @param Tedges accordingly
        */
-      void makeTij1j2sEdges(int nodeId, const Eigen::ArrayXi &nodeDegrees, const SomUtils::MatD &Tedges,
+      void makeTij1j2sEdges(int nodeId, const Eigen::ArrayXi &nodeDegrees, const SomUtils::MatD &Tedges, const SomUtils::MatD &Tijs,
                             SomUtils::MatD &Tij1j2, SomUtils::MatD &Tij1j2tilde) const;
 
       /**
@@ -907,8 +907,8 @@ namespace ROPTLIB
       void recoverRdeg2(const SomUtils::VecMatD &TijTilde2degRecovery, int lowDegNodeId,
                         SomUtils::MatD &P) const;
 
-      // void recoverRdeg2(const SomUtils::MatD &TijTilde2degRecovery, const SomUtils::MatD &low_deg_nodes_id,
-      //                   const SomUtils::MatD &P) const;
+      // void recoverTedges(); //probably just wrong and not needed (neither in MATLAB)
+
    };
 
    /**

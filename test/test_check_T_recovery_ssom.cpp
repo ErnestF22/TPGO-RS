@@ -254,6 +254,8 @@ int main(int argc, char **argv)
     //         Tij_2deg_recovery = cat(3, Tij_2deg_recovery, Tij1j2);
     //         Tij_tilde_2deg_recovery = cat( ...
     //             3, Tij_tilde_2deg_recovery, Tij1j2_tilde);
+    SomUtils::MatD TijsScaled(SomUtils::MatD::Zero(d, numEdges));
+    Prob.makeTijsScaled(LambdasManoptOut, Prob.tijs_, TijsScaled);
     int lowDegIdx = 0;
     for (int nodeId = 0; nodeId < n; ++nodeId)
     {
@@ -261,7 +263,7 @@ int main(int argc, char **argv)
         {
             SomUtils::MatD Tij1j2(SomUtils::MatD::Zero(d, lowDeg));
             SomUtils::MatD Tij1j2Tilde(SomUtils::MatD::Zero(p, lowDeg));
-            Prob.makeTij1j2sEdges(nodeId, nodeDegrees, Tedges, Tij1j2, Tij1j2Tilde);
+            Prob.makeTij1j2sEdges(nodeId, nodeDegrees, Tedges, TijsScaled, Tij1j2, Tij1j2Tilde); // TODO: is TijsScaled correct here?
             Tij2degRecovery[lowDegIdx] = Tij1j2;
             TijTilde2degRecovery[lowDegIdx] = Tij1j2Tilde;
             lowDegIdx++;

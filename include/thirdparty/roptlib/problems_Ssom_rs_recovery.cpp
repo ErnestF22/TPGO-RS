@@ -736,7 +736,7 @@ namespace ROPTLIB
             vPimRshift = vPimR;
             vPimTshift = vPimT;
             vPimLambdasShift = vPimLambdas;
-        } // SMALL VERSION UP TO HERE!!
+        }
 
         if (highestNormEigenval > 0)
         {
@@ -2614,7 +2614,7 @@ namespace ROPTLIB
         Qtransp = Q.transpose();
     }
 
-    void SsomProblem::makeTij1j2sEdges(int nodeId, const Eigen::ArrayXi &nodeDegrees, const SomUtils::MatD &Tedges,
+    void SsomProblem::makeTij1j2sEdges(int nodeId, const Eigen::ArrayXi &nodeDegrees, const SomUtils::MatD &Tedges, const SomUtils::MatD &Tijs,
                                        SomUtils::MatD &Tij1j2, SomUtils::MatD &Tij1j2tilde) const
     {
         ROFL_VAR1("makeTij1j2sEdges START")
@@ -2641,7 +2641,7 @@ namespace ROPTLIB
             // % e_j = edges(e, 2);
             if (eI == nodeId)
             {
-                Tij1j2.col(found) = tijs_.col(e);
+                Tij1j2.col(found) = Tijs.col(e); // not tijs_ !!
                 Tij1j2tilde.col(found) = -Tedges.col(e);
                 found++;
             }
@@ -3039,231 +3039,233 @@ namespace ROPTLIB
                                    SomUtils::VecMatD &Rrecovered, SomUtils::MatD &Trecovered, SomUtils::MatD &LambdasRecovered)
     {
         rsRecoverySuccess_ = true;
-        // ROFL_ASSERT(Rrecovered.size() == sz_.n_ && Trecovered.rows() == sz_.d_ && Trecovered.cols() == sz_.n_)
+        // ROFL_ASSERT(Rrecovered.size() == sz_.n_ && Trecovered.rows() == sz_.d_ && Trecovered.cols() == sz_.n_ && LambdasRecovered.rows() == sz_.n_ && LambdasRecovered.cols() == 1)
 
-        // // !! In the way recovery on SE(d)^N is formulated now, we have to perform it even if nrs = d
+        // !! In the way recovery on SE(d)^N is formulated now, we have to perform it even if nrs = d
 
-        // int nrs = staircaseStepIdx - 1;
-        // nrs = TmanoptOut.rows();
-        // int lowDeg = 2; // TODO: not necessarily 2 in more complex graph cases (?)
+        int nrs = staircaseStepIdx - 1;
+        nrs = TmanoptOut.rows();
+        int lowDeg = 2; // TODO: not necessarily 2 in more complex graph cases (?)
 
-        // Eigen::ArrayXi nodeDegrees(Eigen::ArrayXi::Zero(sz_.n_));
-        // computeNodeDegrees(nodeDegrees);
+        Eigen::ArrayXi nodeDegrees(Eigen::ArrayXi::Zero(sz_.n_));
+        computeNodeDegrees(nodeDegrees);
 
-        // // auto nodesHighDeg = nodeDegrees > lowDeg;
-        // Eigen::ArrayXi nodesHighDeg(Eigen::ArrayXi::Zero(sz_.n_));
-        // Eigen::ArrayXi nodesLowDeg(Eigen::ArrayXi::Zero(sz_.n_));
+        // auto nodesHighDeg = nodeDegrees > lowDeg;
+        Eigen::ArrayXi nodesHighDeg(Eigen::ArrayXi::Zero(sz_.n_));
+        Eigen::ArrayXi nodesLowDeg(Eigen::ArrayXi::Zero(sz_.n_));
 
-        // for (int i = 0; i < sz_.n_; ++i)
-        // {
-        //     if (nodeDegrees(i, 0) > lowDeg)
-        //         nodesHighDeg(i, 0) = 1;
-        //     else
-        //         nodesLowDeg(i, 0) = 1;
-        // }
-        // ROFL_VAR1(nodeDegrees.transpose());
-        // ROFL_VAR1(nodesHighDeg.transpose());
-        // ROFL_VAR1(nodesLowDeg.transpose())
+        for (int i = 0; i < sz_.n_; ++i)
+        {
+            if (nodeDegrees(i, 0) > lowDeg)
+                nodesHighDeg(i, 0) = 1;
+            else
+                nodesLowDeg(i, 0) = 1;
+        }
+        ROFL_VAR1(nodeDegrees.transpose());
+        ROFL_VAR1(nodesHighDeg.transpose());
+        ROFL_VAR1(nodesLowDeg.transpose())
 
-        // // [T_edges, T1_offset] = make_T_edges(T_manopt_out, edges);
-        // SomUtils::MatD Tedges(SomUtils::MatD::Zero(nrs, numEdges_));
-        // makeTedges(TmanoptOut, Tedges);
+        // [T_edges, T1_offset] = make_T_edges(T_manopt_out, edges);
+        SomUtils::MatD Tedges(SomUtils::MatD::Zero(nrs, numEdges_));
+        makeTedges(TmanoptOut, Tedges);
 
-        // // RT_stacked_high_deg = [ matStackH(R_manopt_out( :, :, nodes_high_deg)), T_edges ];
-        // auto numNodesHighDeg = nodesHighDeg.sum();
-        // ROFL_VAR1(numNodesHighDeg);
-        // SomUtils::MatD RTstackedHighDeg(SomUtils::MatD::Zero(nrs, sz_.d_ * numNodesHighDeg + Tedges.cols()));
-        // SomUtils::MatD RstackedHighDeg(SomUtils::MatD::Zero(nrs, sz_.d_ * numNodesHighDeg));
-        // SomUtils::VecMatD RmanoptOutHighDeg;
-        // for (int i = 0; i < sz_.n_; ++i)
-        // {
-        //     if (nodesHighDeg(i, 0) != 0)
-        //         RmanoptOutHighDeg.push_back(RmanoptOut[i]);
-        // }
-        // ROFL_VAR1("hstack call from here");
-        // SomUtils::hstack(RmanoptOutHighDeg, RstackedHighDeg);
-        // RTstackedHighDeg.block(0, 0, nrs, sz_.d_ * numNodesHighDeg) = RstackedHighDeg;
-        // RTstackedHighDeg.block(0, sz_.d_ * numNodesHighDeg, nrs, numEdges_) = Tedges;
+        // RT_stacked_high_deg = [ matStackH(R_manopt_out( :, :, nodes_high_deg)), T_edges ];
+        auto numNodesHighDeg = nodesHighDeg.sum();
+        auto numNodesLowDeg = nodesLowDeg.sum();
+        ROFL_VAR1(numNodesHighDeg);
+        SomUtils::MatD RTstackedHighDeg(SomUtils::MatD::Zero(nrs, sz_.d_ * numNodesHighDeg + Tedges.cols()));
+        SomUtils::MatD RstackedHighDeg(SomUtils::MatD::Zero(nrs, sz_.d_ * numNodesHighDeg));
+        SomUtils::VecMatD RmanoptOutHighDeg;
+        for (int i = 0; i < sz_.n_; ++i)
+        {
+            if (nodesHighDeg(i, 0) != 0)
+                RmanoptOutHighDeg.push_back(RmanoptOut[i]);
+        }
+        ROFL_VAR1("hstack call from here");
+        SomUtils::hstack(RmanoptOutHighDeg, RstackedHighDeg);
+        RTstackedHighDeg.block(0, 0, nrs, sz_.d_ * numNodesHighDeg) = RstackedHighDeg;
+        RTstackedHighDeg.block(0, sz_.d_ * numNodesHighDeg, nrs, numEdges_) = Tedges;
 
-        // // ROFL_VAR1(RTstackedHighDeg)
+        // ROFL_VAR1(RTstackedHighDeg)
 
-        // SomUtils::MatD QxEdges(SomUtils::MatD::Zero(nrs, nrs));
-        // POCRotateToMinimizeLastEntries(RTstackedHighDeg, QxEdges);
+        if (!nodesLowDeg.any())
+        {
+            ROFL_VAR1("NO nodes low deg!");
 
-        // // ROFL_VAR1(QxEdges)
+            SomUtils::MatD QxEdges(SomUtils::MatD::Zero(nrs, nrs));
+            POCRotateToMinimizeLastEntries(RTstackedHighDeg, QxEdges);
+            SomUtils::VecMatD Rtilde2edgesHD(numNodesHighDeg, SomUtils::MatD::Zero(nrs, sz_.d_));
+            int highDegId = 0;
+            for (int i = 0; i < sz_.n_; ++i)
+            {
+                if (nodesHighDeg(i, 0) != 0) 
+                {
+                    Rtilde2edgesHD[highDegId] = QxEdges * RmanoptOut[i];
+                    highDegId++;
+                    Rrecovered[i] = Rtilde2edgesHD[highDegId].block(0, 0, sz_.d_, sz_.d_);
+                }
+            }
+            ROFL_ASSERT(highDegId == numNodesHighDeg)
+            SomUtils::MatD TdiffsShifted = QxEdges * Tedges; // this has last row to 0
+            edgeDiffs2T(src_, TdiffsShifted.block(0, 0, sz_.d_, TdiffsShifted.cols()), sz_.n_, Trecovered);
+            LambdasRecovered = LambdasManoptOut;
+        }
+        else
+        {
+            ROFL_VAR1("There are low degree nodes!");
 
-        // // R_tilde2_edges = multiprod(repmat(Qx_edges, 1, 1, sum(nodes_high_deg)), R_manopt_out( :, :, nodes_high_deg));
-        // SomUtils::VecMatD Rtilde2edges(numNodesHighDeg, SomUtils::MatD::Zero(nrs, sz_.d_));
-        // int highDegId = 0;
-        // for (int i = 0; i < sz_.n_; ++i)
-        // {
-        //     if (nodesHighDeg[i])
-        //     {
-        //         Rtilde2edges[highDegId] = QxEdges * RmanoptOut[i];
-        //         highDegId++;
-        //     }
-        // }
-        // // for (int i = 0; i < numNodesHighDeg; ++i)
-        // //     ROFL_VAR1(Rtilde2edges[i])
+            // Qalign = align3d(RT_stacked_high_deg);
+            // tijs = problem_data.tijs; %TODO!! improve naming
+            // Tijs_scaled = make_tijs_scaled(lambdas_manopt_out, tijs);
 
-        // ROFL_ASSERT(highDegId == numNodesHighDeg)
+            SomUtils::MatD Qalign(SomUtils::MatD::Zero(nrs, nrs));
+            align3d(RTstackedHighDeg, Qalign);
+            SomUtils::MatD TijsScaled(SomUtils::MatD::Zero(sz_.d_, numEdges_));
+            makeTijsScaled(tijs_, LambdasManoptOut, TijsScaled);
 
-        // std::for_each(Rrecovered.begin(), Rrecovered.end(), [](SomUtils::MatD &x) { //^^^ take argument by reference: LAMBDA FUNCTION
-        //     x.setZero();
-        // });
+            // problem_data.d = d;
+            // Tij_2deg_recovery = [];
+            // Tij_tilde_2deg_recovery = [];
+            // for node_id = 1:N
+            //     if problem_data.node_degrees(node_id) == low_deg
+            //         [Tij1j2, Tij1j2_tilde] = ...
+            //             make_Tij1j2s_edges( ...
+            //             node_id, T_edges, Tijs_scaled, edges, problem_data);
+            //         Tij_2deg_recovery = cat(3, Tij_2deg_recovery, Tij1j2);
+            //         Tij_tilde_2deg_recovery = cat( ...
+            //             3, Tij_tilde_2deg_recovery, Tij1j2_tilde);
 
-        // // R_recovered( :, :, nodes_high_deg) = R_tilde2_edges(1 : d, :, :);
-        // highDegId = 0;
-        // for (int i = 0; i < sz_.n_; ++i)
-        // {
-        //     if (nodesHighDeg[i])
-        //     {
-        //         ROFL_ASSERT(Rrecovered[i].rows() == sz_.d_ && Rrecovered[i].cols() == sz_.d_)
-        //         Rrecovered[i] = Rtilde2edges[highDegId].block(0, 0, sz_.d_, sz_.d_);
-        //         highDegId++;
-        //     }
-        // }
-        // ROFL_ASSERT(highDegId == numNodesHighDeg)
+            SomUtils::VecMatD Tij2degRecovery(numNodesLowDeg, SomUtils::MatD::Zero(sz_.d_, lowDeg));
+            SomUtils::VecMatD TijTilde2degRecovery(numNodesLowDeg, SomUtils::MatD::Zero(nrs, lowDeg));
+            int lowDegId = 0;
+            for (int nodeId = 0; nodeId < sz_.n_; ++nodeId)
+            {
+                if (nodeDegrees(nodeId, 0) == lowDeg)
+                {
+                    SomUtils::MatD Tij1j2(SomUtils::MatD::Zero(sz_.d_, lowDeg));
+                    SomUtils::MatD Tij1j2Tilde(SomUtils::MatD::Zero(nrs, lowDeg));
+                    makeTij1j2sEdges(nodeId, nodeDegrees, Tedges, TijsScaled, Tij1j2, Tij1j2Tilde);
+                    Tij2degRecovery[lowDegId] = Tij1j2;
+                    TijTilde2degRecovery[lowDegId] = Tij1j2Tilde;
+                    lowDegId++;
+                }
+            }
 
-        // // for (int i = 0; i < sz_.n_; ++i)
-        // //     ROFL_VAR1(Rrecovered[i])
+            // Tij_tilde_2deg_recovery=multiprod(Qalign, Tij_tilde_2deg_recovery);
+            // RitildeEst = RbRecovery(multiprod(Qalign, R_manopt_out(:,:,nodes_low_deg)), Tij_tilde_2deg_recovery);
+            // R_recovered(:,:,nodes_low_deg) = RitildeEst(1:d,:,:);
 
-        // if (!nodesLowDeg.any())
-        // {
-        //     ROFL_VAR1("No nodes low deg!");
-        //     SomUtils::MatD TdiffsShifted = QxEdges * Tedges; // this has last row to 0
-        //     edgeDiffs2T(src_, TdiffsShifted.block(0, 0, sz_.d_, TdiffsShifted.cols()), sz_.n_, Trecovered);
-        // }
-        // else
-        // {
-        //     // for node_id = 1 : length(params.node_degrees)
-        //     //
-        //     for (int nodeId = 0; nodeId < nodeDegrees.size(); ++nodeId)
-        //     {
-        //         // node_deg = params.node_degrees(node_id);
-        //         auto nodeDeg = nodeDegrees(nodeId);
-        //         // if node_deg == low_deg
-        //         if (nodeDeg == lowDeg)
-        //         {
-        //             //             fprintf("Running recoverRitilde() on node %g\n", node_id);
-        //             std::cout << "Running recoverRitilde() on node " << nodeId << std::endl;
-        //             // R_i_tilde2 = R_manopt_out( :, :, node_id);
-        //             auto RiTilde2 = RmanoptOut[nodeId];
+            SomUtils::VecMatD TijTilde2degRecoveryShifted (TijTilde2degRecovery.size(), SomUtils::MatD::Zero(nrs, lowDeg)); // OBS. different naming than MATLAB (where it's just overwritten)!
+            for (int i = 0; i < TijTilde2degRecovery.size(); ++i)
+            {
+                TijTilde2degRecoveryShifted[i] = Qalign * TijTilde2degRecovery[i];
+            }
+            SomUtils::VecMatD RbRecoveryInput(numNodesLowDeg, SomUtils::MatD::Zero(nrs, sz_.d_));
+            lowDegId = 0;
+            for (int i = 0; i < sz_.n_; ++i)
+            {
+                if (nodesLowDeg(i, 0) != 0)
+                {
+                    RbRecoveryInput[lowDegId] = Qalign * RmanoptOut[i];
+                    lowDegId++;
+                }
+            }
+            ROFL_ASSERT(lowDegId == numNodesLowDeg)
 
-        //             SomUtils::MatD Xgt(SomUtils::MatD::Zero(sz_.d_, sz_.d_ * sz_.n_ + sz_.d_ * sz_.n_));
-        //             SomUtils::MatD RgtSt(SomUtils::MatD::Zero(sz_.d_, sz_.d_ * sz_.n_));
-        //             ROFL_VAR1("hstack call from here");
-        //             SomUtils::hstack(Rgt_, RgtSt);
-        //             ROFL_VAR1(RgtSt);
+            SomUtils::VecMatD RiTildeEst(numNodesLowDeg, SomUtils::MatD::Zero(sz_.d_, sz_.d_));
+            // RbRecovery(RbRecoveryInput, TijTilde2degRecoveryShifted, RiTildeEst);
+            
+            
+            // R_tilde2_HD = multiprod(repmat(Qalign, 1, 1, sum(nodes_high_deg)), R_manopt_out(:,:,nodes_high_deg));
+            // R_recovered(:,:,nodes_high_deg) = R_tilde2_HD(1:d,:,:);
+            SomUtils::VecMatD Rtilde2HD(numNodesHighDeg, SomUtils::MatD::Zero(nrs, sz_.d_));
+            int highDegId = 0;
+            for (int i = 0; i < sz_.n_; ++i)
+            {
+                if (nodesHighDeg(i, 0) != 0)
+                {
+                    Rtilde2HD[highDegId] = Qalign * RmanoptOut  [i];
+                    highDegId++;
+                }
+            } 
+            ROFL_ASSERT(highDegId == numNodesHighDeg)
 
-        //             Xgt.block(0, 0, sz_.d_, RgtSt.cols()) = RgtSt;
-        //             Xgt.block(0, RgtSt.cols(), sz_.d_, Tgt_.cols()) = Tgt_;
+            highDegId = 0;
+            for (int i = 0; i < sz_.n_; ++i) //TODO: avoid double for (Rrecovered can probably be filled directly in previous for)
+            {
+                if (nodesHighDeg(i, 0) != 0)
+                {
+                    ROFL_ASSERT(Rrecovered[i].rows() == sz_.d_ && Rrecovered[i].cols() == sz_.d_)
+                    Rrecovered[i] = Rtilde2HD[highDegId].block(0, 0, sz_.d_, sz_.d_);
+                    highDegId++;
+                }
+            }
+            ROFL_ASSERT(highDegId == numNodesHighDeg)  
 
-        //             // disp("cost_gt")
-        //             // disp(cost_gt)
-        //             double costGt = costEigen(Rgt_, Tgt_);
-        //             ROFL_VAR1(costGt)
+            // low_deg_nodes_ids = find(problem_data.node_degrees <= low_deg); %[1 5]'
+            // for ii = 1:N    
+            //     if ismember(ii, low_deg_nodes_ids) 
+            //         id_low_deg = find(low_deg_nodes_ids == ii);
+            //         P_i = recover_R_deg2(Tij_tilde_2deg_recovery, id_low_deg, d);
+            //         R_recovered(:,:,ii) = P_i * R_recovered(:,:,ii);
 
-        //             SomUtils::MatD XmanoptOut(SomUtils::MatD::Zero(nrs, sz_.d_ * sz_.n_ + sz_.d_ * sz_.n_));
-        //             SomUtils::MatD RmanoptOutSt(SomUtils::MatD::Zero(nrs, sz_.d_ * sz_.n_));
-        //             ROFL_VAR1("hstack call from here");
-        //             SomUtils::hstack(RmanoptOut, RmanoptOutSt);
-        //             ROFL_VAR1(RmanoptOutSt);
+            for (int nodeId = 0; nodeId < sz_.n_; ++nodeId)
+            {
+                if (nodeDegrees(nodeId, 0) == lowDeg)
+                {
+                    int idLowDeg = -1;
+                    int countLowDeg = 0;
+                    for (int j = 0; j < sz_.n_; ++j)
+                    {
+                        if (nodeDegrees(j, 0) == lowDeg)
+                        {
+                            if (j == nodeId)
+                            {
+                                idLowDeg = countLowDeg;
+                                break;
+                            }
+                            countLowDeg++;
+                        }
+                    }
+                    ROFL_ASSERT(idLowDeg != -1)
 
-        //             XmanoptOut.block(0, 0, nrs, RmanoptOutSt.cols()) = RmanoptOutSt;
-        //             XmanoptOut.block(0, RmanoptOutSt.cols(), nrs, TmanoptOut.cols()) = TmanoptOut;
+                    SomUtils::MatD Pi(SomUtils::MatD::Zero(sz_.d_, sz_.d_));
+                    recoverRdeg2(TijTilde2degRecoveryShifted, idLowDeg, Pi);
+                    Rrecovered[nodeId] = Pi * Rrecovered[nodeId];
+                }
+            }
 
-        //             double costManoptOutput = costEigen(RmanoptOut, TmanoptOut);
+            // disp("multidet(R_recovered)")
+            // disp(multidet(R_recovered))
+            ROFL_VAR1("multidet(R_recovered)")
+            for (int i = 0; i < sz_.n_; ++i)
+            {
+                ROFL_VAR2(i, Rrecovered[i].determinant())
+            }
 
-        //             // disp("cost_manopt_output")
-        //             // disp(cost_manopt_output)
-        //             ROFL_VAR1(costManoptOutput);
-        //             // T_diffs_shifted = Qx_edges * T_edges;
-        //             auto TdiffsShifted = QxEdges * Tedges; // this has last row to 0
-        //             ROFL_VAR3(TdiffsShifted, QxEdges, Tedges)
+            // T_diffs_shifted = Qalign * T_edges; %this has last rows to 0
+            // T_recovered_pre = recover_T_edges(T_diffs_shifted(1:d,:), ...
+            //     edges, d, problem_data.node_degrees, low_deg, Tij_tilde_2deg_recovery);
+            // T_recovered = edge_diffs_2_T(T_recovered_pre, edges, N);
+            
+            SomUtils::MatD TdiffsShifted = Qalign * Tedges; // this has last row to 0
+            // SomUtils::MatD TrecoveredPre(SomUtils::MatD::Zero(sz_.d_, sz_.n_));
+            // recoverTedges(TdiffsShifted.block(0, 0, sz_.d_, TdiffsShifted.cols()), TrecoveredPre);
+            edgeDiffs2T(src_, TdiffsShifted, sz_.n_, Trecovered);
 
-        //             // [~, Tij1j2_tilde] = make_Tij1j2s_edges(node_id, T_diffs_shifted, Tijs, edges, params);
-        //             SomUtils::MatD Tij1j2(SomUtils::MatD::Zero(sz_.d_, nodeDeg));
-        //             SomUtils::MatD Tij1j2tilde(SomUtils::MatD::Zero(nrs, nodeDeg));
-        //             makeTij1j2sEdges(nodeId, nodeDegrees, TdiffsShifted, Tij1j2, Tij1j2tilde);
-        //             // ROFL_VAR2(Tij1j2, Tij1j2tilde)
-
-        //             // [ RitildeEst1, RitildeEst2, ~, ~] = recoverRitilde(Qx_edges * R_i_tilde2, Tij1j2_tilde);
-        //             SomUtils::MatD RiTildeEst1(SomUtils::MatD::Zero(nrs, sz_.d_));
-        //             SomUtils::MatD RiTildeEst2(SomUtils::MatD::Zero(nrs, sz_.d_));
-        //             // ROFL_VAR2(QxEdges, RiTilde2)
-        //             recoverRiTilde(QxEdges * RiTilde2, Tij1j2tilde, RiTildeEst1, RiTildeEst2); // TODO: add possibility of returning "local" Qx
-        //             // ROFL_VAR2(Tij1j2, Tij1j2tilde)
-        //             // ROFL_VAR2(RiTildeEst1, RiTildeEst2)
-
-        //             // disp('')
-        //             std::cout << std::endl; // TODO : how to decide between RitildeEst1, RitildeEst2 ? ? det_RitildeEst1 = det(RitildeEst1(1 : d, :));
-        //             // det_RitildeEst2 = det(RitildeEst2(1 : d, :));
-        //             auto detRiTildeEst1 = RiTildeEst1.block(0, 0, sz_.d_, sz_.d_).determinant();
-        //             auto detRiTildeEst2 = RiTildeEst2.block(0, 0, sz_.d_, sz_.d_).determinant();
-        //             ROFL_VAR2(detRiTildeEst1, detRiTildeEst2)
-
-        //             // use_positive_det = boolean(1);
-        //             bool usePositiveDet = true;
-
-        //             // if (sum(multidet(R_tilde2_edges(1 : d, :, :))) < 0)
-        //             //     use_positive_det = boolean(0);
-        //             double tmp = 0.0;
-        //             for (int i = 0; i < Rtilde2edges.size(); ++i)
-        //             {
-        //                 tmp += Rtilde2edges[i].block(0, 0, sz_.d_, sz_.d_).determinant();
-        //             }
-        //             if (tmp < 0)
-        //                 usePositiveDet = false;
-
-        //             if (detRiTildeEst1 > 1 - 1e-5 && detRiTildeEst1 < 1 + 1e-5)
-        //             {
-        //                 ROFL_ASSERT(Rrecovered[nodeId].rows() == sz_.d_ && Rrecovered[nodeId].cols() == sz_.d_)
-
-        //                 //      if use_positive_det
-        //                 //          R_recovered( :, :, node_id) = RitildeEst1(1 : d, :);
-        //                 //      else
-        //                 //          R_recovered( :, :, node_id) = RitildeEst2(1 : d, :);
-        //                 if (usePositiveDet)
-        //                     Rrecovered[nodeId] = RiTildeEst1.block(0, 0, sz_.d_, sz_.d_);
-        //                 else
-        //                     Rrecovered[nodeId] = RiTildeEst2.block(0, 0, sz_.d_, sz_.d_);
-        //             }
-        //             else if (detRiTildeEst2 > 1 - 1e-5 && detRiTildeEst2 < 1 + 1e-5)
-        //             {
-        //                 ROFL_ASSERT(Rrecovered[nodeId].rows() == sz_.d_ && Rrecovered[nodeId].cols() == sz_.d_)
-
-        //                 //     if use_positive_det
-        //                 //          R_recovered( :, :, node_id) = RitildeEst2(1 : d, :);
-        //                 //     else
-        //                 //          R_recovered( :, :, node_id) = RitildeEst1(1 : d, :);
-        //                 if (usePositiveDet)
-        //                     Rrecovered[nodeId] = RiTildeEst2.block(0, 0, sz_.d_, sz_.d_);
-        //                 else
-        //                     Rrecovered[nodeId] = RiTildeEst1.block(0, 0, sz_.d_, sz_.d_);
-        //             }
-        //             else
-        //             {
-        //                 // if ~params.noisy_test
-        //                 // {
-        //                 ROFL_VAR1("ERROR in recovery: Ritilde DETERMINANTS ~= +-1\n")
-        //                 rsRecoverySuccess_ = false; // maybe add possibility to return this also
-        //                 // save('data/zerodet_ws.mat')
-        //                 // ROFL_ASSERT(0) // TODO: add this line for non-noisy cases after recoverRiTilde is implemented
-        //                 // }
-        //             }
-        //             // T_recovered = edge_diffs_2_T(T_diffs_shifted(1 : d, :), edges, N);
-        //             edgeDiffs2T(src_, TdiffsShifted.block(0, 0, sz_.d_, TdiffsShifted.cols()), sz_.n_, Trecovered);
-        //             std::cout << std::endl;
-        //         }
-        //     }
-        // }
+            // lambdas_recovered = X_manopt_out.lambda;
+            LambdasRecovered = LambdasManoptOut; //TODO: probably this copy is mostly a waste of space/time
+        }
 
         // // checking that cost has not changed during "recovery" X_recovered.T = T_recovered;
         // // X_recovered.R = R_recovered;
         // // cost_out = rsom_cost_base(X_recovered, problem_struct_next);
         // // disp("cost_out")
         // // disp(cost_out)
+
+        ROFL_VAR1("costEigen(RmanoptOut, TmanoptOut, LambdasManoptOut) after recoverySEdN")
+        ROFL_VAR1(costEigen(RmanoptOut, TmanoptOut, LambdasManoptOut))
+
         // SomUtils::MatD Xrecovered(SomUtils::MatD::Zero(sz_.d_, sz_.d_ * sz_.n_ + sz_.d_ * sz_.n_));
         // SomUtils::MatD RrecoveredSt(SomUtils::MatD::Zero(sz_.d_, sz_.d_ * sz_.n_));
         // ROFL_VAR1("hstack call from here");
@@ -3281,6 +3283,7 @@ namespace ROPTLIB
         //     ROFL_VAR2(i, Tgt_.col(i).transpose())
         //     ROFL_VAR2(TmanoptOut.col(i).transpose(), Trecovered.col(i).transpose())
         // }
+
         return rsRecoverySuccess_;
     }
 
@@ -3288,130 +3291,147 @@ namespace ROPTLIB
                                 const SomUtils::VecMatD &Rsedn, const SomUtils::MatD &Tsedn, const SomUtils::MatD &LambdasIn,
                                 SomUtils::VecMatD &Rout, SomUtils::MatD &Tout, SomUtils::MatD &LambdasOut)
     {
-        // // R_recovered -> Rsedn
-        // // T_recovered -> Tsedn
+        // R_recovered -> Rsedn i.e., Rrecovered
+        // T_recovered -> Tsedn
 
-        // // GLOBALIZATION! -> probably put it in another function?
-        // // R_global = R_recovered(:,:,1) * X_gt.R(:,:,1)'; %!!
-        // auto Rglobal = Rsedn[src] * Rgt_[src].transpose();
-        // ROFL_VAR1(Rglobal)
+        // GLOBALIZATION! -> probably put it in another function?
+        // R_global = R_recovered(:,:,1) * X_gt.R(:,:,1)'; %!!
+        auto Rglobal = Rsedn[src] * Rgt_[src].transpose();
+        ROFL_VAR1(Rglobal)
 
-        // // code for making all rotations global at once
-        // // R_recovered_global = multiprod(repmat(R_global', 1, 1, N), R_recovered);
-        // SomUtils::VecMatD RrecoveredGlobal(sz_.n_, SomUtils::MatD::Zero(sz_.d_, sz_.d_));
-        // for (int i = 0; i < sz_.n_; ++i)
-        // {
-        //     RrecoveredGlobal[i] = Rglobal.transpose() * Rsedn[i];
-        // }
-        // // disp("[matStackH(X_gt.R); matStackH(R_recovered_global)]");
-        // // disp([matStackH(X_gt.R); matStackH(R_recovered_global)]);
-        // for (int i = 0; i < sz_.n_; ++i)
-        // {
-        //     ROFL_VAR4(i, Rgt_[i], RrecoveredGlobal[i], SomUtils::isEqualFloats(Rgt_[i], RrecoveredGlobal[i]))
-        // }
+        // code for making all rotations global at once
+        // R_recovered_global = multiprod(repmat(R_global', 1, 1, N), R_recovered);
+        SomUtils::VecMatD RrecoveredGlobal(sz_.n_, SomUtils::MatD::Zero(sz_.d_, sz_.d_));
+        for (int i = 0; i < sz_.n_; ++i)
+        {
+            RrecoveredGlobal[i] = Rglobal.transpose() * Rsedn[i];
+        }
+        // disp("[matStackH(X_gt.R); matStackH(R_recovered_global)]");
+        // disp([matStackH(X_gt.R); matStackH(R_recovered_global)]);
+        for (int i = 0; i < sz_.n_; ++i)
+        {
+            ROFL_VAR4(i, Rgt_[i], RrecoveredGlobal[i], SomUtils::isEqualFloats(Rgt_[i], RrecoveredGlobal[i]))
+        }
 
-        // // T_global = R_global * T_recovered(:,1) - X_gt.T(:,1); %!!
-        // auto Tglobal = Rglobal * Tsedn.col(src) - Tgt_.col(src);
-        // ROFL_VAR4(Rglobal, (Rglobal * Tsedn.col(src)).transpose(), Tsedn.col(src).transpose(), Tgt_.col(src).transpose());
-        // ROFL_VAR2(Tglobal.transpose(), Tsedn.col(src).transpose());
-        // // code for making all translation global at once
-        // // disp("[X_gt.T; T_recovered]");
+        // T_global = R_global * T_recovered(:,1) - X_gt.T(:,1); %!!
+        auto Tglobal = Rglobal * Tsedn.col(src) - Tgt_.col(src);
+        ROFL_VAR4(Rglobal, (Rglobal * Tsedn.col(src)).transpose(), Tsedn.col(src).transpose(), Tgt_.col(src).transpose());
+        ROFL_VAR2(Tglobal.transpose(), Tsedn.col(src).transpose());
+        // code for making all translation global at once
+        // disp("[X_gt.T; T_recovered]");
 
-        // // T_recovered_global = R_global' * T_recovered - T_global;
-        // // disp([X_gt.T; T_recovered_global]);
-        // ROFL_VAR3(Rglobal.transpose(), Tsedn, Tglobal)
-        // SomUtils::MatD TglobalRepmat(SomUtils::MatD::Zero(sz_.d_, sz_.n_));
-        // for (int i = 0; i < sz_.n_; ++i)
-        // {
-        //     TglobalRepmat.col(i) = Tglobal; // TODO: maybe use some other adv init
-        // }
-        // auto TrecoveredGlobal = Rglobal.transpose() * Tsedn - TglobalRepmat;
-        // ROFL_VAR2(Tgt_, TrecoveredGlobal)
+        // T_recovered_global = R_global' * T_recovered - T_global;
+        // disp([X_gt.T; T_recovered_global]);
+        ROFL_VAR3(Rglobal.transpose(), Tsedn, Tglobal)
+        SomUtils::MatD TglobalRepmat(SomUtils::MatD::Zero(sz_.d_, sz_.n_));
+        for (int i = 0; i < sz_.n_; ++i)
+        {
+            TglobalRepmat.col(i) = Tglobal; // TODO: maybe use some other adv init
+        }
+        auto TrecoveredGlobal = Rglobal.transpose() * Tsedn - TglobalRepmat;
+        ROFL_VAR2(Tgt_, TrecoveredGlobal)
 
-        // // Checking recovery success
-        // // for ii = 1:N
+        // lambda_factor = X_gt.lambda(1) / lambdas_recovered(1); %should be the same for all edges
+        // lambdas_recovered_global = lambda_factor * lambdas_recovered;
+
+        double lambdaFactor = LambdasGt_(src) / LambdasIn(1); // should be the same for all edges
+        LambdasOut = lambdaFactor * LambdasIn;
+
+        ROFL_VAR2(LambdasGt_.transpose(), LambdasIn.transpose());
+
+        // Checking recovery success
+        // for ii = 1:N
         rsRecoverySuccess_ = true;
-        // for (int i = 0; i < sz_.n_; ++i)
-        // {
-        //     //     R_gt_i = X_gt.R(:,:,ii);
-        //     auto RgtI = Rgt_[i];
-        //     //     R_recov_i_global = R_recovered_global(:,:,ii); %GLOBAL!
-        //     auto RrecovIglobal = RrecoveredGlobal[i];
-        //     //     fprintf("ii %g\n", ii);
-        //     ROFL_VAR1(i)
-        //     //     % rotations
-        //     //     disp("R_gt_i, R_recov_i_global");
-        //     //     disp([R_gt_i, R_recov_i_global]);
-        //     //     disp("is_equal_floats(R_gt_i, R_recov_i_global)")
-        //     //     disp(is_equal_floats(R_gt_i, R_recov_i_global))
-        //     ROFL_VAR2(RgtI, RrecovIglobal)
-        //     //     if (~is_equal_floats(R_gt_i, R_recov_i_global))
-        //     // %         error("rot found NOT equal")
-        //     //         fprintf("ERROR in recovery: R_GLOBAL\n");
-        //     if (!SomUtils::isEqualFloats(RgtI, RrecovIglobal))
-        //     {
-        //         ROFL_VAR1("ERROR in recovery: R_GLOBAL")
-        //         rsRecoverySuccess_ = false;
-        //         // ROFL_ASSERT(0)
-        //     }
-        //     //     % translations
-        //     //     T_gt_i = X_gt.T(:,ii);
-        //     auto TgtI = Tgt_.col(i);
-        //     //     T_recov_i_global = T_recovered_global(:,ii);
-        //     auto TrecovIglobal = TrecoveredGlobal.col(i);
-        //     //     disp("[X_gt.T, T_recovered]");
-        //     //     disp([T_gt_i, T_recov_i_global]);
-        //     ROFL_VAR4(i, TgtI.transpose(), Tsedn.col(i).transpose(), TrecovIglobal.transpose());
+        for (int i = 0; i < sz_.n_; ++i)
+        {
+            //     R_gt_i = X_gt.R(:,:,ii);
+            auto RgtI = Rgt_[i];
+            //     R_recov_i_global = R_recovered_global(:,:,ii); %GLOBAL!
+            auto RrecovIglobal = RrecoveredGlobal[i];
+            //     fprintf("ii %g\n", ii);
+            ROFL_VAR1(i)
+            //     % rotations
+            //     disp("R_gt_i, R_recov_i_global");
+            //     disp([R_gt_i, R_recov_i_global]);
+            //     disp("is_equal_floats(R_gt_i, R_recov_i_global)")
+            //     disp(is_equal_floats(R_gt_i, R_recov_i_global))
+            ROFL_VAR2(RgtI, RrecovIglobal)
+            //     if (~is_equal_floats(R_gt_i, R_recov_i_global))
+            // %         error("rot found NOT equal")
+            //         fprintf("ERROR in recovery: R_GLOBAL\n");
+            if (!SomUtils::isEqualFloats(RgtI, RrecovIglobal))
+            {
+                ROFL_VAR1("ERROR in recovery: R_GLOBAL")
+                rsRecoverySuccess_ = false;
+                // ROFL_ASSERT(0)
+            }
+            //     % translations
+            //     T_gt_i = X_gt.T(:,ii);
+            auto TgtI = Tgt_.col(i);
+            //     T_recov_i_global = T_recovered_global(:,ii);
+            auto TrecovIglobal = TrecoveredGlobal.col(i);
+            //     disp("[X_gt.T, T_recovered]");
+            //     disp([T_gt_i, T_recov_i_global]);
+            ROFL_VAR4(i, TgtI.transpose(), Tsedn.col(i).transpose(), TrecovIglobal.transpose());
 
-        //     //     disp("is_equal_floats(T_gt_i, T_recov_i_global)")
-        //     //     disp(is_equal_floats(T_gt_i, T_recov_i_global))
-        //     ROFL_VAR1(SomUtils::isEqualFloats(TgtI, TrecovIglobal))
-        //     //     if (~is_equal_floats(T_gt_i, T_recov_i_global))
-        //     // %         error("transl found NOT equal")
-        //     //         fprintf("ERROR in recovery: T_GLOBAL\n");
-        //     if (!SomUtils::isEqualFloats(TgtI, TrecovIglobal, 1e-3))
-        //     {
-        //         ROFL_VAR1("ERROR in recovery: T_GLOBAL")
-        //         rsRecoverySuccess_ = false;
-        //         // ROFL_ASSERT(0)
-        //     }
-        // }
+            //     disp("is_equal_floats(T_gt_i, T_recov_i_global)")
+            //     disp(is_equal_floats(T_gt_i, T_recov_i_global))
+            ROFL_VAR1(SomUtils::isEqualFloats(TgtI, TrecovIglobal))
+            //     if (~is_equal_floats(T_gt_i, T_recov_i_global))
+            // %         error("transl found NOT equal")
+            //         fprintf("ERROR in recovery: T_GLOBAL\n");
+            if (!SomUtils::isEqualFloats(TgtI, TrecovIglobal, 1e-3))
+            {
+                ROFL_VAR1("ERROR in recovery: T_GLOBAL")
+                rsRecoverySuccess_ = false;
+                // ROFL_ASSERT(0)
+            }
+            auto lambdaGtI = LambdasGt_(i);
+            auto lambdaRecovI = LambdasOut(i, 0);
+            ROFL_VAR2(lambdaGtI, lambdaRecovI)
+            if (fabs(lambdaGtI - lambdaRecovI) < 1e-3)
+            {
+                ROFL_VAR1("ERROR in recovery: LAMBDA_GLOBAL")
+                rsRecoverySuccess_ = false;
+                // ROFL_ASSERT(0)
+            }
+        }
 
-        // // fprintf("rs_recovery_success: %g\n", rs_recovery_success);
-        // ROFL_VAR1(rsRecoverySuccess_)
+        // fprintf("rs_recovery_success: %g\n", rs_recovery_success);
+        ROFL_VAR1(rsRecoverySuccess_)
 
-        // // X_recovered_global.R = R_recovered_global;
-        // // X_recovered_global.T = T_recovered_global;
-        // // cost_out_global = rsom_cost_base(X_recovered_global, problem_struct_next);
-        // // disp("cost_out_global")
-        // // disp(cost_out_global)
-        // SomUtils::MatD Xout(SomUtils::MatD::Zero(sz_.d_, sz_.d_ * sz_.n_ + sz_.d_ * sz_.n_));
-        // SomUtils::MatD RoutSt(SomUtils::MatD::Zero(sz_.d_, sz_.d_ * sz_.n_));
-        // ROFL_VAR1("hstack call from here");
-        // SomUtils::hstack(RrecoveredGlobal, RoutSt);
-        // ROFL_VAR1(RoutSt);
-        // Xout.block(0, 0, sz_.d_, RoutSt.cols()) = RoutSt;
-        // Xout.block(0, RoutSt.cols(), sz_.d_, Tout.cols()) = TrecoveredGlobal;
+        // X_recovered_global.R = R_recovered_global;
+        // X_recovered_global.T = T_recovered_global;
+        // cost_out_global = rsom_cost_base(X_recovered_global, problem_struct_next);
+        // disp("cost_out_global")
+        // disp(cost_out_global)
+        SomUtils::MatD Xout(SomUtils::MatD::Zero(sz_.d_, sz_.d_ * sz_.n_ + sz_.d_ * sz_.n_ + numEdges_));
+        SomUtils::MatD RoutSt(SomUtils::MatD::Zero(sz_.d_, sz_.d_ * sz_.n_));
+        ROFL_VAR1("hstack call from here");
+        SomUtils::hstack(RrecoveredGlobal, RoutSt);
+        ROFL_VAR1(RoutSt);
+        Xout.block(0, 0, sz_.d_, RoutSt.cols()) = RoutSt;
+        Xout.block(0, RoutSt.cols(), sz_.d_, Tout.cols()) = TrecoveredGlobal;
+        Xout.block(0, RoutSt.cols() + Tout.cols(), sz_.d_, LambdasOut.cols()) = LambdasOut.transpose();
 
-        // Rout = RrecoveredGlobal;
-        // Tout = TrecoveredGlobal;
-        // ROFL_VAR1(costEigen(Rout, Tout))
+        Rout = RrecoveredGlobal;
+        Tout = TrecoveredGlobal;
+        ROFL_VAR1(costEigen(Rout, Tout, LambdasOut))
 
-        // // transf_out = RT2G(R_recovered_global, T_recovered_global); %rsom_genproc() function output
 
-        // // DETERMINANTS CHECK
-        // std::vector<double> multidetRrecovered, multidetRrecoveredGlobal;
-        // // disp('multidet(R_recovered)')
-        // // disp(multidet(R_recovered))
-        // SomUtils::multidet(Rsedn, multidetRrecovered);
-        // for (int i = 0; i < sz_.n_; ++i)
-        //     ROFL_VAR2(i, multidetRrecovered[i]);
+        // DETERMINANTS CHECK
+        std::vector<double> multidetRrecovered, multidetRrecoveredGlobal;
+        // disp('multidet(R_recovered)')
+        // disp(multidet(R_recovered))
+        SomUtils::multidet(Rsedn, multidetRrecovered);
+        for (int i = 0; i < sz_.n_; ++i)
+            ROFL_VAR2(i, multidetRrecovered[i]);
 
-        // // disp('multidet(R_recovered_global)')
-        // // disp(multidet(R_recovered_global))
-        // SomUtils::multidet(Rout, multidetRrecoveredGlobal);
-        // for (int i = 0; i < sz_.n_; ++i)
-        //     ROFL_VAR2(i, multidetRrecoveredGlobal[i]);
+        // disp('multidet(R_recovered_global)')
+        // disp(multidet(R_recovered_global))
+        SomUtils::multidet(Rout, multidetRrecoveredGlobal);
+        for (int i = 0; i < sz_.n_; ++i)
+            ROFL_VAR2(i, multidetRrecoveredGlobal[i]);
 
         return rsRecoverySuccess_;
     }

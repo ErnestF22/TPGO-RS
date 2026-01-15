@@ -2,12 +2,14 @@ clc;
 clear;
 close all;
 
-N = 5;
-mindeg = 2;
+N = 25;
+mindeg = 3;
+
+% rho*(-log(1-a*relu(x))-a*relu(x)+relu(x)^2) ---> a = 1
 
 % 1a) PW TRANSLATION DATA INPUT: R, T are the gt, Tijs_nois are the input data
 % testdata = testNetwork_params(3, N, 'banded', mindeg); %4 would be the default
-testdata = testNetwork_params_translpert(3, N, 'banded', mindeg); 
+testdata = testNetwork_params(3, N, 'banded', mindeg); 
 
 testdata.rho = 1000;
 
@@ -53,7 +55,7 @@ sigmas = readmatrix("data/sigmas.txt"); %sigma = stdev, sigma.^2 = variance
 mus = readmatrix("data/mus.txt"); %OBS. generally, mus can be d-dimensional; here, we just assume them as scalar (i.e. a d-dimensional vector with all coordinates equal)
 
 % sigmas = sigmas(4);
-sigmas = 0.2;
+sigmas = 0.01;
 % mus = mus(2);
 
 node_degrees = sum(testdata.A, 2);
