@@ -917,7 +917,7 @@ namespace ROPTLIB
         SomUtils::MatD uLambdas(SomUtils::MatD::Zero(numEdges_, 1));
         getScales(xEtaEig, uLambdas);
 
-        ROFL_VAR3(sz_.p_, xEig.rows(), xEig.cols())
+        // ROFL_VAR3(sz_.p_, xEig.rows(), xEig.cols())
 
         // ROFL_VAR2(R[0], uR[0]);
         // ROFL_VAR2(T, uT);
@@ -1741,8 +1741,7 @@ namespace ROPTLIB
 
         // back to SE(d)^N
 
-        
-        SomUtils::VecMatD Rrecovered(n, SomUtils::MatD::Zero(d, d));
+                SomUtils::VecMatD Rrecovered(n, SomUtils::MatD::Zero(d, d));
         SomUtils::MatD Trecovered(SomUtils::MatD::Zero(d, n));
         SomUtils::MatD LambdasRecovered(SomUtils::MatD::Zero(e, 1));
         bool recSEDNsuccess = ProbPrev.recoverySEdN(staircaseStepIdx,
@@ -1757,15 +1756,16 @@ namespace ROPTLIB
 
         ROFL_VAR1(recSEDNsuccess)
 
-        // // globalize
+        // globalize
 
-        // ROFL_VAR1("Running globalization procedure")
+        ROFL_VAR1("Running globalization procedure")
 
-        // Rout.resize(n, SomUtils::MatD::Zero(d, d));
-        // Tout.resize(d, n);
-        // bool globalRecoverySuccess = ProbPrev.globalize(src, Rrecovered, Trecovered,
-        //                                                 Rout, Tout);
-        // ROFL_VAR1(globalRecoverySuccess)
+        Rout.resize(n, SomUtils::MatD::Zero(d, d));
+        Tout.resize(d, n);
+        lambdasOut.resize(e, 1);
+        bool globalRecoverySuccess = ProbPrev.globalize(src, Rrecovered, Trecovered, LambdasRecovered,
+                                                        Rout, Tout, lambdasOut);
+        ROFL_VAR1(globalRecoverySuccess)
 
         return costOut;
     }

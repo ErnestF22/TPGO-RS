@@ -203,9 +203,8 @@ int main(int argc, char **argv)
     {
         /* Setting up Prob using setters */
         Prob.setRho(5.0);
-        Prob.setUsePIM(true); //same as default
-        Prob.setPimMaxIterations(5000); //same as default
-
+        Prob.setUsePIM(true);           // same as default
+        Prob.setPimMaxIterations(5000); // same as default
 
         rofl::ScopedTimer timer("ssomRS");
         double costOut = ROPTLIB::runSsom(Prob, startX, srcNodeId,
@@ -216,12 +215,13 @@ int main(int argc, char **argv)
         exectime = timer.elapsedTimeMs();
     }
 
-    // std::vector<double> rotErrs(numEdges, 1e+6), translErrs(numEdges, 1e+6);
-    // SomUtils::computeErrorsSingleRsom(edges,
-    //                                   Rout, Tout,
-    //                                   RgtEig, TgtEig,
-    //                                   rotErrs, translErrs);
-    // ROFL_VAR1(exectime)
+    std::vector<double> rotErrs(numEdges, 1e+6), translErrs(numEdges, 1e+6), scaleErrs(numEdges, 1e+6);
+    SomUtils::computeErrorsSingleSsom(edges,
+                                      Rout, Tout, lambdasOut,
+                                      RgtEig, TgtEig, LambdasGtEig,
+                                      rotErrs, translErrs, scaleErrs);
+                                      
+    ROFL_VAR1(exectime)
 
     return 0;
 }

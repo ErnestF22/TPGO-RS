@@ -908,7 +908,6 @@ namespace ROPTLIB
                         SomUtils::MatD &P) const;
 
       // void recoverTedges(); //probably just wrong and not needed (neither in MATLAB)
-
    };
 
    /**

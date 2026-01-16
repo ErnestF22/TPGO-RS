@@ -396,7 +396,9 @@ namespace ROPTLIB
             SomUtils::VecMatD uRunstackedOutTmp(sz_.n_, SomUtils::MatD::Zero(staircaseLevel, sz_.d_));
             SomUtils::MatD uTout(SomUtils::MatD::Zero(staircaseLevel, sz_.n_));
             SomUtils::MatD uLambdasOut(SomUtils::MatD::Zero(numEdges_, 1));
+            // ROFL_VAR1("hessGenprocEigen call from here");
             hessGenprocEigen(xR, uRunstackedTmp, xT, uTcopy, xLambdas, uLambdasCopy, uRunstackedOutTmp, uTout, uLambdasOut);
+            // ROFL_VAR1("End of hessGenprocEigen call from here");
 
             // 6
             std::for_each(uRunstackedOutTmp.begin(), uRunstackedOutTmp.end(), [](SomUtils::MatD &x) { //^^^ take argument by reference: LAMBDA FUNCTION
@@ -436,7 +438,9 @@ namespace ROPTLIB
         SomUtils::MatD uTout1(SomUtils::MatD::Zero(staircaseLevel, sz_.n_));
         SomUtils::MatD uLambdasOut1(SomUtils::MatD::Zero(numEdges_, 1));
 
+        ROFL_VAR1("hessGenprocEigen call from here");
         hessGenprocEigen(xR, uRunstacked, xT, uTcopy / normRTLambdasMax, xLambdas, uLambdasCopy / normRTLambdasMax, fxRunstackedOut, uTout1, uLambdasOut1);
+        ROFL_VAR1("End of hessGenprocEigen call from here");
 
         // 4
         SomUtils::MatD vecR(SomUtils::MatD::Zero(sz_.d_ * staircaseLevel * sz_.n_, 1));
@@ -586,7 +590,7 @@ namespace ROPTLIB
 
         // lambda_max = x_max.R( :) ' * f_x_max.R(:) + x_max.T(:)' * f_x_max.T( :);
         auto lmax = vecR.transpose() * vecFxR +
-                    uTout1.reshaped<Eigen::ColMajor>(1, staircaseLevel * sz_.n_) * (uTcopy / normRTLambdasMax).reshaped<Eigen::ColMajor>(staircaseLevel * sz_.n_, 1) + 
+                    uTout1.reshaped<Eigen::ColMajor>(1, staircaseLevel * sz_.n_) * (uTcopy / normRTLambdasMax).reshaped<Eigen::ColMajor>(staircaseLevel * sz_.n_, 1) +
                     uLambdasOut1.reshaped<Eigen::ColMajor>(1, numEdges_) * (uLambdasCopy / normRTLambdasMax).reshaped<Eigen::ColMajor>(numEdges_, 1);
         lambdaMax = lmax(0, 0);
 
@@ -1048,12 +1052,12 @@ namespace ROPTLIB
     }
 
     void SsomProblem::ssomPimHessianGenprocEigenWithStartingPts(double thresh,
-                                                 const SomUtils::VecMatD &R, const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
-                                                 const SomUtils::VecMatD &RnextTgNormStart, const SomUtils::MatD &TnextTgNormStart, const SomUtils::MatD &LambdasNextTgNormStart,
-                                                 const SomUtils::VecMatD &Rnext2ndTgNormStart, const SomUtils::MatD &Tnext2ndTgNormStart, const SomUtils::MatD &LambdasNext2ndTgNormStart,
-                                                 Vector &Y0, double &lambdaPimOut,
-                                                 SomUtils::VecMatD &vPimRout, SomUtils::MatD &vPimTout, SomUtils::MatD &vPimLambdasOut,
-                                                 bool armijo) const
+                                                                const SomUtils::VecMatD &R, const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
+                                                                const SomUtils::VecMatD &RnextTgNormStart, const SomUtils::MatD &TnextTgNormStart, const SomUtils::MatD &LambdasNextTgNormStart,
+                                                                const SomUtils::VecMatD &Rnext2ndTgNormStart, const SomUtils::MatD &Tnext2ndTgNormStart, const SomUtils::MatD &LambdasNext2ndTgNormStart,
+                                                                Vector &Y0, double &lambdaPimOut,
+                                                                SomUtils::VecMatD &vPimRout, SomUtils::MatD &vPimTout, SomUtils::MatD &vPimLambdasOut,
+                                                                bool armijo) const
     {
         // [Y_star, lambda, v] = rsom_pim_hessian_genproc( ...
         //     X, problem_struct_next, thr);
@@ -1814,7 +1818,7 @@ namespace ROPTLIB
 
     void SsomProblem::ssomPimHessianGenproc(double thresh,
                                             const SomUtils::VecMatD &R, const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
-                                            Vector &Y0, 
+                                            Vector &Y0,
                                             bool armijo) const
     {
         // [Y_star, lambda, v] = rsom_pim_hessian_genproc( ...
@@ -3098,11 +3102,11 @@ namespace ROPTLIB
             int highDegId = 0;
             for (int i = 0; i < sz_.n_; ++i)
             {
-                if (nodesHighDeg(i, 0) != 0) 
+                if (nodesHighDeg(i, 0) != 0)
                 {
                     Rtilde2edgesHD[highDegId] = QxEdges * RmanoptOut[i];
-                    highDegId++;
                     Rrecovered[i] = Rtilde2edgesHD[highDegId].block(0, 0, sz_.d_, sz_.d_);
+                    highDegId++;
                 }
             }
             ROFL_ASSERT(highDegId == numNodesHighDeg)
@@ -3155,7 +3159,7 @@ namespace ROPTLIB
             // RitildeEst = RbRecovery(multiprod(Qalign, R_manopt_out(:,:,nodes_low_deg)), Tij_tilde_2deg_recovery);
             // R_recovered(:,:,nodes_low_deg) = RitildeEst(1:d,:,:);
 
-            SomUtils::VecMatD TijTilde2degRecoveryShifted (TijTilde2degRecovery.size(), SomUtils::MatD::Zero(nrs, lowDeg)); // OBS. different naming than MATLAB (where it's just overwritten)!
+            SomUtils::VecMatD TijTilde2degRecoveryShifted(TijTilde2degRecovery.size(), SomUtils::MatD::Zero(nrs, lowDeg)); // OBS. different naming than MATLAB (where it's just overwritten)!
             for (int i = 0; i < TijTilde2degRecovery.size(); ++i)
             {
                 TijTilde2degRecoveryShifted[i] = Qalign * TijTilde2degRecovery[i];
@@ -3174,8 +3178,7 @@ namespace ROPTLIB
 
             SomUtils::VecMatD RiTildeEst(numNodesLowDeg, SomUtils::MatD::Zero(sz_.d_, sz_.d_));
             // RbRecovery(RbRecoveryInput, TijTilde2degRecoveryShifted, RiTildeEst);
-            
-            
+
             // R_tilde2_HD = multiprod(repmat(Qalign, 1, 1, sum(nodes_high_deg)), R_manopt_out(:,:,nodes_high_deg));
             // R_recovered(:,:,nodes_high_deg) = R_tilde2_HD(1:d,:,:);
             SomUtils::VecMatD Rtilde2HD(numNodesHighDeg, SomUtils::MatD::Zero(nrs, sz_.d_));
@@ -3184,14 +3187,14 @@ namespace ROPTLIB
             {
                 if (nodesHighDeg(i, 0) != 0)
                 {
-                    Rtilde2HD[highDegId] = Qalign * RmanoptOut  [i];
+                    Rtilde2HD[highDegId] = Qalign * RmanoptOut[i];
                     highDegId++;
                 }
-            } 
+            }
             ROFL_ASSERT(highDegId == numNodesHighDeg)
 
             highDegId = 0;
-            for (int i = 0; i < sz_.n_; ++i) //TODO: avoid double for (Rrecovered can probably be filled directly in previous for)
+            for (int i = 0; i < sz_.n_; ++i) // TODO: avoid double for (Rrecovered can probably be filled directly in previous for)
             {
                 if (nodesHighDeg(i, 0) != 0)
                 {
@@ -3200,11 +3203,11 @@ namespace ROPTLIB
                     highDegId++;
                 }
             }
-            ROFL_ASSERT(highDegId == numNodesHighDeg)  
+            ROFL_ASSERT(highDegId == numNodesHighDeg)
 
             // low_deg_nodes_ids = find(problem_data.node_degrees <= low_deg); %[1 5]'
-            // for ii = 1:N    
-            //     if ismember(ii, low_deg_nodes_ids) 
+            // for ii = 1:N
+            //     if ismember(ii, low_deg_nodes_ids)
             //         id_low_deg = find(low_deg_nodes_ids == ii);
             //         P_i = recover_R_deg2(Tij_tilde_2deg_recovery, id_low_deg, d);
             //         R_recovered(:,:,ii) = P_i * R_recovered(:,:,ii);
@@ -3247,14 +3250,14 @@ namespace ROPTLIB
             // T_recovered_pre = recover_T_edges(T_diffs_shifted(1:d,:), ...
             //     edges, d, problem_data.node_degrees, low_deg, Tij_tilde_2deg_recovery);
             // T_recovered = edge_diffs_2_T(T_recovered_pre, edges, N);
-            
+
             SomUtils::MatD TdiffsShifted = Qalign * Tedges; // this has last row to 0
             // SomUtils::MatD TrecoveredPre(SomUtils::MatD::Zero(sz_.d_, sz_.n_));
             // recoverTedges(TdiffsShifted.block(0, 0, sz_.d_, TdiffsShifted.cols()), TrecoveredPre);
             edgeDiffs2T(src_, TdiffsShifted, sz_.n_, Trecovered);
 
             // lambdas_recovered = X_manopt_out.lambda;
-            LambdasRecovered = LambdasManoptOut; //TODO: probably this copy is mostly a waste of space/time
+            LambdasRecovered = LambdasManoptOut; // TODO: probably this copy is mostly a waste of space/time
         }
 
         // // checking that cost has not changed during "recovery" X_recovered.T = T_recovered;
@@ -3405,19 +3408,15 @@ namespace ROPTLIB
         // cost_out_global = rsom_cost_base(X_recovered_global, problem_struct_next);
         // disp("cost_out_global")
         // disp(cost_out_global)
-        SomUtils::MatD Xout(SomUtils::MatD::Zero(sz_.d_, sz_.d_ * sz_.n_ + sz_.d_ * sz_.n_ + numEdges_));
-        SomUtils::MatD RoutSt(SomUtils::MatD::Zero(sz_.d_, sz_.d_ * sz_.n_));
-        ROFL_VAR1("hstack call from here");
-        SomUtils::hstack(RrecoveredGlobal, RoutSt);
-        ROFL_VAR1(RoutSt);
-        Xout.block(0, 0, sz_.d_, RoutSt.cols()) = RoutSt;
-        Xout.block(0, RoutSt.cols(), sz_.d_, Tout.cols()) = TrecoveredGlobal;
-        Xout.block(0, RoutSt.cols() + Tout.cols(), sz_.d_, LambdasOut.cols()) = LambdasOut.transpose();
+        // SomUtils::MatD Xout(SomUtils::MatD::Zero( sz_.d_ * sz_.n_ + sz_.d_ * sz_.n_ + numEdges_, 1));
+        // ROFL_VAR1(RoutSt);
+        // Xout.block(0, 0, sz_.d_, RoutSt.cols()) = RoutSt;
+        // Xout.block(0, RoutSt.cols(), sz_.d_, Tout.cols()) = TrecoveredGlobal;
+        // Xout.block(0, RoutSt.cols() + Tout.cols(), numEdges_, LambdasOut.cols()) = LambdasOut;
 
         Rout = RrecoveredGlobal;
         Tout = TrecoveredGlobal;
         ROFL_VAR1(costEigen(Rout, Tout, LambdasOut))
-
 
         // DETERMINANTS CHECK
         std::vector<double> multidetRrecovered, multidetRrecoveredGlobal;

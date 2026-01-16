@@ -123,7 +123,7 @@ for tdata = testdatas
         lambdas_initguess = ones(e, 1);
         % transf_initguess = RT2G(R_initguess, transl_initguess);
         transf_initguess_vec = [R_initguess(:); transl_initguess(:); lambdas_initguess(:)];
-        writematrix(transf_initguess_vec, convertStringsToChars(strcat(folder_name, "/startX.csv")))
+        writematrix(transf_initguess_vec, convertStringsToChars(strcat(folder_name, "/ssom_x_start.csv")))
     end
 end
 
