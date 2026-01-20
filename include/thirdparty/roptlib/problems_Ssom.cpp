@@ -114,19 +114,19 @@ namespace ROPTLIB
             auto Ri = Reigen[i];
             auto Ti = Teigen.col(i);
             auto Tj = Teigen.col(j);
+            auto lambdaE = LambdasEigen(e, 0);
 
             SomUtils::VecD tij(SomUtils::VecD::Zero(sz_.d_));
             tij = tijs_.col(e);
 
-            double lambdaIJ = LambdasEigen(e, 0);
-
             // ROFL_VAR3(i, j, e);
-            // ROFL_VAR4(Ri, tij.transpose(), Ti.transpose(), Tj.transpose());
+            // ROFL_VAR5(Ri, tij.transpose(), Ti.transpose(), Tj.transpose(), lambdaE);
 
-            double costEsq = (Ri * lambdaIJ * tij - Tj + Ti).squaredNorm();
-            // ROFL_VAR1(costE);
-
-            cost += costEsq;
+            auto a = Ti - Tj;
+            auto b = Ri * tij;
+            auto costLambdaEe = (a.transpose() * a + 2 * lambdaE * (a.transpose() * b) + lambdaE * lambdaE * (b.transpose() * b)).trace();
+            auto cost_relu_ee = SomUtils::ReLU(ssomReLUargument(lambdaE));
+            cost += costLambdaEe + rho_ * cost_relu_ee * cost_relu_ee;
         }
         return cost;
     }
@@ -197,30 +197,14 @@ namespace ROPTLIB
         // ROFL_VAR1(Tijs_);
         // ROFL_VAR1(TijsScaled);
 
-        // P = zeros(nrs, d*N);
-        SomUtils::MatD P(SomUtils::MatD::Zero(sz_.p_, sz_.d_ * sz_.n_));
-        double frct = 0.0;
-
-        // LR = zeros(N,N);
-        // PR = zeros(N,nrs);
-        // BR_const = zeros(d,d);
-        SomUtils::MatD Lr(SomUtils::MatD::Zero(sz_.n_, sz_.n_));
-        SomUtils::MatD Pr(SomUtils::MatD::Zero(sz_.p_, sz_.n_)); // in RSOM, Pr was considered transpose of this
-        SomUtils::MatD Br(SomUtils::MatD::Zero(sz_.d_, sz_.d_));
-
-        makePfrct(T, Lambdas, P, frct); // frct is unused
-        // ROFL_VAR2(P, frct);
-        makeLrPrBr(R, Lambdas, Lr, Pr, Br); // Br is unused
-        // ROFL_VAR3(Lr, Pr, Br);
-
         SomUtils::VecMatD rgR(sz_.n_, SomUtils::MatD::Zero(sz_.p_, sz_.d_));
         // ROFL_VAR3(xEig.rows(), R.size(), T.size());
         // ROFL_VAR3(R.size(), P.size(), rgR.size());
-        rgradR(R, Lambdas, P, rgR);
+        rgradR(R, T, Lambdas, rgR);
         // ROFL_VAR5(rgR[0],rgR[1],rgR[2],rgR[3],rgR[4]);
 
         SomUtils::MatD rgT(SomUtils::MatD::Zero(sz_.p_, sz_.n_));
-        rgradT(T, Lambdas, Lr, Pr, rgT);
+        rgradT(R, T, Lambdas, rgT);
         // ROFL_VAR1(rgT);
 
         SomUtils::MatD rgLambdas(SomUtils::MatD::Zero(numEdges_, 1));
@@ -334,33 +318,101 @@ namespace ROPTLIB
         }
     }
 
-    void SsomProblem::egradR(const SomUtils::MatD &P, SomUtils::VecMatD &egR) const
+    void SsomProblem::egradR(const SomUtils::VecMatD &R, const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
+                             SomUtils::VecMatD &egR) const
     {
-        SomUtils::unStackH(P, egR, sz_.d_);
+        // num_edges = size(problem_data.edges, 1);
+        // for
+        //  e = 1 : num_edges
+        //          ii = problem_data.edges(e, 1);
+        //          jj = problem_data.edges(e, 2);
+        //          Tj = T(:, jj);
+        //          Ti = T(:, ii);
+        //          lambdaij = lambdas(e, :);
+        //          tij = problem_data.tijs( :, e);
+        //          % R_i = R(:, :, ii);
+        //          P_e = 2 * (Ti * lambdaij * tij ' - Tj * lambdaij * tij');
+        //          g(:, :, ii) = ... g(:, :, ii) + P_e;
+        for (int e = 0; e < numEdges_; ++e)
+        {
+            int i = edges_(e, 0) - 1; // !! -1
+            int j = edges_(e, 1) - 1; // !! -1
+
+            auto Tj = T.col(j);
+            auto Ti = T.col(i);
+            double lambdaIJ = Lambdas(e, 0);
+
+            auto tij = tijs_.col(e);
+
+            auto P_e = 2 * lambdaIJ * (Ti * tij.transpose() - Tj * tij.transpose());
+
+            egR[i] += P_e;
+        }
     }
 
-    void SsomProblem::rgradR(const SomUtils::VecMatD &R, const SomUtils::MatD &Lambdas,
-                             const SomUtils::MatD &P, SomUtils::VecMatD &rgR) const
+    void SsomProblem::rgradR(const SomUtils::VecMatD &R, const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
+                             SomUtils::VecMatD &rgR) const
     {
-        SomUtils::VecMatD egR;
-        egradR(P, egR);
+        SomUtils::VecMatD egR(sz_.n_, SomUtils::MatD::Zero(sz_.p_, sz_.d_));
+
+        egradR(R, T, Lambdas, egR);
 
         SomUtils::stiefelTangentProj(R, egR, rgR);
     }
 
-    void SsomProblem::egradT(const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
-                             const SomUtils::MatD &Lr, const SomUtils::MatD &Pr,
+    void SsomProblem::egradT(const SomUtils::VecMatD &R, const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
                              SomUtils::MatD &egT) const
     {
-        // ROFL_VAR7(egT, T.rows(), T.cols(), Lr.rows(), Lr.cols(), Pr.rows(), Pr.cols());
-        egT = T * (Lr + Lr.transpose()) + Pr;
+        rgradT(R, T, Lambdas, egT);
     }
 
-    void SsomProblem::rgradT(const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
-                             const SomUtils::MatD &Lr, const SomUtils::MatD &Pr,
-                             SomUtils::MatD &egT) const
+    void SsomProblem::rgradT(const SomUtils::VecMatD &R, const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
+                             SomUtils::MatD &rgT) const
     {
-        egradT(T, Lambdas, Lr, Pr, egT);
+        // N = size(T, 2);
+        // nrs = size(T, 1);
+
+        // LR = zeros(N,N);
+        // PR = zeros(nrs,N);
+        // % BR_const = zeros(d,d);
+
+        // num_edges = size(problem_data.edges,1);
+        // for e = 1:num_edges
+        //     ii = problem_data.edges(e,1);
+        //     jj = problem_data.edges(e,2);
+        //     bij = zeros(N,1);
+        //     bij(ii, 1) = 1;
+        //     bij(jj, 1) = -1;
+        //     tij = problem_data.tijs(:, e);
+        //     lambda_e = lambdas(e, 1);
+        //     LR = LR + (bij * bij');
+        //     Ri = R(:,:,ii);
+        //     PR = PR + 2 * lambda_e * (Ri * tij * bij');
+
+        // g=T*(LR+LR')+(PR);
+
+        for (int e = 0; e < numEdges_; ++e)
+        {
+            int i = edges_(e, 0) - 1; // !! -1
+            int j = edges_(e, 1) - 1; // !! -1
+
+            SomUtils::VecD bij = SomUtils::VecD::Zero(sz_.n_);
+            bij(i) = 1.0;
+            bij(j) = -1.0;
+
+            auto tij = tijs_.col(e);
+            double lambdaE = Lambdas(e, 0);
+            // LR = LR + (bij * bij');
+            // Ri = R(:,:,ii);
+            // PR = PR + 2 * lambda_e * (Ri * tij * bij');
+            rgT += 2 * lambdaE * (R[i] * tij) * bij.transpose();
+        }
+    }
+
+    void SsomProblem::egradLambdas(const SomUtils::VecMatD &R, const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
+                                   SomUtils::MatD &egLambdas) const
+    {
+        rgradLambdas(R, T, Lambdas, egLambdas);
     }
 
     void SsomProblem::rgradLambdas(const SomUtils::VecMatD &R, const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
@@ -379,7 +431,7 @@ namespace ROPTLIB
             auto Ri = R[i];
 
             // base_part = 2*(tij_e'*tij_e * lambda_e + tij_e' * R_i' * T_i - tij_e' * R_i' * T_j);
-            auto basePart = (tij.transpose() * tij) * lambdaIJ + (tij.transpose() * Ri.transpose() * Ti) - (tij.transpose() * Ri.transpose() * Tj);
+            auto basePart = 2 * (tij.transpose() * tij) * lambdaIJ + (tij.transpose() * Ri.transpose() * Ti) - (tij.transpose() * Ri.transpose() * Tj);
             // ROFL_VAR1(basePart)
 
             // if ssom_relu_argument(lambda_e) > 0
@@ -403,7 +455,7 @@ namespace ROPTLIB
             // }
 
             // g_lambda(ee) = base_part + rho * compensation_part;
-            rgLambdas(e, 0) = 2 * basePart(0, 0) + rho_ * compensationPart;
+            rgLambdas(e, 0) = basePart(0, 0) + rho_ * compensationPart;
         }
     }
 
@@ -1741,7 +1793,7 @@ namespace ROPTLIB
 
         // back to SE(d)^N
 
-                SomUtils::VecMatD Rrecovered(n, SomUtils::MatD::Zero(d, d));
+        SomUtils::VecMatD Rrecovered(n, SomUtils::MatD::Zero(d, d));
         SomUtils::MatD Trecovered(SomUtils::MatD::Zero(d, n));
         SomUtils::MatD LambdasRecovered(SomUtils::MatD::Zero(e, 1));
         bool recSEDNsuccess = ProbPrev.recoverySEdN(staircaseStepIdx,

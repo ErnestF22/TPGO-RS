@@ -26,6 +26,7 @@ int main(int argc, char **argv)
     // int numTestsPerInstance;
     bool readStartingPtFromFile;
     int srcNodeIdx;
+    double rho;
 
     rofl::ParamMap params;
 
@@ -39,6 +40,7 @@ int main(int argc, char **argv)
         std::string("../matlab/data/ssom_testdata_noisy/harder/tdata_n5_mindeg2_sigma00/"));
 
     params.getParam<int>("d", d, 3);
+    params.getParam<double>("rho", rho, 1000.0);
     // params.getParam<int>("numTestsPerInstance", numTestsPerInstance, 30);
     params.getParam<bool>("readStartingPtFromFile", readStartingPtFromFile, true);
     params.getParam<int>("srcNodeIdx", srcNodeIdx, 0);
@@ -202,7 +204,7 @@ int main(int argc, char **argv)
     double exectime = 0;
     {
         /* Setting up Prob using setters */
-        Prob.setRho(5.0);
+        Prob.setRho(rho);            // default 1000.0
         Prob.setUsePIM(true);           // same as default
         Prob.setPimMaxIterations(5000); // same as default
 

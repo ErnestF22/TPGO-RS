@@ -113,34 +113,42 @@ namespace ROPTLIB
       /**
        * Function that computes Euclidean gradient of Translation estimation cost (with Eigen inputs/outputs)
        */
-      void egradR(const SomUtils::MatD &P, SomUtils::VecMatD &egR) const;
+      void egradR(const SomUtils::VecMatD &R, const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
+                  SomUtils::VecMatD &egR) const;
 
       /**
        * Function that computes Riemannian gradient of Rotation estimation cost (with Eigen inputs/outputs)
        */
-      void rgradR(const SomUtils::VecMatD &R, const SomUtils::MatD &Lambdas,
-                  const SomUtils::MatD &P, SomUtils::VecMatD &rgR) const;
+      void rgradR(const SomUtils::VecMatD &R, const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
+                  SomUtils::VecMatD &rgR) const;
 
       /**
        * Function that computes Euclidean gradient of Translation estimation cost (with Eigen inputs/outputs)
        */
-      void egradT(const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
-                  const SomUtils::MatD &Lr, const SomUtils::MatD &Pr,
+      void egradT(const SomUtils::VecMatD &R, const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
                   SomUtils::MatD &egT) const;
 
       /**
        * Function that computes Riemannian gradient of Translation estimation cost (with Eigen inputs/outputs)
        */
-      void rgradT(const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
-                  const SomUtils::MatD &Lr, const SomUtils::MatD &Pr,
+      void rgradT(const SomUtils::VecMatD &R, const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
                   SomUtils::MatD &egT) const;
 
       /**
-       * Function that computes Riemannian gradient of scale/Lambdas estimation cost (with Eigen inputs/outputs)
+       * Function that computes Euclidean gradient of Translation estimation cost (with Eigen inputs/outputs)
+       */
+      void egradLambdas(const SomUtils::VecMatD &R, const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
+                        SomUtils::MatD &egLambdas) const;
+
+      /**
+       * Function that computes Riemannian gradient of Translation estimation cost (with Eigen inputs/outputs)
        */
       void rgradLambdas(const SomUtils::VecMatD &R, const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
                         SomUtils::MatD &rgLambdas) const;
 
+      /**
+       * SSOM ReLU argument function -> applies intended compensative function to lambdaE; this output will then undergo ReLU
+       */
       double ssomReLUargument(double lambdaE) const;
 
       /**
