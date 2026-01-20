@@ -577,7 +577,7 @@ namespace ROPTLIB
 
             SomUtils::MatD tij = tijs_.col(e);
 
-            PR_dot += 2 * lambdaE * bij * tij.transpose() * uRi.transpose();
+            PR_dot += 2 * lambdaE * bij * tij.transpose() * uRi.transpose(); // Matlab's tij is scaled!
         }
 
         h = PR_dot.transpose();

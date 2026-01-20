@@ -2,7 +2,7 @@ clc;
 clear;
 close all;
 
-N = 25;
+N = 5;
 mindeg = 3;
 
 % rho*(-log(1-a*relu(x))-a*relu(x)+relu(x)^2) ---> a = 1
