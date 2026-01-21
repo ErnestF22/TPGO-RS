@@ -1,4 +1,4 @@
-function cost_out = ssom_cost(X, problem_data)
+function cost_out = ssom_cost_relu(X, problem_data)
 
 lambdas = X.lambda;
 T = X.T;
@@ -8,7 +8,6 @@ R = X.R;
 edges = problem_data.edges;
 tijs = problem_data.tijs;
 rho = problem_data.rho;
-a_log = problem_data.a;
 
 num_edges = size(edges, 1);
 
@@ -24,14 +23,8 @@ for ee = 1:num_edges
     a = T_i - T_j;
     b = R_i * tij_e;
     cost_ee = trace(a' * a + 2 * lambda_e * (a' * b) + lambda_e^2 * (b' * b)); 
-
-    if 1-a_log*lambda_e > 0
-        scale_compensation_ee = -log(1-a_log*lambda_e) - a_log*lambda_e + lambda_e * lambda_e;
-    else
-        scale_compensation_ee = 0.0;
-    end
-
-    cost_out = cost_out + cost_ee + rho * scale_compensation_ee;
+    scale_compensation_ee = relu_som(ssom_relu_argument(lambda_e));
+    cost_out = cost_out + cost_ee + rho * scale_compensation_ee * scale_compensation_ee;
 end
 
 end %file function

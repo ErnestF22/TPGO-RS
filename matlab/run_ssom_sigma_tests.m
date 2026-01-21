@@ -12,6 +12,7 @@ mindeg = 3;
 testdata = testNetwork_params(3, N, 'banded', mindeg); 
 
 testdata.rho = 1000;
+testdata.a = 1.0;
 
 % %som = ShapeOfMotion('testNetwork_params.csv'); %params reading is done directly in constructor
 % %copy the list below from the properties list

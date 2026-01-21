@@ -5,6 +5,8 @@ edges = problem_data.edges;
 tijs = problem_data.tijs;
 % rho = problem_data.rho;
 
+a = problem_data.a;
+
 h = zeros(length(lambdas), 1);
 
 num_edges = size(edges, 1);
@@ -18,10 +20,10 @@ for ee = 1:num_edges
     % R_i = R(:, :, ii);
     % a = T_i - T_j;
     lambda_dot_ee = lambdas_dot(ee,:);
+    lambda_ee = lambdas(ee,:);
 
-
-    if ssom_relu_argument(lambdas(ee)) > 0
-        compensation_part = 2 * lambda_dot_ee;
+    if 1-a*lambda_ee > 0
+        compensation_part = (-a*a / (a*a*lambda_ee*lambda_ee - 2 * a * lambda_ee + 1)) + 2 * lambda_dot_ee;
     else
         compensation_part = 0.0;
     end

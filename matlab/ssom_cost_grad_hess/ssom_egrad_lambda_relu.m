@@ -1,8 +1,7 @@
-function g_lambda = ssom_egrad_lambda(R, T, lambdas, problem_data)
+function g_lambda = ssom_egrad_lambda_relu(R, T, lambdas, problem_data)
     edges = problem_data.edges;
     tijs = problem_data.tijs;
     rho = problem_data.rho;
-    a = problem_data.a;
 
 
     g_lambda = zeros(length(lambdas), 1);
@@ -19,12 +18,13 @@ function g_lambda = ssom_egrad_lambda(R, T, lambdas, problem_data)
         base_part = 2*(tij_e'*tij_e * lambda_e + ...
             tij_e' * R_i' * T_i - tij_e' * R_i' * T_j);
         
-        if 1-a*lambda_e > 0
-            scale_compensation_ee = a / (1-a*lambda_e) - a + 2*lambda_e;
+        
+        if ssom_relu_argument(lambda_e) > 0
+            compensation_part = 2 * (lambda_e - 1);
         else
-            scale_compensation_ee = 0.0;
+            compensation_part = 0.0;
         end
         
-        g_lambda(ee) = base_part + rho * scale_compensation_ee;
+        g_lambda(ee) = base_part + rho * compensation_part;
     end
 end

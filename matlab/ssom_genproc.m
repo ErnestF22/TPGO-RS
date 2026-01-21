@@ -105,6 +105,7 @@ for staircase_step_idx = r0:num_edges*d*N+1
     problem_data_next.tijs = problem_data.tijs;
     problem_data_next.edges = problem_data.edges;
     problem_data_next.rho = problem_data.rho;
+    problem_data_next.a = problem_data.a;
 
     tuple_next.R = stiefelfactory(staircase_step_idx, d, N);
     tuple_next.T = euclideanfactory(staircase_step_idx, N);

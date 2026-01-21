@@ -16,6 +16,90 @@
 
 namespace fs = std::filesystem;
 
+void EigToRopt(const SomUtils::MatD& xEig, const ROPTLIB::SsomProblem& Prob, ROPTLIB::Vector *result)
+{
+    int rotSz = Prob.getRotSz();
+    int translSz = Prob.getTranslSz();
+
+    auto rgR = SomUtils::VecMatD(Prob.sz_.n_, SomUtils::MatD::Zero(Prob.sz_.p_, Prob.sz_.d_));
+    // ROFL_VAR3(xEig.rows(), R.size(), T.size());
+    // ROFL_VAR3(R.size(), P.size(), rgR.size());
+    Prob.getRotations(xEig, rgR);
+    SomUtils::MatD rgT(SomUtils::MatD::Zero(Prob.sz_.p_, Prob.sz_.n_));
+    Prob.getTranslations(xEig, rgT);
+    SomUtils::MatD rgLambdas(SomUtils::MatD::Zero(Prob.numEdges_, 1));
+    Prob.getScales(xEig, rgLambdas);
+
+    auto sz = Prob.sz_;
+
+    int gElemIdx = 0;
+    // fill result with computed gradient values: R
+    for (int i = 0; i < sz.n_; ++i)
+    {
+        // ROFL_VAR1(gElemIdx);
+        // ROFL_VAR2("\n", rgR[gElemIdx]);
+        // result->GetElement(gElemIdx).SetToIdentity(); // Ri
+        // result->GetElement(gElemIdx).Print("Ri before assignment");
+
+        ROPTLIB::Vector rgRiVec(sz.p_, sz.d_);
+        // rgRiVec.Initialize();
+        realdp *GroptlibWriteArray = rgRiVec.ObtainWriteEntireData();
+        for (int j = 0; j < rotSz; ++j)
+        {
+            // ROFL_VAR2(i, j);
+            // rgRiVec.Print("rgRiVec before assignment");
+
+            // ROFL_VAR1(rgRiVec.GetElement(j, 0));
+
+            GroptlibWriteArray[j] = rgR[i].reshaped(sz.d_ * sz.p_, 1)(j);
+
+            // ROFL_VAR1("");
+            // rgRiVec.Print("rgRiVec after assignment");
+        }
+        rgRiVec.CopyTo(result->GetElement(gElemIdx));
+        // result->GetElement(gElemIdx).Print("Riem. grad Ri after assignment");
+        gElemIdx++;
+    }
+
+    // fill result with computed gradient values: T
+
+    ROPTLIB::Vector rgTiVec(sz.p_, sz.n_);
+    realdp *GroptlibWriteArray = rgTiVec.ObtainWriteEntireData();
+    for (int j = 0; j < sz.p_ * sz.n_; ++j)
+    {
+        // rgTiVec.Print("rgTiVec before assignment");
+
+        // ROFL_VAR1(rgRiVec.GetElement(j, 0));
+
+        GroptlibWriteArray[j] = rgT.reshaped(sz.n_ * sz.p_, 1)(j);
+
+        // ROFL_VAR1("");
+        // rgTiVec.Print("rgTiVec after assignment");
+    }
+    rgTiVec.CopyTo(result->GetElement(gElemIdx));
+    gElemIdx++;
+    // result->GetElement(gElemIdx).Print("grad Ti after assignment");
+
+    // ROFL_VAR2("\n", rgT);
+
+    // fill result with computed gradient values: Lambdas
+
+    ROPTLIB::Vector rgLambdasIvec(Prob.numEdges_, 1);
+    realdp *GroptlibWriteArray2 = rgLambdasIvec.ObtainWriteEntireData();
+    for (int j = 0; j < Prob.numEdges_; ++j)
+    {
+        // rhTiVec.Print("rhTiVec before assignment");
+
+        // ROFL_VAR1(rhRiVec.GetElement(j, 0));
+
+        GroptlibWriteArray2[j] = rgLambdas(j); // TODO: reshaped() call can probably be removed
+
+        // ROFL_VAR1("");
+        // rhTiVec.Print("rhTiVec after assignment");
+    }
+    rgLambdasIvec.CopyTo(result->GetElement(gElemIdx));
+}
+
 int main(int argc, char **argv)
 {
     std::string filenameCfg;
@@ -128,10 +212,11 @@ int main(int argc, char **argv)
     Prob.SetUseGrad(true);
     Prob.SetUseHess(true);
 
-    ROFL_VAR1("Printing R, T gt")
+    ROFL_VAR1("Printing R, T, Lambdas gt")
     for (auto &m : RgtEig)
         ROFL_VAR1(m)
     ROFL_VAR1(TgtEig)
+    ROFL_VAR1(LambdasGtEig)
 
     // // problem nrs x d x n
     // ROPTLIB::Stiefel mani1nrs(nrs, d);
@@ -155,6 +240,17 @@ int main(int argc, char **argv)
             ROFL_ASSERT(0)
         }
     startX.Print("startX");
+
+    SomUtils::MatD startXeig = SomUtils::MatD::Zero(d * d * n + d * n + numEdges, 1);
+    Prob.RoptToEig(startX, startXeig);
+    SomUtils::MatD scalesInitguess = SomUtils::MatD::Ones(numEdges, 1);
+    startXeig.block(d * d * n + d * n, 0, numEdges, 1) = scalesInitguess;
+
+    ROPTLIB::Vector startX2 = ProdManiSsom.RandominManifold();
+    EigToRopt(startXeig, Prob, &startX2);
+
+    startX2.Print("startX2");
+
 
     // ROPTLIB::Vector startU = ProdManiSsom.RandominManifold();
     // if (!SomUtils::readCsvInitguess(folderIn + "ssom_u_start.csv", startU))
@@ -209,7 +305,7 @@ int main(int argc, char **argv)
         Prob.setPimMaxIterations(5000); // same as default
 
         rofl::ScopedTimer timer("ssomRS");
-        double costOut = ROPTLIB::runSsom(Prob, startX, srcNodeId,
+        double costOut = ROPTLIB::runSsom(Prob, startX2, srcNodeId,
                                           Rout, Tout, lambdasOut,
                                           lastStaircaseStep); // note: startX is needed (even if random) in ROPTLIB;
         // ROPTLIB namespace is used even if runRsomRS() is not in SsomProblem class, nor in "original" ROPTLIB

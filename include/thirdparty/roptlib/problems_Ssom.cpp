@@ -1660,6 +1660,7 @@ namespace ROPTLIB
             ROPTLIB::SsomProblem ProbNext(somSzNext, Prob.tijs_, Prob.edges_);
 
             ProbNext.setGt(rGt, tGt, lambdasGt);
+            ProbNext.setRho(Prob.rho_);
             ROFL_VAR1(ProbNext.costEigen(ProbNext.Rgt_, ProbNext.Tgt_, ProbNext.LambdasGt_));
             ROFL_VAR1(ProbNext.costEigen(R, T, Lambdas));
 
