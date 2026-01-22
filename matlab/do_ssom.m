@@ -95,6 +95,9 @@ else
 end
 transf_initguess = RT2G(R_initguess, T_initguess);
 
+% disp("transf_initguess")
+% disp(transf_initguess)
+
 %% 3) Run methods
 
 % 3a) execute with step 1 through MANOPT
@@ -137,14 +140,21 @@ if params.enable_ssom
     if cost_ssom > 1e-3
         disp("cost out > 0")
     end
+
+    R_out = G2R(transf_ssom);
+    T_out = G2T(transf_ssom);
+    lambdas_out = lambdas_ssom_out;
 else
     rs_success_bool = boolean(0);
     transf_ssom = repmat(eye(d+1), 1, 1, N);
+
+    R_out = G2R(transf_ssom);
+    T_out = G2T(transf_ssom);
+    lambdas_ssom_out = ones(size(lambdas_initguess));
+    lambdas_out = ones(size(lambdas_initguess));
 end
 exectime_ssom = toc(ssom_start_time);
-R_out = G2R(transf_ssom);
-T_out = G2T(transf_ssom);
-lambdas_out = lambdas_ssom_out;
+
 
 %% 4) Compare output results
 

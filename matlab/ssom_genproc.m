@@ -92,6 +92,11 @@ options.maxiter = 1000;
 X_initguess.R = G2R(transf_initguess);
 X_initguess.T = G2T(transf_initguess);
 X_initguess.lambda = lambdas_initguess;
+
+% disp("transf_initguess")
+% disp(transf_initguess)
+
+
 if params.relu_scale_compensation
     cost_initguess = ssom_cost_relu(X_initguess, problem_data);
     disp("cost_initguess")
