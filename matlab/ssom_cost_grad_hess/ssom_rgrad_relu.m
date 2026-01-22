@@ -1,4 +1,4 @@
-function g = ssom_rgrad(X, problem_data)
+function g = ssom_rgrad_relu(X, problem_data)
     R = X.R;
     T = X.T;
     lambdas = X.lambda;
@@ -7,6 +7,6 @@ function g = ssom_rgrad(X, problem_data)
     %g.T
     g.T = ssom_egrad_T(R, T, lambdas, problem_data);
     %g.lambda
-    g.lambda = ssom_rgrad_lambda(R, T, lambdas, problem_data);
+    g.lambda = ssom_rgrad_lambda_relu(R, T, lambdas, problem_data);
 
 end

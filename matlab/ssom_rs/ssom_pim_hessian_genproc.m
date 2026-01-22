@@ -26,7 +26,12 @@ Tnext = cat_zero_row(X.T);
 Xnext.R = Rnext;
 Xnext.T = Tnext;
 Xnext.lambda = X.lambda;
-rhess_fun_han = @(u) ssom_rhess_genproc(Xnext,u,problem_struct_next);
+
+if problem_struct_next.relu_scale_compensation
+    rhess_fun_han = @(u) ssom_rhess_genproc_relu(Xnext,u,problem_struct_next);
+else    
+    rhess_fun_han = @(u) ssom_rhess_genproc(Xnext,u,problem_struct_next);
+end
 
 stiefel_normalize_han = @(x) x./ (norm(x(:))); %Note: this is basically eucl_normalize_han
 
@@ -52,9 +57,16 @@ if lambda_pim>0
 %     lambda_pim = max(lambda_pim.R, lambda_pim.T);
 
     mu = 1.1 * lambda_pim;
+   
 
-    rhess_shifted_fun_han = ...
-        @(u) ssom_rhess_genproc_shifted(Xnext,u,mu,problem_struct_next);
+    if problem_struct_next.relu_scale_compensation
+        rhess_shifted_fun_han = ...
+            @(u) ssom_rhess_genproc_shifted_relu(Xnext,u,mu,problem_struct_next);
+    else    
+        rhess_shifted_fun_han = ...
+            @(u) ssom_rhess_genproc_shifted(Xnext,u,mu,problem_struct_next);
+    end
+
             
     %run shifted power iteration
     u_start_second_iter.R = stiefel_randTangentNormVector(Rnext);

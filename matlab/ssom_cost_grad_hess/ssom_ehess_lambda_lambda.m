@@ -24,6 +24,7 @@ for ee = 1:num_edges
 
     if 1-a*lambda_ee > 0
         compensation_part = (-a*a / (a*a*lambda_ee*lambda_ee - 2 * a * lambda_ee + 1)) + 2 * lambda_dot_ee;
+        % compensation_part = a / (1-a*lambda_dot_ee) + 2 * lambda_dot_ee;
     else
         compensation_part = 0.0;
     end

@@ -29,11 +29,20 @@ M = productmanifold(tuple);
 
 % Setup the problem structure with manifold M and cost+grad functions.
 problem.M = M;
-problem.cost = @(x) ssom_cost(x, problem_data);
-% problem.egrad = @(x) ssom_egrad(x, problem_data);
-problem.grad = @(x) ssom_rgrad(x, problem_data);
-% problem.ehess = @(x, u) ssom_ehess_genproc(x, u, problem_data);
-problem.hess = @(x, u) ssom_rhess_genproc(x, u, problem_data);
+
+if params.relu_scale_compensation
+    problem.cost = @(x) ssom_cost_relu(x, problem_data);
+    % problem.egrad = @(x) ssom_egrad(x, problem_data);
+    problem.grad = @(x) ssom_rgrad_relu(x, problem_data);
+    % problem.ehess = @(x, u) ssom_ehess_genproc(x, u, problem_data);
+    problem.hess = @(x, u) ssom_rhess_genproc_relu(x, u, problem_data);
+else
+    problem.cost = @(x) ssom_cost(x, problem_data);
+    % problem.egrad = @(x) ssom_egrad(x, problem_data);
+    problem.grad = @(x) ssom_rgrad(x, problem_data);
+    % problem.ehess = @(x, u) ssom_ehess_genproc(x, u, problem_data);
+    problem.hess = @(x, u) ssom_rhess_genproc(x, u, problem_data);
+end
 
 % checkgradient(problem);
 % tmp.R = make_rand_stiefel_3d_array(nrs, d, N);
@@ -58,9 +67,16 @@ checkhessian(problem)
 X_gt.lambda = problem_data.lambda_gt;
 X_gt.R = problem_data.R_gt;
 X_gt.T = problem_data.T_gt;
-cost_gt = ssom_cost(X_gt, problem_data);
-disp("cost_gt in ssom_genproc.m")
-disp(cost_gt)
+
+if params.relu_scale_compensation
+    cost_gt = ssom_cost_relu(X_gt, problem_data);
+    disp("cost_gt_relu in ssom_genproc.m")
+    disp(cost_gt)
+else
+    cost_gt = ssom_cost(X_gt, problem_data);
+    disp("cost_gt in ssom_genproc.m")
+    disp(cost_gt)
+end
 
 disp("cost gt _no_compensation(X_recovered, problem_data_next)")
 disp(ssom_cost_no_compensation(X_gt, problem_data))
@@ -76,26 +92,28 @@ options.maxiter = 1000;
 X_initguess.R = G2R(transf_initguess);
 X_initguess.T = G2T(transf_initguess);
 X_initguess.lambda = lambdas_initguess;
-cost_initguess = ssom_cost(X_initguess, problem_data);
-disp("cost_initguess")
-disp(cost_initguess)
+if params.relu_scale_compensation
+    cost_initguess = ssom_cost_relu(X_initguess, problem_data);
+    disp("cost_initguess")
+    disp(cost_initguess)
+else
+    cost_initguess = ssom_cost(X_initguess, problem_data);
+    disp("cost_initguess")
+    disp(cost_initguess)
+end
 X = trustregions(problem, X_initguess, options);
 T_manopt_out = X.T;
 R_manopt_out = X.R;
 lambdas_manopt_out = X.lambda;
 
-
-cost_last = ssom_cost(X, problem_data);
+if params.relu_scale_compensation
+    cost_last = ssom_cost_relu(X, problem_data);
+else
+    cost_last = ssom_cost(X, problem_data);
+end
 r0 = d+1;
 thr = 1e-5;
 
-% x_opt_cpp_vec = zeros(d*d*N+d*N, 1);
-% x_opt_cpp_vec = readmatrix("/home/ernest/Desktop/xopt_cpp.csv");
-% 
-% x_opt_cpp.R = reshape(x_opt_cpp_vec(1:d*d*N, 1), d, d, N);
-% x_opt_cpp.T = reshape(x_opt_cpp_vec(d*d*N+1:end, 1), d, N);
-% 
-% cost_cpp = ssom_cost(x_opt_cpp, problem_data);
 
 ctr_equal = 0;
 % flag_pim_used = true;
@@ -106,27 +124,39 @@ for staircase_step_idx = r0:num_edges*d*N+1
     problem_data_next.edges = problem_data.edges;
     problem_data_next.rho = problem_data.rho;
     problem_data_next.a = problem_data.a;
+    problem_data_next.relu_scale_compensation = params.relu_scale_compensation;
 
     tuple_next.R = stiefelfactory(staircase_step_idx, d, N);
     tuple_next.T = euclideanfactory(staircase_step_idx, N);
     tuple_next.lambda = euclideanfactory(num_edges, 1);
     M_next = productmanifold(tuple_next);
     problem_next.M = M_next;    
-    problem_next.cost = @(x) ssom_cost(x, problem_data_next); %!! problem_data is the same
-    problem_next.grad = @(x) ssom_rgrad(x, problem_data_next);
-    problem_next.hess = @(x, u) ssom_rhess_genproc(x, u, problem_data_next);
+    if params.relu_scale_compensation
+        problem_next.cost = @(x) ssom_cost_relu(x, problem_data_next); %!! problem_data is the same
+        problem_next.grad = @(x) ssom_rgrad_relu(x, problem_data_next);
+        problem_next.hess = @(x, u) ssom_rhess_genproc_relu(x, u, problem_data_next);
+    else
+        problem_next.cost = @(x) ssom_cost(x, problem_data_next); %!! problem_data is the same
+        problem_next.grad = @(x) ssom_rgrad(x, problem_data_next);
+        problem_next.hess = @(x, u) ssom_rhess_genproc(x, u, problem_data_next);
+    end
+
 
     Xnext = X;
     Xnext.R = cat_zero_rows_3d_array(X.R);
     Xnext.T = cat_zero_rows_3d_array(X.T);
-    ctr_equal_last = ssom_cost(Xnext,problem_data_next);
+    if params.relu_scale_compensation
+        ctr_equal_last = ssom_cost_relu(Xnext,problem_data_next);
+    else
+        ctr_equal_last = ssom_cost(Xnext,problem_data_next);
+    end
 
+    Xprev = X;
     if params.use_pim
         [Y_star, lambda, v] = ssom_pim_hessian_genproc( ...
             X, problem_data_next, thr);
 
-    else
-        Xprev = X;
+    else        
         
         % X_cat.lambda = X.lambda;
     
@@ -183,8 +213,13 @@ for staircase_step_idx = r0:num_edges*d*N+1
         options.ls_contraction_factor = 0.25;
 
     
-        [~, Y_star] = linesearch_decrease(problem_next, ...
-            Xnext, v, ssom_cost(Xnext,problem_data_next), 0, options);
+        if params.relu_cost_compensation
+            [~, Y_star] = linesearch_decrease(problem_next, ...
+                Xnext, v, ssom_cost_relu(Xnext,problem_data_next), 0, options);
+        else
+            [~, Y_star] = linesearch_decrease(problem_next, ...
+                Xnext, v, ssom_cost(Xnext,problem_data_next), 0, options);
+        end
     
     end
 
@@ -198,7 +233,11 @@ for staircase_step_idx = r0:num_edges*d*N+1
     
     X = trustregions(problem_next, Y_star, options);
 
-    ctr_equal_new = ssom_cost(X,problem_data_next);
+    if params.relu_scale_compensation
+        ctr_equal_new = ssom_cost_relu(X,problem_data_next);
+    else
+        ctr_equal_new = ssom_cost(X,problem_data_next);
+    end
 
 
     if is_equal_floats(ctr_equal_last, ctr_equal_new, 1e-5)
@@ -214,7 +253,11 @@ for staircase_step_idx = r0:num_edges*d*N+1
 
     disp("cost_last")
     disp(cost_last)
-    cost_last = ssom_cost(X, problem_data_next); 
+    if params.relu_scale_compensation
+        cost_last = ssom_cost_relu(X, problem_data_next); 
+    else
+        cost_last = ssom_cost(X, problem_data_next); 
+    end
     disp("cost_new")
     disp(cost_last)
 
@@ -237,7 +280,11 @@ for staircase_step_idx = r0:num_edges*d*N+1
 
         X = trustregions(problem_next, Y0pim, options);
 
-        cost_after_pim_rtr = ssom_cost(X, problem_data_next); 
+        if params.relu_scale_compensation
+            cost_after_pim_rtr = ssom_cost_relu(X, problem_data_next); 
+        else
+            cost_after_pim_rtr = ssom_cost(X, problem_data_next); 
+        end
         disp("cost_new")
         disp(cost_after_pim_rtr)
 
@@ -254,7 +301,11 @@ X_manopt_out.R = R_manopt_out;
 X_manopt_out.T = T_manopt_out;
 X_manopt_out.lambda = lambdas_manopt_out;
 
-cost_manopt_out = ssom_cost(X_manopt_out, problem_data); 
+if params.relu_scale_compensation
+    cost_manopt_out = ssom_cost_relu(X_manopt_out, problem_data); 
+else
+    cost_manopt_out = ssom_cost(X_manopt_out, problem_data); 
+end
 disp("cost_manopt_out")
 disp(cost_manopt_out)
 
@@ -366,7 +417,11 @@ X_recovered.T = T_recovered;
 X_recovered.lambda = lambdas_recovered;
 %%
 problem_data_next = problem_data; %TODO: fix this line after recovery works
-cost_out_after_recovery = ssom_cost(X_recovered, problem_data_next); 
+if params.relu_scale_compensation
+    cost_out_after_recovery = ssom_cost_relu(X_recovered, problem_data_next); 
+else
+    cost_out_after_recovery = ssom_cost(X_recovered, problem_data_next); 
+end
 disp("cost_out AFTER RECOVERY")
 disp(cost_out_after_recovery)
 
@@ -477,7 +532,12 @@ if params.perform_globalization
     X_recovered_global.R = R_recovered_global;
     X_recovered_global.T = T_recovered_global;
     X_recovered_global.lambda = lambdas_recovered_global;
-    cost_out_global = ssom_cost(X_recovered_global, problem_data_next); 
+
+    if params.relu_scale_compensation
+        cost_out_global = ssom_cost_relu(X_recovered_global, problem_data_next); 
+    else
+        cost_out_global = ssom_cost(X_recovered_global, problem_data_next); 
+    end
     disp("cost_out_global")
     disp(cost_out_global)
     
@@ -485,14 +545,6 @@ if params.perform_globalization
     disp(multidet(R_recovered)) 
     
     
-    
-    X_recovered_global.R = R_recovered_global; 
-    X_recovered_global.T = T_recovered_global; 
-    X_recovered_global.lambda = lambdas_recovered_global; 
-    
-    cost_out_global = ssom_cost(X_recovered_global, problem_data_next); 
-    disp("cost_out_global")
-    disp(cost_out_global)
     
     if ~is_equal_floats(cost_out_global, cost_manopt_out)
         % save("failed_recovery_global.mat")
@@ -520,7 +572,11 @@ else
 
     transf_out = RT2G(R_recovered_global, T_recovered_global);
 
-    cost_out_global = ssom_cost(X_recovered, problem_data_next); 
+    if params.relu_scale_compensation
+        cost_out_global = ssom_cost_relu(X_recovered, problem_data_next); 
+    else
+        cost_out_global = ssom_cost(X_recovered, problem_data_next); 
+    end
 
     rs_recovery_success = true;
 end
