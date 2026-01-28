@@ -1,4 +1,4 @@
-function quick_save_tdata(sigma,tdata)
+function quick_save_tdata(sigma,tdata,X_initguess,Tijs, Tijs_nois)
 
 d = 3;
 % sigma
@@ -12,10 +12,15 @@ varEdges = tdata.E;
 writematrix(varEdges, ...
     convertStringsToChars(strcat(folder_name, "/edges.csv")), 'Delimiter', ',')
 %tijs
-Tijs = G2T(tdata.gijtruth);
-Tijs_nois = Tijs + sigma*randn(size(Tijs));
+% Tijs = G2T(tdata.gijtruth);
+% Tijs_nois = Tijs + sigma*randn(size(Tijs));
+if ~exist("Tijs_nois", "var")
+    Tijs_nois = Tijs;
+end
 writematrix(Tijs_nois, ...
     convertStringsToChars(strcat(folder_name, "/tijs.csv")), 'Delimiter', ',')
+
+
 writematrix(Tijs, ...
     convertStringsToChars(strcat(folder_name, "/tijs_truth.csv")), 'Delimiter', ',')
 %gt
@@ -28,9 +33,6 @@ writematrix(n, convertStringsToChars(strcat(folder_name, "/n.csv")))
 e = tdata.NEdges;
 writematrix(e, convertStringsToChars(strcat(folder_name, "/e.csv")))
 %
-R_initguess = randrot_som(d, tdata.NNodes);
-transl_initguess = 10 * rand(d, tdata.NNodes);
-lambdas_initguess = ones(e, 1);
 % transf_initguess = RT2G(R_initguess, transl_initguess);
-transf_initguess_vec = [R_initguess(:); transl_initguess(:); lambdas_initguess(:)];
+transf_initguess_vec = [X_initguess.R(:); X_initguess.T(:); X_initguess.lambda(:)];
 writematrix(transf_initguess_vec, convertStringsToChars(strcat(folder_name, "/ssom_x_start.csv")))

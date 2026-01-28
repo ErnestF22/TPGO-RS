@@ -16,7 +16,7 @@
 
 namespace fs = std::filesystem;
 
-void EigToRopt(const SomUtils::MatD& xEig, const ROPTLIB::SsomProblem& Prob, ROPTLIB::Vector *result)
+void EigToRopt(const SomUtils::MatD &xEig, const ROPTLIB::SsomProblem &Prob, ROPTLIB::Vector *result)
 {
     int rotSz = Prob.getRotSz();
     int translSz = Prob.getTranslSz();
@@ -171,6 +171,7 @@ int main(int argc, char **argv)
     ROFL_VAR1(Tijs)
     ROFL_VAR1(edges)
 
+
     // problem d x d x n
     integer numoftypes = 3; // 2 i.e. (3D) Stiefel + Euclidean
     integer numofmani1 = n; // num of Stiefel manifolds
@@ -184,6 +185,8 @@ int main(int argc, char **argv)
     ROPTLIB::ProductManifold ProdManiSsom(numoftypes,
                                           &mani1, numofmani1, &mani2, numofmani2, &mani3, numofmani3);
     ROPTLIB::SsomProblem Prob(somSzD, Tijs, edges);
+    Prob.setRho(rho); // default 1000.0
+
 
     // Read GT from csv
     ROPTLIB::Vector xGt = ProdManiSsom.RandominManifold();
@@ -218,6 +221,8 @@ int main(int argc, char **argv)
     ROFL_VAR1(TgtEig)
     ROFL_VAR1(LambdasGtEig)
 
+    ROFL_VAR1(Prob.costEigen(RgtEig, TgtEig, LambdasGtEig));
+
     // // problem nrs x d x n
     // ROPTLIB::Stiefel mani1nrs(nrs, d);
     // mani1.ChooseParamsSet2();
@@ -243,14 +248,24 @@ int main(int argc, char **argv)
 
     SomUtils::MatD startXeig = SomUtils::MatD::Zero(d * d * n + d * n + numEdges, 1);
     Prob.RoptToEig(startX, startXeig);
-    SomUtils::MatD scalesInitguess = 10 * SomUtils::MatD::Ones(numEdges, 1);
+    SomUtils::MatD scalesInitguess = SomUtils::MatD::Ones(numEdges, 1);
     startXeig.block(d * d * n + d * n, 0, numEdges, 1) = scalesInitguess;
 
     ROPTLIB::Vector startX2 = ProdManiSsom.RandominManifold();
     EigToRopt(startXeig, Prob, &startX2);
 
-    startX2.Print("startX2");
+    // startX2.Print("startX2");
 
+    SomUtils::MatD XstartVecEig(SomUtils::MatD::Zero(d * d * n + d * n + numEdges, 1));
+    SomUtils::VecMatD RstartEig(n, SomUtils::MatD::Zero(d, d));
+    SomUtils::MatD TstartEig(SomUtils::MatD::Zero(d, n));
+    SomUtils::MatD LambdasStartEig(SomUtils::MatD::Zero(numEdges, 1));
+    Prob.RoptToEig(startX, XstartVecEig);
+    Prob.getRotations(XstartVecEig, RstartEig);
+    Prob.getTranslations(XstartVecEig, TstartEig);
+    Prob.getScales(XstartVecEig, LambdasStartEig);
+
+    ROFL_VAR1(Prob.costEigen(RstartEig, TstartEig, LambdasStartEig));
 
     // ROPTLIB::Vector startU = ProdManiSsom.RandominManifold();
     // if (!SomUtils::readCsvInitguess(folderIn + "ssom_u_start.csv", startU))
@@ -300,12 +315,11 @@ int main(int argc, char **argv)
     double exectime = 0;
     {
         /* Setting up Prob using setters */
-        Prob.setRho(rho);            // default 1000.0
         Prob.setUsePIM(true);           // same as default
         Prob.setPimMaxIterations(5000); // same as default
 
         rofl::ScopedTimer timer("ssomRS");
-        double costOut = ROPTLIB::runSsom(Prob, startX2, srcNodeId,
+        double costOut = ROPTLIB::runSsom(Prob, startX, srcNodeId,
                                           Rout, Tout, lambdasOut,
                                           lastStaircaseStep); // note: startX is needed (even if random) in ROPTLIB;
         // ROPTLIB namespace is used even if runRsomRS() is not in SsomProblem class, nor in "original" ROPTLIB
@@ -318,7 +332,7 @@ int main(int argc, char **argv)
                                       Rout, Tout, lambdasOut,
                                       RgtEig, TgtEig, LambdasGtEig,
                                       rotErrs, translErrs, scaleErrs);
-                                      
+
     ROFL_VAR1(exectime)
 
     return 0;

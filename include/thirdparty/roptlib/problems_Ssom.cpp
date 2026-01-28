@@ -127,6 +127,10 @@ namespace ROPTLIB
             auto costLambdaEe = (a.transpose() * a + 2 * lambdaE * (a.transpose() * b) + lambdaE * lambdaE * (b.transpose() * b)).trace();
             auto cost_relu_ee = SomUtils::ReLU(ssomReLUargument(lambdaE));
             cost += costLambdaEe + rho_ * cost_relu_ee * cost_relu_ee;
+
+            // ROFL_VAR1(lambdaE);
+            // ROFL_VAR5(e, a.transpose(), b.transpose(), costLambdaEe, cost_relu_ee);
+
         }
         return cost;
     }

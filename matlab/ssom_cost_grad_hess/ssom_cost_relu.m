@@ -25,6 +25,18 @@ for ee = 1:num_edges
     cost_ee = trace(a' * a + 2 * lambda_e * (a' * b) + lambda_e^2 * (b' * b)); 
     scale_compensation_ee = relu_som(ssom_relu_argument(lambda_e));
     cost_out = cost_out + cost_ee + rho * scale_compensation_ee * scale_compensation_ee;
+    % disp("lambda_e")
+    % disp(lambda_e)
+    % disp('ee')
+    % disp(ee)
+    % disp('a')
+    % disp(a')
+    % disp('b')
+    % disp(b')
+    % disp('cost_ee')
+    % disp(cost_ee)
+    % disp('scale_compensation_ee')
+    % disp(scale_compensation_ee)
 end
 
 end %file function
