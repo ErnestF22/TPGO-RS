@@ -35,7 +35,7 @@ enable_manopt_icp = boolean(0);
 enable_procrustes = boolean(0);
 enable_ssom = boolean(1);
 perform_globalization = true;
-relu_scale_compensation = false;
+relu_scale_compensation = true;
 som_params = struct('N', N, 'd', d, 'd_aff', d_aff, ...
     'global_camera_id', global_camera_id, ...
     'num_tests_per_sigma', num_tests_per_sigma, 'transf_end_thresh', transf_end_thresh, ...
@@ -58,7 +58,7 @@ sigmas = readmatrix("data/sigmas.txt"); %sigma = stdev, sigma.^2 = variance
 mus = readmatrix("data/mus.txt"); %OBS. generally, mus can be d-dimensional; here, we just assume them as scalar (i.e. a d-dimensional vector with all coordinates equal)
 
 % sigmas = sigmas(4);
-sigmas = 0.01;
+sigmas = 0.0;
 % mus = mus(2);
 
 node_degrees = sum(testdata.A, 2);
