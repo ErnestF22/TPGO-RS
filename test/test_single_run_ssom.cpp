@@ -243,7 +243,7 @@ int main(int argc, char **argv)
 
     SomUtils::MatD startXeig = SomUtils::MatD::Zero(d * d * n + d * n + numEdges, 1);
     Prob.RoptToEig(startX, startXeig);
-    SomUtils::MatD scalesInitguess = SomUtils::MatD::Ones(numEdges, 1);
+    SomUtils::MatD scalesInitguess = 10 * SomUtils::MatD::Ones(numEdges, 1);
     startXeig.block(d * d * n + d * n, 0, numEdges, 1) = scalesInitguess;
 
     ROPTLIB::Vector startX2 = ProdManiSsom.RandominManifold();

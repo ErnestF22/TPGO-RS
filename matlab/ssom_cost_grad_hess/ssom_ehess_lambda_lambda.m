@@ -23,13 +23,12 @@ for ee = 1:num_edges
     lambda_ee = lambdas(ee,:);
 
     if 1-a*lambda_ee > 0
-        compensation_part = (-a*a / (a*a*lambda_ee*lambda_ee - 2 * a * lambda_ee + 1)) + 2 * lambda_dot_ee;
-        % compensation_part = a / (1-a*lambda_dot_ee) + 2 * lambda_dot_ee;
+        compensation_part = a^2 / (1-a*lambda_ee)^2 + 2;
     else
         compensation_part = 0.0;
     end
 
-    h(ee) = 2*lambda_dot_ee*(tij_e' * tij_e) + problem_data.rho * compensation_part;
+    h(ee) = 2*lambda_dot_ee*(tij_e' * tij_e) + lambda_dot_ee * problem_data.rho * compensation_part;
 end
 
 end
