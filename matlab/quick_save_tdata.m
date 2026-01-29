@@ -1,4 +1,4 @@
-function quick_save_tdata(sigma,tdata,X_initguess,Tijs, Tijs_nois)
+function quick_save_tdata(sigma,tdata,X_initguess,Tijs, Tijs_nois, R_gt, T_gt, lambdas_gt)
 
 d = 3;
 % sigma
@@ -24,7 +24,7 @@ writematrix(Tijs_nois, ...
 writematrix(Tijs, ...
     convertStringsToChars(strcat(folder_name, "/tijs_truth.csv")), 'Delimiter', ',')
 %gt
-gt_vec = [vec(G2R(tdata.gitruth)); vec(G2T(tdata.gitruth)); vec(tdata.lambdaijtruth)];
+gt_vec = [vec(R_gt); vec(T_gt); vec(lambdas_gt)];
 writematrix(gt_vec, convertStringsToChars(strcat(folder_name, "/Xgt.csv")))
 %n
 n = tdata.NNodes;

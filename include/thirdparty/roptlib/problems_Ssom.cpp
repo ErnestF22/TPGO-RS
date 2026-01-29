@@ -1800,6 +1800,13 @@ namespace ROPTLIB
 
         // back to SE(d)^N
 
+        for (int i = 0; i < n; ++i)
+        {
+            ROFL_VAR2(i, RmanoptOutEig[i])
+        }
+        ROFL_VAR1(TmanoptOutEig)
+        ROFL_VAR1(LambdaManoptOutEig)
+
         SomUtils::VecMatD Rrecovered(n, SomUtils::MatD::Zero(d, d));
         SomUtils::MatD Trecovered(SomUtils::MatD::Zero(d, n));
         SomUtils::MatD LambdasRecovered(SomUtils::MatD::Zero(e, 1));
@@ -1821,7 +1828,9 @@ namespace ROPTLIB
 
         Rout.resize(n, SomUtils::MatD::Zero(d, d));
         Tout.resize(d, n);
+        Tout.setZero();
         lambdasOut.resize(e, 1);
+        lambdasOut.setZero();
         bool globalRecoverySuccess = ProbPrev.globalize(src, Rrecovered, Trecovered, LambdasRecovered,
                                                         Rout, Tout, lambdasOut);
         ROFL_VAR1(globalRecoverySuccess)

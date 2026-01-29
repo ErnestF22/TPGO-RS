@@ -81,7 +81,11 @@ vR_noise=rot_randTangentNormVector(R_truth);
 %R_initguess = G2R(rot_randn(testdata.gitruth, sigma_init, N));
 R_initguess=rot_exp(R_truth,sigma*pi/5*vR_noise);
 T_initguess = T_globalframe + sigma.*randn(size(T_globalframe));
-lambdas_initguess = ones(num_edges, 1);
+if params.relu_scale_compensation
+        lambdas_initguess=ones(num_edges, 1);
+else
+    lambdas_initguess=10*ones(num_edges, 1);
+end
 if params.rand_initguess
     %overwrite sigma-noisy initguess
     R_initguess = randrot_som(params.d, params.N);

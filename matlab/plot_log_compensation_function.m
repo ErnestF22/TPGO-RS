@@ -1,6 +1,6 @@
 function plot_log_compensation_function
 
-x = linspace(-10,0.999, 10000);
+x = linspace(-10,0.999999999, 10000);
 
 N = length(x);
 y = zeros(size(x));

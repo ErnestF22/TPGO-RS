@@ -12,7 +12,11 @@ edges = problem_data.E;
 num_edges = size(edges, 1);
 
 if ~exist('lambdas_initguess','var')
-   lambdas_initguess=ones(num_edges, 1);
+    if params.relu_scale_compensation
+        lambdas_initguess=ones(num_edges, 1);
+    else
+        lambdas_initguess=10*ones(num_edges, 1);
+    end
 end
 
 d = problem_data.sz(2);

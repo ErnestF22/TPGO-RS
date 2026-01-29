@@ -3047,8 +3047,18 @@ namespace ROPTLIB
 
         // !! In the way recovery on SE(d)^N is formulated now, we have to perform it even if nrs = d
 
-        int nrs = staircaseStepIdx - 1;
-        nrs = TmanoptOut.rows();
+        int nrs = TmanoptOut.rows();
+
+        if (nrs == sz_.d_)
+        {
+            ROFL_VAR1("nrs == d case - direct assignment")
+            Rrecovered = RmanoptOut;
+            Trecovered = TmanoptOut;
+            LambdasRecovered = LambdasManoptOut;
+            rsRecoverySuccess_ = true;
+            return rsRecoverySuccess_;
+        }
+
         int lowDeg = 2; // TODO: not necessarily 2 in more complex graph cases (?)
 
         Eigen::ArrayXi nodeDegrees(Eigen::ArrayXi::Zero(sz_.n_));
@@ -3316,31 +3326,43 @@ namespace ROPTLIB
             ROFL_VAR4(i, Rgt_[i], RrecoveredGlobal[i], SomUtils::isEqualFloats(Rgt_[i], RrecoveredGlobal[i]))
         }
 
-        // T_global = R_global * T_recovered(:,1) - X_gt.T(:,1); %!!
-        auto Tglobal = Rglobal * Tsedn.col(src) - Tgt_.col(src);
-        ROFL_VAR4(Rglobal, (Rglobal * Tsedn.col(src)).transpose(), Tsedn.col(src).transpose(), Tgt_.col(src).transpose());
-        ROFL_VAR2(Tglobal.transpose(), Tsedn.col(src).transpose());
-        // code for making all translation global at once
-        // disp("[X_gt.T; T_recovered]");
+        double lambdaFactor = LambdasGt_(src) / LambdasIn(0); // should be the same for all edges
+        LambdasOut = lambdaFactor * LambdasIn;
 
-        // T_recovered_global = R_global' * T_recovered - T_global;
-        // disp([X_gt.T; T_recovered_global]);
-        ROFL_VAR3(Rglobal.transpose(), Tsedn, Tglobal)
-        SomUtils::MatD TglobalRepmat(SomUtils::MatD::Zero(sz_.d_, sz_.n_));
+        ROFL_VAR2(LambdasGt_.transpose(), LambdasIn.transpose());
+
+        // [T_edges, ~] = make_T_edges(T_recovered, edges);
+        // T_edges_scaled = make_tijs_scaled(lambda_factor * ones(num_edges, 1), T_edges);
+        // T_edges_scaled2 = T_edges_scaled;
+        // for ii = 1:num_edges
+        //     T_edges_scaled2(:,ii) = R_global' * T_edges_scaled(:,ii);
+        SomUtils::MatD Tedges(SomUtils::MatD::Zero(sz_.d_, numEdges_));
+        makeTedges(Tsedn, Tedges);
+        SomUtils::MatD TedgesScaled = lambdaFactor * Tedges;
+        SomUtils::MatD TedgesScaled2(SomUtils::MatD::Zero(sz_.d_, numEdges_));
+        for (int i = 0; i < numEdges_; ++i)
+        {
+            TedgesScaled2.col(i) = Rglobal.transpose() * TedgesScaled.col(i);
+        }
+        // T_recovered_global_pre_shift = edge_diffs_2_T(T_edges_scaled2, edges, N);
+        // T_recovered_global = T_recovered_global_pre_shift;
+        // for ii = 1:N
+        //     T_recovered_global(:, ii) = T_recovered_global_pre_shift(:,ii) + X_gt.T(:,base_node_id);
+        SomUtils::MatD TrecoveredGlobalPreShift(SomUtils::MatD::Zero(sz_.d_, sz_.n_));
+        edgeDiffs2T(src, TedgesScaled2, sz_.n_, TrecoveredGlobalPreShift);
+        SomUtils::MatD TrecoveredGlobal(SomUtils::MatD::Zero(sz_.d_, sz_.n_));
         for (int i = 0; i < sz_.n_; ++i)
         {
-            TglobalRepmat.col(i) = Tglobal; // TODO: maybe use some other adv init
-        }
-        auto TrecoveredGlobal = Rglobal.transpose() * Tsedn - TglobalRepmat;
+            TrecoveredGlobal.col(i) = TrecoveredGlobalPreShift.col(i) + Tgt_.col(src);
+        }   
+        
+        // disp([X_gt.T; T_recovered_global]);
         ROFL_VAR2(Tgt_, TrecoveredGlobal)
 
         // lambda_factor = X_gt.lambda(1) / lambdas_recovered(1); %should be the same for all edges
         // lambdas_recovered_global = lambda_factor * lambdas_recovered;
 
-        double lambdaFactor = LambdasGt_(src) / LambdasIn(1); // should be the same for all edges
-        LambdasOut = lambdaFactor * LambdasIn;
-
-        ROFL_VAR2(LambdasGt_.transpose(), LambdasIn.transpose());
+        
 
         // Checking recovery success
         // for ii = 1:N
@@ -3388,16 +3410,15 @@ namespace ROPTLIB
                 ROFL_VAR1("ERROR in recovery: T_GLOBAL")
                 rsRecoverySuccess_ = false;
                 // ROFL_ASSERT(0)
-            }
-            auto lambdaGtI = LambdasGt_(i);
-            auto lambdaRecovI = LambdasOut(i, 0);
-            ROFL_VAR2(lambdaGtI, lambdaRecovI)
-            if (fabs(lambdaGtI - lambdaRecovI) < 1e-3)
-            {
-                ROFL_VAR1("ERROR in recovery: LAMBDA_GLOBAL")
-                rsRecoverySuccess_ = false;
-                // ROFL_ASSERT(0)
-            }
+            }            
+        }
+
+        ROFL_VAR2(LambdasGt_.transpose(), LambdasOut.transpose())
+        if ((LambdasGt_ - LambdasOut).norm() > 1e-3)
+        {
+            ROFL_VAR2("ERROR in recovery: LAMBDA_GLOBAL", (LambdasGt_ - LambdasOut).norm())
+            rsRecoverySuccess_ = false;
+            // ROFL_ASSERT(0)
         }
 
         // fprintf("rs_recovery_success: %g\n", rs_recovery_success);
