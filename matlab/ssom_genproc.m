@@ -106,6 +106,13 @@ else
     disp("cost_initguess")
     disp(cost_initguess)
 end
+
+% rg_ig = ssom_rgrad(X_initguess, problem_data);
+% disp("ssom_rgrad(X_initguess, problem_data)")
+% disp(rg_ig.R)
+% disp(rg_ig.T)
+% disp(rg_ig.lambda)
+
 X = trustregions(problem, X_initguess, options);
 T_manopt_out = X.T;
 R_manopt_out = X.R;

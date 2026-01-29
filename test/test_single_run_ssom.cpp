@@ -254,7 +254,7 @@ int main(int argc, char **argv)
     ROPTLIB::Vector startX2 = ProdManiSsom.RandominManifold();
     EigToRopt(startXeig, Prob, &startX2);
 
-    // startX2.Print("startX2");
+    startX2.Print("startX2");
 
     SomUtils::MatD XstartVecEig(SomUtils::MatD::Zero(d * d * n + d * n + numEdges, 1));
     SomUtils::VecMatD RstartEig(n, SomUtils::MatD::Zero(d, d));
@@ -266,6 +266,12 @@ int main(int argc, char **argv)
     Prob.getScales(XstartVecEig, LambdasStartEig);
 
     ROFL_VAR1(Prob.costEigen(RstartEig, TstartEig, LambdasStartEig));
+
+    ROPTLIB::Vector riegradIG = ProdManiSsom.RandominManifold();
+    Prob.RieGrad(startX2, &riegradIG);
+    riegradIG.Print("riegradIG");
+
+
 
     // ROPTLIB::Vector startU = ProdManiSsom.RandominManifold();
     // if (!SomUtils::readCsvInitguess(folderIn + "ssom_u_start.csv", startU))
