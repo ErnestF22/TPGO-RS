@@ -6,6 +6,7 @@ tijs = problem_data.tijs;
 % rho = problem_data.rho;
 
 a = problem_data.a;
+b=-a/(a-1)^2;
 
 h = zeros(length(lambdas), 1);
 
@@ -22,10 +23,19 @@ for ee = 1:num_edges
     lambda_dot_ee = lambdas_dot(ee,:);
     lambda_ee = lambdas(ee,:);
 
-    if 1-a*lambda_ee > 0
-        compensation_part = a^2 / (1-a*lambda_ee)^2 + 2;
+    % if 1-a*lambda_ee > 0
+    %     compensation_part = a^2 / (1-a*lambda_ee)^2 + 2;
+    % else
+    %     compensation_part = 0.0;
+    % end
+
+    l = lambda_ee;
+    if l<=1
+        compensation_part=a/(a*l-1)^2 ...
+          +0 ...
+          +b;
     else
-        compensation_part = 0.0;
+        compensation_part=0;
     end
 
     h(ee) = 2*lambda_dot_ee*(tij_e' * tij_e) + lambda_dot_ee * problem_data.rho * compensation_part;

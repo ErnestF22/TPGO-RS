@@ -12,7 +12,7 @@ mindeg = 3;
 testdata = testNetwork_params(3, N, 'banded', mindeg); 
 
 testdata.rho = 1000;
-testdata.a = 1.0;
+testdata.a = 2.0;
 
 % %som = ShapeOfMotion('testNetwork_params.csv'); %params reading is done directly in constructor
 % %copy the list below from the properties list
@@ -58,7 +58,7 @@ sigmas = readmatrix("data/sigmas.txt"); %sigma = stdev, sigma.^2 = variance
 mus = readmatrix("data/mus.txt"); %OBS. generally, mus can be d-dimensional; here, we just assume them as scalar (i.e. a d-dimensional vector with all coordinates equal)
 
 % sigmas = sigmas(4);
-sigmas = 0.0;
+sigmas = 0.01;
 % mus = mus(2);
 
 node_degrees = sum(testdata.A, 2);
