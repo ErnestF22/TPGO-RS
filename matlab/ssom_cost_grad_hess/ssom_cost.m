@@ -34,7 +34,9 @@ for ee = 1:num_edges
     % end
 
     l = lambda_e;
-    if l<1
+    if l <= 1/a_log
+        scale_compensation_ee = 1e+10;
+    elseif l<1
         scale_compensation_ee=-1/a_log*log(a_log*l-1)...
             +1/(a_log-1)*(l-1)...
             +b_log/2*(l-1)^2;

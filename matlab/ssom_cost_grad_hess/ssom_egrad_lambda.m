@@ -28,7 +28,9 @@ function g_lambda = ssom_egrad_lambda(R, T, lambdas, problem_data)
         % end
 
         l = lambda_e;
-        if l<=1
+        if l <= 1/a
+            scale_compensation_ee = 1e+10;
+        elseif l<1
             scale_compensation_ee=-1/(a*l-1)...
                 +1/(a-1)...
                 +b*(l-1);

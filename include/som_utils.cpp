@@ -932,6 +932,7 @@ namespace SomUtils
             translErrs[e] = translDistEdge;
 
             scaleErrs[e] = abs(Lambdas(e, 0) - LambdasGt(e, 0));
+            ROFL_VAR2(e, scaleErrs[e]);
         }
     }
 

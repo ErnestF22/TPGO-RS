@@ -2,10 +2,8 @@ clc;
 clear;
 close all;
 
-N = 5;
+N = 10;
 mindeg = 3;
-
-% rho*(-log(1-a*relu(x))-a*relu(x)+relu(x)^2) ---> a = 1
 
 % 1a) PW TRANSLATION DATA INPUT: R, T are the gt, Tijs_nois are the input data
 % testdata = testNetwork_params(3, N, 'banded', mindeg); %4 would be the default
@@ -20,7 +18,7 @@ N = testdata.NNodes;
 d = 3;
 d_aff = d+1;
 global_camera_id = 1;
-num_tests_per_sigma = 50;
+num_tests_per_sigma = 30;
 transf_end_thresh = 1;
 max_icp_iterations = 10;
 num_edges_full = N*N;
@@ -35,7 +33,7 @@ enable_manopt_icp = boolean(0);
 enable_procrustes = boolean(0);
 enable_ssom = boolean(1);
 perform_globalization = true;
-relu_scale_compensation = true;
+relu_scale_compensation = false;
 som_params = struct('N', N, 'd', d, 'd_aff', d_aff, ...
     'global_camera_id', global_camera_id, ...
     'num_tests_per_sigma', num_tests_per_sigma, 'transf_end_thresh', transf_end_thresh, ...
@@ -58,7 +56,7 @@ sigmas = readmatrix("data/sigmas.txt"); %sigma = stdev, sigma.^2 = variance
 mus = readmatrix("data/mus.txt"); %OBS. generally, mus can be d-dimensional; here, we just assume them as scalar (i.e. a d-dimensional vector with all coordinates equal)
 
 % sigmas = sigmas(4);
-sigmas = 0.01;
+% sigmas = 0.01;
 % mus = mus(2);
 
 node_degrees = sum(testdata.A, 2);

@@ -25,6 +25,12 @@ namespace ROPTLIB
         usePIM_ = true; // default to PIM; can be changed with setter if needed
 
         pimMaxIterations_ = 5000; // default max iterations for PIM; can be changed with setter if needed
+
+        reluScaleCompensation_ = false; // default to false; can be changed with setter if needed
+
+        a_ = 2.0; // default value for log-based compensation; can be changed with setter if needed
+
+        b_ = -a_ / ((a_ - 1) * (a_ - 1)); // dependent on a_
     }
 
     SsomProblem::SsomProblem(const SomUtils::SomSize somSz, const SomUtils::MatD &tijs, const Eigen::MatrixXi &edges)
@@ -48,6 +54,12 @@ namespace ROPTLIB
         usePIM_ = true; // default to PIM; can be changed with a setter if needed
 
         pimMaxIterations_ = 5000; // default max iterations for PIM; can be changed with a setter if needed
+
+        reluScaleCompensation_ = false; // default to false; can be changed with setter if needed
+
+        a_ = 2.0; // default value for log-based compensation; can be changed with setter if needed
+
+        b_ = -a_ / ((a_ - 1) * (a_ - 1)); // dependent on a_
     }
 
     SsomProblem::~SsomProblem() {};
@@ -58,7 +70,11 @@ namespace ROPTLIB
         RoptToEig(x, xEigen);
         // ROFL_VAR1(x);
 
-        realdp cost = costEigenVec(xEigen);
+        realdp cost = 1e+10;
+        if (reluScaleCompensation_)
+            cost = costEigenVecRelu(xEigen);
+        else
+            cost = costEigenVec(xEigen);
 
         ROFL_VAR1(cost);
         // ROFL_ASSERT(!std::isnan(corr));
@@ -70,6 +86,38 @@ namespace ROPTLIB
 
         return cost; // checked -> the - here should be OK
     };
+
+    double SsomProblem::costEigenVecReluSEdN(const SomUtils::MatD &xEigen) const
+    {
+        double cost = 0.0f;
+        for (int e = 0; e < numEdges_; ++e)
+        {
+            SomUtils::MatD Ri(SomUtils::MatD::Zero(sz_.d_, sz_.d_));
+            SomUtils::MatD Ti(SomUtils::MatD::Zero(sz_.d_, 1));
+            SomUtils::MatD Tj(SomUtils::MatD::Zero(sz_.d_, 1));
+
+            SomUtils::VecD tij(SomUtils::VecD::Zero(sz_.d_));
+            tij = tijs_.col(e);
+
+            int i = edges_(e, 0) - 1; // !! -1
+            int j = edges_(e, 1) - 1; // !! -1
+            getRiSEdN(xEigen, Ri, i);
+            getTiSEdN(xEigen, Ti, i);
+            getTiSEdN(xEigen, Tj, j);
+            double lambdaE = 0.0;
+            getLambdaISEdN(xEigen, lambdaE, e);
+
+            // ROFL_VAR3(i, j, e);
+            // ROFL_VAR4(Ri, tij.transpose(), Ti.transpose(), Tj.transpose());
+
+            auto a = Ti - Tj;
+            auto b = Ri * tij;
+            auto costLambdaEe = (a.transpose() * a + 2 * lambdaE * (a.transpose() * b) + lambdaE * lambdaE * (b.transpose() * b)).trace();
+            auto costReluEe = SomUtils::ReLU(ssomReLUargument(lambdaE));
+            cost += costLambdaEe + rho_ * costReluEe * costReluEe;
+        }
+        return cost;
+    }
 
     double SsomProblem::costEigenVecSEdN(const SomUtils::MatD &xEigen) const
     {
@@ -97,8 +145,58 @@ namespace ROPTLIB
             auto a = Ti - Tj;
             auto b = Ri * tij;
             auto costLambdaEe = (a.transpose() * a + 2 * lambdaE * (a.transpose() * b) + lambdaE * lambdaE * (b.transpose() * b)).trace();
-            auto cost_relu_ee = SomUtils::ReLU(ssomReLUargument(lambdaE));
-            cost += costLambdaEe + rho_ * cost_relu_ee * cost_relu_ee;
+
+            // l = lambda_e;
+            // if l<1
+            //     scale_compensation_ee=-1/a_log*log(a_log*l-1)...
+            //         +1/(a_log-1)*(l-1)...
+            //         +b_log/2*(l-1)^2;
+            // else
+            //     scale_compensation_ee=0;
+                
+            double scaleCompensation = 0.0;
+            
+            if (lambdaE <= 1/a_)
+            {
+                scaleCompensation = 1e+10;
+            }
+            else if (lambdaE < 1.0)
+            {
+                scaleCompensation = -1.0 / a_ * log(a_ * lambdaE - 1.0) + 1.0 / (a_ - 1.0) * (lambdaE - 1.0) + b_ / (2.0 * (lambdaE - 1.0) * (lambdaE - 1.0));
+            }
+
+            cost += costLambdaEe + rho_ * scaleCompensation;
+        }
+        return cost;
+    }
+
+    double SsomProblem::costEigenRelu(const SomUtils::VecMatD &Reigen, const SomUtils::MatD &Teigen, const SomUtils::MatD &LambdasEigen) const
+    {
+        double cost = 0.0f;
+        for (int e = 0; e < numEdges_; ++e)
+        {
+            int i = edges_(e, 0) - 1; // !! -1
+            int j = edges_(e, 1) - 1; // !! -1
+
+            auto Ri = Reigen[i];
+            auto Ti = Teigen.col(i);
+            auto Tj = Teigen.col(j);
+            auto lambdaE = LambdasEigen(e, 0);
+
+            SomUtils::VecD tij(SomUtils::VecD::Zero(sz_.d_));
+            tij = tijs_.col(e);
+
+            // ROFL_VAR3(i, j, e);
+            // ROFL_VAR5(Ri, tij.transpose(), Ti.transpose(), Tj.transpose(), lambdaE);
+
+            auto a = Ti - Tj;
+            auto b = Ri * tij;
+            auto costLambdaEe = (a.transpose() * a + 2 * lambdaE * (a.transpose() * b) + lambdaE * lambdaE * (b.transpose() * b)).trace();
+            auto costReluEe = SomUtils::ReLU(ssomReLUargument(lambdaE));
+            cost += costLambdaEe + rho_ * costReluEe * costReluEe;
+
+            // ROFL_VAR1(lambdaE);
+            // ROFL_VAR5(e, a.transpose(), b.transpose(), costLambdaEe, costReluEe);
         }
         return cost;
     }
@@ -125,16 +223,31 @@ namespace ROPTLIB
             auto a = Ti - Tj;
             auto b = Ri * tij;
             auto costLambdaEe = (a.transpose() * a + 2 * lambdaE * (a.transpose() * b) + lambdaE * lambdaE * (b.transpose() * b)).trace();
-            auto cost_relu_ee = SomUtils::ReLU(ssomReLUargument(lambdaE));
-            cost += costLambdaEe + rho_ * cost_relu_ee * cost_relu_ee;
 
-            // ROFL_VAR1(lambdaE);
-            // ROFL_VAR5(e, a.transpose(), b.transpose(), costLambdaEe, cost_relu_ee);
+            // l = lambda_e;
+            // if l<1
+            //     scale_compensation_ee=-1/a_log*log(a_log*l-1)...
+            //         +1/(a_log-1)*(l-1)...
+            //         +b_log/2*(l-1)^2;
+            // else
+            //     scale_compensation_ee=0;
+                
+            double scaleCompensation = 0.0;
+            if (lambdaE <= 1/a_)
+            {
+                scaleCompensation = 1e+10;
+            }
+            else if (lambdaE < 1.0)
+            {
+                scaleCompensation = -1.0 / a_ * log(a_ * lambdaE - 1.0) + 1.0 / (a_ - 1.0) * (lambdaE - 1.0) + b_ / (2.0 * (lambdaE - 1.0) * (lambdaE - 1.0));
+            }
+
+            cost += costLambdaEe + rho_ * scaleCompensation;
         }
         return cost;
     }
 
-    double SsomProblem::costEigenVec(const SomUtils::MatD &xEigen) const
+    double SsomProblem::costEigenVecRelu(const SomUtils::MatD &xEigen) const
     {
         double cost = 0.0f;
         for (int e = 0; e < numEdges_; ++e)
@@ -160,8 +273,61 @@ namespace ROPTLIB
             auto a = Ti - Tj;
             auto b = Ri * tij;
             auto costLambdaEe = (a.transpose() * a + 2 * lambdaE * (a.transpose() * b) + lambdaE * lambdaE * (b.transpose() * b)).trace();
-            auto cost_relu_ee = SomUtils::ReLU(ssomReLUargument(lambdaE));
-            cost += costLambdaEe + rho_ * cost_relu_ee * cost_relu_ee;
+            auto costReluEe = SomUtils::ReLU(ssomReLUargument(lambdaE));
+            cost += costLambdaEe + rho_ * costReluEe * costReluEe;
+        }
+        return cost;
+    }
+
+    double SsomProblem::costEigenVec(const SomUtils::MatD &xEigen) const
+    {
+        double cost = 0.0f;
+        
+        for (int e = 0; e < numEdges_; ++e)
+        {
+            SomUtils::MatD Ri(SomUtils::MatD::Zero(sz_.p_, sz_.d_));
+            SomUtils::MatD Ti(SomUtils::MatD::Zero(sz_.p_, 1));
+            SomUtils::MatD Tj(SomUtils::MatD::Zero(sz_.p_, 1));
+            double lambdaE = 0.0;
+
+            SomUtils::VecD tij(SomUtils::VecD::Zero(sz_.d_));
+            tij = tijs_.col(e);
+
+            int i = edges_(e, 0) - 1; // !! -1
+            int j = edges_(e, 1) - 1; // !! -1
+            getRi(xEigen, Ri, i);
+            getTi(xEigen, Ti, i);
+            getTi(xEigen, Tj, j);
+            getLambdaI(xEigen, lambdaE, e);
+
+            // ROFL_VAR3(i, j, e);
+            // ROFL_VAR4(Ri, tij.transpose(), Ti.transpose(), Tj.transpose());
+
+            auto a = Ti - Tj;
+            auto b = Ri * tij;
+            auto costLambdaEe = (a.transpose() * a + 2 * lambdaE * (a.transpose() * b) + lambdaE * lambdaE * (b.transpose() * b)).trace();
+
+            // l = lambda_e;
+            // if l<1
+            //     scale_compensation_ee=-1/a_log*log(a_log*l-1)...
+            //         +1/(a_log-1)*(l-1)...
+            //         +b_log/2*(l-1)^2;
+            // else
+            //     scale_compensation_ee=0;
+                
+            double scaleCompensation = 0.0;
+            if (lambdaE <= 1/a_)
+            {
+                scaleCompensation = 1e+10;
+            }
+            else if (lambdaE < 1.0)
+            {
+                scaleCompensation = -1.0 / a_ * log(a_ * lambdaE - 1.0) + 1.0 / (a_ - 1.0) * (lambdaE - 1.0) + b_ / (2.0 * (lambdaE - 1.0) * (lambdaE - 1.0));
+            }
+
+            ROFL_VAR6(e, a_, b_, lambdaE, costLambdaEe, scaleCompensation);
+
+            cost += costLambdaEe + rho_ * scaleCompensation;
         }
         return cost;
     }
@@ -211,7 +377,11 @@ namespace ROPTLIB
         // ROFL_VAR1(rgT);
 
         SomUtils::MatD rgLambdas(SomUtils::MatD::Zero(numEdges_, 1));
-        rgradLambdas(R, T, Lambdas, rgLambdas);
+
+        if (reluScaleCompensation_)
+            rgradLambdasRelu(R, T, Lambdas, rgLambdas);
+        else
+            rgradLambdas(R, T, Lambdas, rgLambdas);
 
         // result->NewMemoryOnWrite();
         // result = Domain->RandomInManifold();
@@ -415,13 +585,13 @@ namespace ROPTLIB
         rgT = T * (LR + LR.transpose()) + PR;
     }
 
-    void SsomProblem::egradLambdas(const SomUtils::VecMatD &R, const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
+    void SsomProblem::egradLambdasRelu(const SomUtils::VecMatD &R, const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
                                    SomUtils::MatD &egLambdas) const
     {
-        rgradLambdas(R, T, Lambdas, egLambdas);
+        rgradLambdasRelu(R, T, Lambdas, egLambdas);
     }
 
-    void SsomProblem::rgradLambdas(const SomUtils::VecMatD &R, const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
+    void SsomProblem::rgradLambdasRelu(const SomUtils::VecMatD &R, const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
                                    SomUtils::MatD &rgLambdas) const
     {
         for (int e = 0; e < numEdges_; ++e)
@@ -462,6 +632,53 @@ namespace ROPTLIB
 
             // g_lambda(ee) = base_part + rho * compensation_part;
             rgLambdas(e, 0) = basePart(0, 0) + rho_ * compensationPart;
+        }
+    }
+
+    void SsomProblem::egradLambdas(const SomUtils::VecMatD &R, const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
+                                   SomUtils::MatD &egLambdas) const
+    {
+        rgradLambdas(R, T, Lambdas, egLambdas);
+    }
+
+    void SsomProblem::rgradLambdas(const SomUtils::VecMatD &R, const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
+                                   SomUtils::MatD &rgLambdas) const
+    {
+        for (int e = 0; e < numEdges_; ++e)
+        {
+            int i = edges_(e, 0) - 1; // !! -1
+            int j = edges_(e, 1) - 1; // !! -1
+
+            auto tij = tijs_.col(e);
+            double lambdaE = Lambdas(e, 0);
+
+            auto Ti = T.col(i);
+            auto Tj = T.col(j);
+            auto Ri = R[i];
+
+            // base_part = 2*(tij_e'*tij_e * lambda_e + tij_e' * R_i' * T_i - tij_e' * R_i' * T_j);
+            auto basePart = 2 * (tij.transpose() * tij * lambdaE + tij.transpose() * Ri.transpose() * Ti - tij.transpose() * Ri.transpose() * Tj);
+            // ROFL_VAR1(basePart)
+            double scaleCompensation = 0.0;
+            
+            // if l<1
+            //     scale_compensation_ee=-1/a_log*log(a_log*l-1)...
+            //         +1/(a_log-1)*(l-1)...
+            //         +b_log/2*(l-1)^2;
+            // else
+            //     scale_compensation_ee=0;
+
+            if (lambdaE <= 1/a_)
+            {
+                scaleCompensation = 1e+10;
+            }
+            else if (lambdaE <= 1.0)
+            {
+                scaleCompensation = -1.0 / a_ * log(a_ * lambdaE - 1.0) + 1.0 / (a_ - 1.0) * (lambdaE - 1.0) + b_ / (2.0 * (lambdaE - 1.0) * (lambdaE - 1.0));
+            }    
+
+            // g_lambda(ee) = base_part + rho * compensation_part;
+            rgLambdas(e, 0) = basePart(0, 0) + rho_ * scaleCompensation;
         }
     }
 
@@ -727,7 +944,7 @@ namespace ROPTLIB
         }
     }
 
-    void SsomProblem::computeHlambdaslambdas(const SomUtils::MatD &xLambdas, const SomUtils::MatD &uLambdas,
+    void SsomProblem::computeHlambdaslambdasRelu(const SomUtils::MatD &xLambdas, const SomUtils::MatD &uLambdas,
                                              SomUtils::MatD &h) const
     {
         for (int e = 0; e < numEdges_; ++e)
@@ -756,6 +973,42 @@ namespace ROPTLIB
             // h(ee) = 2*lambda_dot_ee*(tij_e' * tij_e) + problem_data.rho * compensation_part;
             double basePart = 2 * lambdaDotE * (tij.transpose() * tij)(0, 0); // 1x1 matrix
             h(e, 0) = basePart + rho_ * compensationPart;
+        }
+    }
+
+    void SsomProblem::computeHlambdaslambdas(const SomUtils::MatD &xLambdas, const SomUtils::MatD &uLambdas,
+                                             SomUtils::MatD &h) const
+    {
+        for (int e = 0; e < numEdges_; ++e)
+        {
+            int i = edges_(e, 0) - 1; // !! -1
+            // int j = edges_(e, 1) - 1; // !! -1
+
+            auto tij = tijs_.col(e);
+
+            double lambdaE = xLambdas(e, 0);
+            double lambdaDotE = uLambdas(e, 0);
+
+            double compensationPart = 0.0;
+            // l = lambda_ee;
+            // if l<=1
+            //     compensation_part=a/(a*l-1)^2 + 0 + b;
+            // else
+            //     compensation_part=0;
+
+            if (lambdaE <= 1/a_)
+            {
+                compensationPart = 1e+10;
+            }
+            else if (lambdaE <= 1.0)
+            {
+                compensationPart = a_ / ((a_ * lambdaE - 1.0) * (a_ * lambdaE - 1.0)) + b_;
+            }
+
+            // h(ee) = 2*lambda_dot_ee*(tij_e' * tij_e) + lambda_dot_ee * problem_data.rho * compensation_part;
+        
+            double basePart = 2 * lambdaDotE * (tij.transpose() * tij)(0, 0); // 1x1 matrix
+            h(e, 0) = basePart + rho_ * lambdaDotE * compensationPart;
         }
     }
 
@@ -810,7 +1063,11 @@ namespace ROPTLIB
 
         SomUtils::MatD hLambdasLambdas(SomUtils::MatD::Zero(numEdges_, 1));
         // ROFL_VAR1("computeHlambdaslambdas")
-        computeHlambdaslambdas(xLambdas, uLambdas, hLambdasLambdas);
+        if (reluScaleCompensation_)
+            computeHlambdaslambdasRelu(xLambdas, uLambdas, hLambdasLambdas);
+        else
+            computeHlambdaslambdas(xLambdas, uLambdas, hLambdasLambdas);
+
 
         // PUT EVERYTHING TOGETHER
 
@@ -1328,6 +1585,18 @@ namespace ROPTLIB
         pimMaxIterations_ = numMaxIterations;
     }
 
+    void SsomProblem::setReluScaleCompensation(bool flag)
+    {
+        reluScaleCompensation_ = flag;
+    }
+
+    void SsomProblem::setLogScaleCompensationParam(double a)
+    {
+        a_ = a;
+        b_ = -a_ / ((a_ - 1) * (a_ - 1)); // dependent on a_
+
+    }
+
     void SsomProblem::vectorizeR(const SomUtils::VecMatD &R, SomUtils::MatD &RvecOut) const
     {
         // int fullRotsSz = sz_.p_ * sz_.d_ * sz_.n_;
@@ -1571,7 +1840,18 @@ namespace ROPTLIB
                    int &staircaseStepIdx)
     {
         ROFL_VAR1("Start of runSsom()")
+
+        if (Prob.reluScaleCompensation_)
+        {
+        ROFL_VAR1(Prob.costEigenRelu(Prob.Rgt_, Prob.Tgt_, Prob.LambdasGt_));
+
+        }
+        else
+        {
         ROFL_VAR1(Prob.costEigen(Prob.Rgt_, Prob.Tgt_, Prob.LambdasGt_));
+
+        }
+
 
         // output the parameters of the manifold of domain
         ROPTLIB::RTRNewton *RTRNewtonSolver = new ROPTLIB::RTRNewton(&Prob, &startX); // USE INITGUESS HERE!
@@ -1667,8 +1947,17 @@ namespace ROPTLIB
 
             ProbNext.setGt(rGt, tGt, lambdasGt);
             ProbNext.setRho(Prob.rho_);
-            ROFL_VAR1(ProbNext.costEigen(ProbNext.Rgt_, ProbNext.Tgt_, ProbNext.LambdasGt_));
-            ROFL_VAR1(ProbNext.costEigen(R, T, Lambdas));
+
+            if (Prob.reluScaleCompensation_)
+            {
+                ROFL_VAR1(ProbNext.costEigenRelu(ProbNext.Rgt_, ProbNext.Tgt_, ProbNext.LambdasGt_));
+                ROFL_VAR1(ProbNext.costEigenRelu(R, T, Lambdas));
+            }
+            else
+            {                
+                ROFL_VAR1(ProbNext.costEigen(ProbNext.Rgt_, ProbNext.Tgt_, ProbNext.LambdasGt_));
+                ROFL_VAR1(ProbNext.costEigen(R, T, Lambdas));
+            }
 
             ROPTLIB::Stiefel mani1next(somSzNext.p_, somSzNext.d_);
             mani1next.ChooseParamsSet2();

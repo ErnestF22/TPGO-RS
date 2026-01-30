@@ -61,10 +61,14 @@ end
 close all;
 figure(10)
 % checkgradient(problem, tmp);
-checkgradient(problem)
+X_chkgrad = M.rand();
+X_chkgrad.lambda = 2 * problem_data.a + rand(num_edges, 1); %!! function not defined on all lambdas
+X_chkgrad_tg = M.randvec(X_chkgrad);
+% X_chkgrad_tg.lambda = 2 * problem_data.a + rand(num_edges, 1);
+checkgradient(problem, X_chkgrad,X_chkgrad_tg)
 figure(11)
 % checkhessian(problem, tmp);
-checkhessian(problem)
+checkhessian(problem, X_chkgrad, X_chkgrad_tg)
 
 %check that GT cost is 0
 % !! only works when tijs are gt

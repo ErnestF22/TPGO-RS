@@ -72,8 +72,24 @@ namespace ROPTLIB
       /**
        * @brief Compute and return cost with Eigen vectorized input on SE(d)^N
        * (i.e., (d * d * n + d * n) x 1) Eigen input
+       * RELU-based scale compensation
+       */
+      double costEigenVecReluSEdN(const SomUtils::MatD &xEigen) const;
+
+      /**
+       * @brief Compute and return cost with Eigen vectorized input on SE(d)^N
+       * (i.e., (d * d * n + d * n) x 1) Eigen input
        */
       double costEigenVecSEdN(const SomUtils::MatD &xEigen) const;
+
+
+      /**
+       * @brief Compute and return cost (as double) with Eigen inputs
+       * i.e., p x d x n @param Reigen p x n @param Teigen and e x 1 @param LambdasEigen
+       * ReLU-based scale compensation
+       */
+      double costEigenRelu(const SomUtils::VecMatD &Reigen, const SomUtils::MatD &Teigen, const SomUtils::MatD &LambdasEigen) const;
+
 
       /**
        * @brief Compute and return cost (as double) with Eigen inputs
@@ -87,8 +103,16 @@ namespace ROPTLIB
       /**
        * @brief Compute and return cost (as double) with fully vectorized
        * (i.e., (p * d * n + p * n) x 1) @param xEigen input
+       * using log-based scale compensation
        */
       double costEigenVec(const SomUtils::MatD &xEigen) const;
+
+      /**
+       * @brief Compute and return cost (as double) with fully vectorized
+       * (i.e., (p * d * n + p * n) x 1) @param xEigen input
+       * using ReLU scale compensation
+       */
+      double costEigenVecRelu(const SomUtils::MatD &xEigen) const;
 
       /**
        * Computation of Euclidean Gradient of cost function
@@ -135,16 +159,31 @@ namespace ROPTLIB
                   SomUtils::MatD &egT) const;
 
       /**
-       * Function that computes Euclidean gradient of Translation estimation cost (with Eigen inputs/outputs)
+       * Function that computes Euclidean gradient of Scale estimation cost (with Eigen inputs/outputs)
        */
       void egradLambdas(const SomUtils::VecMatD &R, const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
                         SomUtils::MatD &egLambdas) const;
 
       /**
-       * Function that computes Riemannian gradient of Translation estimation cost (with Eigen inputs/outputs)
+       * Function that computes Euclidean gradient of Scale estimation cost (with Eigen inputs/outputs)
+       * RELU-based scale compensation
+       */
+      void egradLambdasRelu(const SomUtils::VecMatD &R, const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
+                  SomUtils::MatD &egLambdas) const;
+    
+      /**
+       * Function that computes Riemannian gradient of Scale estimation cost (with Eigen inputs/outputs)
+       * using ReLU-based scale compensation
+       */
+      void rgradLambdasRelu(const SomUtils::VecMatD &R, const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
+                        SomUtils::MatD &rgLambdas) const;
+
+      /**
+       * Function that computes Riemannian gradient of Scale estimation cost (with Eigen inputs/outputs)
+       * using log-based scale compensation
        */
       void rgradLambdas(const SomUtils::VecMatD &R, const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
-                        SomUtils::MatD &rgLambdas) const;
+                        SomUtils::MatD &rgLambdas) const;                        
 
       /**
        * SSOM ReLU argument function -> applies intended compensative function to lambdaE; this output will then undergo ReLU
@@ -203,6 +242,13 @@ namespace ROPTLIB
        */
       void computeHlambdast(const SomUtils::VecMatD &xR, const SomUtils::MatD &uT,
                             SomUtils::MatD &h) const;
+
+
+      /**
+       * Compute one of the Genproc Hessian subparts (RELU scale compensation)
+       */                      
+      void computeHlambdaslambdasRelu(const SomUtils::MatD &xLambdas, const SomUtils::MatD &uLambdas,
+                     SomUtils::MatD &h) const;
 
       /**
        * Compute one of the Genproc Hessian subparts
@@ -358,6 +404,16 @@ namespace ROPTLIB
       void setPimMaxIterations(int numMaxIterations);
 
       /**
+       * Set reluScaleCompensation_ class param: if true, RELU compensation applied; otherwise, log compensation applied
+       */
+      void setReluScaleCompensation(bool flag);
+
+      /**
+       * Set a_ class param used in the log-based scale compensation
+       */
+      void setLogScaleCompensationParam(double a);
+
+      /**
        * @brief Return vectorized (following col-major order, like in MATLAB) version of @param R
        * in output reference @param RvecOut
        */
@@ -499,6 +555,23 @@ namespace ROPTLIB
        * Max number of iterations for PIM
        */
       int pimMaxIterations_;
+
+      // bool debugPrints_ = false;
+
+      /**
+       * @brief If true, RELU compensation applied; otherwise, log compensation applied
+       */
+      bool reluScaleCompensation_;
+
+      /**
+       * Param used in the log-based scale compensation
+       */
+      double a_;
+
+      /**
+       * Param used in the log-based scale compensation (dependent on a_ s.t. b_ = -a_/(a_-1)^2)
+       */
+      double b_;
 
       ////////////////////////////////////////RS////////////////////////////////////////
 

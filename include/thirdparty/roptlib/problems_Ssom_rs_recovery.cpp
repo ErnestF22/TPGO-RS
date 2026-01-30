@@ -2516,6 +2516,9 @@ namespace ROPTLIB
         euclRetraction(xLambdasIn, alphaVlambdasIn, Y0LambdasTry);
 
         double newf = costEigen(Y0Rtry, Y0Ttry, Y0LambdasTry);
+
+        if (reluScaleCompensation_)
+            newf = costEigenRelu(Y0Rtry, Y0Ttry, Y0LambdasTry);
         ROFL_VAR2(newf, f0)
 
         int costEvaluations = 1;
@@ -2544,7 +2547,10 @@ namespace ROPTLIB
 
             euclRetraction(xLambdasIn, alphaVlambdasIn, Y0LambdasTry);
 
-            newf = costEigen(Y0Rtry, Y0Ttry, Y0LambdasTry);
+            if (reluScaleCompensation_)
+                newf = costEigenRelu(Y0Rtry, Y0Ttry, Y0LambdasTry);
+            else
+                newf = costEigen(Y0Rtry, Y0Ttry, Y0LambdasTry);
 
             ROFL_VAR2(newf, f0)
 
@@ -3276,8 +3282,16 @@ namespace ROPTLIB
         // // disp("cost_out")
         // // disp(cost_out)
 
-        ROFL_VAR1("costEigen(RmanoptOut, TmanoptOut, LambdasManoptOut) after recoverySEdN")
-        ROFL_VAR1(costEigen(RmanoptOut, TmanoptOut, LambdasManoptOut))
+        if (reluScaleCompensation_)
+        {
+            ROFL_VAR1("costEigenRelu(RmanoptOut, TmanoptOut, LambdasManoptOut) after recoverySEdN")
+            ROFL_VAR1(costEigenRelu(RmanoptOut, TmanoptOut, LambdasManoptOut))
+        }
+        else
+        {
+            ROFL_VAR1("costEigen(RmanoptOut, TmanoptOut, LambdasManoptOut) after recoverySEdN")
+            ROFL_VAR1(costEigen(RmanoptOut, TmanoptOut, LambdasManoptOut))
+        }
 
         // SomUtils::MatD Xrecovered(SomUtils::MatD::Zero(sz_.d_, sz_.d_ * sz_.n_ + sz_.d_ * sz_.n_));
         // SomUtils::MatD RrecoveredSt(SomUtils::MatD::Zero(sz_.d_, sz_.d_ * sz_.n_));
@@ -3437,7 +3451,15 @@ namespace ROPTLIB
 
         Rout = RrecoveredGlobal;
         Tout = TrecoveredGlobal;
-        ROFL_VAR1(costEigen(Rout, Tout, LambdasOut))
+
+        if (reluScaleCompensation_) {
+            ROFL_VAR1("costEigenRelu(Rout, Tout, LambdasOut)")
+            ROFL_VAR1(costEigenRelu(Rout, Tout, LambdasOut))
+        }
+        else {
+            ROFL_VAR1("costEigen(Rout, Tout, LambdasOut)")
+            ROFL_VAR1(costEigen(Rout, Tout, LambdasOut))
+        }
 
         // DETERMINANTS CHECK
         std::vector<double> multidetRrecovered, multidetRrecoveredGlobal;

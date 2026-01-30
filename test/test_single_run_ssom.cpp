@@ -249,6 +249,10 @@ int main(int argc, char **argv)
     SomUtils::MatD startXeig = SomUtils::MatD::Zero(d * d * n + d * n + numEdges, 1);
     Prob.RoptToEig(startX, startXeig);
     SomUtils::MatD scalesInitguess = SomUtils::MatD::Ones(numEdges, 1);
+    if (!Prob.reluScaleCompensation_)
+    {
+        scalesInitguess *= 10.0;
+    }
     startXeig.block(d * d * n + d * n, 0, numEdges, 1) = scalesInitguess;
 
     ROPTLIB::Vector startX2 = ProdManiSsom.RandominManifold();
@@ -325,7 +329,8 @@ int main(int argc, char **argv)
         Prob.setPimMaxIterations(5000); // same as default
 
         rofl::ScopedTimer timer("ssomRS");
-        double costOut = ROPTLIB::runSsom(Prob, startX, srcNodeId,
+
+        double costOut = ROPTLIB::runSsom(Prob, startX2, srcNodeId,
                                           Rout, Tout, lambdasOut,
                                           lastStaircaseStep); // note: startX is needed (even if random) in ROPTLIB;
         // ROPTLIB namespace is used even if runRsomRS() is not in SsomProblem class, nor in "original" ROPTLIB
