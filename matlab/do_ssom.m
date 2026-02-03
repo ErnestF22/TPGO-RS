@@ -25,79 +25,107 @@ end
 N = params.N;
 d = params.d;
 
-%edges
-edges = (testdata.E);
-num_edges = size(edges, 1);
-testdata.edges = edges; % 2 notation for edges struct member
-
-%% 1) add noise to data
-%set gt 
-% transf_gt = testdata.gitruth;
-
-%set data (no noise)
-tijs = G2T(testdata.gij);
-testdata.R_gt = G2R(testdata.gitruth);
-testdata.T_gt = G2T(testdata.gitruth);
-testdata.lambda_gt = testdata.lambdaijtruth;
-X_gt.R = testdata.R_gt;
-X_gt.T = testdata.T_gt;
-X_gt.lambda = testdata.lambda_gt;
-testdata.tijs = tijs;
-cost_gt = ssom_cost(X_gt, testdata);
-disp("cost_gt in do_ssom.m")
-disp(cost_gt)
-% problem_data_gt.tijs = tijs;
-% problem_data_gt.d = d;
-% problem_data_gt.N = N;
-% problem_data_gt.edges = edges;
-
-% save('poc2degree_data/R_gt.mat', "R_globalframe")
-% save('poc2degree_data/T_gt.mat', "T_globalframe")
-% save('poc2degree_data/problem_data_gt.mat', "problem_data_gt")
-
-
-sigma_transl = sigma;
-tijs_nois = tijs + sigma_transl.*randn(size(tijs)) + ...
-    mu * ones(size(tijs));
-for ii = 1:num_edges
-    tijs_nois(:,ii) = tijs_nois(:,ii) / norm(tijs_nois(:,ii));
-end
-
-T_globalframe = G2T(testdata.gitruth);
-T_globalframe_nois = T_globalframe + sigma_transl.*randn(size(T_globalframe)) + ...
-    mu * ones(size(T_globalframe));
-
 if sigma == 0
     params.noisy_test = boolean(0);
 else
     params.noisy_test = boolean(1);
 end
+    
 
+if params.read_from_file
+    folder_name = "data/ssom_testdata_noisy/harder/tdata_n5_mindeg3_sigma001";
 
-%% 2) setup initguess
-% R_initguess = G2R(rot_randn(testdata.gitruth, 0.0, N)); % this does not add any noise
-R_truth=G2R(testdata.gitruth);
-vR_noise=rot_randTangentNormVector(R_truth);
-%R_initguess = G2R(rot_randn(testdata.gitruth, sigma_init, N));
-R_initguess=rot_exp(R_truth,sigma*pi/5*vR_noise);
-T_initguess = T_globalframe + sigma.*randn(size(T_globalframe));
-if params.relu_scale_compensation
-    lambdas_initguess=ones(num_edges, 1);
+    edges = readmatrix(convertStringsToChars(strcat(folder_name, "/edges.csv")));
+
+    tijs_nois = readmatrix(convertStringsToChars(strcat(folder_name, "/tijs.csv")));
+
+    tijs_gt = readmatrix(convertStringsToChars(strcat(folder_name, "/tijs_truth.csv")));
+
+    N = readmatrix(convertStringsToChars(strcat(folder_name, "/n.csv")));
+
+    X_gt_vec = readmatrix(convertStringsToChars(strcat(folder_name, "/Xgt.csv")));
+    X_gt = convertXtoRTLambdas(X_gt_vec, d, d, N);    
+
+    num_edges = readmatrix(convertStringsToChars(strcat(folder_name, "/e.csv")));
+    
+    startX = readmatrix(convertStringsToChars(strcat(folder_name, "/ssom_x_start.csv")));
+
+    startX_struct = convertXtoRTLambdas(startX, d, d, N);
+
+    transf_initguess = RT2G(startX_struct.R, startX_struct.T);
+
+    lambdas_initguess = startX_struct.lambda;
 else
-    lambdas_initguess=ones(num_edges, 1);
+    edges = (testdata.E);
+    num_edges = size(edges, 1);
+    testdata.edges = edges; % 2 notation for edges struct member
+    
+    %% 1) add noise to data
+    %set gt 
+    % transf_gt = testdata.gitruth;
+    
+    %set data (no noise)
+    
+    
+    tijs = G2T(testdata.gij);
+    testdata.R_gt = G2R(testdata.gitruth);
+    testdata.T_gt = G2T(testdata.gitruth);
+    testdata.lambda_gt = testdata.lambdaijtruth;
+    X_gt.R = testdata.R_gt;
+    X_gt.T = testdata.T_gt;
+    X_gt.lambda = testdata.lambda_gt;
+    testdata.tijs = tijs;
+    cost_gt = ssom_cost(X_gt, testdata);
+    disp("cost_gt in do_ssom.m")
+    disp(cost_gt)
+    % problem_data_gt.tijs = tijs;
+    % problem_data_gt.d = d;
+    % problem_data_gt.N = N;
+    % problem_data_gt.edges = edges;
+    
+    % save('poc2degree_data/R_gt.mat', "R_globalframe")
+    % save('poc2degree_data/T_gt.mat', "T_globalframe")
+    % save('poc2degree_data/problem_data_gt.mat', "problem_data_gt")
+    
+    
+    sigma_transl = sigma;
+    tijs_nois = tijs + sigma_transl.*randn(size(tijs)) + ...
+        mu * ones(size(tijs));
+    for ii = 1:num_edges
+        tijs_nois(:,ii) = tijs_nois(:,ii) / norm(tijs_nois(:,ii));
+    end
+    
+    T_globalframe = G2T(testdata.gitruth);
+    T_globalframe_nois = T_globalframe + sigma_transl.*randn(size(T_globalframe)) + ...
+        mu * ones(size(T_globalframe));
+    
+    
+    
+    %% 2) setup initguess
+    % R_initguess = G2R(rot_randn(testdata.gitruth, 0.0, N)); % this does not add any noise
+    R_truth=G2R(testdata.gitruth);
+    vR_noise=rot_randTangentNormVector(R_truth);
+    %R_initguess = G2R(rot_randn(testdata.gitruth, sigma_init, N));
+    R_initguess=rot_exp(R_truth,sigma*pi/5*vR_noise);
+    T_initguess = T_globalframe + sigma.*randn(size(T_globalframe));
+    if params.relu_scale_compensation
+        lambdas_initguess=ones(num_edges, 1);
+    else
+        lambdas_initguess=10*ones(num_edges, 1);
+    end
+    if params.rand_initguess
+        %overwrite sigma-noisy initguess
+        R_initguess = randrot_som(params.d, params.N);
+        T_initguess = 10 * rand(params.d, params.N);
+        % lambdas_initguess = ones(num_edges, 1);
+        % T_globalframe_nois = 10 * rand(params.d, params.N);
+    else
+        R_initguess = params.R_initguess;
+        T_initguess = params.T_initguess;
+        lambdas_initguess = params.lambdas_initguess;
+    end
+    transf_initguess = RT2G(R_initguess, T_initguess);
 end
-if params.rand_initguess
-    %overwrite sigma-noisy initguess
-    R_initguess = randrot_som(params.d, params.N);
-    T_initguess = 10 * rand(params.d, params.N);
-    % lambdas_initguess = ones(num_edges, 1);
-    % T_globalframe_nois = 10 * rand(params.d, params.N);
-else
-    R_initguess = params.R_initguess;
-    T_initguess = params.T_initguess;
-    lambdas_initguess = params.lambdas_initguess;
-end
-transf_initguess = RT2G(R_initguess, T_initguess);
 
 % disp("transf_initguess")
 % disp(transf_initguess)

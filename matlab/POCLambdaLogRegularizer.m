@@ -1,7 +1,7 @@
 function POCLambdaLogRegularizer
 a=2; 
 fOld=@(l) relu_som(1-l)^2; 
-lGrid=linspace(1/a+0.1,1.5);
+lGrid=linspace(1/a+0.01,1.5);
 %funCheckDer(@selfConcordant,@selfConcordantDer,linspace(0.1,1))
 
 figure(1)

@@ -86,14 +86,16 @@ testdata = testNetwork_params(3, N, 'banded', mindeg);
 testdata.mindeg = mindeg;
 testdatas = [testdatas, testdata];
 
+
 sigmas = readmatrix("data/sigmas.txt");
 for tdata = testdatas
     for s = 1:length(sigmas)
+        num_edges = size(tdata.E, 1);
         sigma = sigmas(s);
         folder_name = strcat("data/ssom_testdata_noisy/harder/", ...
              "tdata_n", string(tdata.NNodes), ...
              "_mindeg", string(tdata.mindeg), ...
-             "_sigma", sprintf( '%02d', sigma*10 ));
+             "_sigma", sprintf( '%03d', sigma*100 ));
         [status, msg, msgID] = mkdir(folder_name);
         %edges
         % save('poc2degree_data/R_gt.mat', "R_globalframe")
@@ -102,6 +104,9 @@ for tdata = testdatas
             convertStringsToChars(strcat(folder_name, "/edges.csv")), 'Delimiter', ',')
         %tijs
         Tijs = G2T(tdata.gijtruth);
+        for ee = 1:num_edges
+            Tijs(:,ee) = Tijs(:,ee) / tdata.lambdaijtruth(1,ee);
+        end
         Tijs_nois = Tijs + sigma*randn(size(Tijs)) + ...
                 mu * ones(size(Tijs));
         writematrix(Tijs_nois, ...

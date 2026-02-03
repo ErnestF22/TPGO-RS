@@ -608,8 +608,19 @@ disp(max(abs(T_recovered_global(:)-X_gt.T(:)), [], "all"))
 disp("max(abs(lambdas_recovered_global(:)-X_gt.lambda(:)), [], ""all"")")
 disp(max(abs(lambdas_recovered_global(:)-X_gt.lambda(:)), [], "all"))
 
-disp('multidet(R_recovered_global)') 
-disp(multidet(R_recovered_global)) 
+disp('multidet(R_recovered_global)')
+disp(multidet(R_recovered_global))
+
+disp("R_recovered_global")
+disp(R_recovered_global)
+disp("T_recovered_global")
+disp(T_recovered_global)
+disp("lambdas_recovered_global")
+disp(lambdas_recovered_global)
+
+disp("cost_out_global")
+disp(cost_out_global)
+
 
 end %file function
 

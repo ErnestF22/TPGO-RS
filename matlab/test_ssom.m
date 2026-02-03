@@ -18,7 +18,7 @@ N = testdata.NNodes;
 d = 3;
 d_aff = d+1;
 global_camera_id = 1;
-num_tests_per_sigma = 30;
+num_tests_per_sigma = 1;
 transf_end_thresh = 1;
 max_icp_iterations = 10;
 num_edges_full = N*N;
@@ -34,6 +34,7 @@ enable_procrustes = boolean(0);
 enable_ssom = boolean(1);
 perform_globalization = true;
 relu_scale_compensation = false;
+read_from_file = true;
 som_params = struct('N', N, 'd', d, 'd_aff', d_aff, ...
     'global_camera_id', global_camera_id, ...
     'num_tests_per_sigma', num_tests_per_sigma, 'transf_end_thresh', transf_end_thresh, ...
@@ -48,7 +49,8 @@ som_params = struct('N', N, 'd', d, 'd_aff', d_aff, ...
     'enable_procrustes', enable_procrustes, ...
     'enable_ssom', enable_ssom, ...
     'perform_globalization', perform_globalization, ...
-    'relu_scale_compensation', relu_scale_compensation);
+    'relu_scale_compensation', relu_scale_compensation, ...
+    'read_from_file', read_from_file);
 
 % 0b) Noise PARAMS
 %NOTE: sigmas, mus can be seen as couples for each test
@@ -138,67 +140,67 @@ for ii = 1:size(sigmas,1)
 end    
 
 % 4b)
-disp("sigmas");
-disp(sigmas);
-disp("mus");
-disp(mus);
-disp("num_tests_per_sigma");
-disp(num_tests_per_sigma);
-
-% plot 
-% on x sigmas
-% on y the mean errors and the mean execution times (across all iterations) 
-
-disp("manopt_sep_rot_errs");
-disp(manopt_sep_rot_errs);
-
-disp("manopt_sep_transl_errs");
-disp(manopt_sep_transl_errs);
-
-disp("procrustes_rot_errs");
-disp(procrustes_rot_errs);
-
-disp("procrustes_transl_errs");
-disp(procrustes_transl_errs);
-
-disp("ssom_rot_errs");
-disp(ssom_rot_errs);
-
-disp("ssom_transl_errs");
-disp(ssom_transl_errs);
-
-disp("manopt_sep_exec_times");
-disp(manopt_sep_exec_times);
-
-disp("procrustes_exec_times");
-disp(procrustes_exec_times);
-
-disp("ssom_exec_times");
-disp(ssom_exec_times);
-
-disp("ssom_scale_ratios");
-disp(ssom_scale_ratios);
-
-disp("ssom_transl_errs_norm");
-disp(ssom_transl_errs_norm);
-
-
-results = struct("manopt_sep_rot_errs", manopt_sep_rot_errs, ...
-    "manopt_sep_transl_errs", manopt_sep_transl_errs, ...
-    "manopt_sep_exec_times", manopt_sep_exec_times, ...
-    "procrustes_rot_errs", procrustes_rot_errs, ...
-    "procrustes_transl_errs", procrustes_transl_errs, ...
-    "procrustes_exec_times", procrustes_exec_times, ...
-    "ssom_rot_errs", ssom_rot_errs, ...
-    "ssom_transl_errs", ssom_transl_errs, ...
-    "ssom_exec_times", ssom_exec_times, ...
-    "ssom_scale_ratios", ssom_scale_ratios, ...
-    "ssom_transl_errs_norm", ssom_transl_errs_norm);
-
-%plot results
-plot_results_ssom(sigmas, results, "ssom");
-
-
-save(string(datetime("now")))
+% disp("sigmas");
+% disp(sigmas);
+% disp("mus");
+% disp(mus);
+% disp("num_tests_per_sigma");
+% disp(num_tests_per_sigma);
+% 
+% % plot 
+% % on x sigmas
+% % on y the mean errors and the mean execution times (across all iterations) 
+% 
+% disp("manopt_sep_rot_errs");
+% disp(manopt_sep_rot_errs);
+% 
+% disp("manopt_sep_transl_errs");
+% disp(manopt_sep_transl_errs);
+% 
+% disp("procrustes_rot_errs");
+% disp(procrustes_rot_errs);
+% 
+% disp("procrustes_transl_errs");
+% disp(procrustes_transl_errs);
+% 
+% disp("ssom_rot_errs");
+% disp(ssom_rot_errs);
+% 
+% disp("ssom_transl_errs");
+% disp(ssom_transl_errs);
+% 
+% disp("manopt_sep_exec_times");
+% disp(manopt_sep_exec_times);
+% 
+% disp("procrustes_exec_times");
+% disp(procrustes_exec_times);
+% 
+% disp("ssom_exec_times");
+% disp(ssom_exec_times);
+% 
+% disp("ssom_scale_ratios");
+% disp(ssom_scale_ratios);
+% 
+% disp("ssom_transl_errs_norm");
+% disp(ssom_transl_errs_norm);
+% 
+% 
+% results = struct("manopt_sep_rot_errs", manopt_sep_rot_errs, ...
+%     "manopt_sep_transl_errs", manopt_sep_transl_errs, ...
+%     "manopt_sep_exec_times", manopt_sep_exec_times, ...
+%     "procrustes_rot_errs", procrustes_rot_errs, ...
+%     "procrustes_transl_errs", procrustes_transl_errs, ...
+%     "procrustes_exec_times", procrustes_exec_times, ...
+%     "ssom_rot_errs", ssom_rot_errs, ...
+%     "ssom_transl_errs", ssom_transl_errs, ...
+%     "ssom_exec_times", ssom_exec_times, ...
+%     "ssom_scale_ratios", ssom_scale_ratios, ...
+%     "ssom_transl_errs_norm", ssom_transl_errs_norm);
+% 
+% %plot results
+% plot_results_ssom(sigmas, results, "ssom");
+% 
+% 
+% save(string(datetime("now")))
 
 

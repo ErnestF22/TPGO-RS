@@ -158,11 +158,12 @@ namespace ROPTLIB
             
             if (lambdaE <= 1/a_)
             {
+                // scaleCompensation = std::nan("nan");
                 scaleCompensation = 1e+10;
             }
             else if (lambdaE < 1.0)
             {
-                scaleCompensation = -1.0 / a_ * log(a_ * lambdaE - 1.0) + 1.0 / (a_ - 1.0) * (lambdaE - 1.0) + b_ / (2.0 * (lambdaE - 1.0) * (lambdaE - 1.0));
+                scaleCompensation = (-1.0 / a_)* log(a_ * lambdaE - 1.0) + (1.0 / (a_ - 1.0)) * (lambdaE - 1.0) + (b_ / 2.0) * (lambdaE - 1.0) * (lambdaE - 1.0);
             }
 
             cost += costLambdaEe + rho_ * scaleCompensation;
@@ -239,8 +240,11 @@ namespace ROPTLIB
             }
             else if (lambdaE < 1.0)
             {
-                scaleCompensation = -1.0 / a_ * log(a_ * lambdaE - 1.0) + 1.0 / (a_ - 1.0) * (lambdaE - 1.0) + b_ / (2.0 * (lambdaE - 1.0) * (lambdaE - 1.0));
+                scaleCompensation = (-1.0 / a_) * log(a_ * lambdaE - 1.0) + (1.0 / (a_ - 1.0)) * (lambdaE - 1.0) + (b_ / 2.0) * (lambdaE - 1.0) * (lambdaE - 1.0);
             }
+
+            ROFL_VAR1(lambdaE);
+            ROFL_VAR5(e, a.transpose(), b.transpose(), costLambdaEe, scaleCompensation);
 
             cost += costLambdaEe + rho_ * scaleCompensation;
         }
@@ -322,7 +326,7 @@ namespace ROPTLIB
             }
             else if (lambdaE < 1.0)
             {
-                scaleCompensation = -1.0 / a_ * log(a_ * lambdaE - 1.0) + 1.0 / (a_ - 1.0) * (lambdaE - 1.0) + b_ / (2.0 * (lambdaE - 1.0) * (lambdaE - 1.0));
+                scaleCompensation = (-1.0 / a_) * log(a_ * lambdaE - 1.0) + (1.0 / (a_ - 1.0)) * (lambdaE - 1.0) + (b_ / 2.0) * (lambdaE - 1.0) * (lambdaE - 1.0);
             }
 
             ROFL_VAR6(e, a_, b_, lambdaE, costLambdaEe, scaleCompensation);
@@ -505,7 +509,7 @@ namespace ROPTLIB
         //          tij = problem_data.tijs( :, e);
         //          % R_i = R(:, :, ii);
         //          P_e = 2 * (Ti * lambdaij * tij ' - Tj * lambdaij * tij');
-        //          g(:, :, ii) = ... g(:, :, ii) + P_e;
+        //          g(:, :, ii) = g(:, :, ii) + P_e;
         for (int e = 0; e < numEdges_; ++e)
         {
             int i = edges_(e, 0) - 1; // !! -1
@@ -670,11 +674,11 @@ namespace ROPTLIB
 
             if (lambdaE <= 1/a_)
             {
-                scaleCompensation = 1e+10;
+                scaleCompensation = std::nan("nan");
             }
             else if (lambdaE <= 1.0)
             {
-                scaleCompensation = -1.0 / a_ * log(a_ * lambdaE - 1.0) + 1.0 / (a_ - 1.0) * (lambdaE - 1.0) + b_ / (2.0 * (lambdaE - 1.0) * (lambdaE - 1.0));
+                scaleCompensation = (-1.0 / a_) * log(a_ * lambdaE - 1.0) + (1.0 / (a_ - 1.0)) * (lambdaE - 1.0) + (b_ / 2.0) * (lambdaE - 1.0) * (lambdaE - 1.0);
             }    
 
             // g_lambda(ee) = base_part + rho * compensation_part;
@@ -998,7 +1002,7 @@ namespace ROPTLIB
 
             if (lambdaE <= 1/a_)
             {
-                compensationPart = 1e+10;
+                compensationPart = std::nan("nan");
             }
             else if (lambdaE <= 1.0)
             {
