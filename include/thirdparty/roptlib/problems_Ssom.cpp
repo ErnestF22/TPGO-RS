@@ -678,7 +678,7 @@ namespace ROPTLIB
             }
             else if (lambdaE <= 1.0)
             {
-                scaleCompensation = (-1.0 / a_) * log(a_ * lambdaE - 1.0) + (1.0 / (a_ - 1.0)) * (lambdaE - 1.0) + (b_ / 2.0) * (lambdaE - 1.0) * (lambdaE - 1.0);
+                scaleCompensation = (-1.0 / a_ * lambdaE - 1.0) + (1.0 / (a_ - 1.0)) * (lambdaE - 1.0) + b_ * (lambdaE - 1.0);
             }    
 
             // g_lambda(ee) = base_part + rho * compensation_part;
