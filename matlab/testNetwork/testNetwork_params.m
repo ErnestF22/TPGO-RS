@@ -1,10 +1,18 @@
-function testnet = testNetwork_params(testNum,num_nodes,mode,min_node_deg)
+function testnet = testNetwork_params(testNum,num_nodes,mode,min_node_deg,sigmaR,sigmaT)
     randn('state',0)
     rand('state',0)
     close all
     
     if ~exist('testNum','var')
         testNum=4;
+    end
+
+    if ~exist('sigmaR','var')
+        sigmaR=0.05;
+    end
+
+    if ~exist('sigmaT','var')
+        sigmaT=0.05;
     end
     
     switch testNum
@@ -44,11 +52,11 @@ function testnet = testNetwork_params(testNum,num_nodes,mode,min_node_deg)
     %set(gcf,'Name','Images in each camera')
     %testNetworkDisplayImages(t_node)
     
-    t_node=testNetworkAddMeasurements(t_node,'Method','Essential');
+    t_node=testNetworkAddMeasurements(t_node,'Method','Essential','SigmaR',sigmaR,'SigmaT',sigmaT); %this adds gij
     
     t_node=testNetworkInitializeStates(t_node,'MethodR','NoisyTruth',...
         'MethodT','NoisyTruth','MethodScale','NoisyTruth',...
-        'SigmaR',0.05,'SigmaT',0.05);
+        'SigmaR',sigmaR,'SigmaT',sigmaT); %this adds gi
     
     %Note:
     % - measurements errors should be all zero
@@ -66,6 +74,23 @@ function testnet = testNetwork_params(testNum,num_nodes,mode,min_node_deg)
     %see inside testNetworkDisplayErrors for examples of use of
     %   testNetworkComputeErrors
     %   testNetworkDisplay
+
+    % edge_1_i = t_node.E(1,1);
+    % edge_1_j = t_node.E(1,2);
+    % R_tmp_truth = (t_node.gitruth);
+    % R_tmp_truth_i = R_tmp_truth(:,:,edge_1_i);
+    % R_tmp_truth_j = R_tmp_truth(:,:,edge_1_j);
+    % R_tmp_truth_ij = (t_node.gijtruth);
+    % disp("[inv(R_tmp_truth_i) * R_tmp_truth_j, R_tmp_truth_ij(:,:,1)]")
+    % disp([inv(R_tmp_truth_i) * R_tmp_truth_j, R_tmp_truth_ij(:,:,1)])
+    
+    num_edges = size(t_node.E, 1);
+    for ee = 1:num_edges
+        e_i = t_node.E(ee,1);
+        e_j = t_node.E(ee,2);
+        t_node.gij(:,:,ee) = inv(t_node.gi(:,:,e_i)) * t_node.gi(:,:,e_j);
+    end
+
 
     testnet = t_node;
 end %file function

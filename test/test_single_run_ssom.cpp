@@ -264,7 +264,7 @@ int main(int argc, char **argv)
     SomUtils::VecMatD RstartEig(n, SomUtils::MatD::Zero(d, d));
     SomUtils::MatD TstartEig(SomUtils::MatD::Zero(d, n));
     SomUtils::MatD LambdasStartEig(SomUtils::MatD::Zero(numEdges, 1));
-    Prob.RoptToEig(startX, XstartVecEig);
+    Prob.RoptToEig(startX2, XstartVecEig);
     Prob.getRotations(XstartVecEig, RstartEig);
     Prob.getTranslations(XstartVecEig, TstartEig);
     Prob.getScales(XstartVecEig, LambdasStartEig);

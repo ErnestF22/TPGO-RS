@@ -329,7 +329,7 @@ namespace ROPTLIB
                 scaleCompensation = (-1.0 / a_) * log(a_ * lambdaE - 1.0) + (1.0 / (a_ - 1.0)) * (lambdaE - 1.0) + (b_ / 2.0) * (lambdaE - 1.0) * (lambdaE - 1.0);
             }
 
-            ROFL_VAR6(e, a_, b_, lambdaE, costLambdaEe, scaleCompensation);
+            // ROFL_VAR6(e, a_, b_, lambdaE, costLambdaEe, scaleCompensation);
 
             cost += costLambdaEe + rho_ * scaleCompensation;
         }
@@ -666,9 +666,9 @@ namespace ROPTLIB
             double scaleCompensation = 0.0;
             
             // if l<1
-            //     scale_compensation_ee=-1/a_log*log(a_log*l-1)...
-            //         +1/(a_log-1)*(l-1)...
-            //         +b_log/2*(l-1)^2;
+            //     scale_compensation_ee= f=-1/(a*l-1)...
+                                        // +1/(a-1)...
+                                        // +b*(l-1);
             // else
             //     scale_compensation_ee=0;
 
@@ -678,7 +678,7 @@ namespace ROPTLIB
             }
             else if (lambdaE <= 1.0)
             {
-                scaleCompensation = (-1.0 / a_ * lambdaE - 1.0) + (1.0 / (a_ - 1.0)) * (lambdaE - 1.0) + b_ * (lambdaE - 1.0);
+                scaleCompensation = (-1.0 / (a_ * lambdaE - 1.0)) + (1.0 / (a_ - 1.0)) + b_ * (lambdaE - 1.0);
             }    
 
             // g_lambda(ee) = base_part + rho * compensation_part;

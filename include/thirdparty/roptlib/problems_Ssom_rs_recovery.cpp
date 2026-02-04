@@ -3057,7 +3057,7 @@ namespace ROPTLIB
 
         if (nrs == sz_.d_)
         {
-            ROFL_VAR1("nrs == d case - direct assignment")
+            ROFL_VAR1("nrs == d case -> direct assignment")
             Rrecovered = RmanoptOut;
             Trecovered = TmanoptOut;
             LambdasRecovered = LambdasManoptOut;
