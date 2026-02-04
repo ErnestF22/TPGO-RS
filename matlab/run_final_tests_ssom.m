@@ -357,7 +357,7 @@ for tdata = testdatas
     plot (sigmas, results.manopt_rs_rot_errs, 'g+', ...
         "DisplayName", "TPGO-RS mean rot error", 'markersize', 15);
     legend;
-    rot_fig_name = convertStringsToChars(strcat("rot_errors", test_str));
+    rot_fig_name = convertStringsToChars(strcat("rot_errors", test_str, '_sigma', str(tdata.sigma)));
     savefigure(rot_fig_name,'epsc',[3 4])
     hold off
 
@@ -372,7 +372,7 @@ for tdata = testdatas
     plot (sigmas, results.manopt_rs_transl_errs, 'g+', ...
         "DisplayName", "TPGO-RS mean transl error", 'markersize', 10)
     legend;
-    transl_fig_name = convertStringsToChars(strcat('transl_errors', test_str));
+    transl_fig_name = convertStringsToChars(strcat('transl_errors', test_str, '_sigma', str(tdata.sigma)));
     savefigure(transl_fig_name,'epsc',[3 4])
     hold off
 
@@ -387,7 +387,7 @@ for tdata = testdatas
     plot (sigmas, results.manopt_rs_scale_errs, 'g+', ...
         "DisplayName", "TPGO-RS mean scale error", 'markersize', 10)
     legend;
-    scale_fig_name = convertStringsToChars(strcat('scale_errors', test_str));
+    scale_fig_name = convertStringsToChars(strcat('scale_errors', test_str, '_sigma', str(tdata.sigma)));
     savefigure(scale_fig_name,'epsc',[3 4])
     hold off
 
@@ -402,7 +402,7 @@ for tdata = testdatas
     plot (sigmas, results.manopt_rs_exec_times, 'g+', ...
         "DisplayName", "TPGO-RS mean exec time", 'markersize', 15)
     legend
-    exectimes_fig_name = convertStringsToChars(strcat('exec_times', test_str));
+    exectimes_fig_name = convertStringsToChars(strcat('exec_times', test_str, '_sigma', str(tdata.sigma)));
     savefigure(exectimes_fig_name,'epsc',[3 4])
     hold off
 
