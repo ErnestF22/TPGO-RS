@@ -2,7 +2,7 @@ function [rotation_error_manopt,translation_error_manopt, ...
     rotation_error_procrustes,translation_error_procrustes, ...
     rotation_error_ssom,translation_error_ssom, ...
     exectime_manopt,exectime_procrustes,exectime_ssom, ...
-    scale_ratios_ssom,transl_err_norm_ssom, ...
+    scale_ratios_ssom,transl_err_norm_ssom, ssom_scale_err,...
     rs_success_bool, R_out, T_out, lambdas_out] = ...
         do_ssom(testdata, sigma, mu, params)
 %DO_SOM_PROCRUSTES_MANOPT_RIEMANNIAN_STAIRCASE
@@ -161,7 +161,7 @@ if params.enable_ssom
     testdata.lambda_gt = X_gt.lambda;
     testdata.sz = [d d N];
     testdata.edges = testdata.E; %edges field name is used in rsom/ssom project, E in testnetwork benchmark testdata generator
-    testdata.tijs_gt = G2T(testdata.gij);
+    testdata.tijs_gt = G2T(testdata.gijtruth);
     testdata.tijs = tijs_nois;
     testdata.noisy_test = params.noisy_test;
     testdata.node_degrees = params.node_degrees;
@@ -176,6 +176,7 @@ if params.enable_ssom
     R_out = G2R(transf_ssom);
     T_out = G2T(transf_ssom);
     lambdas_out = lambdas_ssom_out;
+    ssom_scale_err = norm(lambdas_ssom_out - X_gt.lambda);
 else
     rs_success_bool = boolean(0);
     transf_ssom = repmat(eye(d+1), 1, 1, N);
@@ -184,6 +185,7 @@ else
     T_out = G2T(transf_ssom);
     lambdas_ssom_out = ones(size(lambdas_initguess));
     lambdas_out = ones(size(lambdas_initguess));
+    ssom_scale_err = 1e+6;
 end
 exectime_ssom = toc(ssom_start_time);
 
@@ -204,6 +206,7 @@ testdata.lambdaij = lambdas_ssom_out;
 [rotation_error_ssom,translation_error_ssom,...
     scale_ratios_ssom,transl_err_norm_ssom] = ...
     testNetworkComputeErrors(testdata);
+
 % scale_ratios_ssom = (lambdas_ssom_out ./ transp(testdata.lambdaijtruth));
 
 

@@ -243,8 +243,8 @@ namespace ROPTLIB
                 scaleCompensation = (-1.0 / a_) * log(a_ * lambdaE - 1.0) + (1.0 / (a_ - 1.0)) * (lambdaE - 1.0) + (b_ / 2.0) * (lambdaE - 1.0) * (lambdaE - 1.0);
             }
 
-            ROFL_VAR1(lambdaE);
-            ROFL_VAR5(e, a.transpose(), b.transpose(), costLambdaEe, scaleCompensation);
+            // ROFL_VAR1(lambdaE);
+            // ROFL_VAR5(e, a.transpose(), b.transpose(), costLambdaEe, scaleCompensation);
 
             cost += costLambdaEe + rho_ * scaleCompensation;
         }
