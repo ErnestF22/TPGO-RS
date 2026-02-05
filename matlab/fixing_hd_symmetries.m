@@ -40,8 +40,9 @@ load(filename, "X_gt")
 load(filename, "edges")
 load(filename, "N")
 
-transf_initguess = RT2G(R_recovered, T_recovered);
-lambdas_initguess = lambdas_recovered;
+% transf_initguess = RT2G(R_recovered, T_recovered);
+transf_initguess = RT2G(R_recovered, X_gt.T);
+lambdas_initguess = X_gt.lambda';
 params.use_initguess = true;
 params.initguess_is_available = true;
 problem_data.tijs = problem_data.tijs_gt;
