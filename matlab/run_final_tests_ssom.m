@@ -215,66 +215,81 @@ for tdata = testdatas
     rs_success_bools = zeros(length(sigmas), num_tests_per_sigma);
 
     %when multple sigmas and mus, and multiple tests per each pair
-    for ii = 1:size(sigmas,1)
-        noise_params = struct('sigma', sigmas(ii), 'mu', mus(ii));
-        sigma = noise_params.sigma;
-        mu = noise_params.mu;
+    
+    noise_params = struct('sigma', sigmas(ii), 'mu', mus(ii));
+    sigma = noise_params.sigma;
+    mu = noise_params.mu;
 
-        manopt_sep_rot_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
-        manopt_sep_transl_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
-        manopt_sep_scale_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
-        manopt_sep_exec_times_per_sigma = zeros(1, num_tests_per_sigma); %column-wise just to keep a similar notation to the error vectors
-        procrustes_rot_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
-        procrustes_transl_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
-        procrustes_scale_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
-        procrustes_exec_times_per_sigma = zeros(1, num_tests_per_sigma); %column-wise just to keep a similar notation to the error vectors
-        manopt_rs_rot_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
-        manopt_rs_transl_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
-        manopt_rs_scale_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
-        manopt_rs_exec_times_per_sigma = zeros(1, num_tests_per_sigma); %column-wise just to keep a similar notation to the error vectors
+    manopt_sep_rot_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
+    manopt_sep_transl_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
+    manopt_sep_scale_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
+    manopt_sep_exec_times_per_sigma = zeros(1, num_tests_per_sigma); %column-wise just to keep a similar notation to the error vectors
+    procrustes_rot_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
+    procrustes_transl_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
+    procrustes_scale_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
+    procrustes_exec_times_per_sigma = zeros(1, num_tests_per_sigma); %column-wise just to keep a similar notation to the error vectors
+    manopt_rs_rot_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
+    manopt_rs_transl_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
+    manopt_rs_scale_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
+    manopt_rs_exec_times_per_sigma = zeros(1, num_tests_per_sigma); %column-wise just to keep a similar notation to the error vectors
 
 
-        for jj = 1:num_tests_per_sigma
-            %           rs_success_bool   = false; % if rs is not executed
-            fprintf("ii %g jj %g\n", ii, jj);
-            [manopt_sep_rot_err, manopt_sep_transl_err, ...
-                procrustes_rot_err, procrustes_transl_err, ...
-                ssom_rot_err, ssom_transl_err, ...
-                manopt_sep_exec_time, procrustes_exec_time, ssom_exec_time, ...
-                ssom_scale_ratio,ssom_transl_err_norm, ssom_scale_err, ...
-                rs_success_bool] = ...
-                    do_ssom(tdata, sigma, mu, som_params); % do_som();
-            manopt_sep_rot_errs_per_sigma(:, jj) = manopt_sep_rot_err;
-            manopt_sep_transl_errs_per_sigma(:, jj) = manopt_sep_transl_err;
-            manopt_sep_scale_errs_per_sigma(:, jj) = 10.0;
-            manopt_sep_exec_times_per_sigma(:, jj) = manopt_sep_exec_time;
-            procrustes_rot_errs_per_sigma(:, jj) = procrustes_rot_err;
-            procrustes_transl_errs_per_sigma(:, jj) = procrustes_transl_err;
-            procrustes_scale_errs_per_sigma(:, jj) = 10.0;
-            procrustes_exec_times_per_sigma(:, jj) = procrustes_exec_time;
-            manopt_rs_rot_errs_per_sigma(:, jj) = ssom_rot_err;
-            manopt_rs_transl_errs_per_sigma(:, jj) = ssom_transl_err;
-            manopt_rs_scale_errs_per_sigma(:, jj) = ssom_scale_err;
-            manopt_rs_exec_times_per_sigma(:, jj) = ssom_exec_time;
-            rs_success_bools(ii,jj) = rs_success_bool;
-            disp("ssom_exec_time")
-            disp(ssom_exec_time)
-        end
+    for jj = 1:num_tests_per_sigma
+        %           rs_success_bool   = false; % if rs is not executed
+        fprintf("ii %g jj %g\n", ii, jj);
+        [manopt_sep_rot_err, manopt_sep_transl_err, ...
+            procrustes_rot_err, procrustes_transl_err, ...
+            ssom_rot_err, ssom_transl_err, ...
+            manopt_sep_exec_time, procrustes_exec_time, ssom_exec_time, ...
+            ssom_scale_ratio,ssom_transl_err_norm, ssom_scale_err, ...
+            rs_success_bool] = ...
+                do_ssom(tdata, sigma, mu, som_params); % do_som();
 
-        manopt_sep_rot_errs(ii) = mean(manopt_sep_rot_errs_per_sigma,"all");
-        manopt_sep_transl_errs(ii) = mean(manopt_sep_transl_errs_per_sigma,"all");
-        manopt_sep_scale_errs(ii) = mean(manopt_sep_scale_errs_per_sigma,"all");
-        manopt_sep_exec_times(ii) = mean(manopt_sep_exec_times_per_sigma);
-        procrustes_rot_errs(ii) = mean(procrustes_rot_errs_per_sigma,"all");
-        procrustes_transl_errs(ii) = mean(procrustes_transl_errs_per_sigma,"all");
-        procrustes_scale_errs(ii) = mean(procrustes_scale_errs_per_sigma,"all");
-        procrustes_exec_times(ii) = mean(procrustes_exec_times_per_sigma);
-        manopt_rs_rot_errs(ii) = mean(manopt_rs_rot_errs_per_sigma,"all");
-        manopt_rs_transl_errs(ii) = mean(manopt_rs_transl_errs_per_sigma,"all");
-        manopt_rs_scale_errs(ii) = mean(manopt_rs_scale_errs_per_sigma,"all");
-        manopt_rs_exec_times(ii) = mean(manopt_rs_exec_times_per_sigma);
+        % manopt_sep_rot_err = 0;
+        % manopt_sep_transl_err = 0;
+        % procrustes_rot_err = 0;
+        % procrustes_transl_err = 0;
+        % ssom_rot_err = 0;
+        % ssom_transl_err = 0;
+        % manopt_sep_exec_time = 0;
+        % procrustes_exec_time = 0;
+        % ssom_exec_time = 0;
+        % ssom_scale_ratio = 0;
+        % ssom_transl_err_norm = 0;
+        % ssom_scale_err = 0;
+        % rs_success_bool = false;
 
+        manopt_sep_rot_errs_per_sigma(:, jj) = manopt_sep_rot_err;
+        manopt_sep_transl_errs_per_sigma(:, jj) = manopt_sep_transl_err;
+        manopt_sep_scale_errs_per_sigma(:, jj) = 10.0;
+        manopt_sep_exec_times_per_sigma(:, jj) = manopt_sep_exec_time;
+        procrustes_rot_errs_per_sigma(:, jj) = procrustes_rot_err;
+        procrustes_transl_errs_per_sigma(:, jj) = procrustes_transl_err;
+        procrustes_scale_errs_per_sigma(:, jj) = 10.0;
+        procrustes_exec_times_per_sigma(:, jj) = procrustes_exec_time;
+        manopt_rs_rot_errs_per_sigma(:, jj) = ssom_rot_err;
+        manopt_rs_transl_errs_per_sigma(:, jj) = ssom_transl_err;
+        manopt_rs_scale_errs_per_sigma(:, jj) = ssom_scale_err;
+        manopt_rs_exec_times_per_sigma(:, jj) = ssom_exec_time;
+        rs_success_bools(ii,jj) = rs_success_bool;
+        disp("ssom_exec_time")
+        disp(ssom_exec_time)
     end
+
+    manopt_sep_rot_errs(ii) = mean(manopt_sep_rot_errs_per_sigma,"all");
+    manopt_sep_transl_errs(ii) = mean(manopt_sep_transl_errs_per_sigma,"all");
+    manopt_sep_scale_errs(ii) = mean(manopt_sep_scale_errs_per_sigma,"all");
+    manopt_sep_exec_times(ii) = mean(manopt_sep_exec_times_per_sigma);
+    procrustes_rot_errs(ii) = mean(procrustes_rot_errs_per_sigma,"all");
+    procrustes_transl_errs(ii) = mean(procrustes_transl_errs_per_sigma,"all");
+    procrustes_scale_errs(ii) = mean(procrustes_scale_errs_per_sigma,"all");
+    procrustes_exec_times(ii) = mean(procrustes_exec_times_per_sigma);
+    manopt_rs_rot_errs(ii) = mean(manopt_rs_rot_errs_per_sigma,"all");
+    manopt_rs_transl_errs(ii) = mean(manopt_rs_transl_errs_per_sigma,"all");
+    manopt_rs_scale_errs(ii) = mean(manopt_rs_scale_errs_per_sigma,"all");
+    manopt_rs_exec_times(ii) = mean(manopt_rs_exec_times_per_sigma);
+
+    % end
 
     % 4b)
     disp("sigmas");
@@ -357,8 +372,11 @@ for tdata = testdatas
     plot (sigmas, results.manopt_rs_rot_errs, 'g+', ...
         "DisplayName", "TPGO-RS mean rot error", 'markersize', 15);
     legend;
-    rot_fig_name = convertStringsToChars(strcat("rot_errors", test_str, '_sigma', str(tdata.sigma)));
+    file_name_appendix = sprintf('%03d',100*tdata.sigma);
+    rot_fig_name = convertStringsToChars(strcat("rot_errors", test_str, '_sigma', file_name_appendix));
     savefigure(rot_fig_name,'epsc',[3 4])
+    % Save as PDF with vector graphics (best quality for text/lines)
+    exportgraphics(gcf, strcat(rot_fig_name, '.pdf'), 'ContentType', 'vector'); 
     hold off
 
     figure("Name", "transl errors"); %figure 2
@@ -372,8 +390,10 @@ for tdata = testdatas
     plot (sigmas, results.manopt_rs_transl_errs, 'g+', ...
         "DisplayName", "TPGO-RS mean transl error", 'markersize', 10)
     legend;
-    transl_fig_name = convertStringsToChars(strcat('transl_errors', test_str, '_sigma', str(tdata.sigma)));
+    transl_fig_name = convertStringsToChars(strcat('transl_errors', test_str, '_sigma', file_name_appendix));
     savefigure(transl_fig_name,'epsc',[3 4])
+    % Save as PDF with vector graphics (best quality for text/lines)
+    exportgraphics(gcf, strcat(transl_fig_name, '.pdf'), 'ContentType', 'vector');    
     hold off
 
     figure("Name", "scale errors"); %figure 2
@@ -387,8 +407,10 @@ for tdata = testdatas
     plot (sigmas, results.manopt_rs_scale_errs, 'g+', ...
         "DisplayName", "TPGO-RS mean scale error", 'markersize', 10)
     legend;
-    scale_fig_name = convertStringsToChars(strcat('scale_errors', test_str, '_sigma', str(tdata.sigma)));
+    scale_fig_name = convertStringsToChars(strcat('scale_errors', test_str, '_sigma', file_name_appendix));
     savefigure(scale_fig_name,'epsc',[3 4])
+    % Save as PDF with vector graphics (best quality for text/lines)
+    exportgraphics(gcf, strcat(scale_fig_name, '.pdf'), 'ContentType', 'vector');
     hold off
 
     figure("Name", "execution times"); %figure 3
@@ -402,10 +424,15 @@ for tdata = testdatas
     plot (sigmas, results.manopt_rs_exec_times, 'g+', ...
         "DisplayName", "TPGO-RS mean exec time", 'markersize', 15)
     legend
-    exectimes_fig_name = convertStringsToChars(strcat('exec_times', test_str, '_sigma', str(tdata.sigma)));
+    exectimes_fig_name = convertStringsToChars(strcat('exec_times', test_str, '_sigma', file_name_appendix));
     savefigure(exectimes_fig_name,'epsc',[3 4])
+    % Save as PDF with vector graphics (best quality for text/lines)
+    exportgraphics(gcf, strcat(exectimes_fig_name, '.pdf'), 'ContentType', 'vector');
     hold off
 
     save(test_str)
+
+    close all;
+    
 end
 
