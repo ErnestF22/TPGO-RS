@@ -3033,6 +3033,8 @@ namespace ROPTLIB
             auto edgePath = listEdges[i];
             for (int j = 0; j < edgePath.size(); ++j)
             {
+                // ROFL_VAR6(Tdiffs.col(edgePath[j]).transpose(), T.col(i).transpose(), Tdiffs.col(edgePath[j]).rows(), Tdiffs.col(edgePath[j]).cols(), T.col(i).rows(), T.col(i).cols())
+
                 T.col(i) += Tdiffs.col(edgePath[j]);
             }
             T.col(i) *= -1;
@@ -3268,9 +3270,9 @@ namespace ROPTLIB
             // T_recovered = edge_diffs_2_T(T_recovered_pre, edges, N);
 
             SomUtils::MatD TdiffsShifted = Qalign * Tedges; // this has last row to 0
-            // SomUtils::MatD TrecoveredPre(SomUtils::MatD::Zero(sz_.d_, sz_.n_));
-            // recoverTedges(TdiffsShifted.block(0, 0, sz_.d_, TdiffsShifted.cols()), TrecoveredPre);
-            edgeDiffs2T(src_, TdiffsShifted, sz_.n_, Trecovered);
+                                                            // SomUtils::MatD TrecoveredPre(SomUtils::MatD::Zero(sz_.d_, sz_.n_));
+                                                            // recoverTedges(TdiffsShifted.block(0, 0, sz_.d_, TdiffsShifted.cols()), TrecoveredPre);
+            edgeDiffs2T(src_, TdiffsShifted.block(0, 0, sz_.d_, TdiffsShifted.cols()), sz_.n_, Trecovered);
 
             // lambdas_recovered = X_manopt_out.lambda;
             LambdasRecovered = LambdasManoptOut; // TODO: probably this copy is mostly a waste of space/time
@@ -3368,15 +3370,13 @@ namespace ROPTLIB
         for (int i = 0; i < sz_.n_; ++i)
         {
             TrecoveredGlobal.col(i) = TrecoveredGlobalPreShift.col(i) + Tgt_.col(src);
-        }   
-        
+        }
+
         // disp([X_gt.T; T_recovered_global]);
         ROFL_VAR2(Tgt_, TrecoveredGlobal)
 
         // lambda_factor = X_gt.lambda(1) / lambdas_recovered(1); %should be the same for all edges
         // lambdas_recovered_global = lambda_factor * lambdas_recovered;
-
-        
 
         // Checking recovery success
         // for ii = 1:N
@@ -3424,7 +3424,7 @@ namespace ROPTLIB
                 ROFL_VAR1("ERROR in recovery: T_GLOBAL")
                 rsRecoverySuccess_ = false;
                 // ROFL_ASSERT(0)
-            }            
+            }
         }
 
         ROFL_VAR2(LambdasGt_.transpose(), LambdasOut.transpose())
@@ -3452,11 +3452,13 @@ namespace ROPTLIB
         Rout = RrecoveredGlobal;
         Tout = TrecoveredGlobal;
 
-        if (reluScaleCompensation_) {
+        if (reluScaleCompensation_)
+        {
             ROFL_VAR1("costEigenRelu(Rout, Tout, LambdasOut)")
             ROFL_VAR1(costEigenRelu(Rout, Tout, LambdasOut))
         }
-        else {
+        else
+        {
             ROFL_VAR1("costEigen(Rout, Tout, LambdasOut)")
             ROFL_VAR1(costEigen(Rout, Tout, LambdasOut))
         }
