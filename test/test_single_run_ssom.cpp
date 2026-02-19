@@ -171,7 +171,6 @@ int main(int argc, char **argv)
     ROFL_VAR1(Tijs)
     ROFL_VAR1(edges)
 
-
     // problem d x d x n
     integer numoftypes = 3; // 2 i.e. (3D) Stiefel + Euclidean
     integer numofmani1 = n; // num of Stiefel manifolds
@@ -186,7 +185,6 @@ int main(int argc, char **argv)
                                           &mani1, numofmani1, &mani2, numofmani2, &mani3, numofmani3);
     ROPTLIB::SsomProblem Prob(somSzD, Tijs, edges);
     Prob.setRho(rho); // default 1000.0
-
 
     // Read GT from csv
     ROPTLIB::Vector xGt = ProdManiSsom.RandominManifold();
@@ -275,8 +273,6 @@ int main(int argc, char **argv)
     Prob.RieGrad(startX2, &riegradIG);
     riegradIG.Print("riegradIG");
 
-
-
     // ROPTLIB::Vector startU = ProdManiSsom.RandominManifold();
     // if (!SomUtils::readCsvInitguess(folderIn + "ssom_u_start.csv", startU))
     // {
@@ -322,6 +318,7 @@ int main(int argc, char **argv)
     SomUtils::MatD Tout(SomUtils::MatD::Zero(d, n));
     SomUtils::MatD lambdasOut(SomUtils::MatD::Zero(numEdges, 1));
     int lastStaircaseStep;
+    bool rsSuccess = false, rotDetsOk = false, lambdasAcceptable = false;
     double exectime = 0;
     {
         /* Setting up Prob using setters */
@@ -332,7 +329,8 @@ int main(int argc, char **argv)
 
         double costOut = ROPTLIB::runSsom(Prob, startX2, srcNodeId,
                                           Rout, Tout, lambdasOut,
-                                          lastStaircaseStep); // note: startX is needed (even if random) in ROPTLIB;
+                                          lastStaircaseStep,
+                                          rsSuccess, rotDetsOk, lambdasAcceptable); // note: startX is needed (even if random) in ROPTLIB;
         // ROPTLIB namespace is used even if runRsomRS() is not in SsomProblem class, nor in "original" ROPTLIB
         ROFL_VAR1(costOut)
         exectime = timer.elapsedTimeMs();

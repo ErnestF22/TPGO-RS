@@ -53,7 +53,6 @@ int main(int argc, char **argv)
     params.getParam<int>("srcNodeIdx", srcNodeIdx, 0);
     params.getParam<double>("rho", rho, 1000000.0);
 
-
     std::cout << "Params:" << std::endl;
     params.write(std::cout);
 
@@ -75,6 +74,9 @@ int main(int argc, char **argv)
     std::ofstream lambdaErrsOfstream;
     std::ofstream execTimesOfstream;
     std::ofstream staircaseStepOutIdxOfstream;
+    std::ofstream rsSuccessOfstream;
+    std::ofstream rotDetsOkOfstream;
+    std::ofstream lambdasAcceptableOfstream;
     std::ofstream rotErrsMeanOfstream;
     std::ofstream translErrsMeanOfstream;
     std::ofstream lambdaErrsMeanOfstream;
@@ -137,7 +139,7 @@ int main(int argc, char **argv)
         ROPTLIB::Euclidean mani2(d, n);
         ROPTLIB::Euclidean mani3(numEdges);
         ROPTLIB::ProductManifold ProdManiSsom(numoftypes,
-                                          &mani1, numofmani1, &mani2, numofmani2, &mani3, numofmani3);
+                                              &mani1, numofmani1, &mani2, numofmani2, &mani3, numofmani3);
         ROPTLIB::SsomProblem Prob(somSzD, tijs, edges);
 
         // Read GT from csv
@@ -256,6 +258,7 @@ int main(int argc, char **argv)
             ROFL_ERR("Error opening output file")
             ROFL_ASSERT(0)
         }
+        // staircase step idx out
         std::string staircaseStepOutIdxFilename = resultsBasePath + folderAppendName + "_" + folderAppendNameStamped + "/" + folderAppendName + "_last_rs_step.txt";
         if (staircaseStepOutIdxOfstream.is_open())
         {
@@ -264,6 +267,45 @@ int main(int argc, char **argv)
         }
         staircaseStepOutIdxOfstream.open(staircaseStepOutIdxFilename);
         if (!staircaseStepOutIdxOfstream)
+        {
+            ROFL_ERR("Error opening output file")
+            ROFL_ASSERT(0)
+        }
+        // rs success
+        std::string rsSuccessFilename = resultsBasePath + folderAppendName + "_" + folderAppendNameStamped + "/" + folderAppendName + "_rs_success.txt";
+        if (rsSuccessOfstream.is_open())
+        {
+            rsSuccessOfstream.close();
+            rsSuccessOfstream.clear(); // clear flags
+        }
+        rsSuccessOfstream.open(rsSuccessFilename);
+        if (!rsSuccessOfstream)
+        {
+            ROFL_ERR("Error opening output file")
+            ROFL_ASSERT(0)
+        }
+        // rot dets ok
+        std::string rotDetsOkFilename = resultsBasePath + folderAppendName + "_" + folderAppendNameStamped + "/" + folderAppendName + "_rot_dets_ok.txt";
+        if (rotDetsOkOfstream.is_open())
+        {
+            rotDetsOkOfstream.close();
+            rotDetsOkOfstream.clear(); // clear flags
+        }
+        rotDetsOkOfstream.open(rotDetsOkFilename);
+        if (!rotDetsOkOfstream)
+        {
+            ROFL_ERR("Error opening output file")
+            ROFL_ASSERT(0)
+        }
+        // lambdas acceptable
+        std::string lambdasAcceptableFilename = resultsBasePath + folderAppendName + "_" + folderAppendNameStamped + "/" + folderAppendName + "_lambdas_acceptable.txt";
+        if (lambdasAcceptableOfstream.is_open())
+        {
+            lambdasAcceptableOfstream.close();
+            lambdasAcceptableOfstream.clear(); // clear flags
+        }
+        lambdasAcceptableOfstream.open(lambdasAcceptableFilename);
+        if (!lambdasAcceptableOfstream)
         {
             ROFL_ERR("Error opening output file")
             ROFL_ASSERT(0)
@@ -322,6 +364,7 @@ int main(int argc, char **argv)
         double rotMeanErr = 1e+6, translMeanErr = 1e+6, lambdaMeanErr = 1e+6, execTimeMean = 1e+6;
         std::vector<std::vector<double>> rotErrs(numTestsPerInstance), translErrs(numTestsPerInstance), lambdaErrs(numTestsPerInstance);
         std::vector<double> execTimes(numTestsPerInstance), staircaseStepOutIdx(numTestsPerInstance);
+        std::vector<bool> rsSuccess(numTestsPerInstance), rotDetsOk(numTestsPerInstance), lambdasAcceptable(numTestsPerInstance);
 
         for (int testjd = 0; testjd < numTestsPerInstance; ++testjd)
         {
@@ -362,6 +405,7 @@ int main(int argc, char **argv)
                 SomUtils::MatD Tout(SomUtils::MatD::Zero(d, n));
                 SomUtils::MatD LambdasOut(SomUtils::MatD::Zero(numEdges, 1));
                 int staircaseStepIdxOutIJ;
+                bool rsSuccessIJ, rotDetsOkIJ, lambdasAcceptableIJ;
                 /* Setting up Prob using setters */
                 Prob.setUsePIM(true);           // same as default
                 Prob.setPimMaxIterations(5000); // same as default
@@ -369,12 +413,10 @@ int main(int argc, char **argv)
                 rofl::ScopedTimer timer("ssomRS");
 
                 double costOut = ROPTLIB::runSsom(Prob, startX2, srcNodeIdx, // !! startX2 used here!
-                                                Rout, Tout, LambdasOut,
-                                                staircaseStepIdxOutIJ); // note: startX is needed (even if random) in ROPTLIB;
+                                                  Rout, Tout, LambdasOut,
+                                                  staircaseStepIdxOutIJ,
+                                                  rsSuccessIJ, rotDetsOkIJ, lambdasAcceptableIJ); // note: startX is needed (even if random) in ROPTLIB;
 
-            
-
-                                                
                 // ROPTLIB namespace is used even if runRsomRS() is not in SsomProblem class, nor in "original" ROPTLIB
                 ROFL_VAR1(costOut)
                 // ROPTLIB namespace is used even if runssomRS() is not in SampleSomProblem class, nor in "original" ROPTLIB
@@ -393,7 +435,7 @@ int main(int argc, char **argv)
                     // SomUtils::MatD startXeig(SomUtils::MatD::Zero(d * d * n + d * n, 1));
                     // Prob.RoptToEig(startX, startXeig);
                     std::ofstream startxofs(fstr + "_startx.txt");
-                    startxofs << startXeig; //startXeig is Eig version of startX2
+                    startxofs << startXeig; // startXeig is Eig version of startX2
                     tijsofs.close();
                     edgesofs.close();
                     lambdasOutOfs.close();
@@ -419,6 +461,9 @@ int main(int argc, char **argv)
 
                 execTimes[testjd] = execTimeIJ;
                 staircaseStepOutIdx[testjd] = staircaseStepIdxOutIJ;
+                rsSuccess[testjd] = rsSuccessIJ;
+                rotDetsOk[testjd] = rotDetsOkIJ;
+                lambdasAcceptable[testjd] = lambdasAcceptableIJ;
 
                 for (int k = 0; k < numEdges; ++k)
                 {
@@ -436,6 +481,12 @@ int main(int argc, char **argv)
                 execTimesOfstream << execTimes[testjd] << std::endl;
                 staircaseStepOutIdxOfstream << "j " + std::to_string(testjd) << std::endl;
                 staircaseStepOutIdxOfstream << staircaseStepOutIdx[testjd] << std::endl;
+                rsSuccessOfstream << "j " + std::to_string(testjd) << std::endl;
+                rsSuccessOfstream << rsSuccess[testjd] << std::endl;
+                rotDetsOkOfstream << "j " + std::to_string(testjd) << std::endl;
+                rotDetsOkOfstream << rotDetsOk[testjd] << std::endl;
+                lambdasAcceptableOfstream << "j " + std::to_string(testjd) << std::endl;
+                lambdasAcceptableOfstream << lambdasAcceptable[testjd] << std::endl;
 
                 // Finding mean error of current instance-testjd pair
                 rotMeanErr = SomUtils::stlVecDoublesMean(rotErrs[testjd]);
@@ -482,6 +533,9 @@ int main(int argc, char **argv)
     lambdaErrsOfstream.close();
     execTimesOfstream.close();
     staircaseStepOutIdxOfstream.close();
+    rsSuccessOfstream.close();
+    rotDetsOkOfstream.close();
+    lambdasAcceptableOfstream.close();
     rotErrsMeanOfstream.close();
     translErrsMeanOfstream.close();
     lambdaErrsMeanOfstream.close();
