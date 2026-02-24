@@ -26,6 +26,8 @@ end
 N = params.N;
 d = params.d;
 
+mu = params.mu;
+
 if sigma == 0
     params.noisy_test = boolean(0);
 else
@@ -66,8 +68,7 @@ else
     % transf_gt = testdata.gitruth;
     
     %set data (no noise)
-    
-    
+        
     tijs = G2T(testdata.gij);
     testdata.R_gt = G2R(testdata.gitruth);
     testdata.T_gt = G2T(testdata.gitruth);
@@ -154,7 +155,7 @@ end
 exectime_procrustes = toc(procrustes_start_time);
 
 % 3c) execute with step 1 through Manopt with Riemannian Staircase
-ssom_start_time = tic();
+% ssom_start_time = tic();
 % save('tmp.mat')
 if params.enable_ssom
     testdata.R_gt = X_gt.R;
@@ -168,6 +169,48 @@ if params.enable_ssom
     testdata.node_degrees = params.node_degrees;
     [transf_ssom, lambdas_ssom_out, rs_success_bool, cost_ssom, rot_dets_ok, lambdas_acceptable] = ...
         ssom_genproc(testdata, transf_initguess, lambdas_initguess, params); %lambdas_ssom_out should be used somewhere (maybe already inside ssom_genproc)
+    disp("cost_ssom")
+    disp(cost_ssom)
+    if cost_ssom > 1e-3
+        disp("cost out > 0")
+    end
+
+    R_out = G2R(transf_ssom);
+    T_out = G2T(transf_ssom);
+    lambdas_out = lambdas_ssom_out;
+    ssom_scale_err = norm(lambdas_ssom_out - X_gt.lambda);
+else
+    rs_success_bool = boolean(0);
+    transf_ssom = repmat(eye(d+1), 1, 1, N);
+
+    R_out = G2R(transf_ssom);
+    T_out = G2T(transf_ssom);
+    lambdas_ssom_out = ones(size(lambdas_initguess));
+    lambdas_out = ones(size(lambdas_initguess));
+    ssom_scale_err = 1e+6;
+end
+% exectime_ssom = toc(ssom_start_time);
+
+% 3c) execute with step 1 through Manopt with Riemannian Staircase
+ssom_start_time = tic();
+% save('tmp.mat')
+if params.enable_lsom
+    testdata.R_gt = X_gt.R;
+    testdata.T_gt = X_gt.T;
+    testdata.lambda_gt = X_gt.lambda;
+    testdata.sz = [d d N];
+    testdata.edges = testdata.E; %edges field name is used in rsom/ssom project, E in testnetwork benchmark testdata generator
+    testdata.tijs_gt = G2T(testdata.gijtruth);
+    testdata.tijs = tijs_nois;
+    testdata.noisy_test = params.noisy_test;
+    testdata.node_degrees = params.node_degrees;
+    testdata.z = params.z;
+    testdata.y = params.y;
+    testdata.mu = params.mu;
+    transf_initguess_struct.R = G2R(transf_initguess);
+    transf_initguess_struct.T = G2T(transf_initguess);
+    [transf_ssom, lambdas_ssom_out, rs_success_bool, cost_ssom, rot_dets_ok, lambdas_acceptable] = ...
+        lsom_genproc(testdata, transf_initguess_struct, lambdas_initguess, params); %lambdas_ssom_out should be used somewhere (maybe already inside ssom_genproc)
     disp("cost_ssom")
     disp(cost_ssom)
     if cost_ssom > 1e-3
