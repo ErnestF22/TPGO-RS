@@ -13,7 +13,7 @@ num_edges = size(edges, 1);
 
 if ~exist('lambdas_initguess','var')
     if params.relu_scale_compensation
-        lambdas_initguess=ones(num_edges, 1);
+        lambdas_initguess=5*ones(num_edges, 1);
     else
         lambdas_initguess=10*ones(num_edges, 1);
     end
@@ -33,7 +33,7 @@ X_manopt_out.lambda = - ones(num_edges, 1); %to go into while
 
 iter_admm = 0;
 
-while any(X_manopt_out.lambda < 1) && iter_admm < 3
+while any(X_manopt_out.lambda < 1) && iter_admm < 10
 
     [X_manopt_out] = lsom_rtr_rs(nrs, d, N, problem_data, params, transf_initguess_struct, lambdas_initguess);
     
@@ -44,7 +44,7 @@ while any(X_manopt_out.lambda < 1) && iter_admm < 3
     lambdas_manopt_out = X_manopt_out.lambda;
 
     if params.relu_scale_compensation
-        lambdas_initguess=ones(num_edges, 1);
+        lambdas_initguess=5*ones(num_edges, 1);
     else
         lambdas_initguess=10*ones(num_edges, 1);
     end
@@ -58,6 +58,9 @@ while any(X_manopt_out.lambda < 1) && iter_admm < 3
 
     problem_data.z = params.z;
     problem_data.y = params.y;
+
+    disp("[lambdas_manopt_out, params.z, params.y]") 
+    disp([lambdas_manopt_out, params.z, params.y])
 
     iter_admm = iter_admm + 1;
 

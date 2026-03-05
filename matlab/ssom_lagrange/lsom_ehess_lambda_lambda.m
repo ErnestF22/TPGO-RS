@@ -3,11 +3,14 @@ function h = lsom_ehess_lambda_lambda(R, T, lambdas, lambdas_dot, problem_data)
 % lambdas_dot = Xdot.lambda;
 edges = problem_data.edges;
 tijs = problem_data.tijs;
-% rho = problem_data.rho;
+rho = problem_data.rho;
 
 mu = problem_data.mu;
 % y = problem_data.y;
 % z = problem_data.z;
+
+a = problem_data.a;
+b=-a/(a-1)^2;
 
 
 h = zeros(length(lambdas), 1);
@@ -23,15 +26,20 @@ for ee = 1:num_edges
     % R_i = R(:, :, ii);
     % a = T_i - T_j;
     lambda_dot_ee = lambdas_dot(ee,:);
-    % lambda_ee = lambdas(ee,:);
+    lambda_ee = lambdas(ee,:);
 
-    % if 1-a*lambda_ee > 0
-    %     compensation_part = a^2 / (1-a*lambda_ee)^2 + 2;
-    % else
-    %     compensation_part = 0.0;
-    % end
+    l = lambda_ee;
+    if l <= 1/a
+        scale_compensation_ee = 1e+10;
+    elseif l<1
+        scale_compensation_ee=a/(a*l-1)^2 ...
+          +0 ...
+          +b;
+    else
+        scale_compensation_ee=0;
+    end
 
-    h(ee) = 2*lambda_dot_ee*(tij_e' * tij_e);
+    h(ee) = 2*lambda_dot_ee*(tij_e' * tij_e) + lambda_dot_ee * rho * scale_compensation_ee;
 end
 
 h = h + mu * lambdas_dot;

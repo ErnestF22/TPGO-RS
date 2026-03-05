@@ -15,8 +15,8 @@ testdata.a = 2.0;
 num_edges = testdata.NEdges;
 
 z = ones(num_edges, 1);
-y = ones(num_edges, 1);
-mu = 100.0;
+y = zeros(num_edges, 1);
+mu = 10.0;
 
 % %som = ShapeOfMotion('testNetwork_params.csv'); %params reading is done directly in constructor
 % %copy the list below from the properties list

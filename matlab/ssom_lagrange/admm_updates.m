@@ -1,6 +1,6 @@
 function admm_updates
 
-%% ADMM Update -> try to insert it directly into for loop
+%% ADMM Update
 
 % z = max(1, lambdas - y/mu)
 % y = y + mu(z − lambdas)

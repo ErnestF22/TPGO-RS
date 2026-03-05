@@ -5,6 +5,8 @@ edges = problem_data.edges;
 tijs = problem_data.tijs;
 % rho = problem_data.rho;
 
+mu = problem_data.mu;
+
 h = zeros(length(lambdas), 1);
 
 num_edges = size(edges, 1);
@@ -28,5 +30,8 @@ for ee = 1:num_edges
 
     h(ee) = 2*lambda_dot_ee*(tij_e' * tij_e) + problem_data.rho * compensation_part;
 end
+
+
+h = h + mu * lambdas_dot;
 
 end
