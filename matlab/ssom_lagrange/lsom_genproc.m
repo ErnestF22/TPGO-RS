@@ -35,7 +35,8 @@ iter_admm = 0;
 
 while any(X_manopt_out.lambda < 1) && iter_admm < 10
 
-    [X_manopt_out] = lsom_rtr_rs(nrs, d, N, problem_data, params, transf_initguess_struct, lambdas_initguess);
+    % [X_manopt_out] = lsom_rtr_rs(nrs, d, N, problem_data, params, transf_initguess_struct, lambdas_initguess);
+    [X_manopt_out] = lsom_rtr(nrs, d, N, problem_data, params, transf_initguess_struct, lambdas_initguess);
     
     staircase_step_idx = size(X_manopt_out.R, 1) + 1;
 
@@ -43,11 +44,8 @@ while any(X_manopt_out.lambda < 1) && iter_admm < 10
 
     lambdas_manopt_out = X_manopt_out.lambda;
 
-    if params.relu_scale_compensation
-        lambdas_initguess=5*ones(num_edges, 1);
-    else
-        lambdas_initguess=10*ones(num_edges, 1);
-    end
+    lambdas_initguess = lambdas_manopt_out;
+
     transf_initguess_struct.R = X_manopt_out.R;
     transf_initguess_struct.T = X_manopt_out.T;
 
