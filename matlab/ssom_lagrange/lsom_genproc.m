@@ -34,8 +34,8 @@ X_manopt_out.lambda = - ones(num_edges, 1); %to go into while
 iter_admm = 0;
 
 % params.z = max(ones(size(lambdas_initguess)), lambdas_initguess);
-
-while any(X_manopt_out.lambda < 1) && iter_admm < 40
+admm_stopping_condition_reached = false;
+while any(X_manopt_out.lambda < 1) && iter_admm < 40 && ~admm_stopping_conditions_reached
 
     z_prev = params.z;
     % [X_manopt_out] = lsom_rtr_rs(nrs, d, N, problem_data, params, transf_initguess_struct, lambdas_initguess);
@@ -79,13 +79,15 @@ while any(X_manopt_out.lambda < 1) && iter_admm < 40
     disp("params.mu before update_lsom_penalty_param()")
     params_mu_prev = params.mu;
     disp(params.mu)
-    params.mu = update_lsom_penalty_param(params.mu, x_k, z_k, z_prev);
+    [params.mu, r_k, s_k] = update_lsom_penalty_param(params.mu, x_k, z_k, z_prev);
     disp("params.mu before update_lsom_penalty_param()")
     params_mu_next = params.mu;
     disp(params.mu)
     if params_mu_next ~= params_mu_prev
-        print(" ")
+        disp(" ")
     end
+
+    admm_stopping_condition_reached = check_stopping_condition_reached(r_k, );
 end
 
 R_manopt_out = X_manopt_out.R;
@@ -93,9 +95,9 @@ T_manopt_out = X_manopt_out.T;
 lambdas_manopt_out = X_manopt_out.lambda;
 
 if params.relu_scale_compensation
-    cost_manopt_out = lsom_cost_relu(X_manopt_out, problem_data);
+    cost_manopt_out = ssom_cost_relu(X_manopt_out, problem_data);
 else
-    cost_manopt_out = lsom_cost(X_manopt_out, problem_data);
+    cost_manopt_out = ssom_cost(X_manopt_out, problem_data);
 end
 
 X_gt.R = problem_data.R_gt;
@@ -221,9 +223,9 @@ X_recovered.lambda = lambdas_recovered;
 %%
 problem_data_next = problem_data; %TODO: fix this line after recovery works
 if params.relu_scale_compensation
-    cost_out_after_recovery = lsom_cost_relu(X_recovered, problem_data_next);
+    cost_out_after_recovery = ssom_cost_relu(X_recovered, problem_data_next);
 else
-    cost_out_after_recovery = lsom_cost(X_recovered, problem_data_next);
+    cost_out_after_recovery = ssom_cost(X_recovered, problem_data_next);
 end
 disp("cost_out AFTER RECOVERY")
 disp(cost_out_after_recovery)
@@ -253,7 +255,7 @@ if params.perform_globalization
     disp(is_equal_floats(X_gt.lambda(:), lambdas_recovered_global))
 
 
-    disp("cost_lsom_no_compensation(X_recovered, problem_data_next)")
+    disp("cost_ssom_no_compensation(X_recovered, problem_data_next)")
     disp(ssom_cost_no_compensation(X_recovered, problem_data))
 
     %%
@@ -335,9 +337,9 @@ if params.perform_globalization
     X_recovered_global.lambda = lambdas_recovered_global;
 
     if params.relu_scale_compensation
-        cost_out_global = lsom_cost_relu(X_recovered_global, problem_data_next);
+        cost_out_global = ssom_cost_relu(X_recovered_global, problem_data_next);
     else
-        cost_out_global = lsom_cost(X_recovered_global, problem_data_next);
+        cost_out_global = ssom_cost(X_recovered_global, problem_data_next);
     end
     disp("cost_out_global")
     disp(cost_out_global)
@@ -351,7 +353,7 @@ if params.perform_globalization
         % save("failed_recovery_global.mat")
     end
 
-    transf_out = RT2G(X_recovered_global.R, X_recovered_global.T); %lsom_genproc() function output
+    transf_out = RT2G(X_recovered_global.R, X_recovered_global.T); %ssom_genproc() function output
     lambdas_lsom_out = lambdas_recovered_global;
 
     % disp("max(abs(R_recovered_global(:)-X_gt.R(:)), [], ""all"")")
@@ -374,9 +376,9 @@ else
     transf_out = RT2G(R_recovered_global, T_recovered_global);
 
     if params.relu_scale_compensation
-        cost_out_global = lsom_cost_relu(X_recovered, problem_data_next);
+        cost_out_global = ssom_cost_relu(X_recovered, problem_data_next);
     else
-        cost_out_global = lsom_cost(X_recovered, problem_data_next);
+        cost_out_global = ssom_cost(X_recovered, problem_data_next);
     end
 
     rs_recovery_success = true;

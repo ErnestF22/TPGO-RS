@@ -1,4 +1,4 @@
-function mu_next = update_lsom_penalty_param(mu_prev, x_k, z_k, z_prev)
+function [mu_next, r_k, s_k] = update_lsom_penalty_param(mu_prev, x_k, z_k, z_prev)
 
 r_k = x_k - z_k;
 s_k = -mu_prev * (z_k - z_prev);
