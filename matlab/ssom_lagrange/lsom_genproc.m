@@ -33,8 +33,11 @@ X_manopt_out.lambda = - ones(num_edges, 1); %to go into while
 
 iter_admm = 0;
 
-while any(X_manopt_out.lambda < 1) && iter_admm < 10
+% params.z = max(ones(size(lambdas_initguess)), lambdas_initguess);
 
+while any(X_manopt_out.lambda < 1) && iter_admm < 40
+
+    z_prev = params.z;
     % [X_manopt_out] = lsom_rtr_rs(nrs, d, N, problem_data, params, transf_initguess_struct, lambdas_initguess);
     [X_manopt_out] = lsom_rtr(nrs, d, N, problem_data, params, transf_initguess_struct, lambdas_initguess);
     
@@ -44,7 +47,15 @@ while any(X_manopt_out.lambda < 1) && iter_admm < 10
 
     lambdas_manopt_out = X_manopt_out.lambda;
 
+    % choose between re-initializing lambdas_initguess or using previous
+    % step output
     lambdas_initguess = lambdas_manopt_out;
+    
+    % if params.relu_scale_compensation
+    %     lambdas_initguess=5*ones(num_edges, 1);
+    % else
+    %     lambdas_initguess=10*ones(num_edges, 1);
+    % end
 
     transf_initguess_struct.R = X_manopt_out.R;
     transf_initguess_struct.T = X_manopt_out.T;
@@ -62,6 +73,19 @@ while any(X_manopt_out.lambda < 1) && iter_admm < 10
 
     iter_admm = iter_admm + 1;
 
+    % penalty_param = params.mu;
+    x_k = lambdas_manopt_out;
+    z_k = params.z;
+    disp("params.mu before update_lsom_penalty_param()")
+    params_mu_prev = params.mu;
+    disp(params.mu)
+    params.mu = update_lsom_penalty_param(params.mu, x_k, z_k, z_prev);
+    disp("params.mu before update_lsom_penalty_param()")
+    params_mu_next = params.mu;
+    disp(params.mu)
+    if params_mu_next ~= params_mu_prev
+        print(" ")
+    end
 end
 
 R_manopt_out = X_manopt_out.R;
