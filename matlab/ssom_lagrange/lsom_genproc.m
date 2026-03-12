@@ -35,7 +35,7 @@ iter_admm = 0;
 
 % params.z = max(ones(size(lambdas_initguess)), lambdas_initguess);
 admm_stopping_condition_reached = false;
-while any(X_manopt_out.lambda < 1) && iter_admm < 40 && ~admm_stopping_conditions_reached
+while any(X_manopt_out.lambda < 1) && iter_admm < 40 && ~admm_stopping_condition_reached
 
     z_prev = params.z;
     % [X_manopt_out] = lsom_rtr_rs(nrs, d, N, problem_data, params, transf_initguess_struct, lambdas_initguess);
@@ -87,7 +87,9 @@ while any(X_manopt_out.lambda < 1) && iter_admm < 40 && ~admm_stopping_condition
         disp(" ")
     end
 
-    admm_stopping_condition_reached = check_stopping_condition_reached(r_k, );
+    y_k = params.y;
+
+    admm_stopping_condition_reached = check_admm_stopping_condition(x_k, y_k, z_k, r_k, s_k, num_edges);
 end
 
 R_manopt_out = X_manopt_out.R;
