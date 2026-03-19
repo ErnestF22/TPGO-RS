@@ -1,16 +1,16 @@
-function stop = check_admm_stopping_condition(x_k, y_k, z_k, r_k, s_k, num_edges, eps_abs, eps_dual)
+function stop = check_admm_stopping_condition(x_k, y_k, z_k, r_k, s_k, num_edges, eps_abs, eps_rel)
 
 if ~exist("eps_abs", "var")
-    eps_abs = 1e-5;
+    eps_abs = 1e-6;
 end
 
 if ~exist("eps_rel", "var")
-    eps_rel = 1e-4;
+    eps_rel = 1e-3;
 end
 
-A = ones(num_edges);
-B = -ones(num_edges);
-% C = zeros(num_edges, 1); % eluding norm(C) from further consideration
+A = eye(num_edges);
+B = eye(num_edges);
+% C = zeros(num_edges, 1); % excluding norm(C) from further consideration
 
 tmp = [norm(A * x_k), norm(B*z_k)];
 eps_pri = sqrt(num_edges) * eps_abs + eps_rel * max(tmp, [], "all");

@@ -35,6 +35,8 @@ iter_admm = 0;
 
 % params.z = max(ones(size(lambdas_initguess)), lambdas_initguess);
 admm_stopping_condition_reached = false;
+plot_vars = []
+plot_r_s = []
 while any(X_manopt_out.lambda < 1) && iter_admm < 40 && ~admm_stopping_condition_reached
 
     z_prev = params.z;
@@ -87,7 +89,28 @@ while any(X_manopt_out.lambda < 1) && iter_admm < 40 && ~admm_stopping_condition
         disp(" ")
     end
 
+    % When a varying penalty parameter is used in the scaled form of
+    % ADMM, the scaled dual variable must also be rescaled
     y_k = params.y;
+
+    disp("norm(s_k)")
+    disp(norm(s_k))
+    disp("norm(r_k)")
+    disp(norm(r_k))
+    
+    figure(1)
+    plot_vars = [plot_vars; iter_admm * ones(size(lambdas_initguess)), lambdas_manopt_out];
+    plot(plot_vars(:,1), plot_vars(:,2), '.')
+    plot_r_s = [plot_r_s; iter_admm * ones(2,1), [norm(r_k); norm(s_k)]];
+    % hold on;
+    figure(2)
+    plot(plot_r_s(1:2:end,1), plot_r_s(1:2:end,2), 'r+')
+    hold on;
+    plot(plot_r_s(2:2:end,1), plot_r_s(2:2:end,2), 'g^')
+    hold off;
+
+    disp("multidet(X_manopt_out.R)")
+    disp(multidet(X_manopt_out.R))
 
     admm_stopping_condition_reached = check_admm_stopping_condition(x_k, y_k, z_k, r_k, s_k, num_edges);
 end

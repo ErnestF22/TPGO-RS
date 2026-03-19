@@ -5,7 +5,7 @@ s_k = -mu_prev * (z_k - z_prev);
 
 tau_incr = 2.0;
 tau_decr = 2.0;
-mu_tau = 10.0;
+mu_tau = 1.0;
 
 assert(~ ((norm(r_k) > mu_tau * norm(s_k)) && (norm(s_k) > mu_tau * norm(r_k))) )
 
@@ -17,6 +17,6 @@ else
     mu_next = mu_prev;
 end
 
-
+mu_next = mu_prev; % TODO: this clears mu_next updates
 
 end % file function
