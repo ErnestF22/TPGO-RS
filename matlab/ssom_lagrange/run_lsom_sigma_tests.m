@@ -1,6 +1,6 @@
-clc;
-clear;
-close all;
+% clc;
+% clear;
+% close all;
 
 N = 5;
 mindeg = 3;
@@ -9,14 +9,14 @@ mindeg = 3;
 % testdata = testNetwork_params(3, N, 'banded', mindeg); %4 would be the default
 testdata = testNetwork_params(3, N, 'banded', mindeg); 
 
-testdata.rho = 1000;
+testdata.rho = 0;
 testdata.a = 2.0;
 
 num_edges = testdata.NEdges;
 
 z = ones(num_edges, 1);
 y = zeros(num_edges, 1);
-mu = 10.0;
+mu = 5.0; % !!
 
 % %som = ShapeOfMotion('testNetwork_params.csv'); %params reading is done directly in constructor
 % %copy the list below from the properties list
@@ -24,21 +24,21 @@ N = testdata.NNodes;
 d = 3;
 d_aff = d+1;
 global_camera_id = 1;
-num_tests_per_sigma = 5;
+num_tests_per_sigma = 50;
 transf_end_thresh = 1;
 max_icp_iterations = 10;
 num_edges_full = N*N;
 procrustes_mode = 'som';
 riem_grad_mode = 'manual'; %'auto' or 'manual'
 hessian_mode = 'manual'; 
-initguess_is_available = boolean(0);
-rand_initguess = boolean(1);
-use_pim = boolean(1);
-enable_manopt_icp = boolean(0);
-enable_procrustes = boolean(0);
-enable_ssom = boolean(0);
-enable_lsom = boolean(1);
-perform_globalization = true;
+initguess_is_available = false;
+rand_initguess = true;
+use_pim = true;
+enable_manopt_icp = false;
+enable_procrustes = false;
+enable_ssom = false;
+enable_lsom = true;
+perform_globalization = false;
 relu_scale_compensation = false;
 read_from_file = false;
 som_params = struct('N', N, 'd', d, 'd_aff', d_aff, ...

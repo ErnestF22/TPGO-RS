@@ -26,7 +26,7 @@ end
 N = params.N;
 d = params.d;
 
-mu = params.mu;
+% mu = params.mu;
 
 if sigma == 0
     params.noisy_test = boolean(0);
@@ -78,8 +78,15 @@ else
     X_gt.lambda = testdata.lambda_gt;
     testdata.tijs = tijs;
     cost_gt = ssom_cost(X_gt, testdata);
-    disp("cost_gt in do_ssom.m")
+    disp("SSOM cost_gt in do_ssom.m")
     disp(cost_gt)
+    %%
+    testdata.mu = params.mu;
+    testdata.y = params.y;
+    testdata.z = params.z;
+    disp("LSOM cost_gt in do_ssom.m")
+    disp(lsom_cost(X_gt, testdata))
+    %%
     % problem_data_gt.tijs = tijs;
     % problem_data_gt.d = d;
     % problem_data_gt.N = N;

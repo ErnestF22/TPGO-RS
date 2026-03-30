@@ -17,6 +17,6 @@ else
     mu_next = mu_prev;
 end
 
-mu_next = mu_prev; % TODO: this clears mu_next updates
+% mu_next = mu_prev; % TODO: this clears mu_next updates
 
 end % file function

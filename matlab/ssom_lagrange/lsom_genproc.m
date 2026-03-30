@@ -27,6 +27,29 @@ N = problem_data.sz(3);
 % y = params.y;
 % mu = params.mu;
 
+X_gt.R = problem_data.R_gt;
+X_gt.T = problem_data.T_gt;
+X_gt.lambda = problem_data.lambda_gt;
+
+disp("BEFORE ANY ITERATION OF LSOM_RTR:")
+
+if params.relu_scale_compensation
+    cost_gt = lsom_cost_relu(X_gt, problem_data);
+    disp("lsom cost_gt_relu in lsom_rtr.m")
+    disp(cost_gt)
+    disp("ssom cost_gt_relu in lsom_rtr.m")
+    disp(ssom_cost(X_gt, problem_data))
+else
+    cost_gt = lsom_cost(X_gt, problem_data);
+    disp("lsom cost_gt in lsom_rtr.m")
+    disp(cost_gt)
+    disp("ssom cost_gt_relu in lsom_rtr.m")
+    disp(ssom_cost(X_gt, problem_data))
+end
+
+
+
+
 % r0 = d+1; %start of RS
 
 X_manopt_out.lambda = - ones(num_edges, 1); %to go into while
@@ -35,9 +58,9 @@ iter_admm = 0;
 
 % params.z = max(ones(size(lambdas_initguess)), lambdas_initguess);
 admm_stopping_condition_reached = false;
-plot_vars = []
-plot_r_s = []
-while any(X_manopt_out.lambda < 1) && iter_admm < 40 && ~admm_stopping_condition_reached
+plot_vars = [];
+plot_r_s = [];
+while iter_admm < 40 && ~admm_stopping_condition_reached
 
     z_prev = params.z;
     % [X_manopt_out] = lsom_rtr_rs(nrs, d, N, problem_data, params, transf_initguess_struct, lambdas_initguess);
@@ -74,6 +97,8 @@ while any(X_manopt_out.lambda < 1) && iter_admm < 40 && ~admm_stopping_condition
     disp([lambdas_manopt_out, params.z, params.y])
 
     iter_admm = iter_admm + 1;
+    disp("iter_admm")
+    disp(iter_admm)
 
     % penalty_param = params.mu;
     x_k = lambdas_manopt_out;
@@ -97,13 +122,15 @@ while any(X_manopt_out.lambda < 1) && iter_admm < 40 && ~admm_stopping_condition
     disp(norm(s_k))
     disp("norm(r_k)")
     disp(norm(r_k))
+
+    close all;
     
-    figure(1)
+    figure(101)
     plot_vars = [plot_vars; iter_admm * ones(size(lambdas_initguess)), lambdas_manopt_out];
     plot(plot_vars(:,1), plot_vars(:,2), '.')
     plot_r_s = [plot_r_s; iter_admm * ones(2,1), [norm(r_k); norm(s_k)]];
     % hold on;
-    figure(2)
+    figure(102)
     plot(plot_r_s(1:2:end,1), plot_r_s(1:2:end,2), 'r+')
     hold on;
     plot(plot_r_s(2:2:end,1), plot_r_s(2:2:end,2), 'g^')
@@ -245,19 +272,26 @@ end
 X_recovered.R = R_recovered;
 X_recovered.T = T_recovered;
 X_recovered.lambda = lambdas_recovered;
+
+
+
+
 %%
-problem_data_next = problem_data; %TODO: fix this line after recovery works
+problem_data_next = problem_data; %TODO: double-check this line after recovery works
 if params.relu_scale_compensation
     cost_out_after_recovery = ssom_cost_relu(X_recovered, problem_data_next);
 else
     cost_out_after_recovery = ssom_cost(X_recovered, problem_data_next);
 end
-disp("cost_out AFTER RECOVERY")
+disp("SSOM cost_out AFTER RECOVERY")
 disp(cost_out_after_recovery)
 
 if ~is_equal_floats(cost_out_after_recovery, cost_manopt_out)
     save("failed_recovery.mat")
 end
+
+disp("LSOM cost_out AFTER RECOVERY")
+disp(lsom_cost(X_recovered, problem_data_next))
 
 %
 disp("[matStackH(X_gt.R); matStackH(R_recovered)]");

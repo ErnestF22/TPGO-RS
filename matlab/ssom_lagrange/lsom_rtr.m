@@ -36,17 +36,18 @@ end
 % tmpU.T = normalize(tmpU.T);
 % tmpU.lambda = rand(num_edges, 1);
 % tmpU.lambda = normalize(tmpU.lambda);
-close all;
-figure(10)
-% checkgradient(problem, tmp);
-X_chkgrad = M.rand();
-X_chkgrad.lambda = 2 * problem_data.a + rand(num_edges, 1); %!! function not defined on all lambdas
-X_chkgrad_tg = M.randvec(X_chkgrad);
-% X_chkgrad_tg.lambda = 2 * problem_data.a + rand(num_edges, 1);
-checkgradient(problem, X_chkgrad,X_chkgrad_tg)
-figure(11)
-% checkhessian(problem, tmp);
-checkhessian(problem, X_chkgrad, X_chkgrad_tg)
+
+% close all;
+% figure(10)
+% % checkgradient(problem, tmp);
+% X_chkgrad = M.rand();
+% X_chkgrad.lambda = 2 * problem_data.a + rand(num_edges, 1); %!! function not defined on all lambdas
+% X_chkgrad_tg = M.randvec(X_chkgrad);
+% % X_chkgrad_tg.lambda = 2 * problem_data.a + rand(num_edges, 1);
+% checkgradient(problem, X_chkgrad,X_chkgrad_tg)
+% figure(11)
+% % checkhessian(problem, tmp);
+% checkhessian(problem, X_chkgrad, X_chkgrad_tg)
 
 %check that GT cost is 0
 % !! only works when tijs are gt
@@ -56,12 +57,16 @@ X_gt.T = problem_data.T_gt;
 
 if params.relu_scale_compensation
     cost_gt = lsom_cost_relu(X_gt, problem_data);
-    disp("cost_gt_relu in lsom_genproc.m")
+    disp("lsom cost_gt_relu in lsom_rtr.m")
     disp(cost_gt)
+    disp("ssom cost_gt_relu in lsom_rtr.m")
+    disp(ssom_cost(X_gt, problem_data))
 else
     cost_gt = lsom_cost(X_gt, problem_data);
-    disp("cost_gt in lsom_genproc.m")
+    disp("lsom cost_gt in lsom_rtr.m")
     disp(cost_gt)
+    disp("ssom cost_gt_relu in lsom_rtr.m")
+    disp(ssom_cost(X_gt, problem_data))
 end
 
 disp("cost gt _no_compensation(X_recovered, problem_data)")
@@ -85,11 +90,11 @@ X_initguess.lambda = lambdas_initguess;
 
 if params.relu_scale_compensation
     cost_initguess = lsom_cost_relu(X_initguess, problem_data);
-    disp("cost_initguess")
+    disp("lsom_cost_relu initguess")
     disp(cost_initguess)
 else
     cost_initguess = lsom_cost(X_initguess, problem_data);
-    disp("cost_initguess")
+    disp("lsom_cost_relu initguess")
     disp(cost_initguess)
 end
 
@@ -116,7 +121,10 @@ if params.relu_scale_compensation
 else
     cost_manopt_out = lsom_cost(X_manopt_out, problem_data);
 end
-disp("cost_manopt_out")
+disp("lsom cost_manopt_out")
 disp(cost_manopt_out)
+
+disp("ssom cost_manopt_out")
+disp(ssom_cost(X_manopt_out, problem_data))
 
 end %file function
