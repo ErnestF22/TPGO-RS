@@ -152,7 +152,7 @@ while lambda_pim_out < 0 % maybe change RS stopping conditions
     problem_data_next.sz(1) = problem_data_next.sz(1) + 1;
     nrs = problem_data_next.sz(1);
 
-    [Y0, lambda_pim_out, v_pim_out, eigenvalue_check_ok] = lsom_pim_hessian_genproc(X_manopt_out, problem_data_next);
+    [Y0, lambda_pim_out, v_pim_out, eigenvalue_check_ok] = lsom_pim_hessian_genproc(X_manopt_out, problem_data_next, 1e-5, 10000);
     
     disp("lambda_pim_out")
     disp(lambda_pim_out)
@@ -437,6 +437,42 @@ disp(multidet(R_recovered))
 
 disp("staircase_step_idx")
 disp(staircase_step_idx)
+
+%% Plot
+figure(7)
+testdata = problem_data;
+testdata.gi = RT2G(X_recovered.R, X_recovered.T);
+testdata.lambdaij = X_recovered.lambda;
+testdata_comp = testNetworkCompensate(testdata);
+% testdata=rmfield(testdata,'X');
+% testNetworkDisplay(testdata); %'Color1','red'
+hold on;
+red=[65535	8567	0]/65535;
+opts_draw_camera={'Color1',red,'Color2',red};
+testNetworkDisplay(testdata_comp,'member','gi','optionsDrawCamera', opts_draw_camera)
+green=[15934	35723	14392]/65535/0.6;           %camera color
+opts_draw_camera={'Color1',green,'Color2',green};  %options to pass to drawCamera
+testNetworkDisplay(testdata_comp,'member','gitruth', 'optionsDrawCamera', opts_draw_camera)
+hold off;
+
+
+X_compensated.R = G2R(testdata_comp.gi);
+X_compensated.T = G2T(testdata_comp.gi);
+X_compensated.lambda = testdata_comp.lambdaij;
+disp("LSOM cost AFTER Compensation")
+disp(lsom_cost(X_compensated, problem_data))
+
+if params.relu_scale_compensation
+    cost_out_after_compensation = ssom_cost_relu(X_compensated, problem_data);
+else
+    cost_out_after_compensation = ssom_cost(X_compensated, problem_data);
+end
+disp("SSOM cost AFTER compensation")
+disp(cost_out_after_compensation)
+
+close all;
+
+%% globalization
 
 base_node_id = 1; %TODO: make this settable from params
 
