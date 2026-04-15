@@ -48,8 +48,6 @@ else
 end
 
 
-
-
 % r0 = d+1; %start of RS
 
 X_manopt_out.lambda = - ones(num_edges, 1); %to go into while
@@ -123,18 +121,18 @@ while iter_admm < 40 && ~admm_stopping_condition_reached
     disp("norm(r_k)")
     disp(norm(r_k))
 
-    close all;
+    % close all;
     
-    figure(101)
-    plot_vars = [plot_vars; iter_admm * ones(size(lambdas_initguess)), lambdas_manopt_out];
-    plot(plot_vars(:,1), plot_vars(:,2), '.')
-    plot_r_s = [plot_r_s; iter_admm * ones(2,1), [norm(r_k); norm(s_k)]];
+    % figure(101)
+    % plot_vars = [plot_vars; iter_admm * ones(size(lambdas_initguess)), lambdas_manopt_out];
+    % plot(plot_vars(:,1), plot_vars(:,2), '.')
+    % plot_r_s = [plot_r_s; iter_admm * ones(2,1), [norm(r_k); norm(s_k)]];
+    % % hold on;
+    % figure(102)
+    % plot(plot_r_s(1:2:end,1), plot_r_s(1:2:end,2), 'r+')
     % hold on;
-    figure(102)
-    plot(plot_r_s(1:2:end,1), plot_r_s(1:2:end,2), 'r+')
-    hold on;
-    plot(plot_r_s(2:2:end,1), plot_r_s(2:2:end,2), 'g^')
-    hold off;
+    % plot(plot_r_s(2:2:end,1), plot_r_s(2:2:end,2), 'g^')
+    % hold off;
 
     disp("multidet(X_manopt_out.R)")
     disp(multidet(X_manopt_out.R))
@@ -142,15 +140,149 @@ while iter_admm < 40 && ~admm_stopping_condition_reached
     admm_stopping_condition_reached = check_admm_stopping_condition(x_k, y_k, z_k, r_k, s_k, num_edges);
 end
 
+%% eigensearch
+
+problem_data_next = problem_data;
+problem_data_next.relu_scale_compensation = params.relu_scale_compensation;
+
+lambda_pim_out = -1;
+
+while lambda_pim_out < 0 % maybe change RS stopping conditions
+
+    problem_data_next.sz(1) = problem_data_next.sz(1) + 1;
+    nrs = problem_data_next.sz(1);
+
+    [Y0, lambda_pim_out, v_pim_out, eigenvalue_check_ok] = lsom_pim_hessian_genproc(X_manopt_out, problem_data_next);
+    
+    disp("lambda_pim_out")
+    disp(lambda_pim_out)
+    
+    if lambda_pim_out < 0 
+        %check whether cost has actually gone down
+        
+        disp("lsom_cost X_manopt_out")
+        disp(lsom_cost(X_manopt_out, problem_data))
+    
+        disp("ssom_cost X_manopt_out")
+        disp(ssom_cost(X_manopt_out, problem_data))
+    
+        disp("lsom_cost Y0 a.k.a. new starting pt")
+        disp(lsom_cost(Y0, problem_data_next))
+    
+        disp("ssom_cost Y0 a.k.a. new starting pt")
+        disp(ssom_cost(Y0, problem_data_next))
+
+        transf_initguess_struct.R = Y0.R;
+        transf_initguess_struct.T = Y0.T;
+        lambdas_initguess = Y0.lambda;
+
+        iter_admm = 0;
+        admm_stopping_condition_reached = false;
+
+        while iter_admm < 40 && ~admm_stopping_condition_reached
+
+            z_prev = params.z;
+            % [X_manopt_out] = lsom_rtr_rs(nrs, d, N, problem_data, params, transf_initguess_struct, lambdas_initguess);
+            [X_manopt_out] = lsom_rtr(nrs, d, N, problem_data, params, transf_initguess_struct, lambdas_initguess);
+            
+            staircase_step_idx = size(X_manopt_out.R, 1) + 1;
+        
+            %% ADMM UPDATE
+        
+            lambdas_manopt_out = X_manopt_out.lambda;
+        
+            % choose between re-initializing lambdas_initguess or using previous
+            % step output
+            lambdas_initguess = lambdas_manopt_out;
+            
+            % if params.relu_scale_compensation
+            %     lambdas_initguess=5*ones(num_edges, 1);
+            % else
+            %     lambdas_initguess=10*ones(num_edges, 1);
+            % end
+        
+            transf_initguess_struct.R = X_manopt_out.R;
+            transf_initguess_struct.T = X_manopt_out.T;
+        
+            nrs = size(X_manopt_out.T, 1);
+        
+            params.z = max(ones(size(lambdas_manopt_out)), lambdas_manopt_out);
+            params.y = params.y + params.mu *(params.z-lambdas_manopt_out);
+        
+            problem_data.z = params.z;
+            problem_data.y = params.y;
+        
+            disp("[lambdas_manopt_out, params.z, params.y]") 
+            disp([lambdas_manopt_out, params.z, params.y])
+        
+            iter_admm = iter_admm + 1;
+            disp("iter_admm")
+            disp(iter_admm)
+        
+            % penalty_param = params.mu;
+            x_k = lambdas_manopt_out;
+            z_k = params.z;
+            disp("params.mu before update_lsom_penalty_param()")
+            params_mu_prev = params.mu;
+            disp(params.mu)
+            [params.mu, r_k, s_k] = update_lsom_penalty_param(params.mu, x_k, z_k, z_prev);
+            disp("params.mu before update_lsom_penalty_param()")
+            params_mu_next = params.mu;
+            disp(params.mu)
+            if params_mu_next ~= params_mu_prev
+                disp(" ")
+            end
+        
+            % When a varying penalty parameter is used in the scaled form of
+            % ADMM, the scaled dual variable must also be rescaled
+            y_k = params.y;
+        
+            disp("norm(s_k)")
+            disp(norm(s_k))
+            disp("norm(r_k)")
+            disp(norm(r_k))
+        
+            % close all;
+            
+            % figure(101)
+            % plot_vars = [plot_vars; iter_admm * ones(size(lambdas_initguess)), lambdas_manopt_out];
+            % plot(plot_vars(:,1), plot_vars(:,2), '.')
+            % plot_r_s = [plot_r_s; iter_admm * ones(2,1), [norm(r_k); norm(s_k)]];
+            % % hold on;
+            % figure(102)
+            % plot(plot_r_s(1:2:end,1), plot_r_s(1:2:end,2), 'r+')
+            % hold on;
+            % plot(plot_r_s(2:2:end,1), plot_r_s(2:2:end,2), 'g^')
+            % hold off;
+
+            if size(X_manopt_out.R, 1) == size(X_manopt_out.R, 2)
+                disp("multidet(X_manopt_out.R)")
+                disp(multidet(X_manopt_out.R))
+            end
+        
+            admm_stopping_condition_reached = check_admm_stopping_condition(x_k, y_k, z_k, r_k, s_k, num_edges);
+        end
+    end
+
+end
+
+%%
+
 R_manopt_out = X_manopt_out.R;
 T_manopt_out = X_manopt_out.T;
 lambdas_manopt_out = X_manopt_out.lambda;
 
+disp("LSOM cost manopt out")
+disp(lsom_cost(X_manopt_out, problem_data_next))
+
 if params.relu_scale_compensation
-    cost_manopt_out = ssom_cost_relu(X_manopt_out, problem_data);
+    cost_manopt_out = ssom_cost_relu(X_manopt_out, problem_data_next);
 else
-    cost_manopt_out = ssom_cost(X_manopt_out, problem_data);
+    cost_manopt_out = ssom_cost(X_manopt_out, problem_data_next);
 end
+
+disp("SSOM cost_manopt_out")
+disp(cost_manopt_out)
 
 X_gt.R = problem_data.R_gt;
 X_gt.T = problem_data.T_gt;
@@ -177,7 +309,7 @@ if staircase_step_idx > d+1
 
     if ~any(nodes_low_deg)
         disp('No nodes low deg!')
-        Qx_edges = POCRotateToMinimizeLastEntries(RT_stacked_high_deg);
+        Qx_edges = align3d(RT_stacked_high_deg); % !! changed from POCRotateToMinimizeLastEntries() to align3d()
         R_tilde2_HD = multiprod(repmat(Qx_edges, 1, 1, sum(nodes_high_deg)), R_manopt_out(:,:,nodes_high_deg));
         R_recovered(:,:,nodes_high_deg) = R_tilde2_HD(1:d,:,:);
         T_diffs_shifted = Qx_edges * T_edges; %this has last rows to 0
@@ -277,25 +409,34 @@ X_recovered.lambda = lambdas_recovered;
 
 
 %%
-problem_data_next = problem_data; %TODO: double-check this line after recovery works
+% problem_data_next = problem_data; %TODO: double-check this line after recovery works
+
+disp("LSOM cost AFTER RECOVERY")
+disp(lsom_cost(X_recovered, problem_data_next))
+
 if params.relu_scale_compensation
     cost_out_after_recovery = ssom_cost_relu(X_recovered, problem_data_next);
 else
     cost_out_after_recovery = ssom_cost(X_recovered, problem_data_next);
 end
-disp("SSOM cost_out AFTER RECOVERY")
+disp("SSOM cost AFTER RECOVERY")
 disp(cost_out_after_recovery)
 
 if ~is_equal_floats(cost_out_after_recovery, cost_manopt_out)
     save("failed_recovery.mat")
 end
 
-disp("LSOM cost_out AFTER RECOVERY")
-disp(lsom_cost(X_recovered, problem_data_next))
+
 
 %
 disp("[matStackH(X_gt.R); matStackH(R_recovered)]");
 disp([matStackH(X_gt.R); matStackH(R_recovered)]);
+
+disp("multidet(R_recovered)")
+disp(multidet(R_recovered))
+
+disp("staircase_step_idx")
+disp(staircase_step_idx)
 
 base_node_id = 1; %TODO: make this settable from params
 

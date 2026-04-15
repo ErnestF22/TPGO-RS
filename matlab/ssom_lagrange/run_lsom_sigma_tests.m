@@ -9,15 +9,18 @@ mindeg = 3;
 % testdata = testNetwork_params(3, N, 'banded', mindeg); %4 would be the default
 testdata = testNetwork_params(3, N, 'banded', mindeg); 
 
-testdata.rho = 0;
-testdata.a = 2.0;
+testdata.rho = 0; % compensation part
+
+testdata.a = 2.0; % log scale-compensation param
 
 num_edges = testdata.NEdges;
 
+%% ADMM params
 z = ones(num_edges, 1);
 y = zeros(num_edges, 1);
 mu = 5.0; % !!
 
+%% Problem params
 % %som = ShapeOfMotion('testNetwork_params.csv'); %params reading is done directly in constructor
 % %copy the list below from the properties list
 N = testdata.NNodes;
@@ -41,6 +44,7 @@ enable_lsom = true;
 perform_globalization = false;
 relu_scale_compensation = false;
 read_from_file = false;
+
 som_params = struct('N', N, 'd', d, 'd_aff', d_aff, ...
     'global_camera_id', global_camera_id, ...
     'num_tests_per_sigma', num_tests_per_sigma, 'transf_end_thresh', transf_end_thresh, ...
@@ -68,7 +72,7 @@ sigmas = readmatrix("data/sigmas.txt"); %sigma = stdev, sigma.^2 = variance
 mus = readmatrix("data/mus.txt"); %OBS. generally, mus can be d-dimensional; here, we just assume them as scalar (i.e. a d-dimensional vector with all coordinates equal)
 
 % sigmas = sigmas(4);
-sigmas = 0.1;
+sigmas = 0.0;
 % mus = mus(2);
 
 node_degrees = sum(testdata.A, 2);
