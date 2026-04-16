@@ -73,6 +73,7 @@ else
     testdata.R_gt = G2R(testdata.gitruth);
     testdata.T_gt = G2T(testdata.gitruth);
     testdata.lambda_gt = testdata.lambdaijtruth;
+    testdata.lambda_gt_unscaled = testdata.lambdaij;
     X_gt.R = testdata.R_gt;
     X_gt.T = testdata.T_gt;
     X_gt.lambda = testdata.lambda_gt;

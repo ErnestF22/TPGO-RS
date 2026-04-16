@@ -27,30 +27,69 @@ N = problem_data.sz(3);
 % y = params.y;
 % mu = params.mu;
 
+lambdas_initguess = problem_data.lambda_gt';
+
+params.z = lambdas_initguess;
+
 X_gt.R = problem_data.R_gt;
 X_gt.T = problem_data.T_gt;
 X_gt.lambda = problem_data.lambda_gt;
 
 disp("BEFORE ANY ITERATION OF LSOM_RTR:")
 
-if params.relu_scale_compensation
-    cost_gt = lsom_cost_relu(X_gt, problem_data);
-    disp("lsom cost_gt_relu in lsom_rtr.m")
-    disp(cost_gt)
-    disp("ssom cost_gt_relu in lsom_rtr.m")
-    disp(ssom_cost(X_gt, problem_data))
-else
-    cost_gt = lsom_cost(X_gt, problem_data);
-    disp("lsom cost_gt in lsom_rtr.m")
-    disp(cost_gt)
-    disp("ssom cost_gt_relu in lsom_rtr.m")
-    disp(ssom_cost(X_gt, problem_data))
-end
+% %% try to start from optimal solution
+% 
+transf_initguess_struct.R = X_gt.R;
+transf_initguess_struct.T = X_gt.T;
+% lambdas_initguess = X_gt.lambda';
+% 
+% if params.relu_scale_compensation
+%     cost_gt = lsom_cost_relu(X_gt, problem_data);
+%     disp("lsom cost_gt_relu in lsom_rtr.m")
+%     disp(cost_gt)
+%     disp("ssom cost_gt_relu in lsom_rtr.m")
+%     disp(ssom_cost_relu(X_gt, problem_data))
+% else
+%     cost_gt = lsom_cost(X_gt, problem_data);
+%     disp("lsom cost_gt in lsom_rtr.m")
+%     disp(cost_gt)
+%     disp("ssom cost_gt in lsom_rtr.m")
+%     disp(ssom_cost(X_gt, problem_data))
+% end
+
+%% Initial plot to assess how far is GT from "noisy"-correct data
+
+% figure(6)
+% testdata_gt_plot = problem_data;
+% 
+% Rijs = [];
+% for ee = 1:num_edges
+%     ii = edges(ee, 1);
+%     jj = edges(ee, 2);
+%     Rijs(:,:,ee) = inv(X_gt.R(:,:,ii)) * X_gt.R(:,:,jj);
+% end
+% testdata_gt_plot.gij = RT2G(Rijs, make_tijs_scaled(X_gt.lambda, problem_data.tijs));
+% testdata_gt_plot.lambdaij = X_gt.lambda;
+% testdata_gt_plot = testNetworkCompensate(testdata_gt_plot);
+% % testdata=rmfield(testdata,'X');
+% % testNetworkDisplay(testdata); %'Color1','red'
+% hold on;
+% red=[65535	8567	0]/65535;
+% opts_draw_camera={'Color1',red,'Color2',red};
+% testNetworkDisplay(testdata_gt_plot,'member','gij','optionsDrawCamera', opts_draw_camera)
+% green=[15934	35723	14392]/65535/0.6;           %camera color
+% % testdata_gt_plot.gij = 
+% 
+% testdata_gt_plot.gitruth = RT2G(X_gt.R, X_gt.T);
+% testdata_gt_plot.lambdaijtruth = X_gt.lambda;
+% testdata_gt_plot = testNetworkCompensate(testdata_gt_plot);
+% opts_draw_camera={'Color1',green,'Color2',green};  %options to pass to drawCamera
+% testNetworkDisplay(testdata_gt_plot,'member','gitruth', 'optionsDrawCamera', opts_draw_camera)
+% hold off;
 
 
 % r0 = d+1; %start of RS
 
-X_manopt_out.lambda = - ones(num_edges, 1); %to go into while
 
 iter_admm = 0;
 
@@ -58,13 +97,20 @@ iter_admm = 0;
 admm_stopping_condition_reached = false;
 plot_vars = [];
 plot_r_s = [];
-while iter_admm < 40 && ~admm_stopping_condition_reached
+while iter_admm < 100 && ~admm_stopping_condition_reached
 
     z_prev = params.z;
     % [X_manopt_out] = lsom_rtr_rs(nrs, d, N, problem_data, params, transf_initguess_struct, lambdas_initguess);
     [X_manopt_out] = lsom_rtr(nrs, d, N, problem_data, params, transf_initguess_struct, lambdas_initguess);
+
+    disp("lsom cost_manopt_out")
+    disp(lsom_cost(X_manopt_out, problem_data))
+
+    disp("ssom cost_manopt_out")
+    disp(ssom_cost(X_manopt_out, problem_data))
     
     staircase_step_idx = size(X_manopt_out.R, 1) + 1;
+    
 
     %% ADMM UPDATE
 
@@ -72,6 +118,9 @@ while iter_admm < 40 && ~admm_stopping_condition_reached
 
     % choose between re-initializing lambdas_initguess or using previous
     % step output
+
+    disp("Are Lambdas changing inside Manopt?")
+    disp([lambdas_initguess, lambdas_manopt_out])
     lambdas_initguess = lambdas_manopt_out;
     
     % if params.relu_scale_compensation
@@ -123,21 +172,21 @@ while iter_admm < 40 && ~admm_stopping_condition_reached
 
     % close all;
     
-    % figure(101)
-    % plot_vars = [plot_vars; iter_admm * ones(size(lambdas_initguess)), lambdas_manopt_out];
-    % plot(plot_vars(:,1), plot_vars(:,2), '.')
-    % plot_r_s = [plot_r_s; iter_admm * ones(2,1), [norm(r_k); norm(s_k)]];
-    % % hold on;
-    % figure(102)
-    % plot(plot_r_s(1:2:end,1), plot_r_s(1:2:end,2), 'r+')
+    figure(101)
+    plot_vars = [plot_vars; iter_admm * ones(size(lambdas_initguess)), lambdas_manopt_out];
+    plot(plot_vars(:,1), plot_vars(:,2), '.')
+    plot_r_s = [plot_r_s; iter_admm * ones(2,1), [norm(r_k); norm(s_k)]];
     % hold on;
-    % plot(plot_r_s(2:2:end,1), plot_r_s(2:2:end,2), 'g^')
-    % hold off;
+    figure(102)
+    plot(plot_r_s(1:2:end,1), plot_r_s(1:2:end,2), 'r+')
+    hold on;
+    plot(plot_r_s(2:2:end,1), plot_r_s(2:2:end,2), 'g^')
+    hold off;
 
     disp("multidet(X_manopt_out.R)")
     disp(multidet(X_manopt_out.R))
 
-    admm_stopping_condition_reached = check_admm_stopping_condition(x_k, y_k, z_k, r_k, s_k, num_edges);
+    admm_stopping_condition_reached = check_admm_stopping_condition(x_k, y_k, z_k, r_k, s_k, num_edges, 1e-8, 1e-8);
 end
 
 %% eigensearch
@@ -147,12 +196,18 @@ problem_data_next.relu_scale_compensation = params.relu_scale_compensation;
 
 lambda_pim_out = -1;
 
+disp("lsom_cost X_manopt_out")
+disp(lsom_cost(X_manopt_out, problem_data))
+
+disp("ssom_cost X_manopt_out")
+disp(ssom_cost(X_manopt_out, problem_data))
+
 while lambda_pim_out < 0 % maybe change RS stopping conditions
 
     problem_data_next.sz(1) = problem_data_next.sz(1) + 1;
-    nrs = problem_data_next.sz(1);
+    nrs = problem_data_next.sz(1);    
 
-    [Y0, lambda_pim_out, v_pim_out, eigenvalue_check_ok] = lsom_pim_hessian_genproc(X_manopt_out, problem_data_next, 1e-5, 10000);
+    [Y0, lambda_pim_out, v_pim_out, eigenvalue_check_ok] = lsom_pim_hessian_genproc(X_manopt_out, problem_data_next, 1e-5, 5000);
     
     disp("lambda_pim_out")
     disp(lambda_pim_out)
@@ -260,7 +315,7 @@ while lambda_pim_out < 0 % maybe change RS stopping conditions
                 disp(multidet(X_manopt_out.R))
             end
         
-            admm_stopping_condition_reached = check_admm_stopping_condition(x_k, y_k, z_k, r_k, s_k, num_edges);
+            admm_stopping_condition_reached = check_admm_stopping_condition(x_k, y_k, z_k, r_k, s_k, num_edges, 1e-8, 1e-8);
         end
     end
 

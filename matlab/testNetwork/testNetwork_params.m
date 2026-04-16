@@ -8,11 +8,11 @@ function testnet = testNetwork_params(testNum,num_nodes,mode,min_node_deg,sigmaR
     end
 
     if ~exist('sigmaR','var')
-        sigmaR=0.05;
+        sigmaR=0.00;
     end
 
     if ~exist('sigmaT','var')
-        sigmaT=0.05;
+        sigmaT=0.00;
     end
     
     switch testNum
@@ -91,6 +91,10 @@ function testnet = testNetwork_params(testNum,num_nodes,mode,min_node_deg,sigmaR
     %     t_node.gij(:,:,ee) = inv(t_node.gi(:,:,e_i)) * t_node.gi(:,:,e_j);
     % end
 
+    t_node.lambdaij = t_node.lambdaijtruth;
 
     testnet = t_node;
+
+
+
 end %file function

@@ -16,9 +16,9 @@ testdata.a = 2.0; % log scale-compensation param
 num_edges = testdata.NEdges;
 
 %% ADMM params
-z = ones(num_edges, 1);
+z = ones(num_edges, 1); % better to initialize this as lambdas initguess
 y = zeros(num_edges, 1);
-mu = 5.0; % !!
+mu = 0.1; % !!
 
 %% Problem params
 % %som = ShapeOfMotion('testNetwork_params.csv'); %params reading is done directly in constructor

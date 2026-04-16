@@ -121,10 +121,10 @@ if params.relu_scale_compensation
 else
     cost_manopt_out = lsom_cost(X_manopt_out, problem_data);
 end
-disp("lsom cost_manopt_out")
-disp(cost_manopt_out)
-
-disp("ssom cost_manopt_out")
-disp(ssom_cost(X_manopt_out, problem_data))
+% disp("lsom cost_manopt_out")
+% disp(cost_manopt_out)
+% 
+% disp("ssom cost_manopt_out")
+% disp(ssom_cost(X_manopt_out, problem_data))
 
 end %file function

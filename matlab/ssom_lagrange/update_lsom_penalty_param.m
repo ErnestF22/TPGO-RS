@@ -17,6 +17,8 @@ else
     mu_next = mu_prev;
 end
 
+mu_next = max(0.1, mu_next);
+
 % mu_next = mu_prev; % TODO: this clears mu_next updates
 
 end % file function
