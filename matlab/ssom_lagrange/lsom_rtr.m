@@ -69,7 +69,7 @@ else
     disp(ssom_cost(X_gt, problem_data))
 end
 
-disp("cost gt _no_compensation(X_recovered, problem_data)")
+disp("cost gt _no_compensation(X_gt, problem_data)")
 disp(ssom_cost_no_compensation(X_gt, problem_data))
 
 % tg_element_test = M.randvec(X_gt);

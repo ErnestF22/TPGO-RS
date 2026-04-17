@@ -70,9 +70,10 @@ else
     %set data (no noise)
         
     tijs = G2T(testdata.gij);
-    testdata.R_gt = G2R(testdata.gitruth);
-    testdata.T_gt = G2T(testdata.gitruth);
-    testdata.lambda_gt = testdata.lambdaijtruth;
+    testdata.R_gt = G2R(testdata.gi);
+    testdata.T_gt = G2T(testdata.gi);
+    %only the tijs "make sense" when normalized
+    testdata.lambda_gt = testdata.lambdaij;
     testdata.lambda_gt_unscaled = testdata.lambdaij;
     X_gt.R = testdata.R_gt;
     X_gt.T = testdata.T_gt;
@@ -205,6 +206,7 @@ ssom_start_time = tic();
 if params.enable_lsom
     testdata.R_gt = X_gt.R;
     testdata.T_gt = X_gt.T;
+    %only the tijs "make sense" when normalized
     testdata.lambda_gt = X_gt.lambda;
     testdata.sz = [d d N];
     testdata.edges = testdata.E; %edges field name is used in rsom/ssom project, E in testnetwork benchmark testdata generator

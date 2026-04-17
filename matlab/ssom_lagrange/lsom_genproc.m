@@ -27,9 +27,13 @@ N = problem_data.sz(3);
 % y = params.y;
 % mu = params.mu;
 
-lambdas_initguess = problem_data.lambda_gt';
+% temporarily overwrite initguess with gt
+% transf_initguess_struct.R = problem_data.R_gt;
+% transf_initguess_struct.T = problem_data.T_gt;
+% lambdas_initguess = problem_data.lambda_gt';
 
-params.z = lambdas_initguess;
+% params.z = lambdas_initguess;
+problem_data.z = lambdas_initguess;
 
 X_gt.R = problem_data.R_gt;
 X_gt.T = problem_data.T_gt;
@@ -172,16 +176,16 @@ while iter_admm < 100 && ~admm_stopping_condition_reached
 
     % close all;
     
-    figure(101)
-    plot_vars = [plot_vars; iter_admm * ones(size(lambdas_initguess)), lambdas_manopt_out];
-    plot(plot_vars(:,1), plot_vars(:,2), '.')
-    plot_r_s = [plot_r_s; iter_admm * ones(2,1), [norm(r_k); norm(s_k)]];
+    % figure(101)
+    % plot_vars = [plot_vars; iter_admm * ones(size(lambdas_initguess)), lambdas_manopt_out];
+    % plot(plot_vars(:,1), plot_vars(:,2), '.')
+    % plot_r_s = [plot_r_s; iter_admm * ones(2,1), [norm(r_k); norm(s_k)]];
+    % % hold on;
+    % figure(102)
+    % plot(plot_r_s(1:2:end,1), plot_r_s(1:2:end,2), 'r+')
     % hold on;
-    figure(102)
-    plot(plot_r_s(1:2:end,1), plot_r_s(1:2:end,2), 'r+')
-    hold on;
-    plot(plot_r_s(2:2:end,1), plot_r_s(2:2:end,2), 'g^')
-    hold off;
+    % plot(plot_r_s(2:2:end,1), plot_r_s(2:2:end,2), 'g^')
+    % hold off;
 
     disp("multidet(X_manopt_out.R)")
     disp(multidet(X_manopt_out.R))

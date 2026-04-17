@@ -17,7 +17,7 @@ else
     mu_next = mu_prev;
 end
 
-mu_next = max(0.1, mu_next);
+% mu_next = max(0.1, mu_next); % This puts a cap on mu minimum value
 
 % mu_next = mu_prev; % TODO: this clears mu_next updates
 
