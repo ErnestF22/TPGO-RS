@@ -4,7 +4,7 @@ assert(size(testdatas, 2) == size(sigmas, 1))
 
 ii = 1;
 
-num_tests_per_sigma = 5;
+num_tests_per_sigma = 2;
 
 manopt_sep_rot_errs = zeros(size(sigmas));
 manopt_sep_transl_errs = zeros(size(sigmas));
@@ -30,22 +30,33 @@ for tdata = testdatas
     d = 3;
     d_aff = d+1;
     global_camera_id = 1;
+    num_tests_per_sigma = 50;
     transf_end_thresh = 1;
     max_icp_iterations = 10;
     num_edges_full = N*N;
-    num_edges = tdata.NEdges;
     procrustes_mode = 'som';
     riem_grad_mode = 'manual'; %'auto' or 'manual'
-    hessian_mode = 'manual';
-    initguess_is_available = boolean(0);
-    rand_initguess = boolean(1);
-    use_pim = boolean(1);
-    enable_manopt_icp = boolean(0);
-    enable_procrustes = boolean(0);
-    enable_ssom = boolean(1);
-    perform_globalization = true;
+    hessian_mode = 'manual'; 
+    initguess_is_available = false;
+    rand_initguess = true;
+    use_pim = true;
+    enable_manopt_icp = false;
+    enable_procrustes = false;
+    enable_ssom = false;
+    enable_lsom = true;
+    enable_rs = false;
+    perform_globalization = false;
     relu_scale_compensation = false;
     read_from_file = false;
+
+    num_edges = tdata.NEdges;
+
+    %% ADMM params
+    z = ones(num_edges, 1); % better to initialize this as lambdas initguess
+    y = zeros(num_edges, 1);
+    mu = 0.1; % !!
+
+    
     som_params = struct('N', N, 'd', d, 'd_aff', d_aff, ...
         'global_camera_id', global_camera_id, ...
         'num_tests_per_sigma', num_tests_per_sigma, 'transf_end_thresh', transf_end_thresh, ...
@@ -59,6 +70,11 @@ for tdata = testdatas
         'enable_manopt_icp', enable_manopt_icp, ...
         'enable_procrustes', enable_procrustes, ...
         'enable_ssom', enable_ssom, ...
+        'enable_lsom', enable_lsom, ...
+        'mu', mu, ...
+        'y', y, ...
+        'z', z, ...
+        'enable_rs', enable_rs, ...
         'perform_globalization', perform_globalization, ...
         'relu_scale_compensation', relu_scale_compensation, ...
         'read_from_file', read_from_file);

@@ -211,14 +211,71 @@ if params.enable_lsom
     testdata.sz = [d d N];
     testdata.edges = testdata.E; %edges field name is used in rsom/ssom project, E in testnetwork benchmark testdata generator
     testdata.tijs_gt = G2T(testdata.gijtruth);
-    testdata.tijs = tijs_nois;
+    testdata.tijs = tijs_nois; % !!
     testdata.noisy_test = params.noisy_test;
     testdata.node_degrees = params.node_degrees;
     testdata.z = params.z;
     testdata.y = params.y;
     testdata.mu = params.mu;
+
+    %% temporarily use GT as initguess (tijs still noisy)
+    transf_initguess = testdata.gitruth;
+    lambdas_initguess = testdata.lambdaijtruth';
+    %%
     transf_initguess_struct.R = G2R(transf_initguess);
     transf_initguess_struct.T = G2T(transf_initguess);
+    transf_initguess_struct.lambda = lambdas_initguess;
+    %% 
+    disp("sigma noise")
+    disp(sigma)
+    ssom_cost_initguess = ssom_cost(transf_initguess_struct, testdata);
+    disp("SSOM cost initguess.m")
+    disp(ssom_cost_initguess)
+    lsom_cost_initguess = lsom_cost(transf_initguess_struct, testdata);
+    disp("LSOM cost initguess.m")
+    disp(lsom_cost_initguess)    
+
+    
+
+    figure(12)
+    % testdata = problem_data;
+    % testdata.gi = RT2G(X_recovered.R, X_recovered.T);
+    testdata_noisy_gt = testdata;
+    % for ee = 1:num_edges
+    %     disp("ee")
+    %     disp(ee)
+    %     disp("testdata_noisy_gt.gij(1:3, 4, ee)")
+    %     disp(testdata_noisy_gt.gij(1:3, 4, ee))
+    %     disp("tijs_nois(:, ee)")
+    %     disp(tijs_nois(:, ee))
+    %     testdata_noisy_gt.gij(1:3, 4, ee) = tijs_nois(:, ee);
+    % end
+    tmp = from_gij_to_gi_T(tijs_nois, G2R(testdata.gij), edges, N, X_gt.T(:,1), X_gt.R(:,:,1));
+    for ii = 1:N
+        testdata.gi(1:3, 4, ii) = tmp(:,ii);
+    end    
+    
+    % testdata.lambdaij = X_recovered.lambda;
+    testdata_noisy_gt = testNetworkCompensate(testdata);
+    % testdata=rmfield(testdata,'X');
+    % testNetworkDisplay(testdata); %'Color1','red'
+    hold on;
+    red=[65535	8567	0]/65535;
+    opts_draw_camera={'Color1',red,'Color2',red};
+    testNetworkDisplay(testdata_noisy_gt,'member','gi','optionsDrawCamera', opts_draw_camera)
+    green=[15934	35723	14392]/65535/0.6;           %camera color
+    opts_draw_camera={'Color1',green,'Color2',green};  %options to pass to drawCamera
+    testNetworkDisplay(testdata_noisy_gt,'member','gitruth', 'optionsDrawCamera', opts_draw_camera)
+    hold off;
+
+    ssom_cost_noisy_gt = ssom_cost(X_gt, testdata_noisy_gt);
+    disp("SSOM cost noisy gt.m")
+    disp(ssom_cost_noisy_gt)
+    lsom_cost_noisy_gt = lsom_cost(X_gt, testdata_noisy_gt);
+    disp("LSOM cost noisy gt.m")
+    disp(lsom_cost_noisy_gt)
+
+    %% LSOM Genproc
     [transf_ssom, lambdas_ssom_out, rs_success_bool, cost_ssom, rot_dets_ok, lambdas_acceptable] = ...
         lsom_genproc(testdata, transf_initguess_struct, lambdas_initguess, params); %lambdas_ssom_out should be used somewhere (maybe already inside ssom_genproc)
     disp("cost_ssom")
