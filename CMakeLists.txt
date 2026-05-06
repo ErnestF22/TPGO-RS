@@ -77,6 +77,8 @@ include/thirdparty/roptlib/problems_FRankEWeightApprox.cpp
 include/thirdparty/roptlib/problems_FRankQ2FMatCompletion.cpp
 include/thirdparty/roptlib/problems_GrassRQ.cpp
 include/thirdparty/roptlib/problems_juliaProblem.cpp
+include/thirdparty/roptlib/problems_Lsom.cpp #lsom
+include/thirdparty/roptlib/problems_Lsom_rs_recovery.cpp #lsom
 include/thirdparty/roptlib/problems_mexProblem.cpp
 include/thirdparty/roptlib/problems_Problem.cpp
 include/thirdparty/roptlib/problems_ProdStieSumBrockett.cpp
@@ -198,6 +200,12 @@ target_link_libraries(test_roptlib_som ${rofl_LIBRARIES} roptlib_local qru m bla
 
 add_executable(test_rsom_pim_hessian_genproc test/test_rsom_pim_hessian_genproc.cpp include/som_utils.cpp)
 target_link_libraries(test_rsom_pim_hessian_genproc ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
+
+# add_executable(test_single_run_lsom test/test_single_run_lsom_gt.cpp include/som_utils.cpp)
+# target_link_libraries(test_single_run_lsom_gt ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
+
+add_executable(test_single_run_lsom test/test_single_run_lsom.cpp include/som_utils.cpp)
+target_link_libraries(test_single_run_lsom ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
 
 add_executable(test_single_run_rsom_rs test/test_single_run_rsom_rs.cpp include/som_utils.cpp)
 target_link_libraries(test_single_run_rsom_rs ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
