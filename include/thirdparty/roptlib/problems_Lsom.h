@@ -411,6 +411,26 @@ namespace ROPTLIB
       void setLogScaleCompensationParam(double a);
 
       /**
+       * @brief Set the zAdmm_ object to @param z
+       */
+      void setZAdmm(const SomUtils::MatD &z);
+
+      /**
+       * @brief Set the yAdmm_ object to @param y
+       */
+      void setYAdmm(const SomUtils::MatD &y);
+
+      /**
+       * @brief Set the muAdmm_ object to @param mu
+       */
+      void setMuAdmm(double mu);
+
+      /**
+       * @brief Set the maxIterAdmm_ object to @param maxIterAdmm
+       */
+      void setMaxIterAdmm(int maxIterAdmm);
+
+      /**
        * @brief Return vectorized (following col-major order, like in MATLAB) version of @param R
        * in output reference @param RvecOut
        */
@@ -465,6 +485,13 @@ namespace ROPTLIB
        * @brief Set the costCurr_ object to @param cc
        */
       void setCostCurr(double cc);
+
+      /**
+       * Set enableRS_ class param: if true, Riemannian Staircase (RS) recovery is enabled
+       */
+      void setEnableRs(bool enableRs);
+
+      void setTolerancesAdmm(double tolPrimal, double tolDual);
 
       // private: //TODO: separate public from private members
 
@@ -569,6 +596,23 @@ namespace ROPTLIB
        * Param used in the log-based scale compensation (dependent on a_ s.t. b_ = -a_/(a_-1)^2)
        */
       double b_;
+
+      /**
+       * @brief If true, Riemannian Staircase (RS) recovery is enabled
+       */
+      bool enableRs_;
+
+      int maxIterAdmm_;
+
+      SomUtils::MatD zAdmm_;
+
+      SomUtils::MatD yAdmm_;
+
+      double muAdmm_;
+
+      double tolAdmmPrimal_;
+
+      double tolAdmmDual_;
 
       ////////////////////////////////////////RS////////////////////////////////////////
 

@@ -146,7 +146,7 @@ int main(int argc, char **argv)
     ROPTLIB::Vector startX = ProdManiLsom.RandominManifold();
 
     if (readStartingPtFromFile)
-        if (!SomUtils::readCsvInitguess(folderIn + "startXrtlambdas.csv", startX))
+        if (!SomUtils::readCsvInitguess(folderIn + "ssom_x_start.csv", startX))
         {
             ROFL_ERR("Error opening file")
             ROFL_ASSERT(0)
