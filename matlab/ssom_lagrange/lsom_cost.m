@@ -51,5 +51,4 @@ end
 cost_out = cost_out + y'*(vec(z)-vec(lambdas))+0.5 * mu * norm(vec(z)-vec(lambdas))^2;
 
 
-
 end %file function

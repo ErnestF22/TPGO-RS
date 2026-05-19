@@ -204,6 +204,9 @@ target_link_libraries(test_rsom_pim_hessian_genproc ${rofl_LIBRARIES} roptlib_lo
 # add_executable(test_single_run_lsom test/test_single_run_lsom_gt.cpp include/som_utils.cpp)
 # target_link_libraries(test_single_run_lsom_gt ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
 
+add_executable(test_single_run_lsom_gt test/test_single_run_lsom_gt.cpp include/som_utils.cpp)
+target_link_libraries(test_single_run_lsom_gt ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
+
 add_executable(test_single_run_lsom test/test_single_run_lsom.cpp include/som_utils.cpp)
 target_link_libraries(test_single_run_lsom ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
 

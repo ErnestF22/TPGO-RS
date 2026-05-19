@@ -1,4 +1,4 @@
-function [transf_out, lambdas_ssom_out, rs_recovery_success, cost_out_global, rot_dets_ok, lambdas_acceptable] = ...
+function [transf_out, lambdas_ssom_out, cost_out, rot_dets_ok, lambdas_acceptable] = ...
     ssom_genproc(problem_data, transf_initguess, lambdas_initguess, params)
 %RSOM_RS Rsom Manopt pipeline, with the addition of the Riemannian
 %Staircase ("RS")
@@ -126,508 +126,513 @@ T_manopt_out = X.T;
 R_manopt_out = X.R;
 lambdas_manopt_out = X.lambda;
 
-if params.relu_scale_compensation
-    cost_last = ssom_cost_relu(X, problem_data);
-else
-    cost_last = ssom_cost(X, problem_data);
-end
-r0 = d+1;
-thr = 1e-5;
+% if params.relu_scale_compensation
+%     cost_last = ssom_cost_relu(X, problem_data);
+% else
+%     cost_last = ssom_cost(X, problem_data);
+% end
+% r0 = d+1;
+% thr = 1e-5;
 
 
-ctr_equal = 0;
+% ctr_equal = 0;
 % flag_pim_used = true;
 
-for staircase_step_idx = r0:num_edges*d*N+1
-    problem_data_next.sz = [staircase_step_idx, d, N];
-    problem_data_next.tijs = problem_data.tijs;
-    problem_data_next.edges = problem_data.edges;
-    problem_data_next.rho = problem_data.rho;
-    problem_data_next.a = problem_data.a;
-    problem_data_next.relu_scale_compensation = params.relu_scale_compensation;
-
-    tuple_next.R = stiefelfactory(staircase_step_idx, d, N);
-    tuple_next.T = euclideanfactory(staircase_step_idx, N);
-    tuple_next.lambda = euclideanfactory(num_edges, 1);
-    M_next = productmanifold(tuple_next);
-    problem_next.M = M_next;
-    if params.relu_scale_compensation
-        problem_next.cost = @(x) ssom_cost_relu(x, problem_data_next); %!! problem_data is the same
-        problem_next.grad = @(x) ssom_rgrad_relu(x, problem_data_next);
-        problem_next.hess = @(x, u) ssom_rhess_genproc_relu(x, u, problem_data_next);
-    else
-        problem_next.cost = @(x) ssom_cost(x, problem_data_next); %!! problem_data is the same
-        problem_next.grad = @(x) ssom_rgrad(x, problem_data_next);
-        problem_next.hess = @(x, u) ssom_rhess_genproc(x, u, problem_data_next);
-    end
-
-
-    Xnext = X;
-    Xnext.R = cat_zero_rows_3d_array(X.R);
-    Xnext.T = cat_zero_rows_3d_array(X.T);
-    if params.relu_scale_compensation
-        ctr_equal_last = ssom_cost_relu(Xnext,problem_data_next);
-    else
-        ctr_equal_last = ssom_cost(Xnext,problem_data_next);
-    end
-
-    Xprev = X;
-    if params.use_pim
-        [Y_star, lambda, v] = ssom_pim_hessian_genproc( ...
-            X, problem_data_next, thr);
-
-    else
-
-        % X_cat.lambda = X.lambda;
-
-        Hmat_ssom = make_Hmat_ssom_proj(Xnext, problem_data_next);
-
-        % Hmat_ssom = symm(Hmat_ssom);
-
-        [eigvecs_Hmat_ssom, eigvals_Hmat_ssom] = eig(Hmat_ssom);
-
-        disp("max(abs(Hmat_ssom - Hmat_ssom'), [], ""all"")")
-        disp(max(abs(Hmat_ssom - Hmat_ssom'), [], "all"))
-
-        lambda = min(real(eigvals_Hmat_ssom), [], "all");
-
-        disp("min(real(eigvals_Hmat_ssom), [], ""all"")")
-        disp(lambda);
-
-        imag_eigenvalues = false;
-        if max(abs(imag(eigvals_Hmat_ssom)), [], "all") > 1e-5
-            imag_eigenvalues = true;
-            error("Imag eigenvalues in ssom_genproc")
-        end
-
-        lambda_index = find(lambda == diag(real(eigvals_Hmat_ssom)));
-
-        v_tg = real(eigvecs_Hmat_ssom(:, lambda_index));
-
-        v = recompose_eigenvector_from_Hmat(Xnext, v_tg);
-        %
-        % % disp("v") %just to remove unused variable warning
-        % % disp(v)
-
-
-        % disp("Now performing linesearch...");
-        % %Note: first output param of linesearch() would be "stepsize"
-        %
-        % % next optimization iteration
-
-
-        disp("staircase_step_idx")
-        disp(staircase_step_idx)
-        disp("d")
-        disp(d)
-        disp("N")
-        disp(N)
-
-        disp("size(v)")
-        disp(size(v))
-
-        % v_struct = convertXtoRTLambdas(v, staircase_step_idx, d, N);
-
-        options.ls_max_steps = 10000;
-        options.ls_initial_stepsize = 10;
-        options.ls_contraction_factor = 0.25;
-
-
-        if params.relu_cost_compensation
-            [~, Y_star] = linesearch_decrease(problem_next, ...
-                Xnext, v, ssom_cost_relu(Xnext,problem_data_next), 0, options);
-        else
-            [~, Y_star] = linesearch_decrease(problem_next, ...
-                Xnext, v, ssom_cost(Xnext,problem_data_next), 0, options);
-        end
-
-    end
-
-    %
-    if lambda > 0
-        disp("R, T eigenvals > 0: exiting staircase")
-        break;
-    else
-        disp("RS actually useful")
-    end
-
-    X = trustregions(problem_next, Y_star, options);
-
-    if params.relu_scale_compensation
-        ctr_equal_new = ssom_cost_relu(X,problem_data_next);
-    else
-        ctr_equal_new = ssom_cost(X,problem_data_next);
-    end
-
-
-    if is_equal_floats(ctr_equal_last, ctr_equal_new, 1e-5)
-        ctr_equal = ctr_equal + 1;
-    else
-        ctr_equal = 0;
-        flag_pim_used = false;
-    end
-
-    T_manopt_out = X.T;
-    R_manopt_out = X.R;
-    lambdas_manopt_out = X.lambda;
-
-    disp("cost_last")
-    disp(cost_last)
-    if params.relu_scale_compensation
-        cost_last = ssom_cost_relu(X, problem_data_next);
-    else
-        cost_last = ssom_cost(X, problem_data_next);
-    end
-    disp("cost_new")
-    disp(cost_last)
-
-    % if rank(matStackH(Y_star.R))<staircase_step_idx
-    %     break;
-    % end
-
-    if ctr_equal == d
-        disp("too many equals")
-
-        ctr_equal = 0;
-
-        [Y0pim, lambda_pim_out, v_pim_out] = ...
-            ssom_pim_hessian_genproc(Xprev, problem_data_next);
-
-        if lambda_pim_out > -1e-3
-            disp("R, T eigenvals > 0: exiting staircase")
-            break;
-        end
-
-        X = trustregions(problem_next, Y0pim, options);
-
-        if params.relu_scale_compensation
-            cost_after_pim_rtr = ssom_cost_relu(X, problem_data_next);
-        else
-            cost_after_pim_rtr = ssom_cost(X, problem_data_next);
-        end
-        disp("cost_new")
-        disp(cost_after_pim_rtr)
-
-        if (is_equal_floats(cost_after_pim_rtr, cost_last))
-            break
-        else
-            cost_last = cost_after_pim_rtr;
-        end
-    end
-
-end
-
-X_manopt_out.R = R_manopt_out;
-X_manopt_out.T = T_manopt_out;
-X_manopt_out.lambda = lambdas_manopt_out;
-
-if params.relu_scale_compensation
-    cost_manopt_out = ssom_cost_relu(X_manopt_out, problem_data);
-else
-    cost_manopt_out = ssom_cost(X_manopt_out, problem_data);
-end
-disp("cost_manopt_out")
-disp(cost_manopt_out)
-
-if staircase_step_idx > d+1
-
-    if ~problem_data.noisy_test && staircase_step_idx > d+2
-        % save("rs_going_further.mat");
-    end
-
-    low_deg = 2; %TODO: maybe not necessarily in more complex graph cases?
-    nodes_high_deg = problem_data.node_degrees > low_deg;
-
-    [T_edges, ~] = make_T_edges(T_manopt_out, edges);
-
-    RT_stacked_high_deg = [matStackH(R_manopt_out(:,:,nodes_high_deg)), T_edges];
-
-    % RT_stacked_high_deg_poc = Qx_edges * RT_stacked_high_deg;
-
-    R_recovered = eye3d(d,d,N);
-
-    nodes_low_deg = ~nodes_high_deg;
-
-    if ~any(nodes_low_deg)
-        disp('No nodes low deg!')
-        Qx_edges = POCRotateToMinimizeLastEntries(RT_stacked_high_deg);
-        R_tilde2_HD = multiprod(repmat(Qx_edges, 1, 1, sum(nodes_high_deg)), R_manopt_out(:,:,nodes_high_deg));
-        R_recovered(:,:,nodes_high_deg) = R_tilde2_HD(1:d,:,:);
-        T_diffs_shifted = Qx_edges * T_edges; %this has last rows to 0
-        T_recovered = edge_diffs_2_T(T_diffs_shifted(1:d,:), edges, N);
-        lambdas_recovered = lambdas_manopt_out;
-    else
-        Qalign = align3d(RT_stacked_high_deg);
-        tijs = problem_data.tijs; %TODO!! improve naming
-        Tijs_scaled = make_tijs_scaled(lambdas_manopt_out, tijs);
-        problem_data.d = d;
-        Tij_2deg_recovery = [];
-        Tij_tilde_2deg_recovery = [];
-        for node_id = 1:N
-            if problem_data.node_degrees(node_id) == low_deg
-                [Tij1j2, Tij1j2_tilde] = ...
-                    make_Tij1j2s_edges( ...
-                    node_id, T_edges, Tijs_scaled, edges, problem_data);
-                Tij_2deg_recovery = cat(3, Tij_2deg_recovery, Tij1j2);
-                Tij_tilde_2deg_recovery = cat( ...
-                    3, Tij_tilde_2deg_recovery, Tij1j2_tilde);
-            end
-        end
-        Tij_tilde_2deg_recovery=multiprod(Qalign, Tij_tilde_2deg_recovery);
-        RitildeEst = RbRecovery(multiprod(Qalign, R_manopt_out(:,:,nodes_low_deg)), Tij_tilde_2deg_recovery);
-        R_recovered(:,:,nodes_low_deg) = RitildeEst(1:d,:,:);
-
-        % [RitildeEst, Qx_rec, Qb_rec] = ...
-        %     RbRecovery(multiprod(Qalign, R_manopt_out(:,:,nodes_low_deg)), Tij_tilde_2deg_recovery);
-        % R_recovered(:,:,nodes_low_deg) = RitildeEst(1:d,:,:);
-
-
-        R_tilde2_HD = multiprod(repmat(Qalign, 1, 1, sum(nodes_high_deg)), R_manopt_out(:,:,nodes_high_deg));
-        R_recovered(:,:,nodes_high_deg) = R_tilde2_HD(1:d,:,:);
-
-        low_deg_nodes_ids = find(problem_data.node_degrees <= low_deg); %[1 5]'
-        for ii = 1:N
-            if ismember(ii, low_deg_nodes_ids)
-                id_low_deg = find(low_deg_nodes_ids == ii);
-                P_i = recover_R_deg2(Tij_tilde_2deg_recovery, id_low_deg, d);
-                R_recovered(:,:,ii) = P_i * R_recovered(:,:,ii);
-                % else
-                %     if det(R_recovered(:,:,ii)) < 0
-                %         R_recovered(:,:,ii) = -R_recovered(:,:,ii);
-                %     end
-            end
-        end
-
-        disp("multidet(R_recovered)")
-        disp(multidet(R_recovered))
-
-        T_diffs_shifted = Qalign * T_edges; %this has last rows to 0
-        T_recovered_pre = recover_T_edges(T_diffs_shifted(1:d,:), ...
-            edges, d, problem_data.node_degrees, low_deg, Tij_tilde_2deg_recovery);
-        T_recovered = edge_diffs_2_T(T_recovered_pre, edges, N);
-        % T_recovered = edge_diffs_2_T(T_diffs_shifted(1:d, :), edges, N);
-
-        lambdas_recovered = X_manopt_out.lambda;
-
-    end
-else
-    % recovery is not actually performed but using the same variable names
-    % for simplicity
-    R_recovered = R_manopt_out;
-    T_recovered = T_manopt_out;
-    lambdas_recovered = lambdas_manopt_out;
-end
-
-if any(abs(vec(multidet(R_recovered))) < 1-1e-5) || any(abs(vec(multidet(R_recovered))) > 1+1e-5)
-    rot_dets_ok = false;
-else
-    rot_dets_ok = true;
-end
-
-if any(lambdas_recovered(:) < 1)
-    lambdas_acceptable = false;
-else
-    lambdas_acceptable = true;
-end
-
-% save("ws2.mat")
-
-
-%checking that cost has not changed during "recovery"
-% if sum(multidet(R_recovered)) < N
-%     testdata_plot = problem_data;
-%     testdata_plot.gi = RT2G(R_recovered, T_recovered);
-%     testdata_plot = testNetworkCompensate(testdata_plot);
-%     T_recovered = G2T(testdata_plot.gi);
-%     R_recovered = G2R(testdata_plot.gi);
+% for staircase_step_idx = r0:num_edges*d*N+1
+%     problem_data_next.sz = [staircase_step_idx, d, N];
+%     problem_data_next.tijs = problem_data.tijs;
+%     problem_data_next.edges = problem_data.edges;
+%     problem_data_next.rho = problem_data.rho;
+%     problem_data_next.a = problem_data.a;
+%     problem_data_next.relu_scale_compensation = params.relu_scale_compensation;
+% 
+%     tuple_next.R = stiefelfactory(staircase_step_idx, d, N);
+%     tuple_next.T = euclideanfactory(staircase_step_idx, N);
+%     tuple_next.lambda = euclideanfactory(num_edges, 1);
+%     M_next = productmanifold(tuple_next);
+%     problem_next.M = M_next;
+%     if params.relu_scale_compensation
+%         problem_next.cost = @(x) ssom_cost_relu(x, problem_data_next); %!! problem_data is the same
+%         problem_next.grad = @(x) ssom_rgrad_relu(x, problem_data_next);
+%         problem_next.hess = @(x, u) ssom_rhess_genproc_relu(x, u, problem_data_next);
+%     else
+%         problem_next.cost = @(x) ssom_cost(x, problem_data_next); %!! problem_data is the same
+%         problem_next.grad = @(x) ssom_rgrad(x, problem_data_next);
+%         problem_next.hess = @(x, u) ssom_rhess_genproc(x, u, problem_data_next);
+%     end
+% 
+% 
+%     Xnext = X;
+%     Xnext.R = cat_zero_rows_3d_array(X.R);
+%     Xnext.T = cat_zero_rows_3d_array(X.T);
+%     if params.relu_scale_compensation
+%         ctr_equal_last = ssom_cost_relu(Xnext,problem_data_next);
+%     else
+%         ctr_equal_last = ssom_cost(Xnext,problem_data_next);
+%     end
+% 
+%     Xprev = X;
+%     if params.use_pim
+%         [Y_star, lambda, v] = ssom_pim_hessian_genproc( ...
+%             X, problem_data_next, thr);
+% 
+%     else
+% 
+%         % X_cat.lambda = X.lambda;
+% 
+%         Hmat_ssom = make_Hmat_ssom_proj(Xnext, problem_data_next);
+% 
+%         % Hmat_ssom = symm(Hmat_ssom);
+% 
+%         [eigvecs_Hmat_ssom, eigvals_Hmat_ssom] = eig(Hmat_ssom);
+% 
+%         disp("max(abs(Hmat_ssom - Hmat_ssom'), [], ""all"")")
+%         disp(max(abs(Hmat_ssom - Hmat_ssom'), [], "all"))
+% 
+%         lambda = min(real(eigvals_Hmat_ssom), [], "all");
+% 
+%         disp("min(real(eigvals_Hmat_ssom), [], ""all"")")
+%         disp(lambda);
+% 
+%         imag_eigenvalues = false;
+%         if max(abs(imag(eigvals_Hmat_ssom)), [], "all") > 1e-5
+%             imag_eigenvalues = true;
+%             error("Imag eigenvalues in ssom_genproc")
+%         end
+% 
+%         lambda_index = find(lambda == diag(real(eigvals_Hmat_ssom)));
+% 
+%         v_tg = real(eigvecs_Hmat_ssom(:, lambda_index));
+% 
+%         v = recompose_eigenvector_from_Hmat(Xnext, v_tg);
+%         %
+%         % % disp("v") %just to remove unused variable warning
+%         % % disp(v)
+% 
+% 
+%         % disp("Now performing linesearch...");
+%         % %Note: first output param of linesearch() would be "stepsize"
+%         %
+%         % % next optimization iteration
+% 
+% 
+%         disp("staircase_step_idx")
+%         disp(staircase_step_idx)
+%         disp("d")
+%         disp(d)
+%         disp("N")
+%         disp(N)
+% 
+%         disp("size(v)")
+%         disp(size(v))
+% 
+%         % v_struct = convertXtoRTLambdas(v, staircase_step_idx, d, N);
+% 
+%         options.ls_max_steps = 10000;
+%         options.ls_initial_stepsize = 10;
+%         options.ls_contraction_factor = 0.25;
+% 
+% 
+%         if params.relu_cost_compensation
+%             [~, Y_star] = linesearch_decrease(problem_next, ...
+%                 Xnext, v, ssom_cost_relu(Xnext,problem_data_next), 0, options);
+%         else
+%             [~, Y_star] = linesearch_decrease(problem_next, ...
+%                 Xnext, v, ssom_cost(Xnext,problem_data_next), 0, options);
+%         end
+% 
+%     end
+% 
+%     %
+%     if lambda > 0
+%         disp("R, T eigenvals > 0: exiting staircase")
+%         break;
+%     else
+%         disp("RS actually useful")
+%     end
+% 
+%     X = trustregions(problem_next, Y_star, options);
+% 
+%     if params.relu_scale_compensation
+%         ctr_equal_new = ssom_cost_relu(X,problem_data_next);
+%     else
+%         ctr_equal_new = ssom_cost(X,problem_data_next);
+%     end
+% 
+% 
+%     if is_equal_floats(ctr_equal_last, ctr_equal_new, 1e-5)
+%         ctr_equal = ctr_equal + 1;
+%     else
+%         ctr_equal = 0;
+%         flag_pim_used = false;
+%     end
+% 
+%     T_manopt_out = X.T;
+%     R_manopt_out = X.R;
+%     lambdas_manopt_out = X.lambda;
+% 
+%     disp("cost_last")
+%     disp(cost_last)
+%     if params.relu_scale_compensation
+%         cost_last = ssom_cost_relu(X, problem_data_next);
+%     else
+%         cost_last = ssom_cost(X, problem_data_next);
+%     end
+%     disp("cost_new")
+%     disp(cost_last)
+% 
+%     % if rank(matStackH(Y_star.R))<staircase_step_idx
+%     %     break;
+%     % end
+% 
+%     if ctr_equal == d
+%         disp("too many equals")
+% 
+%         ctr_equal = 0;
+% 
+%         [Y0pim, lambda_pim_out, v_pim_out] = ...
+%             ssom_pim_hessian_genproc(Xprev, problem_data_next);
+% 
+%         if lambda_pim_out > -1e-3
+%             disp("R, T eigenvals > 0: exiting staircase")
+%             break;
+%         end
+% 
+%         X = trustregions(problem_next, Y0pim, options);
+% 
+%         if params.relu_scale_compensation
+%             cost_after_pim_rtr = ssom_cost_relu(X, problem_data_next);
+%         else
+%             cost_after_pim_rtr = ssom_cost(X, problem_data_next);
+%         end
+%         disp("cost_new")
+%         disp(cost_after_pim_rtr)
+% 
+%         if (is_equal_floats(cost_after_pim_rtr, cost_last))
+%             break
+%         else
+%             cost_last = cost_after_pim_rtr;
+%         end
+%     end
+% 
+% end
+% 
+% X_manopt_out.R = R_manopt_out;
+% X_manopt_out.T = T_manopt_out;
+% X_manopt_out.lambda = lambdas_manopt_out;
+% 
+% if params.relu_scale_compensation
+%     cost_manopt_out = ssom_cost_relu(X_manopt_out, problem_data);
+% else
+%     cost_manopt_out = ssom_cost(X_manopt_out, problem_data);
+% end
+% disp("cost_manopt_out")
+% disp(cost_manopt_out)
+% 
+% if staircase_step_idx > d+1
+% 
+%     if ~problem_data.noisy_test && staircase_step_idx > d+2
+%         % save("rs_going_further.mat");
+%     end
+% 
+%     low_deg = 2; %TODO: maybe not necessarily in more complex graph cases?
+%     nodes_high_deg = problem_data.node_degrees > low_deg;
+% 
+%     [T_edges, ~] = make_T_edges(T_manopt_out, edges);
+% 
+%     RT_stacked_high_deg = [matStackH(R_manopt_out(:,:,nodes_high_deg)), T_edges];
+% 
+%     % RT_stacked_high_deg_poc = Qx_edges * RT_stacked_high_deg;
+% 
+%     R_recovered = eye3d(d,d,N);
+% 
+%     nodes_low_deg = ~nodes_high_deg;
+% 
+%     if ~any(nodes_low_deg)
+%         disp('No nodes low deg!')
+%         Qx_edges = POCRotateToMinimizeLastEntries(RT_stacked_high_deg);
+%         R_tilde2_HD = multiprod(repmat(Qx_edges, 1, 1, sum(nodes_high_deg)), R_manopt_out(:,:,nodes_high_deg));
+%         R_recovered(:,:,nodes_high_deg) = R_tilde2_HD(1:d,:,:);
+%         T_diffs_shifted = Qx_edges * T_edges; %this has last rows to 0
+%         T_recovered = edge_diffs_2_T(T_diffs_shifted(1:d,:), edges, N);
+%         lambdas_recovered = lambdas_manopt_out;
+%     else
+%         Qalign = align3d(RT_stacked_high_deg);
+%         tijs = problem_data.tijs; %TODO!! improve naming
+%         Tijs_scaled = make_tijs_scaled(lambdas_manopt_out, tijs);
+%         problem_data.d = d;
+%         Tij_2deg_recovery = [];
+%         Tij_tilde_2deg_recovery = [];
+%         for node_id = 1:N
+%             if problem_data.node_degrees(node_id) == low_deg
+%                 [Tij1j2, Tij1j2_tilde] = ...
+%                     make_Tij1j2s_edges( ...
+%                     node_id, T_edges, Tijs_scaled, edges, problem_data);
+%                 Tij_2deg_recovery = cat(3, Tij_2deg_recovery, Tij1j2);
+%                 Tij_tilde_2deg_recovery = cat( ...
+%                     3, Tij_tilde_2deg_recovery, Tij1j2_tilde);
+%             end
+%         end
+%         Tij_tilde_2deg_recovery=multiprod(Qalign, Tij_tilde_2deg_recovery);
+%         RitildeEst = RbRecovery(multiprod(Qalign, R_manopt_out(:,:,nodes_low_deg)), Tij_tilde_2deg_recovery);
+%         R_recovered(:,:,nodes_low_deg) = RitildeEst(1:d,:,:);
+% 
+%         % [RitildeEst, Qx_rec, Qb_rec] = ...
+%         %     RbRecovery(multiprod(Qalign, R_manopt_out(:,:,nodes_low_deg)), Tij_tilde_2deg_recovery);
+%         % R_recovered(:,:,nodes_low_deg) = RitildeEst(1:d,:,:);
+% 
+% 
+%         R_tilde2_HD = multiprod(repmat(Qalign, 1, 1, sum(nodes_high_deg)), R_manopt_out(:,:,nodes_high_deg));
+%         R_recovered(:,:,nodes_high_deg) = R_tilde2_HD(1:d,:,:);
+% 
+%         low_deg_nodes_ids = find(problem_data.node_degrees <= low_deg); %[1 5]'
+%         for ii = 1:N
+%             if ismember(ii, low_deg_nodes_ids)
+%                 id_low_deg = find(low_deg_nodes_ids == ii);
+%                 P_i = recover_R_deg2(Tij_tilde_2deg_recovery, id_low_deg, d);
+%                 R_recovered(:,:,ii) = P_i * R_recovered(:,:,ii);
+%                 % else
+%                 %     if det(R_recovered(:,:,ii)) < 0
+%                 %         R_recovered(:,:,ii) = -R_recovered(:,:,ii);
+%                 %     end
+%             end
+%         end
+% 
+%         disp("multidet(R_recovered)")
+%         disp(multidet(R_recovered))
+% 
+%         T_diffs_shifted = Qalign * T_edges; %this has last rows to 0
+%         T_recovered_pre = recover_T_edges(T_diffs_shifted(1:d,:), ...
+%             edges, d, problem_data.node_degrees, low_deg, Tij_tilde_2deg_recovery);
+%         T_recovered = edge_diffs_2_T(T_recovered_pre, edges, N);
+%         % T_recovered = edge_diffs_2_T(T_diffs_shifted(1:d, :), edges, N);
+% 
+%         lambdas_recovered = X_manopt_out.lambda;
+% 
+%     end
+% else
+%     % recovery is not actually performed but using the same variable names
+%     % for simplicity
+%     R_recovered = R_manopt_out;
+%     T_recovered = T_manopt_out;
+%     lambdas_recovered = lambdas_manopt_out;
+% end
+% 
+% if any(abs(vec(multidet(R_recovered))) < 1-1e-5) || any(abs(vec(multidet(R_recovered))) > 1+1e-5)
+%     rot_dets_ok = false;
+% else
+%     rot_dets_ok = true;
+% end
+% 
+% if any(lambdas_recovered(:) < 1)
+%     lambdas_acceptable = false;
+% else
+%     lambdas_acceptable = true;
+% end
+% 
+% % save("ws2.mat")
+% 
+% 
+% %checking that cost has not changed during "recovery"
+% % if sum(multidet(R_recovered)) < N
+% %     testdata_plot = problem_data;
+% %     testdata_plot.gi = RT2G(R_recovered, T_recovered);
+% %     testdata_plot = testNetworkCompensate(testdata_plot);
+% %     T_recovered = G2T(testdata_plot.gi);
+% %     R_recovered = G2R(testdata_plot.gi);
+% % end
+% 
+% X_recovered.R = R_recovered;
+% X_recovered.T = T_recovered;
+% X_recovered.lambda = lambdas_recovered;
+% %%
+% problem_data_next = problem_data; %TODO: fix this line after recovery works
+% if params.relu_scale_compensation
+%     cost_out_after_recovery = ssom_cost_relu(X_recovered, problem_data_next);
+% else
+%     cost_out_after_recovery = ssom_cost(X_recovered, problem_data_next);
+% end
+% disp("cost_out AFTER RECOVERY")
+% disp(cost_out_after_recovery)
+% 
+% if ~is_equal_floats(cost_out_after_recovery, cost_manopt_out)
+%     save("failed_recovery.mat")
+% end
+% 
+% %
+% disp("[matStackH(X_gt.R); matStackH(R_recovered)]");
+% disp([matStackH(X_gt.R); matStackH(R_recovered)]);
+% 
+% base_node_id = 1; %TODO: make this settable from params
+% 
+% if params.perform_globalization
+%     R_global = R_recovered(:,:,base_node_id) * X_gt.R(:,:,base_node_id)'; %!!
+%     % code for making all rotations global at once
+%     R_recovered_global = multiprod(repmat(R_global', 1, 1, N), R_recovered);
+%     disp("[matStackH(X_gt.R); matStackH(R_recovered_global)]");
+%     disp([matStackH(X_gt.R); matStackH(R_recovered_global)]);
+% 
+%     lambda_factor = X_gt.lambda(1) / lambdas_recovered(1); %should be the same for all edges
+%     lambdas_recovered_global = lambda_factor * lambdas_recovered;
+%     disp("[X_gt.lambda, lambdas_recovered_global]");
+%     disp([X_gt.lambda(:), lambdas_recovered_global]);
+%     disp("is_equal_floats(X_gt.lambda, lambdas_recovered_global)")
+%     disp(is_equal_floats(X_gt.lambda(:), lambdas_recovered_global))
+% 
+% 
+%     disp("cost_ssom_no_compensation(X_recovered, problem_data_next)")
+%     disp(ssom_cost_no_compensation(X_recovered, problem_data))
+% 
+%     %%
+%     [T_edges, ~] = make_T_edges(T_recovered, edges);
+% 
+%     T_edges_scaled = make_tijs_scaled(lambda_factor * ones(num_edges, 1), T_edges);
+%     T_edges_scaled2 = T_edges_scaled;
+%     for ii = 1:num_edges
+%         T_edges_scaled2(:,ii) = R_global' * T_edges_scaled(:,ii);
+%     end
+% 
+%     T_recovered_global_pre_shift = edge_diffs_2_T(T_edges_scaled2, edges, N);
+%     T_recovered_global = T_recovered_global_pre_shift;
+%     for ii = 1:N
+%         T_recovered_global(:, ii) = T_recovered_global_pre_shift(:,ii) + X_gt.T(:,base_node_id);
+%     end
+% 
+%     disp([X_gt.T; T_recovered_global]);
+% 
+%     disp("[matStackH(X_gt.R); matStackH(R_recovered_global)]");
+%     disp([matStackH(X_gt.R); matStackH(R_recovered_global)]);
+% 
+%     % T_recovered_global_nocomp = R_global' * T_recovered;
+% 
+%     % testdata_plot2 = problem_data;
+%     % testdata_plot2.gi = RT2G(R_recovered_global, T_recovered_global_nocomp);
+%     % testdata_plot2 = testNetworkCompensate(testdata_plot2);
+%     % if staircase_step_idx == d+1
+%     %     T_recovered_global = T_recovered;
+%     % end
+%     % lambdas_recovered_global = lambdas_recovered;
+% 
+%     rs_recovery_success = boolean(1);
+%     for ii = 1:N
+%         R_gt_i = X_gt.R(:,:,ii);
+%         R_recov_i_global = R_recovered_global(:,:,ii); %GLOBAL!
+%         fprintf("ii %g\n", ii);
+%         % rotations
+%         disp("R_gt_i, R_recov_i");
+%         disp([R_gt_i, R_recov_i_global]);
+%         disp("is_equal_floats(R_gt_i, R_recov_i_global)")
+%         disp(is_equal_floats(R_gt_i, R_recov_i_global))
+%         if (~is_equal_floats(R_gt_i, R_recov_i_global))
+%             %         error("rot found NOT equal")
+%             fprintf("ERROR in recovery: R_GLOBAL\n");
+%             rs_recovery_success = boolean(0);
+%         end
+%         % translations
+%         T_gt_i = X_gt.T(:,ii);
+%         T_recov_i_global = T_recovered_global(:,ii);
+%         disp("[X_gt.T, T_recovered]");
+%         disp([T_gt_i, T_recov_i_global]);
+%         disp("is_equal_floats(T_gt_i, T_recov_i_global)")
+%         disp(is_equal_floats(T_gt_i, T_recov_i_global))
+%         if (~is_equal_floats(T_gt_i, T_recov_i_global))
+%             %         error("transl found NOT equal")
+%             fprintf("ERROR in recovery: T_GLOBAL\n");
+%             rs_recovery_success = boolean(0);
+%         end
+%     end
+% 
+%     disp("[X_gt.T; T_recovered_global]");
+%     disp([X_gt.T; T_recovered_global]);
+% 
+% 
+%     disp("[X_gt.lambda, lambdas_recovered_global]");
+%     disp([X_gt.lambda(:), lambdas_recovered_global]);
+%     disp("is_equal_floats(X_gt.lambda, lambdas_recovered_global)")
+%     disp(is_equal_floats(X_gt.lambda(:), lambdas_recovered_global))
+%     if (~is_equal_floats(X_gt.lambda(:), lambdas_recovered_global))
+%         %         error("scales found NOT equal")
+%         fprintf("ERROR in recovery: LAMBDA GLOBAL\n");
+%         rs_recovery_success = boolean(0);
+%     end
+% 
+%     fprintf("rs_recovery_success: %g\n", rs_recovery_success);
+%     X_recovered_global.R = R_recovered_global;
+%     X_recovered_global.T = T_recovered_global;
+%     X_recovered_global.lambda = lambdas_recovered_global;
+% 
+%     if params.relu_scale_compensation
+%         cost_out_global = ssom_cost_relu(X_recovered_global, problem_data_next);
+%     else
+%         cost_out_global = ssom_cost(X_recovered_global, problem_data_next);
+%     end
+%     disp("cost_out_global")
+%     disp(cost_out_global)
+% 
+%     disp('multidet(R_recovered)')
+%     disp(multidet(R_recovered))
+% 
+% 
+% 
+%     if ~is_equal_floats(cost_out_global, cost_manopt_out)
+%         % save("failed_recovery_global.mat")
+%     end
+% 
+%     transf_out = RT2G(X_recovered_global.R, X_recovered_global.T); %ssom_genproc() function output
+%     lambdas_ssom_out = lambdas_recovered_global;
+% 
+%     % disp("max(abs(R_recovered_global(:)-X_gt.R(:)), [], ""all"")")
+%     % disp(max(abs(R_recovered_global(:)-X_gt.R(:)), [], "all"))
+%     % disp("max(abs(T_recovered_global(:)-X_gt.T(:)), [], ""all"")")
+%     % disp(max(abs(T_recovered_global(:)-X_gt.T(:)), [], "all"))
+%     % disp("max(abs(lambdas_recovered_global(:)-X_gt.lambda(:)), [], ""all"")")
+%     % disp(max(abs(lambdas_recovered_global(:)-X_gt.lambda(:)), [], "all"))
+%     %
+%     % disp('multidet(X_recovered_global.R)')
+%     % disp(multidet(X_recovered_global.R))
+% 
+% else
+% 
+%     R_recovered_global = R_recovered;
+%     T_recovered_global = T_recovered;
+%     lambdas_recovered_global = lambdas_recovered;
+%     lambdas_ssom_out = lambdas_recovered;
+% 
+%     transf_out = RT2G(R_recovered_global, T_recovered_global);
+% 
+%     if params.relu_scale_compensation
+%         cost_out_global = ssom_cost_relu(X_recovered, problem_data_next);
+%     else
+%         cost_out_global = ssom_cost(X_recovered, problem_data_next);
+%     end
+% 
+%     rs_recovery_success = true;
 % end
 
-X_recovered.R = R_recovered;
-X_recovered.T = T_recovered;
-X_recovered.lambda = lambdas_recovered;
-%%
-problem_data_next = problem_data; %TODO: fix this line after recovery works
-if params.relu_scale_compensation
-    cost_out_after_recovery = ssom_cost_relu(X_recovered, problem_data_next);
-else
-    cost_out_after_recovery = ssom_cost(X_recovered, problem_data_next);
-end
-disp("cost_out AFTER RECOVERY")
-disp(cost_out_after_recovery)
 
-if ~is_equal_floats(cost_out_after_recovery, cost_manopt_out)
-    save("failed_recovery.mat")
-end
-
-%
-disp("[matStackH(X_gt.R); matStackH(R_recovered)]");
-disp([matStackH(X_gt.R); matStackH(R_recovered)]);
-
-base_node_id = 1; %TODO: make this settable from params
-
-if params.perform_globalization
-    R_global = R_recovered(:,:,base_node_id) * X_gt.R(:,:,base_node_id)'; %!!
-    % code for making all rotations global at once
-    R_recovered_global = multiprod(repmat(R_global', 1, 1, N), R_recovered);
-    disp("[matStackH(X_gt.R); matStackH(R_recovered_global)]");
-    disp([matStackH(X_gt.R); matStackH(R_recovered_global)]);
-
-    lambda_factor = X_gt.lambda(1) / lambdas_recovered(1); %should be the same for all edges
-    lambdas_recovered_global = lambda_factor * lambdas_recovered;
-    disp("[X_gt.lambda, lambdas_recovered_global]");
-    disp([X_gt.lambda(:), lambdas_recovered_global]);
-    disp("is_equal_floats(X_gt.lambda, lambdas_recovered_global)")
-    disp(is_equal_floats(X_gt.lambda(:), lambdas_recovered_global))
-
-
-    disp("cost_ssom_no_compensation(X_recovered, problem_data_next)")
-    disp(ssom_cost_no_compensation(X_recovered, problem_data))
-
-    %%
-    [T_edges, ~] = make_T_edges(T_recovered, edges);
-
-    T_edges_scaled = make_tijs_scaled(lambda_factor * ones(num_edges, 1), T_edges);
-    T_edges_scaled2 = T_edges_scaled;
-    for ii = 1:num_edges
-        T_edges_scaled2(:,ii) = R_global' * T_edges_scaled(:,ii);
-    end
-
-    T_recovered_global_pre_shift = edge_diffs_2_T(T_edges_scaled2, edges, N);
-    T_recovered_global = T_recovered_global_pre_shift;
-    for ii = 1:N
-        T_recovered_global(:, ii) = T_recovered_global_pre_shift(:,ii) + X_gt.T(:,base_node_id);
-    end
-
-    disp([X_gt.T; T_recovered_global]);
-
-    disp("[matStackH(X_gt.R); matStackH(R_recovered_global)]");
-    disp([matStackH(X_gt.R); matStackH(R_recovered_global)]);
-
-    % T_recovered_global_nocomp = R_global' * T_recovered;
-
-    % testdata_plot2 = problem_data;
-    % testdata_plot2.gi = RT2G(R_recovered_global, T_recovered_global_nocomp);
-    % testdata_plot2 = testNetworkCompensate(testdata_plot2);
-    % if staircase_step_idx == d+1
-    %     T_recovered_global = T_recovered;
-    % end
-    % lambdas_recovered_global = lambdas_recovered;
-
-    rs_recovery_success = boolean(1);
-    for ii = 1:N
-        R_gt_i = X_gt.R(:,:,ii);
-        R_recov_i_global = R_recovered_global(:,:,ii); %GLOBAL!
-        fprintf("ii %g\n", ii);
-        % rotations
-        disp("R_gt_i, R_recov_i");
-        disp([R_gt_i, R_recov_i_global]);
-        disp("is_equal_floats(R_gt_i, R_recov_i_global)")
-        disp(is_equal_floats(R_gt_i, R_recov_i_global))
-        if (~is_equal_floats(R_gt_i, R_recov_i_global))
-            %         error("rot found NOT equal")
-            fprintf("ERROR in recovery: R_GLOBAL\n");
-            rs_recovery_success = boolean(0);
-        end
-        % translations
-        T_gt_i = X_gt.T(:,ii);
-        T_recov_i_global = T_recovered_global(:,ii);
-        disp("[X_gt.T, T_recovered]");
-        disp([T_gt_i, T_recov_i_global]);
-        disp("is_equal_floats(T_gt_i, T_recov_i_global)")
-        disp(is_equal_floats(T_gt_i, T_recov_i_global))
-        if (~is_equal_floats(T_gt_i, T_recov_i_global))
-            %         error("transl found NOT equal")
-            fprintf("ERROR in recovery: T_GLOBAL\n");
-            rs_recovery_success = boolean(0);
-        end
-    end
-
-    disp("[X_gt.T; T_recovered_global]");
-    disp([X_gt.T; T_recovered_global]);
-
-
-    disp("[X_gt.lambda, lambdas_recovered_global]");
-    disp([X_gt.lambda(:), lambdas_recovered_global]);
-    disp("is_equal_floats(X_gt.lambda, lambdas_recovered_global)")
-    disp(is_equal_floats(X_gt.lambda(:), lambdas_recovered_global))
-    if (~is_equal_floats(X_gt.lambda(:), lambdas_recovered_global))
-        %         error("scales found NOT equal")
-        fprintf("ERROR in recovery: LAMBDA GLOBAL\n");
-        rs_recovery_success = boolean(0);
-    end
-
-    fprintf("rs_recovery_success: %g\n", rs_recovery_success);
-    X_recovered_global.R = R_recovered_global;
-    X_recovered_global.T = T_recovered_global;
-    X_recovered_global.lambda = lambdas_recovered_global;
-
-    if params.relu_scale_compensation
-        cost_out_global = ssom_cost_relu(X_recovered_global, problem_data_next);
-    else
-        cost_out_global = ssom_cost(X_recovered_global, problem_data_next);
-    end
-    disp("cost_out_global")
-    disp(cost_out_global)
-
-    disp('multidet(R_recovered)')
-    disp(multidet(R_recovered))
-
-
-
-    if ~is_equal_floats(cost_out_global, cost_manopt_out)
-        % save("failed_recovery_global.mat")
-    end
-
-    transf_out = RT2G(X_recovered_global.R, X_recovered_global.T); %ssom_genproc() function output
-    lambdas_ssom_out = lambdas_recovered_global;
-
-    % disp("max(abs(R_recovered_global(:)-X_gt.R(:)), [], ""all"")")
-    % disp(max(abs(R_recovered_global(:)-X_gt.R(:)), [], "all"))
-    % disp("max(abs(T_recovered_global(:)-X_gt.T(:)), [], ""all"")")
-    % disp(max(abs(T_recovered_global(:)-X_gt.T(:)), [], "all"))
-    % disp("max(abs(lambdas_recovered_global(:)-X_gt.lambda(:)), [], ""all"")")
-    % disp(max(abs(lambdas_recovered_global(:)-X_gt.lambda(:)), [], "all"))
-    %
-    % disp('multidet(X_recovered_global.R)')
-    % disp(multidet(X_recovered_global.R))
-
-else
-
-    R_recovered_global = R_recovered;
-    T_recovered_global = T_recovered;
-    lambdas_recovered_global = lambdas_recovered;
-    lambdas_ssom_out = lambdas_recovered;
-
-    transf_out = RT2G(R_recovered_global, T_recovered_global);
-
-    if params.relu_scale_compensation
-        cost_out_global = ssom_cost_relu(X_recovered, problem_data_next);
-    else
-        cost_out_global = ssom_cost(X_recovered, problem_data_next);
-    end
-
-    rs_recovery_success = true;
-end
-
-disp("max(abs(R_recovered_global(:)-X_gt.R(:)), [], ""all"")")
-disp(max(abs(R_recovered_global(:)-X_gt.R(:)), [], "all"))
-disp("max(abs(T_recovered_global(:)-X_gt.T(:)), [], ""all"")")
-disp(max(abs(T_recovered_global(:)-X_gt.T(:)), [], "all"))
+disp("max(abs(R_manopt_out(:)-X_gt.R(:)), [], ""all"")")
+disp(max(abs(R_manopt_out(:)-X_gt.R(:)), [], "all"))
+disp("max(abs(T_manopt_out(:)-X_gt.T(:)), [], ""all"")")
+disp(max(abs(T_manopt_out(:)-X_gt.T(:)), [], "all"))
 disp("max(abs(lambdas_recovered_global(:)-X_gt.lambda(:)), [], ""all"")")
-disp(max(abs(lambdas_recovered_global(:)-X_gt.lambda(:)), [], "all"))
+disp(max(abs(lambdas_manopt_out(:)-X_gt.lambda(:)), [], "all"))
 
-disp('multidet(R_recovered_global)')
-disp(multidet(R_recovered_global))
+disp('multidet(R_manopt_out)')
+disp(multidet(R_manopt_out))
 
-disp("R_recovered_global")
-disp(R_recovered_global)
-disp("T_recovered_global")
-disp(T_recovered_global)
-disp("lambdas_recovered_global")
-disp(lambdas_recovered_global)
+disp("R_manopt_out")
+disp(R_manopt_out)
+disp("T_manopt_out")
+disp(T_manopt_out)
+disp("lambdas_manopt_out")
+disp(lambdas_manopt_out)
 
-disp("cost_out_global")
-disp(cost_out_global)
+transf_out = RT2G(R_manopt_out, T_manopt_out);
+lambdas_ssom_out = lambdas_manopt_out;
+
+disp("cost_out")
+cost_out = ssom_cost(X, problem_data);
+disp(cost_out)
 
 
 end %file function

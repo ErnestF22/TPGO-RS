@@ -16,7 +16,7 @@ namespace ROPTLIB
         Tgt_ = SomUtils::MatD::Zero(sz_.d_, sz_.n_);
         LambdasGt_ = SomUtils::MatD::Zero(numEdges_, 1);
 
-        rho_ = 0.5; // TODO: add rho_ as input parameter in another constructor
+        rho_ = 0.0; // TODO: add rho_ as input parameter in another constructor
 
         src_ = 0; // TODO: src_ VS src (for sure in globalize, maybe also in other places)
 
@@ -34,13 +34,24 @@ namespace ROPTLIB
 
         enableRs_ = false; // default to false; can be changed with setter if needed
 
-        maxIterAdmm_ = 100; // default value, can be changed by setter
+        maxIterAdmm_ = 10000;  // default value, can be changed by setter
         tolAdmmPrimal_ = 1e-8; // default value, can be changed by setter
-        tolAdmmDual_ = 1e-8; // default value, can be changed by setter
+        tolAdmmDual_ = 1e-8;   // default value, can be changed by setter
 
-        zAdmm_ = SomUtils::MatD::Ones(numEdges_, 1);
+        // zAdmm_ = SomUtils::MatD::Ones(numEdges_, 1);
+        if (reluScaleCompensation_)
+            zAdmm_ = 5.0 * SomUtils::MatD::Ones(numEdges_, 1);
+        else
+            zAdmm_ = 10.0 * SomUtils::MatD::Ones(numEdges_, 1);
+
         yAdmm_ = SomUtils::MatD::Zero(numEdges_, 1);
         muAdmm_ = 0.1; // default value, can be changed by setter
+
+        ssomInitguess_ = true;
+
+        firstZadmmLambdas_ = false;
+
+        performGlobalization_ = false; // default to false; can be changed with setter if needed
     }
 
     LsomProblem::LsomProblem(const SomUtils::SomSize somSz, const SomUtils::MatD &tijs, const Eigen::MatrixXi &edges)
@@ -55,7 +66,7 @@ namespace ROPTLIB
         Tgt_ = SomUtils::MatD::Zero(sz_.d_, sz_.n_);
         LambdasGt_ = SomUtils::MatD::Zero(numEdges_, 1);
 
-        rho_ = 0.5; // TODO: add rho_ as input parameter in another constructor
+        rho_ = 0.0; // TODO: add rho_ as input parameter in another constructor
 
         src_ = 0;
 
@@ -73,13 +84,24 @@ namespace ROPTLIB
 
         enableRs_ = false; // default to false; can be changed with setter if needed
 
-        maxIterAdmm_ = 100; // default value, can be changed by setter
+        maxIterAdmm_ = 10000;  // default value, can be changed by setter
         tolAdmmPrimal_ = 1e-8; // default value, can be changed by setter
-        tolAdmmDual_ = 1e-8; // default value, can be changed by setter
+        tolAdmmDual_ = 1e-8;   // default value, can be changed by setter
 
-        zAdmm_ = SomUtils::MatD::Ones(numEdges_, 1);
+        // zAdmm_ = SomUtils::MatD::Ones(numEdges_, 1);
+        if (reluScaleCompensation_)
+            zAdmm_ = 5.0 * SomUtils::MatD::Ones(numEdges_, 1);
+        else
+            zAdmm_ = 10.0 * SomUtils::MatD::Ones(numEdges_, 1);
+
         yAdmm_ = SomUtils::MatD::Zero(numEdges_, 1);
         muAdmm_ = 0.1; // default value, can be changed by setter
+
+        ssomInitguess_ = true;
+
+        firstZadmmLambdas_ = false;
+
+        performGlobalization_ = false; // default to false; can be changed with setter if needed
     }
 
     LsomProblem::~LsomProblem() {};
@@ -96,7 +118,7 @@ namespace ROPTLIB
         else
             cost = costEigenVec(xEigen);
 
-        ROFL_VAR1(cost);
+        ROFL_VAR2("cost in LsomProblem::f()", cost);
         // ROFL_ASSERT(!std::isnan(corr));
 
         // Vector *resultEgrad;
@@ -136,7 +158,15 @@ namespace ROPTLIB
             auto costReluEe = SomUtils::ReLU(lsomReLUargument(lambdaE));
             cost += costLambdaEe + rho_ * costReluEe * costReluEe;
         }
-        return cost;
+
+        // cost_out = cost_out + y'*(vec(z)-vec(lambdas))+0.5 * mu * norm(vec(z)-vec(lambdas))^2;
+        SomUtils::MatD LambdasEigen(numEdges_, 1);
+        getScales(xEigen, LambdasEigen);
+        ROFL_VAR2(zAdmm_.transpose(), LambdasEigen.transpose());
+        auto admmCost1 = yAdmm_.transpose() * (zAdmm_ - LambdasEigen);
+        ROFL_ASSERT_VAR2(admmCost1.rows() == 1 && admmCost1.cols() == 1, admmCost1.rows(), admmCost1.cols());
+        double admmCost = admmCost1(0, 0) + 0.5 * muAdmm_ * ((zAdmm_ - LambdasEigen).squaredNorm());
+        return cost + admmCost;
     }
 
     double LsomProblem::costEigenVecSEdN(const SomUtils::MatD &xEigen) const
@@ -188,7 +218,12 @@ namespace ROPTLIB
 
             cost += costLambdaEe + rho_ * scaleCompensation;
         }
-        return cost;
+        SomUtils::MatD LambdasEigen(numEdges_, 1);
+        getScales(xEigen, LambdasEigen);
+        auto admmCost1 = yAdmm_.transpose() * (zAdmm_ - LambdasEigen);
+        ROFL_ASSERT_VAR2(admmCost1.rows() == 1 && admmCost1.cols() == 1, admmCost1.rows(), admmCost1.cols());
+        double admmCost = admmCost1(0, 0) + 0.5 * muAdmm_ * ((zAdmm_ - LambdasEigen).squaredNorm());
+        return cost + admmCost;
     }
 
     double LsomProblem::costEigenRelu(const SomUtils::VecMatD &Reigen, const SomUtils::MatD &Teigen, const SomUtils::MatD &LambdasEigen) const
@@ -219,7 +254,11 @@ namespace ROPTLIB
             // ROFL_VAR1(lambdaE);
             // ROFL_VAR5(e, a.transpose(), b.transpose(), costLambdaEe, costReluEe);
         }
-        return cost;
+
+        auto admmCost1 = yAdmm_.transpose() * (zAdmm_ - LambdasEigen);
+        ROFL_ASSERT_VAR2(admmCost1.rows() == 1 && admmCost1.cols() == 1, admmCost1.rows(), admmCost1.cols());
+        double admmCost = admmCost1(0, 0) + 0.5 * muAdmm_ * ((zAdmm_ - LambdasEigen).squaredNorm());
+        return cost + admmCost;
     }
 
     double LsomProblem::costEigen(const SomUtils::VecMatD &Reigen, const SomUtils::MatD &Teigen, const SomUtils::MatD &LambdasEigen) const
@@ -271,7 +310,7 @@ namespace ROPTLIB
         // cost_out = cost_out + y'*(vec(z)-vec(lambdas))+0.5 * mu * norm(vec(z)-vec(lambdas))^2
         auto admmCost1 = yAdmm_.transpose() * (zAdmm_ - LambdasEigen);
         ROFL_ASSERT_VAR2(admmCost1.rows() == 1 && admmCost1.cols() == 1, admmCost1.rows(), admmCost1.cols());
-        double admmCost = admmCost1(0, 0) + 0.5 * muAdmm_ * (zAdmm_ - LambdasEigen).squaredNorm();
+        double admmCost = admmCost1(0, 0) + 0.5 * muAdmm_ * ((zAdmm_ - LambdasEigen).squaredNorm());
         return cost + admmCost;
     }
 
@@ -304,7 +343,22 @@ namespace ROPTLIB
             auto costReluEe = SomUtils::ReLU(lsomReLUargument(lambdaE));
             cost += costLambdaEe + rho_ * costReluEe * costReluEe;
         }
-        return cost;
+        SomUtils::MatD LambdasEigen(numEdges_, 1);
+        getScales(xEigen, LambdasEigen); // TODO: can be called before for loop to save some time, but should be fine for now
+        // cost_out = cost_out + y'*(vec(z)-vec(lambdas))+0.5 * mu * norm(vec(z)-vec(lambdas))^2
+        ROFL_VAR1(yAdmm_.transpose());
+        ROFL_VAR1(zAdmm_.transpose())
+        ROFL_VAR1(LambdasEigen.transpose());
+
+        auto admmCost1 = yAdmm_.transpose() * (zAdmm_ - LambdasEigen);
+        ROFL_ASSERT_VAR2(admmCost1.rows() == 1 && admmCost1.cols() == 1, admmCost1.rows(), admmCost1.cols());
+        ROFL_VAR1(admmCost1);
+        ROFL_ASSERT_VAR1(admmCost1(0, 0) >= 0.0, admmCost1);
+        double admmCost = admmCost1(0, 0) + 0.5 * muAdmm_ * ((zAdmm_ - LambdasEigen).squaredNorm());
+        ROFL_VAR2(cost, admmCost);
+        ROFL_ASSERT_VAR1(admmCost >= 0.0, admmCost);
+
+        return cost + admmCost;
     }
 
     double LsomProblem::costEigenVec(const SomUtils::MatD &xEigen) const
@@ -357,7 +411,14 @@ namespace ROPTLIB
 
             cost += costLambdaEe + rho_ * scaleCompensation;
         }
-        return cost;
+        SomUtils::MatD LambdasEigen(numEdges_, 1);
+        getScales(xEigen, LambdasEigen); // TODO: can be called before for loop to save some time, but should be fine for now
+        // cost_out = cost_out + y'*(vec(z)-vec(lambdas))+0.5 * mu * norm(vec(z)-vec(lambdas))^2
+        auto admmCost1 = yAdmm_.transpose() * (zAdmm_ - LambdasEigen);
+        ROFL_ASSERT_VAR2(admmCost1.rows() == 1 && admmCost1.cols() == 1, admmCost1.rows(), admmCost1.cols());
+        double admmCost = admmCost1(0, 0) + 0.5 * muAdmm_ * ((zAdmm_ - LambdasEigen).squaredNorm());
+        ROFL_VAR2(cost, admmCost);
+        return cost + admmCost;
     }
 
     // Vector &LsomProblem::EucGrad(const Variable &x, Vector *result) const
@@ -374,7 +435,7 @@ namespace ROPTLIB
 
         // result->Print("RieGrad: printing result at start of function (should be empty)");
 
-        ROFL_VAR1(sz_.p_)
+        // ROFL_VAR1(sz_.p_)
 
         SomUtils::MatD xEig(fullSz_, 1);
         RoptToEig(x, xEig);
@@ -661,6 +722,8 @@ namespace ROPTLIB
             // g_lambda(ee) = base_part + rho * compensation_part;
             rgLambdas(e, 0) = basePart(0, 0) + rho_ * compensationPart;
         }
+        SomUtils::MatD lagrComp = -yAdmm_ + muAdmm_ * (Lambdas - zAdmm_); // Lagrange compensation
+        rgLambdas += lagrComp;
     }
 
     void LsomProblem::egradLambdas(const SomUtils::VecMatD &R, const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
@@ -707,13 +770,12 @@ namespace ROPTLIB
 
             // g_lambda(ee) = base_part + rho * compensation_part;
             rgLambdas(e, 0) = basePart(0, 0) + rho_ * scaleCompensation;
-
-            // lagrange_compensation = -y + mu * (lambdas - z);
-            // g_lambda = g_lambda + lagrange_compensation;
-
-            SomUtils::MatD lagrComp = -yAdmm_ + muAdmm_ * (Lambdas - zAdmm_); // Lagrange compensation
-            rgLambdas += lagrComp;
         }
+        // lagrange_compensation = -y + mu * (lambdas - z);
+        // g_lambda = g_lambda + lagrange_compensation;
+
+        SomUtils::MatD lagrComp = -yAdmm_ + muAdmm_ * (Lambdas - zAdmm_); // Lagrange compensation
+        rgLambdas += lagrComp;
     }
 
     double LsomProblem::lsomReLUargument(double lambdaE) const
@@ -1008,6 +1070,7 @@ namespace ROPTLIB
             double basePart = 2 * lambdaDotE * (tij.transpose() * tij)(0, 0); // 1x1 matrix
             h(e, 0) = basePart + rho_ * compensationPart;
         }
+        h += muAdmm_ * uLambdas;
     }
 
     void LsomProblem::computeHlambdaslambdas(const SomUtils::MatD &xLambdas, const SomUtils::MatD &uLambdas,
@@ -1043,8 +1106,8 @@ namespace ROPTLIB
 
             double basePart = 2 * lambdaDotE * (tij.transpose() * tij)(0, 0); // 1x1 matrix
             h(e, 0) = basePart + rho_ * lambdaDotE * compensationPart;
-            h += muAdmm_ * uLambdas;
         }
+        h += muAdmm_ * uLambdas;
     }
 
     void LsomProblem::hessGenprocEigen(const SomUtils::VecMatD &xR, const SomUtils::VecMatD &uR,
@@ -1650,6 +1713,21 @@ namespace ROPTLIB
         maxIterAdmm_ = maxIterAdmm;
     }
 
+    void LsomProblem::setPerformGlobalization(bool performGlobalization)
+    {
+        performGlobalization_ = performGlobalization;
+    }
+
+    void LsomProblem::setSsomInitguess(bool ssomInitguess)
+    {
+        ssomInitguess_ = ssomInitguess;
+    }
+
+    void LsomProblem::setFirstZadmmLambdas(bool firstZadmmLambdas)
+    {
+        firstZadmmLambdas_ = firstZadmmLambdas;
+    }
+
     void LsomProblem::vectorizeR(const SomUtils::VecMatD &R, SomUtils::MatD &RvecOut) const
     {
         // int fullRotsSz = sz_.p_ * sz_.d_ * sz_.n_;
@@ -1895,6 +1973,73 @@ namespace ROPTLIB
         // }
     }
 
+    void LsomProblem::updateLsomPenaltyParam(const double &mu, const SomUtils::MatD &xK, const SomUtils::MatD &zK, const SomUtils::MatD &zPrev,
+                                             double &muNext, SomUtils::MatD &rK, SomUtils::MatD &sK) const
+    {
+        // r_k = x_k - z_k;
+        // s_k = -mu_prev * (z_k - z_prev);
+        rK = xK - zK;
+        sK = -mu * (zK - zPrev);
+
+        // tau_incr = 2.0;
+        // tau_decr = 2.0;
+        // mu_tau = 1.0;
+
+        double tauIncr = 2.0; // TODO: make these settable from outside
+        double tauDecr = 2.0; // TODO: make these settable from outside
+        double muTau = 1.0;   // TODO: make these settable from outside
+
+        // assert(~ ((norm(r_k) > mu_tau * norm(s_k)) && (norm(s_k) > mu_tau * norm(r_k))) )
+        ROFL_ASSERT_VAR3(!(rK.norm() > muTau * sK.norm() && sK.norm() > muTau * rK.norm()), rK.norm(), sK.norm(), muTau)
+
+        // if norm(r_k) > mu_tau * norm(s_k)
+        //     mu_next = tau_incr * mu_prev;
+        // elseif norm(s_k) > mu_tau * norm(r_k)
+        //     mu_next = mu_prev / tau_decr;
+        // else
+        //     mu_next = mu_prev;
+
+        if (rK.norm() > muTau * sK.norm())
+        {
+            muNext = tauIncr * mu;
+        }
+        else if (sK.norm() > muTau * rK.norm())
+        {
+            muNext = mu / tauDecr;
+        }
+        else
+        {
+            muNext = mu;
+        }
+
+        // % mu_next = max(0.1, mu_next); % This puts a cap on mu minimum value
+
+        // % mu_next = mu_prev; % TODO: this clears mu_next updates
+    }
+
+    bool LsomProblem::checkAdmmStoppingCondition(const SomUtils::MatD &rK, const SomUtils::MatD &sK, double epsAbs, double epsRel) const
+    {
+        // A = eye(num_edges);
+        // B = eye(num_edges);
+        // % C = zeros(num_edges, 1); % excluding norm(C) from further consideration
+        SomUtils::MatD A = SomUtils::MatD::Identity(numEdges_, numEdges_);
+        SomUtils::MatD B = SomUtils::MatD::Identity(numEdges_, numEdges_);
+
+        // tmp = [norm(A * x_k), norm(B*z_k)];
+        SomUtils::MatD tmp = SomUtils::MatD::Zero(1, 2);
+        tmp(0, 0) = (A * rK).norm();
+        tmp(0, 1) = (B * sK).norm();
+        // eps_pri = sqrt(num_edges) * eps_abs + eps_rel * max(tmp, [], "all");
+        // eps_dual = sqrt(num_edges) * eps_abs + eps_rel * norm(A' * y_k);
+        double epsPri = std::sqrt(numEdges_) * epsAbs + epsRel * tmp.maxCoeff();
+        double epsDual = std::sqrt(numEdges_) * epsAbs + epsRel * (A.transpose() * sK).norm();
+
+        // stop = norm(r_k) <= eps_pri && norm(s_k) <= eps_dual;
+        bool stop = rK.norm() <= epsPri && sK.norm() <= epsDual;
+
+        return stop;
+    }
+
     double runLsom(ROPTLIB::LsomProblem &Prob,
                    const ROPTLIB::Vector &startX,
                    int src,
@@ -1925,31 +2070,104 @@ namespace ROPTLIB
 
         double costOut = std::numeric_limits<double>::infinity();
 
-        SomUtils::VecMatD Rrecovered(n, SomUtils::MatD::Zero(d, d));
-        SomUtils::MatD Trecovered(SomUtils::MatD::Zero(d, n));
-        SomUtils::MatD LambdasRecovered(SomUtils::MatD::Zero(e, 1));
-
         bool admmStoppingConditionReached = false;
 
         SomUtils::MatD zAdmm(SomUtils::MatD::Zero(e, 1));
-        zAdmm = Prob.zAdmm_;
+
+        // zAdmm = Prob.zAdmm_;
+        if (Prob.firstZadmmLambdas_)
+        {
+            SomUtils::MatD startXEig(Prob.fullSz_, 1);
+            Prob.RoptToEig(startX, startXEig);
+            SomUtils::MatD lambdasInitguess = SomUtils::MatD::Zero(e, 1);
+            Prob.getScales(startXEig, lambdasInitguess);
+            zAdmm = lambdasInitguess; // TODO: use setter instead of direct access
+        }
+        else
+        {
+            zAdmm = Prob.zAdmm_; // TODO: use setter instead of direct access
+
+            
+        }
+
         SomUtils::MatD yAdmm(SomUtils::MatD::Zero(e, 1));
         yAdmm = Prob.yAdmm_;
         double muAdmm = Prob.muAdmm_;
 
-        auto startXlocal = startX;
+        ROFL_VAR1("ADMM init:")
+        ROFL_VAR1(zAdmm.transpose())
+        ROFL_VAR1(yAdmm.transpose())
+        ROFL_VAR1(muAdmm)
+
+        ROPTLIB::Vector startXlocal = startX;
+        // startX.CopyTo(startXlocal);
+
+        if (Prob.ssomInitguess_)
+        {
+            SsomProblem ssomProb(Prob.sz_, Prob.tijs_, Prob.edges_);
+            ssomProb.setReluScaleCompensation(Prob.reluScaleCompensation_);
+
+            // integer numoftypes = 3;
+            // ROPTLIB::Stiefel mani1next(d, d);
+            // mani1next.ChooseParamsSet2();
+            // ROPTLIB::Euclidean mani2next(somSzNext.p_, somSzNext.n_);
+            // ROPTLIB::ProductManifold ProdMani(numoftypes,
+            //                                       &mani1next, numofmani1, &mani2next, numofmani2, &mani3, numofmani3);
+            ssomProb.SetDomain(Prob.GetDomain());
+
+            ssomProb.setUsePIM(true);           // same as default
+            ssomProb.setPimMaxIterations(5000); // same as default
+            ssomProb.setGt(rGt, tGt, lambdasGt);
+
+            ssomProb.setRho(100.0); // TODO: make this settable from outside, and maybe also make it adaptive as in ADMM?
+
+            ROFL_VAR1("Using SSOM initguess")
+
+            if (ssomProb.reluScaleCompensation_)
+            {
+                ROFL_VAR1(ssomProb.costEigenRelu(ssomProb.Rgt_, ssomProb.Tgt_, ssomProb.LambdasGt_));
+            }
+            else
+            {
+                ROFL_VAR1(ssomProb.costEigen(ssomProb.Rgt_, ssomProb.Tgt_, ssomProb.LambdasGt_));
+            }
+
+            // output the parameters of the manifold of domain
+            startXlocal.Print("startXlocal before SSOM optimization");
+            ROPTLIB::RTRNewton *RTRNewtonSolver = new ROPTLIB::RTRNewton(&ssomProb, &startXlocal);
+            RTRNewtonSolver->Verbose = ROPTLIB::ITERRESULT;
+            // RTRNewtonSolver->Max_Iteration = 500;
+            // RTRNewtonSolver->Max_Inner_Iter = 500;
+            // ROPTLIB::PARAMSMAP solverParams = {std::pair<std::string, double>("Max_Inner_Iter", 10)};
+            // RTRNewtonSolver->SetParams(solverParams);
+            RTRNewtonSolver->CheckParams();
+
+            RTRNewtonSolver->Run();
+            // Numerically check gradient consistency (optional).
+            auto Xopt = RTRNewtonSolver->GetXopt();
+            auto XoptCost = RTRNewtonSolver->Getfinalfun();
+
+            Xopt.CopyTo(startXlocal);
+
+            delete RTRNewtonSolver;
+        }
 
         if (!Prob.enableRs_)
         {
             std::cout << "RS disabled: skipping staircase and returning directly with costOut = costLast" << std::endl;
 
             int iterAdmm = 0;
+
+            SomUtils::MatD rK(SomUtils::MatD::Zero(e, 1));
+            SomUtils::MatD sK(SomUtils::MatD::Zero(e, 1));
+
             // while iter_admm < 100 && ~admm_stopping_condition_reached
             while (iterAdmm < Prob.maxIterAdmm_ && !admmStoppingConditionReached)
             {
-                ROFL_VAR1(iterAdmm)
+                ROFL_VAR2(iterAdmm, Prob.maxIterAdmm_)
 
                 auto ProbAdmm = Prob;
+                ProbAdmm.costCurr_ = costOut; // TODO: use setter instead of direct access
                 ProbAdmm.setZAdmm(zAdmm);
                 ProbAdmm.setYAdmm(yAdmm);
                 ProbAdmm.setMuAdmm(muAdmm);
@@ -1963,7 +2181,8 @@ namespace ROPTLIB
                 // RTRNewtonSolver->SetParams(solverParams);
                 RTRNewtonSolver->CheckParams();
 
-                startX.Print("startx");
+                ROFL_VAR1(iterAdmm)
+                startX.Print("startx in ADMM loop");
 
                 // % Solve.
                 // [x, xcost, info, options] = trustregions(problem);
@@ -1971,6 +2190,7 @@ namespace ROPTLIB
                 // Numerically check gradient consistency (optional).
                 auto Xopt = RTRNewtonSolver->GetXopt();
                 auto XoptCost = RTRNewtonSolver->Getfinalfun();
+                costOut = XoptCost;
 
                 // Prob.CheckGradHessian(Xopt);
 
@@ -1985,10 +2205,16 @@ namespace ROPTLIB
                 SomUtils::MatD XoptEig = SomUtils::MatD::Zero(d * d * n + d * n + e, 1);
                 ProbAdmm.RoptToEig(Xopt, XoptEig);
                 ProbAdmm.getScales(XoptEig, LambdasManoptOutEig);
-                zAdmm = LambdasManoptOutEig.cwiseMax(SomUtils::MatD::Ones(e, 1));
-                yAdmm = yAdmm + muAdmm * (zAdmm - LambdasManoptOutEig);
+                // SomUtils::MatD tmp = LambdasManoptOutEig - (yAdmm / muAdmm); // as in Overleaf, but this is not what Matlab code does
+                SomUtils::MatD tmp = LambdasManoptOutEig; // as in Matlab
+                zAdmm = tmp.cwiseMax(1.0);
+                yAdmm += muAdmm * (zAdmm - LambdasManoptOutEig);
 
-                startXlocal = Xopt;
+                ROFL_VAR1("ADMM updates")
+                ROFL_VAR1(zAdmm.transpose())
+                ROFL_VAR1(yAdmm.transpose())
+
+                Xopt.CopyTo(startXlocal);
 
                 // Outputs
                 Xopt.Print("Xopt");
@@ -1996,6 +2222,29 @@ namespace ROPTLIB
 
                 delete RTRNewtonSolver;
                 // end of lsomRTR()
+
+                // [params.mu, r_k, s_k] = update_lsom_penalty_param(params.mu, x_k, z_k, z_prev);
+                // params_mu_next = params.mu;
+                // disp(params.mu)
+                ProbAdmm.updateLsomPenaltyParam(ProbAdmm.muAdmm_, LambdasManoptOutEig, zAdmm, ProbAdmm.zAdmm_, muAdmm, rK, sK);
+                ROFL_VAR1(muAdmm)
+
+                // disp(norm(s_k))
+                // disp(norm(r_k))
+                ROFL_VAR2(rK.norm(), sK.norm())
+
+                // if size (X_manopt_out.R, 1) == size(X_manopt_out.R, 2)
+                //     disp("multidet(X_manopt_out.R)")
+                //     disp(multidet(X_manopt_out.R))
+
+                SomUtils::VecMatD RadmmOut(n, SomUtils::MatD::Zero(d, d));
+                std::vector<double> rotDetsOk(n, -1.0);
+                ProbAdmm.getRotations(XoptEig, RadmmOut);
+                SomUtils::multidet(RadmmOut, rotDetsOk);
+
+                // admm_stopping_condition_reached = check_admm_stopping_condition(x_k, y_k, z_k, r_k, s_k, num_edges, 1e-8, 1e-8);
+                admmStoppingConditionReached = ProbAdmm.checkAdmmStoppingCondition(rK, sK, ProbAdmm.tolAdmmPrimal_, ProbAdmm.tolAdmmDual_);
+                ROFL_VAR1(admmStoppingConditionReached)
 
                 iterAdmm++;
             }
@@ -2220,9 +2469,23 @@ namespace ROPTLIB
             // rsSuccess = recSEDNsuccess;
         }
 
+        ROFL_VAR1("End of ADMM")
+
         //
         std::vector<double> Rdets(n);
+        SomUtils::VecMatD Rrecovered(n, SomUtils::MatD::Zero(d, d));
+        SomUtils::MatD Trecovered(SomUtils::MatD::Zero(d, n));
+        SomUtils::MatD LambdasRecovered(SomUtils::MatD::Zero(e, 1));
+        SomUtils::VecMatD RmanoptOutEig(n, SomUtils::MatD::Zero(staircaseStepIdx, d));
+        SomUtils::MatD TmanoptOutEig(SomUtils::MatD::Zero(staircaseStepIdx, n));
+        SomUtils::MatD LambdaManoptOutEig(SomUtils::MatD::Zero(e, 1));
+        SomUtils::MatD XoptEig(SomUtils::MatD::Zero(d * d * n + d * n + e, 1));
+        Prob.RoptToEig(startXlocal, XoptEig);
+        Prob.getRotations(XoptEig, Rrecovered);
+        Prob.getTranslations(XoptEig, Trecovered);
+        Prob.getScales(XoptEig, LambdasRecovered);
         SomUtils::multidet(Rrecovered, Rdets);
+
         rotDetsOk = true;
         for (int i = 0; i < n; ++i)
         {
@@ -2248,16 +2511,53 @@ namespace ROPTLIB
 
         // globalize
 
-        ROFL_VAR1("Running globalization procedure")
-
         Rout.resize(n, SomUtils::MatD::Zero(d, d));
         Tout.resize(d, n);
         Tout.setZero();
         lambdasOut.resize(e, 1);
         lambdasOut.setZero();
+
         bool globalRecoverySuccess = true; // TODO: implement globalization procedure and set this flag accordingly
-        // bool globalRecoverySuccess = ProbPrev.globalize(src, Rrecovered, Trecovered, LambdasRecovered,
-        //                                                 Rout, Tout, lambdasOut);
+
+        if (Prob.performGlobalization_)
+        {
+            ROFL_VAR1("Running globalization procedure")
+            bool globalRecoverySuccess = Prob.globalize(src, Rrecovered, Trecovered, LambdasRecovered,
+                                                        Rout, Tout, lambdasOut);
+        }
+        else
+        {
+            ROFL_VAR1("Skipping globalization procedure")
+            Rout = Rrecovered;
+            Tout = Trecovered;
+            lambdasOut = LambdasRecovered;
+        }
+
+        for (int i = 0; i < n; ++i)
+        {
+            ROFL_VAR2(i, Rout[i])
+            if (!SomUtils::isEqualDoubles(((Rout[i] - rGt[i]).cwiseAbs().maxCoeff()), 0.0))
+            {
+                rotDetsOk = false;
+                ROFL_VAR1("Rotations changed")
+                break;
+            }
+        }
+        ROFL_VAR1(Tout)
+
+        if (!SomUtils::isEqualDoubles(((Tout - tGt).cwiseAbs().maxCoeff()), 0.0))
+        {
+            rotDetsOk = false;
+            ROFL_VAR1("Translations changed")
+        }
+
+        ROFL_VAR1(lambdasOut)
+        if (!SomUtils::isEqualDoubles(((lambdasOut - lambdasGt).cwiseAbs().maxCoeff()), 0.0))
+        {
+            rotDetsOk = false;
+            ROFL_VAR1("Lambdas changed")
+        }
+
         ROFL_VAR1(globalRecoverySuccess)
 
         return costOut;

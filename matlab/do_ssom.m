@@ -219,8 +219,8 @@ if params.enable_lsom
     testdata.mu = params.mu;
 
     %% temporarily use GT as initguess (tijs still noisy)
-    transf_initguess = testdata.gitruth;
-    lambdas_initguess = testdata.lambdaijtruth';
+    % transf_initguess = testdata.gitruth;
+    % lambdas_initguess = testdata.lambdaijtruth';
     %%
     transf_initguess_struct.R = G2R(transf_initguess);
     transf_initguess_struct.T = G2T(transf_initguess);

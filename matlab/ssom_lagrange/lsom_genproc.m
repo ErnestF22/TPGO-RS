@@ -43,8 +43,8 @@ disp("BEFORE ANY ITERATION OF LSOM_RTR:")
 
 % %% try to start from optimal solution
 % 
-transf_initguess_struct.R = X_gt.R;
-transf_initguess_struct.T = X_gt.T;
+% transf_initguess_struct.R = X_gt.R;
+% transf_initguess_struct.T = X_gt.T;
 % lambdas_initguess = X_gt.lambda';
 % 
 % if params.relu_scale_compensation
@@ -94,14 +94,31 @@ transf_initguess_struct.T = X_gt.T;
 
 % r0 = d+1; %start of RS
 
+%% Use SSOM (with scale cost compensation) to provide more correct initguess to ADMM
+
+problem_data_ssom = problem_data;
+problem_data_ssom.rho = 1000.0;
+
+transf_initguess = RT2G(transf_initguess_struct.R, transf_initguess_struct.T);
+
+ [transf_out_ig, lambdas_ssom_out_ig] = ...
+    ssom_genproc(problem_data_ssom, transf_initguess, lambdas_initguess, params);
+
 
 iter_admm = 0;
+
+transf_initguess_struct.R = G2R(transf_out_ig);
+transf_initguess_struct.T = G2T(transf_out_ig);
+lambdas_initguess = lambdas_ssom_out_ig;
+
+
+
 
 % params.z = max(ones(size(lambdas_initguess)), lambdas_initguess);
 admm_stopping_condition_reached = false;
 plot_vars = [];
 plot_r_s = [];
-while iter_admm < 100 && ~admm_stopping_condition_reached
+while iter_admm < 50 && ~admm_stopping_condition_reached
 
     z_prev = params.z;
     % [X_manopt_out] = lsom_rtr_rs(nrs, d, N, problem_data, params, transf_initguess_struct, lambdas_initguess);

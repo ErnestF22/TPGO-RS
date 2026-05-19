@@ -4,7 +4,7 @@ assert(size(testdatas, 2) == size(sigmas, 1))
 
 ii = 1;
 
-num_tests_per_sigma = 2;
+num_tests_per_sigma = 30;
 
 manopt_sep_rot_errs = zeros(size(sigmas));
 manopt_sep_transl_errs = zeros(size(sigmas));
@@ -30,7 +30,7 @@ for tdata = testdatas
     d = 3;
     d_aff = d+1;
     global_camera_id = 1;
-    num_tests_per_sigma = 50;
+    % num_tests_per_sigma = 50;
     transf_end_thresh = 1;
     max_icp_iterations = 10;
     num_edges_full = N*N;
@@ -52,7 +52,8 @@ for tdata = testdatas
     num_edges = tdata.NEdges;
 
     %% ADMM params
-    z = ones(num_edges, 1); % better to initialize this as lambdas initguess
+    % z = ones(num_edges, 1); % better to initialize this as lambdas initguess
+    z = tdata.lambdaij;
     y = zeros(num_edges, 1);
     mu = 0.1; % !!
 
@@ -90,7 +91,6 @@ for tdata = testdatas
     %struct, uncomment the following line
     % noise_params = struct('sigma', sigmas(1), 'mu', mus(1));
 
-    
 
     %when multple sigmas and mus, and multiple tests per each pair
 

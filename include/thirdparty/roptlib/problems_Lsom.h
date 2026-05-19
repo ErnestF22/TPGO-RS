@@ -30,6 +30,8 @@
 #include "problems_Problem.h"
 #include "solvers_RTRNewton.h"
 
+#include "problems_Ssom.h"
+
 #include "thirdparty/qr_unique_sizeless/main.h"
 
 #include <Spectra/GenEigsSolver.h>
@@ -431,6 +433,21 @@ namespace ROPTLIB
       void setMaxIterAdmm(int maxIterAdmm);
 
       /**
+       * @brief Set the performGlobalization_ object to @param performGlobalization
+       */
+      void setPerformGlobalization(bool performGlobalization);
+
+      /**
+       * @brief Set the ssomInitguess_ object to @param ssomInitguess
+       */
+      void setSsomInitguess(bool ssomInitguess);
+
+      /**
+       * @brief Set the firstZadmmLambdas_ object to @param firstZadmmLambdas
+       */
+      void setFirstZadmmLambdas(bool firstZadmmLambdas);
+
+      /**
        * @brief Return vectorized (following col-major order, like in MATLAB) version of @param R
        * in output reference @param RvecOut
        */
@@ -614,7 +631,18 @@ namespace ROPTLIB
 
       double tolAdmmDual_;
 
+      bool performGlobalization_;
+
+      bool ssomInitguess_; // whether to use SSOM solution as init guess for LSOM
+
+      bool firstZadmmLambdas_;
+
       ////////////////////////////////////////RS////////////////////////////////////////
+
+      void updateLsomPenaltyParam(const double &mu, const SomUtils::MatD &xK, const SomUtils::MatD &zK, const SomUtils::MatD &zPrev,
+                                  double &muNext, SomUtils::MatD &rK, SomUtils::MatD &sK) const;
+
+      bool checkAdmmStoppingCondition(const SomUtils::MatD &rK, const SomUtils::MatD &sK, double epsAbs = 1e-6, double epsRel = 1e-3) const;
 
       /**
        * @brief Check and return boolean stating whether @param lambda and u are an eigencouple for
