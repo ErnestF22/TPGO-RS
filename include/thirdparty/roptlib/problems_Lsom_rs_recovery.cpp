@@ -3342,7 +3342,7 @@ namespace ROPTLIB
             ROFL_VAR4(i, Rgt_[i], RrecoveredGlobal[i], SomUtils::isEqualFloats(Rgt_[i], RrecoveredGlobal[i]))
         }
 
-        double lambdaFactor = LambdasGt_(src) / LambdasIn(0); // should be the same for all edges
+        double lambdaFactor = LambdasGt_(src) / LambdasIn(src); // should be the same for all edges
         LambdasOut = lambdaFactor * LambdasIn;
 
         ROFL_VAR2(LambdasGt_.transpose(), LambdasIn.transpose());
@@ -3352,8 +3352,12 @@ namespace ROPTLIB
         // T_edges_scaled2 = T_edges_scaled;
         // for ii = 1:num_edges
         //     T_edges_scaled2(:,ii) = R_global' * T_edges_scaled(:,ii);
+        // T_recovered_global_pre_shift = edge_diffs_2_T(T_edges_scaled2, edges, N);
+        // T_recovered_global = T_recovered_global_pre_shift;
+        // for ii = 1:N
+        //     T_recovered_global(:, ii) = T_recovered_global_pre_shift(:,ii) + X_gt.T(:,base_node_id);
         SomUtils::MatD Tedges(SomUtils::MatD::Zero(sz_.d_, numEdges_));
-        makeTedges(Tsedn, Tedges);
+        makeTedges(Tsedn, Tedges);        
         SomUtils::MatD TedgesScaled = lambdaFactor * Tedges;
         SomUtils::MatD TedgesScaled2(SomUtils::MatD::Zero(sz_.d_, numEdges_));
         for (int i = 0; i < numEdges_; ++i)

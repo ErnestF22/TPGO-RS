@@ -50,6 +50,7 @@ results/
 results_procrustes/
 results_icp/
 results_ssom/
+results_lsom/
 
 .vscode/
 

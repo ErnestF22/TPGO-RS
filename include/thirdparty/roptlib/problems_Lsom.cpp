@@ -2085,9 +2085,7 @@ namespace ROPTLIB
         }
         else
         {
-            zAdmm = Prob.zAdmm_; // TODO: use setter instead of direct access
-
-            
+            zAdmm = Prob.zAdmm_; // TODO: use setter instead of direct access            
         }
 
         SomUtils::MatD yAdmm(SomUtils::MatD::Zero(e, 1));
@@ -2182,7 +2180,7 @@ namespace ROPTLIB
                 RTRNewtonSolver->CheckParams();
 
                 ROFL_VAR1(iterAdmm)
-                startX.Print("startx in ADMM loop");
+                // startX.Print("startx in ADMM loop");
 
                 // % Solve.
                 // [x, xcost, info, options] = trustregions(problem);
