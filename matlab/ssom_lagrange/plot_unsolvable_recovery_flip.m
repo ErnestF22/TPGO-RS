@@ -71,7 +71,7 @@ testdata_smaller.NNodes = size(testdata_smaller.E, 1);
 testdata_smaller.NEdges = testdata.NNodes;
 testdata_smaller.EType = ones(size(testdata.E, 1), 1);
 
-testdata_smaller.node_ids = [2,3,4,5]; % TODO: extract them from testdata_smaller.E automatically
+testdata_smaller.node_ids = sort(unique(testdata_smaller.E));
 
 original_node_ids = 1:testdata.NNodes;
 
@@ -103,8 +103,6 @@ adjmat = tril(adjmat); %adjust to lower-triangular matrix as only edges starting
 
 testdata_smaller.A = adjmat;
 
-
-testdata_smaller.A = make_adj_mat_from_edges(testdata_smaller.E, testdata_smaller.NNodes);
 testdata_smaller.gitruth = [];
 testdata_smaller.gi = [];
 for ii = testdata_smaller.node_ids
