@@ -2190,6 +2190,7 @@ namespace ROPTLIB
                 auto XoptCost = RTRNewtonSolver->Getfinalfun();
                 costOut = XoptCost;
 
+                // ROFL_VAR1("")
                 // Prob.CheckGradHessian(Xopt);
 
                 // std::cout << "Prob.GetUseGrad() " << Prob.GetUseGrad() << std::endl;

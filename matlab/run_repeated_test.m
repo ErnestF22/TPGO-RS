@@ -4,7 +4,7 @@ assert(size(testdatas, 2) == size(sigmas, 1))
 
 ii = 1;
 
-num_tests_per_sigma = 30;
+num_tests_per_sigma = 3;
 
 manopt_sep_rot_errs = zeros(size(sigmas));
 manopt_sep_transl_errs = zeros(size(sigmas));
