@@ -55,7 +55,7 @@ for tdata = testdatas
     % z = ones(num_edges, 1); % better to initialize this as lambdas initguess
     z = tdata.lambdaij;
     y = zeros(num_edges, 1);
-    mu = 0.1; % !!
+    mu = 2.0; % !!
 
     
     som_params = struct('N', N, 'd', d, 'd_aff', d_aff, ...
