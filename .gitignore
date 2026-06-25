@@ -64,6 +64,7 @@ matlab/data/check_same_output/
 matlab/failed_recovery.mat
 matlab/ssom_lagrange/data/ssom_testdata_noisy/harder/
 matlab/lsom_results/
+matlab/20*
 
 #include/thirdparty/qr_unique_sizeless/
 

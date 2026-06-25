@@ -177,6 +177,9 @@ target_link_libraries(test_dijkstra_self ${rofl_LIBRARIES} roptlib_local qru m b
 # add_executable(test_gfg_dijkstra test/test_gfg_dijkstra.cpp include/som_utils.cpp)
 # target_link_libraries(test_gfg_dijkstra ${rofl_LIBRARIES} roptlib_local m blas lapack boost_iostreams boost_system boost_filesystem)
 
+add_executable(test_grad_hess_matlab_cpp test/test_grad_hess_matlab_cpp.cpp include/som_utils.cpp)
+target_link_libraries(test_grad_hess_matlab_cpp ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
+
 add_executable(test_linesearch_som test/test_linesearch_som.cpp include/som_utils.cpp)
 target_link_libraries(test_linesearch_som ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
 

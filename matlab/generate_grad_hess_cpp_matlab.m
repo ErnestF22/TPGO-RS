@@ -97,9 +97,15 @@ if exist('mu','var')
     writematrix(mu, fullfile(outDir, 'mu.csv'));
 end
 
+num_edges = size(testdata.E, 1);
+if exist('num_edges','var')
+    writematrix(num_edges, fullfile(outDir, 'num_edges.csv'));
+end
+
 % tijs = problem_data.tijs;
 if exist('tijs','var')
-    writematrix(tijs, fullfile(outDir, 'tijs.csv'));
+   writematrix(tijs, ...
+        convertStringsToChars(strcat(outDir, "/tijs.csv")), 'Delimiter', ',')
 end
 
 edges = problem_data.edges;
