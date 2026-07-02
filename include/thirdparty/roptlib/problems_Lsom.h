@@ -1070,7 +1070,7 @@ namespace ROPTLIB
                   SomUtils::MatD &Tout,
                   SomUtils::MatD &lambdasOut,
                   int &staircaseStepIdx,
-                  bool &rsSuccess, bool &rotDetsOk, bool &lambdasAcceptable);
+                  bool &rsSuccess, bool &rotDetsOk, bool &lambdasAcceptable, bool& rsActuallyUseful);
 
 } // end of namespace ROPTLIB
 

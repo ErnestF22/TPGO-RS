@@ -79,6 +79,7 @@ int main(int argc, char **argv)
     std::ofstream rsSuccessOfstream;
     std::ofstream rotDetsOkOfstream;
     std::ofstream lambdasAcceptableOfstream;
+    std::ofstream rsActuallyUsefulOfstream;
     std::ofstream rotErrsMeanOfstream;
     std::ofstream translErrsMeanOfstream;
     std::ofstream lambdaErrsMeanOfstream;
@@ -318,6 +319,19 @@ int main(int argc, char **argv)
             ROFL_ERR("Error opening output file")
             ROFL_ASSERT(0)
         }
+        // RS actually useful
+        std::string rsActuallyUsefulFilename = resultsBasePath + folderAppendName + "_" + folderAppendNameStamped + "/" + folderAppendName + "_rs_actually_useful.txt";
+        if (rsActuallyUsefulOfstream.is_open())
+        {
+            rsActuallyUsefulOfstream.close();
+            rsActuallyUsefulOfstream.clear(); // clear flags
+        }
+        rsActuallyUsefulOfstream.open(rsActuallyUsefulFilename);
+        if (!rsActuallyUsefulOfstream)
+        {
+            ROFL_ERR("Error opening output file")
+            ROFL_ASSERT(0)
+        }
         // means
         std::string rotErrsMeanFilename = resultsBasePath + folderAppendName + "_" + folderAppendNameStamped + "/" + folderAppendName + "_rot_errors_mean.txt";
         if (rotErrsMeanOfstream.is_open())
@@ -372,7 +386,7 @@ int main(int argc, char **argv)
         double rotMeanErr = 1e+6, translMeanErr = 1e+6, lambdaMeanErr = 1e+6, execTimeMean = 1e+6;
         std::vector<std::vector<double>> rotErrs(numTestsPerInstance), translErrs(numTestsPerInstance), lambdaErrs(numTestsPerInstance);
         std::vector<double> execTimes(numTestsPerInstance), staircaseStepOutIdx(numTestsPerInstance);
-        std::vector<bool> rsSuccess(numTestsPerInstance), rotDetsOk(numTestsPerInstance), lambdasAcceptable(numTestsPerInstance);
+        std::vector<bool> rsSuccess(numTestsPerInstance), rotDetsOk(numTestsPerInstance), lambdasAcceptable(numTestsPerInstance), rsActuallyUseful(numTestsPerInstance);
 
         for (int testjd = 0; testjd < numTestsPerInstance; ++testjd)
         {
@@ -418,7 +432,7 @@ int main(int argc, char **argv)
                 SomUtils::MatD Tout(SomUtils::MatD::Zero(d, n));
                 SomUtils::MatD LambdasOut(SomUtils::MatD::Zero(numEdges, 1));
                 int staircaseStepIdxOutIJ;
-                bool rsSuccessIJ, rotDetsOkIJ, lambdasAcceptableIJ;
+                bool rsSuccessIJ, rotDetsOkIJ, lambdasAcceptableIJ, rsActuallyUsefulIJ = true;
                 /* Setting up Prob using setters */
                 Prob.setUsePIM(true);           // same as default
                 Prob.setPimMaxIterations(5000); // same as default
@@ -428,7 +442,12 @@ int main(int argc, char **argv)
                 double costOut = ROPTLIB::runLsom(Prob, startX2, srcNodeIdx, // !! startX2 used here!
                                                   Rout, Tout, LambdasOut,
                                                   staircaseStepIdxOutIJ,
-                                                  rsSuccessIJ, rotDetsOkIJ, lambdasAcceptableIJ); // note: startX is needed (even if random) in ROPTLIB;
+                                                  rsSuccessIJ, rotDetsOkIJ, lambdasAcceptableIJ, rsActuallyUsefulIJ); // note: startX is needed (even if random) in ROPTLIB;
+
+                if (rsActuallyUsefulIJ)
+                {
+                    ROFL_ASSERT(0)
+                }
 
                 // ROPTLIB namespace is used even if runRsomRS() is not in LsomProblem class, nor in "original" ROPTLIB
                 ROFL_VAR1(costOut)
@@ -477,6 +496,7 @@ int main(int argc, char **argv)
                 rsSuccess[testjd] = rsSuccessIJ;
                 rotDetsOk[testjd] = rotDetsOkIJ;
                 lambdasAcceptable[testjd] = lambdasAcceptableIJ;
+                rsActuallyUseful[testjd] = rsActuallyUsefulIJ;
 
                 for (int k = 0; k < numEdges; ++k)
                 {
@@ -500,6 +520,8 @@ int main(int argc, char **argv)
                 rotDetsOkOfstream << rotDetsOk[testjd] << std::endl;
                 lambdasAcceptableOfstream << "j " + std::to_string(testjd) << std::endl;
                 lambdasAcceptableOfstream << lambdasAcceptable[testjd] << std::endl;
+                rsActuallyUsefulOfstream << "j " + std::to_string(testjd) << std::endl;
+                rsActuallyUsefulOfstream << rsActuallyUseful[testjd] << std::endl;
 
                 // Finding mean error of current instance-testjd pair
                 rotMeanErr = SomUtils::stlVecDoublesMean(rotErrs[testjd]);
@@ -549,6 +571,7 @@ int main(int argc, char **argv)
     rsSuccessOfstream.close();
     rotDetsOkOfstream.close();
     lambdasAcceptableOfstream.close();
+    rsActuallyUsefulOfstream.close();
     rotErrsMeanOfstream.close();
     translErrsMeanOfstream.close();
     lambdaErrsMeanOfstream.close();

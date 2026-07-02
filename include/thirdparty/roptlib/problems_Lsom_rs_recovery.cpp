@@ -3313,6 +3313,27 @@ namespace ROPTLIB
         //     ROFL_VAR2(TmanoptOut.col(i).transpose(), Trecovered.col(i).transpose())
         // }
 
+        std::vector<double> multidetRrecovered(sz_.n_);
+        SomUtils::multidet(Rrecovered, multidetRrecovered);
+
+        // Verify each determinant is either +1 or -1 (within tolerance)
+        const double tol = 1e-6;
+        for (std::size_t i = 0; i < multidetRrecovered.size(); ++i)
+        {
+            double val = multidetRrecovered[i];
+            if (std::abs(std::abs(val) - 1.0) > tol)
+            {
+                // ROFL_VAR2("Determinant not +/-1 at index ", static_cast<int>(i));
+                // ROFL_VAR2("Value: ", val);
+                rsRecoverySuccess_ = false;
+                break;
+            }
+        }
+        // if (rsRecoverySuccess_)
+        // {
+        //     // ROFL_VAR1("All recovered rotation determinants are +/-1");
+        // }
+
         return rsRecoverySuccess_;
     }
 
@@ -3357,7 +3378,7 @@ namespace ROPTLIB
         // for ii = 1:N
         //     T_recovered_global(:, ii) = T_recovered_global_pre_shift(:,ii) + X_gt.T(:,base_node_id);
         SomUtils::MatD Tedges(SomUtils::MatD::Zero(sz_.d_, numEdges_));
-        makeTedges(Tsedn, Tedges);        
+        makeTedges(Tsedn, Tedges);
         SomUtils::MatD TedgesScaled = lambdaFactor * Tedges;
         SomUtils::MatD TedgesScaled2(SomUtils::MatD::Zero(sz_.d_, numEdges_));
         for (int i = 0; i < numEdges_; ++i)
@@ -3455,6 +3476,8 @@ namespace ROPTLIB
 
         Rout = RrecoveredGlobal;
         Tout = TrecoveredGlobal;
+
+        
 
         if (reluScaleCompensation_)
         {

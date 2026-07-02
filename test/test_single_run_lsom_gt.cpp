@@ -162,7 +162,7 @@ int main(int argc, char **argv)
     SomUtils::MatD Tout(SomUtils::MatD::Zero(d, n));
     SomUtils::MatD lambdasOut(SomUtils::MatD::Zero(numEdges, 1));
     int lastStaircaseStep = 3;
-    bool rsSuccess = false, rotDetsOk = false, lambdasAcceptable = false;
+    bool rsSuccess = false, rotDetsOk = false, lambdasAcceptable = false, rsActuallyUseful = true;
     double exectime = 0;
     ROFL_VAR1("Before ROPTLIB::runLsom")
     ROFL_VAR1(Prob.f(startX))
@@ -172,7 +172,7 @@ int main(int argc, char **argv)
         double costOut = ROPTLIB::runLsom(Prob, startX, srcNodeIdx,
                                           Rout, Tout, lambdasOut,
                                           lastStaircaseStep,
-                                          rsSuccess, rotDetsOk, lambdasAcceptable); // note: startX is needed (even if random) in ROPTLIB;
+                                          rsSuccess, rotDetsOk, lambdasAcceptable, rsActuallyUseful); // note: startX is needed (even if random) in ROPTLIB;
         // ROPTLIB namespace is used even if runLsom() is not in SsomProblem class, nor in "original" ROPTLIB
         ROFL_VAR1(costOut)
         exectime = timer.elapsedTimeMs();

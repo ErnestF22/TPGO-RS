@@ -4,7 +4,7 @@ assert(size(testdatas, 2) == size(sigmas, 1))
 
 ii = 1;
 
-num_tests_per_sigma = 3;
+num_tests_per_sigma = 10;
 
 manopt_sep_rot_errs = zeros(size(sigmas));
 manopt_sep_transl_errs = zeros(size(sigmas));
@@ -21,6 +21,7 @@ manopt_rs_exec_times = zeros(size(sigmas));
 rs_success_bools = zeros(length(sigmas), num_tests_per_sigma);
 rot_dets_ok = zeros(length(sigmas), num_tests_per_sigma);
 lambdas_acceptable = zeros(length(sigmas), num_tests_per_sigma);
+rs_actually_useful = zeros(length(sigmas), num_tests_per_sigma);
 
 for tdata = testdatas
 
@@ -44,8 +45,8 @@ for tdata = testdatas
     enable_procrustes = false;
     enable_ssom = false;
     enable_lsom = true;
-    enable_rs = false;
-    perform_globalization = false;
+    enable_rs = true;
+    perform_globalization = true;
     relu_scale_compensation = false;
     read_from_file = false;
 
@@ -55,7 +56,7 @@ for tdata = testdatas
     % z = ones(num_edges, 1); % better to initialize this as lambdas initguess
     z = tdata.lambdaij;
     y = zeros(num_edges, 1);
-    mu = 2.0; % !!
+    mu = 0.5; % !!
 
     
     som_params = struct('N', N, 'd', d, 'd_aff', d_aff, ...
@@ -120,7 +121,7 @@ for tdata = testdatas
             ssom_rot_err, ssom_transl_err, ...
             manopt_sep_exec_time, procrustes_exec_time, ssom_exec_time, ...
             ssom_scale_ratio,ssom_transl_err_norm, ssom_scale_err, ...
-            rs_success_bool, rot_dets_ok_ij, lambdas_acceptable_ij] = ...
+            rs_success_bool, rot_dets_ok_ij, lambdas_acceptable_ij, rs_actually_useful_ij] = ...
             do_ssom(tdata, sigma, mu, som_params); % do_som();
 
         % manopt_sep_rot_err = ii + jj;
@@ -152,6 +153,7 @@ for tdata = testdatas
         rs_success_bools(ii,jj) = rs_success_bool;
         rot_dets_ok(ii,jj) = rot_dets_ok_ij;
         lambdas_acceptable(ii,jj) = lambdas_acceptable_ij;
+        rs_actually_useful(ii,jj) = rs_actually_useful_ij;
         disp("ssom_exec_time")
         disp(ssom_exec_time)
     end
@@ -320,6 +322,7 @@ hold off
 save(convertStringsToChars(strcat('rs_success_bools', test_str, ".csv")), "rs_success_bools", '-ascii', '-tabs')
 save(convertStringsToChars(strcat('rot_dets_ok', test_str, ".csv")), "rot_dets_ok", '-ascii', '-tabs')
 save(convertStringsToChars(strcat('lambdas_acceptable', test_str, ".csv")), "lambdas_acceptable", '-ascii', '-tabs')
+save(convertStringsToChars(strcat('rs_actually_useful', test_str, ".csv")), "lambdas_acceptable", '-ascii', '-tabs')
 
 save(test_str)
 

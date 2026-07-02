@@ -25,7 +25,7 @@ tuple.lambda = euclideanfactory(num_edges, 1);
 M = productmanifold(tuple);
 
 % Setup the problem structure with manifold M and cost+grad functions.
-problem.M = M;
+% problem.M = M;
 
 
 problem_data.edges = testdata.E;

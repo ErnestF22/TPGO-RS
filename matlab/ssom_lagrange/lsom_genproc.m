@@ -1,4 +1,4 @@
-function [transf_out, lambdas_lsom_out, rs_recovery_success, cost_out_global, rot_dets_ok, lambdas_acceptable] = ...
+function [transf_out, lambdas_lsom_out, rs_recovery_success, cost_out_global, rot_dets_ok, lambdas_acceptable, rs_actually_useful] = ...
     lsom_genproc(problem_data, transf_initguess_struct, lambdas_initguess, params)
 %RSOM_RS Rsom Manopt pipeline, with the addition of the Riemannian
 %Staircase ("RS")
@@ -6,6 +6,8 @@ function [transf_out, lambdas_lsom_out, rs_recovery_success, cost_out_global, ro
 % if ~exist('thresh','var')
 %   thr=1e-5;
 % end
+
+rs_actually_useful = false;
 
 edges = problem_data.E;
 
@@ -214,6 +216,8 @@ end
 
 problem_data_next = problem_data;
 problem_data_next.relu_scale_compensation = params.relu_scale_compensation;
+
+X_manopt_out_backup = X_manopt_out;
 
 if params.enable_rs
 
@@ -474,6 +478,12 @@ else
     lambdas_acceptable = true;
 end
 
+if params.enable_rs && ~rot_dets_ok
+    X_recovered = X_manopt_out_backup;
+elseif params.enable_rs && size(R_recovered, 1) > d && rot_dets_ok 
+    rs_actually_useful = true;
+end
+
 % save("ws2.mat")
 
 
@@ -724,6 +734,17 @@ disp(lambdas_recovered_global)
 
 disp("cost_out_global")
 disp(cost_out_global)
+
+if params.perform_globalization && (any(abs(vec(multidet(R_recovered_global))) < 1-1e-5) || any(abs(vec(multidet(R_recovered_global))) > 1+1e-5))
+    X_recovered = X_manopt_out_backup;
+    R_recovered_global = X_recovered.R;
+    T_recovered_global = X_recovered.T;
+    lambdas_recovered_global = X_recovered.lambda;
+    rs_actually_useful = false;
+
+    transf_out = RT2G(R_recovered_global, T_recovered_global);
+    lambdas_lsom_out = lambdas_recovered_global;
+end
 
 
 end %file function
