@@ -146,7 +146,7 @@ end
 % 3a) execute with step 1 through MANOPT
 manopt_start_time = tic();
 if params.enable_manopt_icp
-    transf_manopt = rsom_manopt(T_globalframe_nois, tijs_nois, edges, params, transf_initguess);
+    transf_manopt = ssom_manopt(T_globalframe_nois, lambdas_initguess, tijs_nois, edges, params, transf_initguess);
     % manopt_end_time = tic();
 else
     transf_manopt = repmat(eye(d+1), 1, 1, N);
@@ -157,7 +157,7 @@ exectime_manopt = toc(manopt_start_time);
 % 3b) execute with step 1 through PROCRUSTES
 procrustes_start_time = tic();
 if params.enable_procrustes
-    transf_procrustes = som_procrustes(T_globalframe_nois, tijs_nois, edges, params);
+    transf_procrustes = ssom_procrustes(T_globalframe_nois, lambdas_initguess, tijs_nois, edges, params);
 else
     transf_procrustes = repmat(eye(d+1), 1, 1, N);
 end
@@ -237,36 +237,36 @@ if params.enable_lsom
 
     
 
-    figure(12)
-    % testdata = problem_data;
-    % testdata.gi = RT2G(X_recovered.R, X_recovered.T);
-    testdata_noisy_gt = testdata;
-    % for ee = 1:num_edges
-    %     disp("ee")
-    %     disp(ee)
-    %     disp("testdata_noisy_gt.gij(1:3, 4, ee)")
-    %     disp(testdata_noisy_gt.gij(1:3, 4, ee))
-    %     disp("tijs_nois(:, ee)")
-    %     disp(tijs_nois(:, ee))
-    %     testdata_noisy_gt.gij(1:3, 4, ee) = tijs_nois(:, ee);
-    % end
-    tmp = from_gij_to_gi_T(tijs_nois, G2R(testdata.gij), edges, N, X_gt.T(:,1), X_gt.R(:,:,1));
-    for ii = 1:N
-        testdata.gi(1:3, 4, ii) = tmp(:,ii);
-    end    
-    
-    % testdata.lambdaij = X_recovered.lambda;
-    testdata_noisy_gt = testNetworkCompensate(testdata);
-    % testdata=rmfield(testdata,'X');
-    % testNetworkDisplay(testdata); %'Color1','red'
-    hold on;
-    red=[65535	8567	0]/65535;
-    opts_draw_camera={'Color1',red,'Color2',red};
-    testNetworkDisplay(testdata_noisy_gt,'member','gi','optionsDrawCamera', opts_draw_camera)
-    green=[15934	35723	14392]/65535/0.6;           %camera color
-    opts_draw_camera={'Color1',green,'Color2',green};  %options to pass to drawCamera
-    testNetworkDisplay(testdata_noisy_gt,'member','gitruth', 'optionsDrawCamera', opts_draw_camera)
-    hold off;
+    % figure(12)
+    % % testdata = problem_data;
+    % % testdata.gi = RT2G(X_recovered.R, X_recovered.T);
+    % testdata_noisy_gt = testdata;
+    % % for ee = 1:num_edges
+    % %     disp("ee")
+    % %     disp(ee)
+    % %     disp("testdata_noisy_gt.gij(1:3, 4, ee)")
+    % %     disp(testdata_noisy_gt.gij(1:3, 4, ee))
+    % %     disp("tijs_nois(:, ee)")
+    % %     disp(tijs_nois(:, ee))
+    % %     testdata_noisy_gt.gij(1:3, 4, ee) = tijs_nois(:, ee);
+    % % end
+    % tmp = from_gij_to_gi_T(tijs_nois, G2R(testdata.gij), edges, N, X_gt.T(:,1), X_gt.R(:,:,1));
+    % for ii = 1:N
+    %     testdata.gi(1:3, 4, ii) = tmp(:,ii);
+    % end    
+    % 
+    % % testdata.lambdaij = X_recovered.lambda;
+    % testdata_noisy_gt = testNetworkCompensate(testdata);
+    % % testdata=rmfield(testdata,'X');
+    % % testNetworkDisplay(testdata); %'Color1','red'
+    % hold on;
+    % red=[65535	8567	0]/65535;
+    % opts_draw_camera={'Color1',red,'Color2',red};
+    % testNetworkDisplay(testdata_noisy_gt,'member','gi','optionsDrawCamera', opts_draw_camera)
+    % green=[15934	35723	14392]/65535/0.6;           %camera color
+    % opts_draw_camera={'Color1',green,'Color2',green};  %options to pass to drawCamera
+    % testNetworkDisplay(testdata_noisy_gt,'member','gitruth', 'optionsDrawCamera', opts_draw_camera)
+    % hold off;
 
     ssom_cost_noisy_gt = ssom_cost(X_gt, testdata_noisy_gt);
     disp("SSOM cost noisy gt.m")
@@ -328,17 +328,17 @@ testdata.lambdaij = lambdas_ssom_out;
 % hold off;
 
 %
-testdata_comp = testNetworkCompensate(testdata);
-% testdata=rmfield(testdata,'X');
-% testNetworkDisplay(testdata); %'Color1','red'
-hold on;
-red=[65535	8567	0]/65535;
-opts_draw_camera={'Color1',red,'Color2',red};
-testNetworkDisplay(testdata_comp,'member','gi','optionsDrawCamera', opts_draw_camera)
-green=[15934	35723	14392]/65535/0.6;           %camera color
-opts_draw_camera={'Color1',green,'Color2',green};  %options to pass to drawCamera
-testNetworkDisplay(testdata_comp,'member','gitruth', 'optionsDrawCamera', opts_draw_camera)
-hold off;
+% testdata_comp = testNetworkCompensate(testdata);
+% % testdata=rmfield(testdata,'X');
+% % testNetworkDisplay(testdata); %'Color1','red'
+% hold on;
+% red=[65535	8567	0]/65535;
+% opts_draw_camera={'Color1',red,'Color2',red};
+% testNetworkDisplay(testdata_comp,'member','gi','optionsDrawCamera', opts_draw_camera)
+% green=[15934	35723	14392]/65535/0.6;           %camera color
+% opts_draw_camera={'Color1',green,'Color2',green};  %options to pass to drawCamera
+% testNetworkDisplay(testdata_comp,'member','gitruth', 'optionsDrawCamera', opts_draw_camera)
+% hold off;
 
 
 

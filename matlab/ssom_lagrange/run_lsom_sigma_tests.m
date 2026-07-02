@@ -18,7 +18,7 @@ num_edges = testdata.NEdges;
 %% ADMM params
 z = ones(num_edges, 1); % better to initialize this as lambdas initguess
 y = zeros(num_edges, 1);
-mu = 0.1; % !!
+mu = 0.5; % !!
 
 %% Problem params
 % %som = ShapeOfMotion('testNetwork_params.csv'); %params reading is done directly in constructor
@@ -27,7 +27,7 @@ N = testdata.NNodes;
 d = 3;
 d_aff = d+1;
 global_camera_id = 1;
-num_tests_per_sigma = 50;
+num_tests_per_sigma = 3;
 transf_end_thresh = 1;
 max_icp_iterations = 10;
 num_edges_full = N*N;
@@ -37,10 +37,10 @@ hessian_mode = 'manual';
 initguess_is_available = false;
 rand_initguess = true;
 use_pim = true;
-enable_manopt_icp = false;
-enable_procrustes = false;
+enable_manopt_icp = true;
+enable_procrustes = true;
 enable_ssom = false;
-enable_lsom = true;
+enable_lsom = false;
 enable_rs = false;
 perform_globalization = false;
 relu_scale_compensation = false;
@@ -210,6 +210,7 @@ results = struct("manopt_sep_rot_errs", manopt_sep_rot_errs, ...
     "ssom_rot_errs", ssom_rot_errs, ...
     "ssom_transl_errs", ssom_transl_errs, ...
     "ssom_exec_times", ssom_exec_times, ...
+    ...
     "ssom_scale_ratios", ssom_scale_ratios, ...
     "ssom_transl_errs_norm", ssom_transl_errs_norm);
 
