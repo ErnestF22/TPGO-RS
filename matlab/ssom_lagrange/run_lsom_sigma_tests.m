@@ -27,9 +27,9 @@ N = testdata.NNodes;
 d = 3;
 d_aff = d+1;
 global_camera_id = 1;
-num_tests_per_sigma = 3;
+num_tests_per_sigma = 10;
 transf_end_thresh = 1;
-max_icp_iterations = 10;
+max_icp_iterations = 25;
 num_edges_full = N*N;
 procrustes_mode = 'som';
 riem_grad_mode = 'manual'; %'auto' or 'manual'
@@ -74,7 +74,7 @@ sigmas = readmatrix("data/sigmas.txt"); %sigma = stdev, sigma.^2 = variance
 mus = readmatrix("data/mus.txt"); %OBS. generally, mus can be d-dimensional; here, we just assume them as scalar (i.e. a d-dimensional vector with all coordinates equal)
 
 % sigmas = sigmas(4);
-sigmas = 0.0;
+% sigmas = 0.0;
 % mus = mus(2);
 
 node_degrees = sum(testdata.A, 2);

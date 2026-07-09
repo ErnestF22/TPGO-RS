@@ -1,4 +1,4 @@
-function [transf_out, lambdas_out] = ssom_manopt(T_gf_nois, lambdas_init, tijs, edges, params, transf_initguess, lambdas_initguess)
+function [transf_out, lambdas_out] = ssom_manopt(T_gf_nois, lambdas_init, tijs, edges, params, transf_initguess)
 %RSOM_MANOPT Runs the 2-step pipeline of Manopt's RSOM
 
 % nrs = size(T_gf_nois, 1);
