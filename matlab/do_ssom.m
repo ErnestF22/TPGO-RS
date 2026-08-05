@@ -131,6 +131,9 @@ else
         % lambdas_initguess = ones(num_edges, 1);
         % T_globalframe_nois = 10 * rand(params.d, params.N);
     else
+        params.R_initguess = testdata.R_gt;
+        params.T_initguess = testdata.T_gt;
+        params.lambdas_initguess = testdata.lambda_gt;
         R_initguess = params.R_initguess;
         T_initguess = params.T_initguess;
         lambdas_initguess = params.lambdas_initguess;
@@ -267,13 +270,13 @@ if params.enable_lsom
     % opts_draw_camera={'Color1',green,'Color2',green};  %options to pass to drawCamera
     % testNetworkDisplay(testdata_noisy_gt,'member','gitruth', 'optionsDrawCamera', opts_draw_camera)
     % hold off;
-
-    ssom_cost_noisy_gt = ssom_cost(X_gt, testdata_noisy_gt);
-    disp("SSOM cost noisy gt.m")
-    disp(ssom_cost_noisy_gt)
-    lsom_cost_noisy_gt = lsom_cost(X_gt, testdata_noisy_gt);
-    disp("LSOM cost noisy gt.m")
-    disp(lsom_cost_noisy_gt)
+    %    
+    % ssom_cost_noisy_gt = ssom_cost(X_gt, testdata_noisy_gt);
+    % disp("SSOM cost noisy gt.m")
+    % disp(ssom_cost_noisy_gt)
+    % lsom_cost_noisy_gt = lsom_cost(X_gt, testdata_noisy_gt);
+    % disp("LSOM cost noisy gt.m")
+    % disp(lsom_cost_noisy_gt)
 
     %% LSOM Genproc
     [transf_ssom, lambdas_ssom_out, rs_success_bool, cost_ssom, rot_dets_ok, lambdas_acceptable, rs_actually_useful] = ...

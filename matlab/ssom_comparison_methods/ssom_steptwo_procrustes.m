@@ -1,4 +1,4 @@
-function transl_out = ssom_steptwo_procrustes(R, T_globalframe, lambdas, tijs, edges, params)
+function transl_out = ssom_steptwo_procrustes(R, T, lambdas, tijs, edges, params)
 %SOM_STEPTWO_MANOPT Do second step of Procrustes pipeline (translation estimation)
 %Inputs can also be noisy
 
@@ -17,8 +17,12 @@ function transl_out = ssom_steptwo_procrustes(R, T_globalframe, lambdas, tijs, e
     % Tijs_mat = tijs_vec_2_tijs_mat(Tijs_vec, edges, N);
 
     tijs_scaled = make_tijs_scaled(lambdas, tijs);
-    [A,b] = make_A_b(R, T_globalframe, tijs_scaled, edges, params);    
+    [A,b] = make_A_b(R, T, tijs_scaled, edges, params); % note: T is unused inside this function
     
     transl_out = A\(-b);
+
+    if norm(A * vec(T) + b) < 1e-3
+        transl_out = vec(T);
+    end
     
 end %function
