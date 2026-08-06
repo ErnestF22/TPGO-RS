@@ -466,6 +466,11 @@ namespace ROPTLIB
        */
       void setCostCurr(double cc);
 
+      /**
+       * @brief Set the maximum number of iterations for ICP (used in SSOM ICP) to @param maxIcpIterations
+       */
+      void setIcpMaxIterations(int maxIcpIterations);
+
       // private: //TODO: separate public from private members
 
       ////////////////////////////////////CLASS MEMBER VARIABLES////////////////////////////////////////////////
@@ -569,6 +574,11 @@ namespace ROPTLIB
        * Param used in the log-based scale compensation (dependent on a_ s.t. b_ = -a_/(a_-1)^2)
        */
       double b_;
+
+      /**
+       * @brief Max number of iterations for ICP (used in SSOM ICP)
+       */
+      int icpMaxIterations_;
 
       ////////////////////////////////////////RS////////////////////////////////////////
 
@@ -986,6 +996,20 @@ namespace ROPTLIB
                         SomUtils::MatD &P) const;
 
       // void recoverTedges(); //probably just wrong and not needed (neither in MATLAB)
+
+      void ssomStep3(const SomUtils::VecMatD &Rin,
+                     const SomUtils::MatD &Tin,
+                     SomUtils::MatD &LambdasOut,
+                     double stopThr = 1e-5);
+
+      /**
+       * @brief Solve a quadratic equation
+       * @param a coefficient a
+       * @param b coefficient b
+       * @param c coefficient c
+       * @param x output root
+       */
+      double solveQuadraticLambdas(const double a, const double b, const double c);
    };
 
    /**
@@ -999,6 +1023,14 @@ namespace ROPTLIB
                   SomUtils::MatD &lambdasOut,
                   int &staircaseStepIdx,
                   bool &rsSuccess, bool &rotDetsOk, bool &lambdasAcceptable);
+
+   double runSsomICP(ROPTLIB::SsomProblem &Prob,
+                      const ROPTLIB::Vector &startX,
+                      int src,
+                      SomUtils::VecMatD &Rout,
+                      SomUtils::MatD &Tout,
+                      SomUtils::MatD &LambdasOut,
+                      double stopThr = 1e-5);
 
 } // end of namespace ROPTLIB
 

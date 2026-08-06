@@ -90,8 +90,9 @@ include/thirdparty/roptlib/problems_SPDKarcherMean.cpp
 include/thirdparty/roptlib/problems_SphereConvexHull.cpp
 include/thirdparty/roptlib/problems_SphereSparsestVector.cpp
 include/thirdparty/roptlib/problems_SphereTxRQ.cpp
-include/thirdparty/roptlib/problems_Ssom.cpp #ssom
 include/thirdparty/roptlib/problems_Ssom_rs_recovery.cpp #ssom
+include/thirdparty/roptlib/problems_Ssom.cpp #ssom
+include/thirdparty/roptlib/problems_SsomICP.cpp #ssom
 include/thirdparty/roptlib/problems_StieBrockett.cpp
 include/thirdparty/roptlib/problems_StieSPCA.cpp
 include/thirdparty/roptlib/manifolds_SphereTx.cpp
@@ -138,6 +139,9 @@ include/thirdparty/qr_unique_sizeless/rt_nonfinite.cpp
 
 add_executable(run_lsom_tests app/run_lsom_tests.cpp include/som_utils.cpp)
 target_link_libraries(run_lsom_tests ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
+
+add_executable(run_ssom_tests_icp app/run_ssom_tests_icp.cpp include/som_utils.cpp)
+target_link_libraries(run_ssom_tests_icp ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
 
 add_executable(run_ssom_tests app/run_ssom_tests.cpp include/som_utils.cpp)
 target_link_libraries(run_ssom_tests ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)

@@ -1733,6 +1733,11 @@ namespace ROPTLIB
         costCurr_ = cc;
     }
 
+    void SsomProblem::setIcpMaxIterations(int maxIcpIterations)
+    {
+        icpMaxIterations_ = maxIcpIterations;
+    }
+
     void SsomProblem::makeHmat(const SomUtils::MatD &XvecNext, const SomUtils::SomSize &szNext, SomUtils::MatD &Hmat) const
     {
         int staircaseStepLevel = szNext.p_; // TODO: it can maybe be deducted fron XvecNext.size()?
