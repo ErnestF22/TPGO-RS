@@ -143,6 +143,9 @@ target_link_libraries(run_lsom_tests ${rofl_LIBRARIES} roptlib_local qru m blas 
 add_executable(run_ssom_tests_icp app/run_ssom_tests_icp.cpp include/som_utils.cpp)
 target_link_libraries(run_ssom_tests_icp ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
 
+add_executable(run_ssom_tests_procrustes app/run_ssom_tests_procrustes.cpp include/som_utils.cpp include/ssom_procrustes.cpp)
+target_link_libraries(run_ssom_tests_procrustes ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
+
 add_executable(run_ssom_tests app/run_ssom_tests.cpp include/som_utils.cpp)
 target_link_libraries(run_ssom_tests ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
 

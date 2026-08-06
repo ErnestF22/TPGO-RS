@@ -57,7 +57,6 @@ namespace ROPTLIB
         auto tGt = Prob.Tgt_;
         auto lambdasGt = Prob.LambdasGt_;
 
-        Prob.ssomStep3(rGt, tGt, LambdasOut); // TODO: remove from here and use elsewhere where it's needed
 
         SomUtils::MatD startxEigVec(SomUtils::MatD::Zero(d * d * n + d * n + e, 1));
         Prob.RoptToEig(startX, startxEigVec);
@@ -81,6 +80,10 @@ namespace ROPTLIB
             RTRNewtonSolverIter->Run();
             auto XoptIter = RTRNewtonSolverIter->GetXopt();
             auto XoptIterCost = RTRNewtonSolverIter->Getfinalfun();
+
+            // TODO: use
+            // Prob.ssomStep3(rGt, tGt, LambdasOut); 
+            // instead of the full RTR solution
 
             // Outputs
             XoptIter.Print("XoptIter");
@@ -164,8 +167,8 @@ namespace ROPTLIB
         for (int e = 0; e < numEdges; ++e)
         {
             auto tij = tijs_.col(e);
-            int ii = edges_(e, 0);
-            int jj = edges_(e, 1);
+            int ii = edges_(e, 0) - 1;
+            int jj = edges_(e, 1) - 1;
             auto Ri = Rin[ii];
             auto Ti = Tin.col(ii);
             auto Tj = Tin.col(jj);
