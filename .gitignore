@@ -50,7 +50,8 @@ results/
 results_procrustes/
 results_icp/
 results_ssom/
-
+results_lsom/
+results_lsom_matlab/
 
 .vscode/
 
@@ -60,6 +61,10 @@ matlab/data/big_testnetworks/
 matlab/data/ssom_testdata_noisy/small_sample/
 matlab/data/ssom_testdata_noisy/harder/
 matlab/data/check_same_output/
+matlab/failed_recovery.mat
+matlab/ssom_lagrange/data/ssom_testdata_noisy/harder/
+matlab/lsom_results/
+matlab/20*
 
 #include/thirdparty/qr_unique_sizeless/
 
@@ -94,3 +99,4 @@ include/thirdparty/qr_unique_sizeless/include_matlab/*.slxc
 
 # Octave session info
 include/thirdparty/qr_unique_sizeless/include_matlab/octave-workspace
+

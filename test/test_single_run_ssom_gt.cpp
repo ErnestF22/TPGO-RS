@@ -159,12 +159,14 @@ int main(int argc, char **argv)
     SomUtils::MatD Tout(SomUtils::MatD::Zero(d, n));
     SomUtils::MatD lambdasOut(SomUtils::MatD::Zero(numEdges, 1));
     int lastStaircaseStep;
+    bool rsSuccess = false, rotDetsOk = false, lambdasAcceptable = false;
     double exectime = 0;
     {
         rofl::ScopedTimer timer("RsomRS");
         double costOut = ROPTLIB::runSsom(Prob, startX, srcNodeId,
                                           Rout, Tout, lambdasOut,
-                                          lastStaircaseStep); // note: startX is needed (even if random) in ROPTLIB;
+                                          lastStaircaseStep,
+                                          rsSuccess, rotDetsOk, lambdasAcceptable); // note: startX is needed (even if random) in ROPTLIB;
         // ROPTLIB namespace is used even if runRsomRS() is not in SsomProblem class, nor in "original" ROPTLIB
         ROFL_VAR1(costOut)
         exectime = timer.elapsedTimeMs();

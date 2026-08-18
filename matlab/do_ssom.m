@@ -3,7 +3,8 @@ function [rotation_error_manopt,translation_error_manopt, ...
     rotation_error_ssom,translation_error_ssom, ...
     exectime_manopt,exectime_procrustes,exectime_ssom, ...
     scale_ratios_ssom,transl_err_norm_ssom, ssom_scale_err,...
-    rs_success_bool, R_out, T_out, lambdas_out] = ...
+    rs_success_bool, rot_dets_ok, lambdas_acceptable, rs_actually_useful, ...
+    R_out, T_out, lambdas_out] = ...
         do_ssom(testdata, sigma, mu, params)
 %DO_SOM_PROCRUSTES_MANOPT_RIEMANNIAN_STAIRCASE
 %Function that executes the Shape of Motion algorithms through
@@ -24,6 +25,8 @@ end
 %% 0) parse used SoM params
 N = params.N;
 d = params.d;
+
+% mu = params.mu;
 
 if sigma == 0
     params.noisy_test = boolean(0);
@@ -65,19 +68,27 @@ else
     % transf_gt = testdata.gitruth;
     
     %set data (no noise)
-    
-    
+        
     tijs = G2T(testdata.gij);
-    testdata.R_gt = G2R(testdata.gitruth);
-    testdata.T_gt = G2T(testdata.gitruth);
-    testdata.lambda_gt = testdata.lambdaijtruth;
+    testdata.R_gt = G2R(testdata.gi);
+    testdata.T_gt = G2T(testdata.gi);
+    %only the tijs "make sense" when normalized
+    testdata.lambda_gt = testdata.lambdaij;
+    testdata.lambda_gt_unscaled = testdata.lambdaij;
     X_gt.R = testdata.R_gt;
     X_gt.T = testdata.T_gt;
     X_gt.lambda = testdata.lambda_gt;
     testdata.tijs = tijs;
     cost_gt = ssom_cost(X_gt, testdata);
-    disp("cost_gt in do_ssom.m")
+    disp("SSOM cost_gt in do_ssom.m")
     disp(cost_gt)
+    %%
+    testdata.mu = params.mu;
+    testdata.y = params.y;
+    testdata.z = params.z;
+    disp("LSOM cost_gt in do_ssom.m")
+    disp(lsom_cost(X_gt, testdata))
+    %%
     % problem_data_gt.tijs = tijs;
     % problem_data_gt.d = d;
     % problem_data_gt.N = N;
@@ -120,6 +131,9 @@ else
         % lambdas_initguess = ones(num_edges, 1);
         % T_globalframe_nois = 10 * rand(params.d, params.N);
     else
+        params.R_initguess = testdata.R_gt;
+        params.T_initguess = testdata.T_gt;
+        params.lambdas_initguess = testdata.lambda_gt;
         R_initguess = params.R_initguess;
         T_initguess = params.T_initguess;
         lambdas_initguess = params.lambdas_initguess;
@@ -135,7 +149,7 @@ end
 % 3a) execute with step 1 through MANOPT
 manopt_start_time = tic();
 if params.enable_manopt_icp
-    transf_manopt = rsom_manopt(T_globalframe_nois, tijs_nois, edges, params, transf_initguess);
+    transf_manopt = ssom_manopt(T_globalframe_nois, lambdas_initguess, tijs_nois, edges, params, transf_initguess);
     % manopt_end_time = tic();
 else
     transf_manopt = repmat(eye(d+1), 1, 1, N);
@@ -146,14 +160,14 @@ exectime_manopt = toc(manopt_start_time);
 % 3b) execute with step 1 through PROCRUSTES
 procrustes_start_time = tic();
 if params.enable_procrustes
-    transf_procrustes = som_procrustes(T_globalframe_nois, tijs_nois, edges, params);
+    transf_procrustes = ssom_procrustes(T_globalframe_nois, lambdas_initguess, tijs_nois, edges, params);
 else
     transf_procrustes = repmat(eye(d+1), 1, 1, N);
 end
 exectime_procrustes = toc(procrustes_start_time);
 
 % 3c) execute with step 1 through Manopt with Riemannian Staircase
-ssom_start_time = tic();
+% ssom_start_time = tic();
 % save('tmp.mat')
 if params.enable_ssom
     testdata.R_gt = X_gt.R;
@@ -165,8 +179,108 @@ if params.enable_ssom
     testdata.tijs = tijs_nois;
     testdata.noisy_test = params.noisy_test;
     testdata.node_degrees = params.node_degrees;
-    [transf_ssom, lambdas_ssom_out, rs_success_bool, cost_ssom] = ...
+    [transf_ssom, lambdas_ssom_out, rs_success_bool, cost_ssom, rot_dets_ok, lambdas_acceptable] = ...
         ssom_genproc(testdata, transf_initguess, lambdas_initguess, params); %lambdas_ssom_out should be used somewhere (maybe already inside ssom_genproc)
+    disp("cost_ssom")
+    disp(cost_ssom)
+    if cost_ssom > 1e-3
+        disp("cost out > 0")
+    end
+
+    R_out = G2R(transf_ssom);
+    T_out = G2T(transf_ssom);
+    lambdas_out = lambdas_ssom_out;
+    ssom_scale_err = norm(lambdas_ssom_out - X_gt.lambda);
+else
+    rs_success_bool = boolean(0);
+    transf_ssom = repmat(eye(d+1), 1, 1, N);
+
+    R_out = G2R(transf_ssom);
+    T_out = G2T(transf_ssom);
+    lambdas_ssom_out = ones(size(lambdas_initguess));
+    lambdas_out = ones(size(lambdas_initguess));
+    ssom_scale_err = 1e+6;
+end
+% exectime_ssom = toc(ssom_start_time);
+
+% 3c) execute with step 1 through Manopt with Riemannian Staircase
+ssom_start_time = tic();
+% save('tmp.mat')
+if params.enable_lsom
+    testdata.R_gt = X_gt.R;
+    testdata.T_gt = X_gt.T;
+    %only the tijs "make sense" when normalized
+    testdata.lambda_gt = X_gt.lambda;
+    testdata.sz = [d d N];
+    testdata.edges = testdata.E; %edges field name is used in rsom/ssom project, E in testnetwork benchmark testdata generator
+    testdata.tijs_gt = G2T(testdata.gijtruth);
+    testdata.tijs = tijs_nois; % !!
+    testdata.noisy_test = params.noisy_test;
+    testdata.node_degrees = params.node_degrees;
+    testdata.z = params.z;
+    testdata.y = params.y;
+    testdata.mu = params.mu;
+
+    %% temporarily use GT as initguess (tijs still noisy)
+    % transf_initguess = testdata.gitruth;
+    % lambdas_initguess = testdata.lambdaijtruth';
+    %%
+    transf_initguess_struct.R = G2R(transf_initguess);
+    transf_initguess_struct.T = G2T(transf_initguess);
+    transf_initguess_struct.lambda = lambdas_initguess;
+    %% 
+    disp("sigma noise")
+    disp(sigma)
+    ssom_cost_initguess = ssom_cost(transf_initguess_struct, testdata);
+    disp("SSOM cost initguess.m")
+    disp(ssom_cost_initguess)
+    lsom_cost_initguess = lsom_cost(transf_initguess_struct, testdata);
+    disp("LSOM cost initguess.m")
+    disp(lsom_cost_initguess)    
+
+    
+
+    % figure(12)
+    % % testdata = problem_data;
+    % % testdata.gi = RT2G(X_recovered.R, X_recovered.T);
+    % testdata_noisy_gt = testdata;
+    % % for ee = 1:num_edges
+    % %     disp("ee")
+    % %     disp(ee)
+    % %     disp("testdata_noisy_gt.gij(1:3, 4, ee)")
+    % %     disp(testdata_noisy_gt.gij(1:3, 4, ee))
+    % %     disp("tijs_nois(:, ee)")
+    % %     disp(tijs_nois(:, ee))
+    % %     testdata_noisy_gt.gij(1:3, 4, ee) = tijs_nois(:, ee);
+    % % end
+    % tmp = from_gij_to_gi_T(tijs_nois, G2R(testdata.gij), edges, N, X_gt.T(:,1), X_gt.R(:,:,1));
+    % for ii = 1:N
+    %     testdata.gi(1:3, 4, ii) = tmp(:,ii);
+    % end    
+    % 
+    % % testdata.lambdaij = X_recovered.lambda;
+    % testdata_noisy_gt = testNetworkCompensate(testdata);
+    % % testdata=rmfield(testdata,'X');
+    % % testNetworkDisplay(testdata); %'Color1','red'
+    % hold on;
+    % red=[65535	8567	0]/65535;
+    % opts_draw_camera={'Color1',red,'Color2',red};
+    % testNetworkDisplay(testdata_noisy_gt,'member','gi','optionsDrawCamera', opts_draw_camera)
+    % green=[15934	35723	14392]/65535/0.6;           %camera color
+    % opts_draw_camera={'Color1',green,'Color2',green};  %options to pass to drawCamera
+    % testNetworkDisplay(testdata_noisy_gt,'member','gitruth', 'optionsDrawCamera', opts_draw_camera)
+    % hold off;
+    %    
+    % ssom_cost_noisy_gt = ssom_cost(X_gt, testdata_noisy_gt);
+    % disp("SSOM cost noisy gt.m")
+    % disp(ssom_cost_noisy_gt)
+    % lsom_cost_noisy_gt = lsom_cost(X_gt, testdata_noisy_gt);
+    % disp("LSOM cost noisy gt.m")
+    % disp(lsom_cost_noisy_gt)
+
+    %% LSOM Genproc
+    [transf_ssom, lambdas_ssom_out, rs_success_bool, cost_ssom, rot_dets_ok, lambdas_acceptable, rs_actually_useful] = ...
+        lsom_genproc(testdata, transf_initguess_struct, lambdas_initguess, params); %lambdas_ssom_out should be used somewhere (maybe already inside ssom_genproc)
     disp("cost_ssom")
     disp(cost_ssom)
     if cost_ssom > 1e-3
@@ -217,17 +331,17 @@ testdata.lambdaij = lambdas_ssom_out;
 % hold off;
 
 %
-testdata_comp = testNetworkCompensate(testdata);
-% testdata=rmfield(testdata,'X');
-% testNetworkDisplay(testdata); %'Color1','red'
-hold on;
-red=[65535	8567	0]/65535;
-opts_draw_camera={'Color1',red,'Color2',red};
-testNetworkDisplay(testdata_comp,'member','gi','optionsDrawCamera', opts_draw_camera)
-green=[15934	35723	14392]/65535/0.6;           %camera color
-opts_draw_camera={'Color1',green,'Color2',green};  %options to pass to drawCamera
-testNetworkDisplay(testdata_comp,'member','gitruth', 'optionsDrawCamera', opts_draw_camera)
-hold off;
+% testdata_comp = testNetworkCompensate(testdata);
+% % testdata=rmfield(testdata,'X');
+% % testNetworkDisplay(testdata); %'Color1','red'
+% hold on;
+% red=[65535	8567	0]/65535;
+% opts_draw_camera={'Color1',red,'Color2',red};
+% testNetworkDisplay(testdata_comp,'member','gi','optionsDrawCamera', opts_draw_camera)
+% green=[15934	35723	14392]/65535/0.6;           %camera color
+% opts_draw_camera={'Color1',green,'Color2',green};  %options to pass to drawCamera
+% testNetworkDisplay(testdata_comp,'member','gitruth', 'optionsDrawCamera', opts_draw_camera)
+% hold off;
 
 
 

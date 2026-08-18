@@ -77,6 +77,8 @@ include/thirdparty/roptlib/problems_FRankEWeightApprox.cpp
 include/thirdparty/roptlib/problems_FRankQ2FMatCompletion.cpp
 include/thirdparty/roptlib/problems_GrassRQ.cpp
 include/thirdparty/roptlib/problems_juliaProblem.cpp
+include/thirdparty/roptlib/problems_Lsom.cpp #lsom
+include/thirdparty/roptlib/problems_Lsom_rs_recovery.cpp #lsom
 include/thirdparty/roptlib/problems_mexProblem.cpp
 include/thirdparty/roptlib/problems_Problem.cpp
 include/thirdparty/roptlib/problems_ProdStieSumBrockett.cpp
@@ -88,8 +90,9 @@ include/thirdparty/roptlib/problems_SPDKarcherMean.cpp
 include/thirdparty/roptlib/problems_SphereConvexHull.cpp
 include/thirdparty/roptlib/problems_SphereSparsestVector.cpp
 include/thirdparty/roptlib/problems_SphereTxRQ.cpp
-include/thirdparty/roptlib/problems_Ssom.cpp #ssom
 include/thirdparty/roptlib/problems_Ssom_rs_recovery.cpp #ssom
+include/thirdparty/roptlib/problems_Ssom.cpp #ssom
+include/thirdparty/roptlib/problems_SsomICP.cpp #ssom
 include/thirdparty/roptlib/problems_StieBrockett.cpp
 include/thirdparty/roptlib/problems_StieSPCA.cpp
 include/thirdparty/roptlib/manifolds_SphereTx.cpp
@@ -134,6 +137,15 @@ include/thirdparty/qr_unique_sizeless/rt_nonfinite.cpp
 
 #apps
 
+add_executable(run_lsom_tests app/run_lsom_tests.cpp include/som_utils.cpp)
+target_link_libraries(run_lsom_tests ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
+
+add_executable(run_ssom_tests_icp app/run_ssom_tests_icp.cpp include/som_utils.cpp)
+target_link_libraries(run_ssom_tests_icp ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
+
+add_executable(run_ssom_tests_procrustes app/run_ssom_tests_procrustes.cpp include/som_utils.cpp include/ssom_procrustes.cpp)
+target_link_libraries(run_ssom_tests_procrustes ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
+
 add_executable(run_ssom_tests app/run_ssom_tests.cpp include/som_utils.cpp)
 target_link_libraries(run_ssom_tests ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
 
@@ -172,6 +184,9 @@ target_link_libraries(test_dijkstra_self ${rofl_LIBRARIES} roptlib_local qru m b
 # add_executable(test_gfg_dijkstra test/test_gfg_dijkstra.cpp include/som_utils.cpp)
 # target_link_libraries(test_gfg_dijkstra ${rofl_LIBRARIES} roptlib_local m blas lapack boost_iostreams boost_system boost_filesystem)
 
+add_executable(test_grad_hess_matlab_cpp test/test_grad_hess_matlab_cpp.cpp include/som_utils.cpp)
+target_link_libraries(test_grad_hess_matlab_cpp ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
+
 add_executable(test_linesearch_som test/test_linesearch_som.cpp include/som_utils.cpp)
 target_link_libraries(test_linesearch_som ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
 
@@ -198,6 +213,15 @@ target_link_libraries(test_roptlib_som ${rofl_LIBRARIES} roptlib_local qru m bla
 
 add_executable(test_rsom_pim_hessian_genproc test/test_rsom_pim_hessian_genproc.cpp include/som_utils.cpp)
 target_link_libraries(test_rsom_pim_hessian_genproc ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
+
+# add_executable(test_single_run_lsom test/test_single_run_lsom_gt.cpp include/som_utils.cpp)
+# target_link_libraries(test_single_run_lsom_gt ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
+
+add_executable(test_single_run_lsom_gt test/test_single_run_lsom_gt.cpp include/som_utils.cpp)
+target_link_libraries(test_single_run_lsom_gt ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
+
+add_executable(test_single_run_lsom test/test_single_run_lsom.cpp include/som_utils.cpp)
+target_link_libraries(test_single_run_lsom ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
 
 add_executable(test_single_run_rsom_rs test/test_single_run_rsom_rs.cpp include/som_utils.cpp)
 target_link_libraries(test_single_run_rsom_rs ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)

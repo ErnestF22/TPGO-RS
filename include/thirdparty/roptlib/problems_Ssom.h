@@ -82,14 +82,12 @@ namespace ROPTLIB
        */
       double costEigenVecSEdN(const SomUtils::MatD &xEigen) const;
 
-
       /**
        * @brief Compute and return cost (as double) with Eigen inputs
        * i.e., p x d x n @param Reigen p x n @param Teigen and e x 1 @param LambdasEigen
        * ReLU-based scale compensation
        */
       double costEigenRelu(const SomUtils::VecMatD &Reigen, const SomUtils::MatD &Teigen, const SomUtils::MatD &LambdasEigen) const;
-
 
       /**
        * @brief Compute and return cost (as double) with Eigen inputs
@@ -169,21 +167,21 @@ namespace ROPTLIB
        * RELU-based scale compensation
        */
       void egradLambdasRelu(const SomUtils::VecMatD &R, const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
-                  SomUtils::MatD &egLambdas) const;
-    
+                            SomUtils::MatD &egLambdas) const;
+
       /**
        * Function that computes Riemannian gradient of Scale estimation cost (with Eigen inputs/outputs)
        * using ReLU-based scale compensation
        */
       void rgradLambdasRelu(const SomUtils::VecMatD &R, const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
-                        SomUtils::MatD &rgLambdas) const;
+                            SomUtils::MatD &rgLambdas) const;
 
       /**
        * Function that computes Riemannian gradient of Scale estimation cost (with Eigen inputs/outputs)
        * using log-based scale compensation
        */
       void rgradLambdas(const SomUtils::VecMatD &R, const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
-                        SomUtils::MatD &rgLambdas) const;                        
+                        SomUtils::MatD &rgLambdas) const;
 
       /**
        * SSOM ReLU argument function -> applies intended compensative function to lambdaE; this output will then undergo ReLU
@@ -243,12 +241,11 @@ namespace ROPTLIB
       void computeHlambdast(const SomUtils::VecMatD &xR, const SomUtils::MatD &uT,
                             SomUtils::MatD &h) const;
 
-
       /**
        * Compute one of the Genproc Hessian subparts (RELU scale compensation)
-       */                      
+       */
       void computeHlambdaslambdasRelu(const SomUtils::MatD &xLambdas, const SomUtils::MatD &uLambdas,
-                     SomUtils::MatD &h) const;
+                                      SomUtils::MatD &h) const;
 
       /**
        * Compute one of the Genproc Hessian subparts
@@ -469,6 +466,11 @@ namespace ROPTLIB
        */
       void setCostCurr(double cc);
 
+      /**
+       * @brief Set the maximum number of iterations for ICP (used in SSOM ICP) to @param maxIcpIterations
+       */
+      void setIcpMaxIterations(int maxIcpIterations);
+
       // private: //TODO: separate public from private members
 
       ////////////////////////////////////CLASS MEMBER VARIABLES////////////////////////////////////////////////
@@ -572,6 +574,11 @@ namespace ROPTLIB
        * Param used in the log-based scale compensation (dependent on a_ s.t. b_ = -a_/(a_-1)^2)
        */
       double b_;
+
+      /**
+       * @brief Max number of iterations for ICP (used in SSOM ICP)
+       */
+      int icpMaxIterations_;
 
       ////////////////////////////////////////RS////////////////////////////////////////
 
@@ -989,6 +996,20 @@ namespace ROPTLIB
                         SomUtils::MatD &P) const;
 
       // void recoverTedges(); //probably just wrong and not needed (neither in MATLAB)
+
+      void ssomStep3(const SomUtils::VecMatD &Rin,
+                     const SomUtils::MatD &Tin,
+                     SomUtils::MatD &LambdasOut,
+                     double stopThr = 1e-5);
+
+      /**
+       * @brief Solve a quadratic equation
+       * @param a coefficient a
+       * @param b coefficient b
+       * @param c coefficient c
+       * @param x output root
+       */
+      double solveQuadraticLambdas(const double a, const double b, const double c);
    };
 
    /**
@@ -1000,7 +1021,16 @@ namespace ROPTLIB
                   SomUtils::VecMatD &Rout,
                   SomUtils::MatD &Tout,
                   SomUtils::MatD &lambdasOut,
-                  int &staircaseStepIdx);
+                  int &staircaseStepIdx,
+                  bool &rsSuccess, bool &rotDetsOk, bool &lambdasAcceptable);
+
+   double runSsomICP(ROPTLIB::SsomProblem &Prob,
+                      const ROPTLIB::Vector &startX,
+                      int src,
+                      SomUtils::VecMatD &Rout,
+                      SomUtils::MatD &Tout,
+                      SomUtils::MatD &LambdasOut,
+                      double stopThr = 1e-5);
 
 } // end of namespace ROPTLIB
 

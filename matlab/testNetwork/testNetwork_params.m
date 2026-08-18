@@ -8,11 +8,11 @@ function testnet = testNetwork_params(testNum,num_nodes,mode,min_node_deg,sigmaR
     end
 
     if ~exist('sigmaR','var')
-        sigmaR=0.05;
+        sigmaR=0.00;
     end
 
     if ~exist('sigmaT','var')
-        sigmaT=0.05;
+        sigmaT=0.00;
     end
     
     switch testNum
@@ -84,13 +84,17 @@ function testnet = testNetwork_params(testNum,num_nodes,mode,min_node_deg,sigmaR
     % disp("[inv(R_tmp_truth_i) * R_tmp_truth_j, R_tmp_truth_ij(:,:,1)]")
     % disp([inv(R_tmp_truth_i) * R_tmp_truth_j, R_tmp_truth_ij(:,:,1)])
     
-    num_edges = size(t_node.E, 1);
-    for ee = 1:num_edges
-        e_i = t_node.E(ee,1);
-        e_j = t_node.E(ee,2);
-        t_node.gij(:,:,ee) = inv(t_node.gi(:,:,e_i)) * t_node.gi(:,:,e_j);
-    end
+    % num_edges = size(t_node.E, 1);
+    % for ee = 1:num_edges
+    %     e_i = t_node.E(ee,1);
+    %     e_j = t_node.E(ee,2);
+    %     t_node.gij(:,:,ee) = inv(t_node.gi(:,:,e_i)) * t_node.gi(:,:,e_j);
+    % end
 
+    t_node.lambdaij = t_node.lambdaijtruth;
 
     testnet = t_node;
+
+
+
 end %file function
