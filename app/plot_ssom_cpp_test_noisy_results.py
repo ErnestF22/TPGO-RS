@@ -4,7 +4,7 @@ import numpy as np
 
 
 
-rsom_rs_results_path = "../results_ssom"
+rsom_rs_results_path = "~/Downloads/cpp"
 folders = os.listdir(rsom_rs_results_path)
 tuples_rs = []
 
@@ -272,9 +272,9 @@ rsom_procrustes_results_path = "results_procrustes/"
 
 import matplotlib.pyplot as plt
 
-mindeg_to_plot = 2
+mindeg_to_plot = 3
 
-xpoints = np.array([0, 0.1, 0.2, 0.5, 1, 2])
+xpoints = np.array([0,0.01,0.02,0.05,0.1,0.2,0.5,1,2])
 
 ############################ PLOT RS ############################
 
