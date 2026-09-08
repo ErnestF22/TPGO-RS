@@ -50,6 +50,8 @@ results/
 results_procrustes/
 results_icp/
 results_ssom/
+results_ssom_icp/
+results_ssom_procrustes/
 results_lsom/
 results_lsom_matlab/
 
@@ -64,7 +66,15 @@ matlab/data/check_same_output/
 matlab/failed_recovery.mat
 matlab/ssom_lagrange/data/ssom_testdata_noisy/harder/
 matlab/lsom_results/
+matlab/ssom_lagrange/*.pdf
+matlab/ssom_lagrange/*.eps
+matlab/ssom_lagrange/*.csv
+matlab/ssom_lagrange/*.mat
 matlab/20*
+matlab/*.mat
+matlab/*.pdf
+
+
 
 #include/thirdparty/qr_unique_sizeless/
 

@@ -68,7 +68,8 @@ namespace ROPTLIB
     {
         SomUtils::MatD xEigen(fullSz_, 1);
         RoptToEig(x, xEigen);
-        // ROFL_VAR1(x);
+        ROFL_VAR1(x);
+        ROFL_VAR1(xEigen);
 
         realdp cost = 1e+10;
         if (reluScaleCompensation_)
@@ -77,7 +78,83 @@ namespace ROPTLIB
             cost = costEigenVec(xEigen);
 
         ROFL_VAR1(cost);
-        // ROFL_ASSERT(!std::isnan(corr));
+
+        if (std::isnan(cost))
+        {
+            ROFL_ERR("Cost is NaN")
+            // ROFL_VAR1(reluScaleCompensation_)
+
+            double costDebug = 0.0f;
+
+            for (int e = 0; e < numEdges_; ++e)
+            {
+                SomUtils::MatD Ri(SomUtils::MatD::Zero(sz_.p_, sz_.d_));
+                SomUtils::MatD Ti(SomUtils::MatD::Zero(sz_.p_, 1));
+                SomUtils::MatD Tj(SomUtils::MatD::Zero(sz_.p_, 1));
+                double lambdaE = 0.0;
+
+                SomUtils::VecD tij(SomUtils::VecD::Zero(sz_.d_));
+                tij = tijs_.col(e);
+
+                int i = edges_(e, 0) - 1; // !! -1
+                int j = edges_(e, 1) - 1; // !! -1
+                getRi(xEigen, Ri, i);
+                getTi(xEigen, Ti, i);
+                getTi(xEigen, Tj, j);
+                getLambdaI(xEigen, lambdaE, e);
+
+                // ROFL_VAR3(i, j, e);
+                // ROFL_VAR4(Ri, tij.transpose(), Ti.transpose(), Tj.transpose());
+
+                auto a = Ti - Tj;
+                auto b = Ri * tij;
+                auto costLambdaEe = (a.transpose() * a + 2 * lambdaE * (a.transpose() * b) + lambdaE * lambdaE * (b.transpose() * b)).trace();
+
+                // l = lambda_e;
+                // if l<1
+                //     scale_compensation_ee=-1/a_log*log(a_log*l-1)...
+                //         +1/(a_log-1)*(l-1)...
+                //         +b_log/2*(l-1)^2;
+                // else
+                //     scale_compensation_ee=0;
+
+                double scaleCompensation = 0.0;
+                if (lambdaE <= 1 / a_)
+                {
+                    if (fabs(rho_) < 1e-6)
+                    {
+                        scaleCompensation = 0;
+                    }
+                    else
+                    {
+                        scaleCompensation = std::nan("nan");
+                    }
+                }
+                else if (lambdaE < 1.0)
+                {
+                    scaleCompensation = (-1.0 / a_) * log(a_ * lambdaE - 1.0) + (1.0 / (a_ - 1.0)) * (lambdaE - 1.0) + (b_ / 2.0) * (lambdaE - 1.0) * (lambdaE - 1.0);
+                }
+
+                ROFL_VAR5(e, scaleCompensation, log(a_ * lambdaE - 1.0), a_, lambdaE)
+
+                if (std::isnan(lambdaE))
+                {
+                    ROFL_ERR("lambdaE is NaN")
+                    ROFL_VAR5(e, a_, b_, lambdaE, costLambdaEe)
+                    ROFL_VAR3(a.transpose(), b.transpose(), xEigen.transpose())
+                    ROFL_ASSERT(0)
+                }
+
+                // ROFL_VAR6(e, a_, b_, lambdaE, costLambdaEe, scaleCompensation);
+
+                costDebug += costLambdaEe + rho_ * scaleCompensation;
+            }
+            ROFL_VAR1(costDebug)
+
+            ROFL_ASSERT(0)
+        }
+
+        ROFL_ASSERT(!std::isnan(cost));
 
         // Vector *resultEgrad;
         // *resultEgrad = Domain->RandominManifold();
@@ -158,8 +235,14 @@ namespace ROPTLIB
 
             if (lambdaE <= 1 / a_)
             {
-                // scaleCompensation = std::nan("nan");
-                scaleCompensation = 1e+10;
+                if (fabs(rho_) < 1e-6)
+                {
+                    scaleCompensation = 0;
+                }
+                else
+                {
+                    scaleCompensation = std::nan("nan");
+                }
             }
             else if (lambdaE < 1.0)
             {
@@ -236,7 +319,14 @@ namespace ROPTLIB
             double scaleCompensation = 0.0;
             if (lambdaE <= 1 / a_)
             {
-                scaleCompensation = 1e+10;
+                if (fabs(rho_) < 1e-6)
+                {
+                    scaleCompensation = 0;
+                }
+                else
+                {
+                    scaleCompensation = std::nan("nan");
+                }
             }
             else if (lambdaE < 1.0)
             {
@@ -322,7 +412,14 @@ namespace ROPTLIB
             double scaleCompensation = 0.0;
             if (lambdaE <= 1 / a_)
             {
-                scaleCompensation = 1e+10;
+               if (fabs(rho_) < 1e-6)
+                {
+                    scaleCompensation = 0;
+                }
+                else
+                {
+                    scaleCompensation = std::nan("nan");
+                }
             }
             else if (lambdaE < 1.0)
             {
@@ -674,7 +771,14 @@ namespace ROPTLIB
 
             if (lambdaE <= 1 / a_)
             {
-                scaleCompensation = std::nan("nan");
+                if (fabs(rho_) < 1e-6)
+                {
+                    scaleCompensation = 0;
+                }
+                else
+                {
+                    scaleCompensation = std::nan("nan");
+                }
             }
             else if (lambdaE <= 1.0)
             {
@@ -993,7 +1097,7 @@ namespace ROPTLIB
             double lambdaE = xLambdas(e, 0);
             double lambdaDotE = uLambdas(e, 0);
 
-            double compensationPart = 0.0;
+            double scaleCompensation = 0.0;
             // l = lambda_ee;
             // if l<=1
             //     compensation_part=a/(a*l-1)^2 + 0 + b;
@@ -1002,17 +1106,24 @@ namespace ROPTLIB
 
             if (lambdaE <= 1 / a_)
             {
-                compensationPart = std::nan("nan");
+                if (fabs(rho_) < 1e-6)
+                {
+                    scaleCompensation = 0;
+                }
+                else
+                {
+                    scaleCompensation = std::nan("nan");
+                }
             }
             else if (lambdaE <= 1.0)
             {
-                compensationPart = a_ / ((a_ * lambdaE - 1.0) * (a_ * lambdaE - 1.0)) + b_;
+                scaleCompensation = a_ / ((a_ * lambdaE - 1.0) * (a_ * lambdaE - 1.0)) + b_;
             }
 
             // h(ee) = 2*lambda_dot_ee*(tij_e' * tij_e) + lambda_dot_ee * problem_data.rho * compensation_part;
 
             double basePart = 2 * lambdaDotE * (tij.transpose() * tij)(0, 0); // 1x1 matrix
-            h(e, 0) = basePart + rho_ * lambdaDotE * compensationPart;
+            h(e, 0) = basePart + rho_ * lambdaDotE * scaleCompensation;
         }
     }
 

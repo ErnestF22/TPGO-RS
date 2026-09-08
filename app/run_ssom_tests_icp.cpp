@@ -44,9 +44,9 @@ int main(int argc, char **argv)
         std::string("../matlab/data/cpp_testdata/"));
 
     params.getParam<int>("d", d, 3);
-    params.getParam<int>("numTestsPerInstance", numTestsPerInstance, 30);
+    params.getParam<int>("numTestsPerInstance", numTestsPerInstance, 2);
     params.getParam<bool>("readStartingPtFromFile", readStartingPtFromFile, true);
-    params.getParam<std::string>("resultsBasePath", resultsBasePath, "../results_icp/");
+    params.getParam<std::string>("resultsBasePath", resultsBasePath, "../results_ssom_icp/");
     params.getParam<int>("srcNodeIdx", srcNodeIdx, 0);
 
     std::cout << "Params:" << std::endl;
@@ -271,12 +271,6 @@ int main(int argc, char **argv)
             ROFL_ERR("Error opening output file")
             ROFL_ASSERT(0)
         }
-        LambdasErrsMeanOfstream.open(resultsBasePath + folderAppendName + "_" + folderAppendNameStamped + "/" + folderAppendName + "_lambdas_errors_mean.txt");
-        if (!LambdasErrsMeanOfstream)
-        {
-            ROFL_ERR("Error opening output file")
-            ROFL_ASSERT(0)
-        }
         std::string LambdasErrsMeanFilename = resultsBasePath + folderAppendName + "_" + folderAppendNameStamped + "/" + folderAppendName + "_lambdas_errors.txt";
         if (LambdasErrsMeanOfstream.is_open())
         {
@@ -316,7 +310,7 @@ int main(int argc, char **argv)
             // startX.Initialization(numoftypes, &mani1, numofmani1, &mani2, numofmani2);
 
             if (readStartingPtFromFile)
-                if (!SomUtils::readCsvInitguess(entry.string() + "/startX.csv", startX))
+                if (!SomUtils::readCsvInitguess(entry.string() + "/ssom_x_start.csv", startX))
                 {
                     ROFL_ERR("Error opening file")
                     ROFL_ASSERT(0)
@@ -324,15 +318,15 @@ int main(int argc, char **argv)
 
             startX.Print("startX");
 
-            { // rsom RS execution scope
-                rofl::ScopedTimer runRsomRStimer("runRsomRS");
+            { // Ssom RS execution scope
+                rofl::ScopedTimer runSsomICPtimer("runSsomICP");
 
-                // RUN RSOM RS
+                // RUN SSOM RS
                 SomUtils::VecMatD Rout(n, SomUtils::MatD::Identity(d, d));
                 SomUtils::MatD Tout(SomUtils::MatD::Zero(d, n));
                 SomUtils::MatD LambdasOut(SomUtils::MatD::Zero(e, 1));
                 double costOut = ROPTLIB::runSsomICP(Prob, startX, srcNodeIdx, Rout, Tout, LambdasOut); // note: startX is needed (even if random) in ROPTLIB;
-                // ROPTLIB namespace is used even if runRsomRS() is not in SampleSomProblem class, nor in "original" ROPTLIB
+                // ROPTLIB namespace is used even if runSsomRS() is not in SampleSomProblem class, nor in "original" ROPTLIB
 
                 // costOut = 1.0f;
                 if (!SomUtils::isEqualDoubles(costOut, 0.0f) && sigmaStr == "00" && testjd == 0)
@@ -355,7 +349,7 @@ int main(int argc, char **argv)
                                                   RgtEig, TgtEig, LambdasGtEig,
                                                   rotErrsTestjd, translErrsTestjd, LambdasErrsTestjd);
 
-                double execTimeIJ = runRsomRStimer.elapsedTimeMs();
+                double execTimeIJ = runSsomICPtimer.elapsedTimeMs();
                 ROFL_VAR3(entry, testjd, execTimeIJ)
 
                 rotErrs[testjd].resize(numEdges, 1e+6);

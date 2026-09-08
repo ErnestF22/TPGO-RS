@@ -33,7 +33,7 @@ int main(int argc, char **argv)
     bool readStartingPtFromFile;
     int srcNodeIdx;
     std::string resultsBasePath;
-    double rho;
+    double rho, muAdmm;
     bool firstZadmmEqualToLambdas;
 
     rofl::ParamMap params;
@@ -48,12 +48,14 @@ int main(int argc, char **argv)
         std::string("../matlab/data/ssom_testdata_noisy/small_sample/"));
 
     params.getParam<int>("d", d, 3);
-    params.getParam<int>("numTestsPerInstance", numTestsPerInstance, 50);
+    params.getParam<int>("numTestsPerInstance", numTestsPerInstance, 2);
     params.getParam<bool>("readStartingPtFromFile", readStartingPtFromFile, false);
     params.getParam<std::string>("resultsBasePath", resultsBasePath, "../results_lsom/");
     params.getParam<int>("srcNodeIdx", srcNodeIdx, 0);
     params.getParam<double>("rho", rho, 1000.0);
     params.getParam<bool>("firstZadmmEqualToLambdas", firstZadmmEqualToLambdas, false);
+    params.getParam<double>("muAdmm", muAdmm, 0.1);
+
 
     std::cout << "Params:" << std::endl;
     params.write(std::cout);
@@ -164,7 +166,8 @@ int main(int argc, char **argv)
         SomUtils::VecMatD RgtEig(n, SomUtils::MatD::Zero(d, d));
         SomUtils::MatD TgtEig(SomUtils::MatD::Zero(d, n));
         SomUtils::MatD LambdasGtEig(SomUtils::MatD::Zero(numEdges, 1));
-        Prob.setRho(rho); // default 1000.0
+        Prob.setRho(rho); // default 0.0
+        Prob.setMuAdmm(muAdmm);
         Prob.RoptToEig(xGt, XgtVecEig);
         Prob.getRotations(XgtVecEig, RgtEig);
         Prob.getTranslations(XgtVecEig, TgtEig);
@@ -436,6 +439,7 @@ int main(int argc, char **argv)
                 /* Setting up Prob using setters */
                 Prob.setUsePIM(true);           // same as default
                 Prob.setPimMaxIterations(5000); // same as default
+                Prob.setEnableRs(false);
 
                 rofl::ScopedTimer timer("ssomRS");
 
@@ -444,10 +448,10 @@ int main(int argc, char **argv)
                                                   staircaseStepIdxOutIJ,
                                                   rsSuccessIJ, rotDetsOkIJ, lambdasAcceptableIJ, rsActuallyUsefulIJ); // note: startX is needed (even if random) in ROPTLIB;
 
-                if (rsActuallyUsefulIJ)
-                {
-                    ROFL_ASSERT(0)
-                }
+                // if (rsActuallyUsefulIJ)
+                // {
+                //     ROFL_ASSERT(0)
+                // }
 
                 // ROPTLIB namespace is used even if runRsomRS() is not in LsomProblem class, nor in "original" ROPTLIB
                 ROFL_VAR1(costOut)

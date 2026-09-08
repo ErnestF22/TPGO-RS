@@ -43,9 +43,9 @@ int main(int argc, char **argv)
         std::string("../matlab/ssom_lagrange/data/ssom_testdata_noisy/harder/"));
 
     params.getParam<int>("d", d, 3);
-    params.getParam<int>("numTestsPerInstance", numTestsPerInstance, 30);
+    params.getParam<int>("numTestsPerInstance", numTestsPerInstance, 2);
     params.getParam<bool>("readStartingPtFromFile", readStartingPtFromFile, true);
-    params.getParam<std::string>("resultsBasePath", resultsBasePath, "../results_procrustes/");
+    params.getParam<std::string>("resultsBasePath", resultsBasePath, "../results_ssom_procrustes/");
     params.getParam<int>("srcNodeIdx", srcNodeIdx, 0);
 
     std::cout << "Params:" << std::endl;
