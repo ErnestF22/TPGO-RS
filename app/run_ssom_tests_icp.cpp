@@ -31,6 +31,7 @@ int main(int argc, char **argv)
     bool readStartingPtFromFile;
     int srcNodeIdx;
     std::string resultsBasePath;
+    double rho;
 
     rofl::ParamMap params;
 
@@ -48,6 +49,7 @@ int main(int argc, char **argv)
     params.getParam<bool>("readStartingPtFromFile", readStartingPtFromFile, true);
     params.getParam<std::string>("resultsBasePath", resultsBasePath, "../results_ssom_icp/");
     params.getParam<int>("srcNodeIdx", srcNodeIdx, 0);
+    params.getParam<double>("rho", rho, 0.0);
 
     std::cout << "Params:" << std::endl;
     params.write(std::cout);
@@ -151,6 +153,7 @@ int main(int argc, char **argv)
         Prob.getTranslations(XgtVecEig, TgtEig);
         Prob.getScales(XgtVecEig, LambdasGtEig);
         Prob.setGt(RgtEig, TgtEig, LambdasGtEig);
+        Prob.setRho(rho);
 
         // Set the domain of the problem to be the product of Stiefel manifolds
         Prob.SetDomain(&ProdMani);
@@ -184,7 +187,7 @@ int main(int argc, char **argv)
         ROFL_VAR1(mindeg)
 
         int pos2 = entry.string().find("sigma");
-        std::string sigmaStr = entry.string().substr(pos2 + 5, 2); // sigma has 5 characters
+        std::string sigmaStr = entry.string().substr(pos2 + 5, 3); // sigma has 5 characters
         ROFL_VAR1(sigmaStr);
 
         ROFL_VAR2(n, mindeg)

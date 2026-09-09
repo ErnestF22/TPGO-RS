@@ -3,7 +3,7 @@ import os
 import numpy as np
 from matplotlib.colors import ListedColormap
 
-if False:
+if True:
 
     ssom_rs_results_path = "../results_lsom/"
     folders = os.listdir(ssom_rs_results_path)
@@ -300,7 +300,7 @@ mindeg_to_plot = 2
 xpoints = np.array([0.0, 0.1, 0.2, 0.5, 1, 2])
 ############################ PLOT RS ############################
 
-if False:
+if True:
 
     rot_errs_rs = np.zeros_like(xpoints, dtype=np.float64)
     transl_errs_rs = np.zeros_like(xpoints, dtype=np.float64)
@@ -430,15 +430,15 @@ fig = plt.figure()
 gs = fig.add_gridspec(3, hspace=1)
 axs = gs.subplots(sharex=True)
 fig.suptitle("mindeg " + str(mindeg_to_plot))
-# axs[0].plot(xpoints, rot_errs_rs, "o", label="TPGO-RS", color="green")
-# axs[0].set_title("Rotation errors")
-# # axs[0].set_ylim(-0.1, 3.14)
-# axs[1].plot(xpoints, transl_errs_rs, "o", label="TPGO-RS", color="green")
-# axs[1].set_title("Translation errors")
+axs[0].plot(xpoints, rot_errs_rs, "o", label="TPGO-RS", color="green")
+axs[0].set_title("Rotation errors")
+# axs[0].set_ylim(-0.1, 3.14)
+axs[1].plot(xpoints, transl_errs_rs, "o", label="TPGO-RS", color="green")
+axs[1].set_title("Translation errors")
 
-# axs[2].plot(xpoints, exec_times_rs, "o", label="TPGO-RS", color="green")
-# axs[2].set_title("Execution times [ms]")
-# # axs[2].set_ylim()
+axs[2].plot(xpoints, exec_times_rs, "o", label="TPGO-RS", color="green")
+axs[2].set_title("Execution times [ms]")
+# axs[2].set_ylim()
 
 axs[0].plot(xpoints, rot_errs_icp, 'o', label="TPGO-ICP", color='red')
 axs[0].set_title('Rotation errors')

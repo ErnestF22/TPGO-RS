@@ -52,7 +52,7 @@ int main(int argc, char **argv)
     params.getParam<bool>("readStartingPtFromFile", readStartingPtFromFile, false);
     params.getParam<std::string>("resultsBasePath", resultsBasePath, "../results_lsom/");
     params.getParam<int>("srcNodeIdx", srcNodeIdx, 0);
-    params.getParam<double>("rho", rho, 1000.0);
+    params.getParam<double>("rho", rho, 0.0);
     params.getParam<bool>("firstZadmmEqualToLambdas", firstZadmmEqualToLambdas, false);
     params.getParam<double>("muAdmm", muAdmm, 0.1);
 
@@ -166,7 +166,6 @@ int main(int argc, char **argv)
         SomUtils::VecMatD RgtEig(n, SomUtils::MatD::Zero(d, d));
         SomUtils::MatD TgtEig(SomUtils::MatD::Zero(d, n));
         SomUtils::MatD LambdasGtEig(SomUtils::MatD::Zero(numEdges, 1));
-        Prob.setRho(rho); // default 0.0
         Prob.setMuAdmm(muAdmm);
         Prob.RoptToEig(xGt, XgtVecEig);
         Prob.getRotations(XgtVecEig, RgtEig);
@@ -440,6 +439,7 @@ int main(int argc, char **argv)
                 Prob.setUsePIM(true);           // same as default
                 Prob.setPimMaxIterations(5000); // same as default
                 Prob.setEnableRs(false);
+                Prob.setRho(rho); // default 0.0
 
                 rofl::ScopedTimer timer("ssomRS");
 

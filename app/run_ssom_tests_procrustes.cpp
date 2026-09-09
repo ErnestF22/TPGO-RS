@@ -128,7 +128,7 @@ int main(int argc, char **argv)
         ROFL_VAR1(mindeg)
 
         int pos2 = entry.string().find("sigma");
-        std::string sigmaStr = entry.string().substr(pos2 + 5, 2); // sigma has 5 characters
+        std::string sigmaStr = entry.string().substr(pos2 + 5, 3); // sigma has 5 characters
         ROFL_VAR1(sigmaStr);
 
         ROFL_VAR2(n, mindeg)
