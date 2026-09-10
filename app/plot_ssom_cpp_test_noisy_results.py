@@ -307,7 +307,7 @@ if True:
     scale_errs_rs = np.zeros_like(xpoints, dtype=np.float64)
     exec_times_rs = np.zeros_like(xpoints, dtype=np.float64)
 
-    num_tests_per_instance = 5  # must match what was used in the C++ tests
+    num_tests_per_instance = 2  # must match what was used in the C++ tests
     print("xpoints.shape[0]")
     print(xpoints.shape[0])
     lambdas_acceptable = np.zeros([xpoints.shape[0], num_tests_per_instance], dtype=np.float64)  # will be binary (0 or 1) for plotting
@@ -343,8 +343,8 @@ if True:
         sigma_index = np.where(xpoints == t_sigma)
         lambdas_acceptable[sigma_index, :] = t[3]  # Assuming this is already binary (0 or 1) for each sigma   
         
-    print("lambdas_acceptable")
-    print(lambdas_acceptable)
+    # print("lambdas_acceptable")
+    # print(lambdas_acceptable)
 
     # Build a binary matrix for acceptable lambdas and plot as red/green squares.
     rows = []
