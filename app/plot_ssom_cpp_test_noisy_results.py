@@ -142,7 +142,7 @@ for f in folders:
     print("folder")
     print(folder)
 
-    testid = folder[20: 39]
+    testid = folder[20: 40]
 
     print("testid")
     print(testid)
@@ -150,7 +150,7 @@ for f in folders:
     testid_split = testid.split("_")
     n = int(testid_split[0][1:])
     mindeg = int(testid_split[1][6:])
-    sigma = float(testid_split[2][5:]) /10
+    sigma = float(testid_split[2][5:]) /100
     print("n")
     print(n)
     print("mindeg")
@@ -224,7 +224,7 @@ for f in folders:
     print("folder")
     print(folder)
 
-    testid = folder[27:46]
+    testid = folder[27:47]
 
     print("testid")
     print(testid)
@@ -232,7 +232,7 @@ for f in folders:
     testid_split = testid.split("_")
     n = int(testid_split[0][1:])
     mindeg = int(testid_split[1][6:])
-    sigma = float(testid_split[2][5:]) /10
+    sigma = float(testid_split[2][5:]) /100
     print("n")
     print(n)
     print("mindeg")
@@ -296,8 +296,8 @@ import matplotlib.pyplot as plt
 
 mindeg_to_plot = 2
 
-# xpoints = np.array([0.0, 0.01, 0.02, 0.05,0.01,0.02,0.05,0.1,0.2,0.5,1,2])
-xpoints = np.array([0.0, 0.1, 0.2, 0.5, 1, 2])
+xpoints = np.array([0.0, 0.01, 0.02, 0.05,0.01,0.02,0.05,0.1,0.2,0.5,1,2])
+# xpoints = np.array([0.0, 0.1, 0.2, 0.5, 1, 2])
 ############################ PLOT RS ############################
 
 if True:

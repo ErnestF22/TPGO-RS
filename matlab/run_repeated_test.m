@@ -14,6 +14,10 @@ procrustes_rot_errs = zeros(size(sigmas));
 procrustes_transl_errs = zeros(size(sigmas));
 procrustes_scale_errs = zeros(size(sigmas));
 procrustes_exec_times = zeros(size(sigmas));
+procrustes_qp_rot_errs = zeros(size(sigmas));
+procrustes_qp_transl_errs = zeros(size(sigmas));
+procrustes_qp_scale_errs = zeros(size(sigmas));
+procrustes_qp_exec_times = zeros(size(sigmas));
 manopt_rs_rot_errs = zeros(size(sigmas));
 manopt_rs_transl_errs = zeros(size(sigmas));
 manopt_rs_scale_errs = zeros(size(sigmas));
@@ -43,9 +47,10 @@ for tdata = testdatas
     use_pim = true;
     enable_manopt_icp = true;
     enable_procrustes = true;
+    enable_procrustes_qp = true;
     enable_ssom = false;
-    enable_lsom = true;
-    enable_rs = true;
+    enable_lsom = false;
+    enable_rs = false;
     perform_globalization = true;
     relu_scale_compensation = false;
     read_from_file = false;
@@ -71,6 +76,7 @@ for tdata = testdatas
         'use_pim', use_pim, ...
         'enable_manopt_icp', enable_manopt_icp, ...
         'enable_procrustes', enable_procrustes, ...
+        'enable_procrustes_qp', enable_procrustes_qp, ...
         'enable_ssom', enable_ssom, ...
         'enable_lsom', enable_lsom, ...
         'mu', mu, ...
@@ -107,6 +113,10 @@ for tdata = testdatas
     procrustes_transl_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
     procrustes_scale_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
     procrustes_exec_times_per_sigma = zeros(1, num_tests_per_sigma); %column-wise just to keep a similar notation to the error vectors
+    procrustes_qp_rot_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
+    procrustes_qp_transl_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
+    procrustes_qp_scale_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
+    procrustes_qp_exec_times_per_sigma = zeros(1, num_tests_per_sigma); %column-wise just to keep a similar notation to the error vectors
     manopt_rs_rot_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
     manopt_rs_transl_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
     manopt_rs_scale_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
@@ -118,25 +128,14 @@ for tdata = testdatas
         fprintf("ii %g jj %g\n", ii, jj);
         [manopt_sep_rot_err, manopt_sep_transl_err, ...
             procrustes_rot_err, procrustes_transl_err, ...
+            procrustes_qp_rot_err, procrustes_qp_transl_err, ...
             ssom_rot_err, ssom_transl_err, ...
-            manopt_sep_exec_time, procrustes_exec_time, ssom_exec_time, ...
+            manopt_sep_exec_time, procrustes_exec_time, procrustes_qp_exec_time, ssom_exec_time, ...
             ssom_scale_ratio,ssom_transl_err_norm, ssom_scale_err, ...
             rs_success_bool, rot_dets_ok_ij, lambdas_acceptable_ij, rs_actually_useful_ij] = ...
             do_ssom(tdata, sigma, mu, som_params); % do_som();
 
-        % manopt_sep_rot_err = ii + jj;
-        % manopt_sep_transl_err = ii + jj;
-        % procrustes_rot_err = ii + jj;
-        % procrustes_transl_err = ii + jj;
-        % ssom_rot_err = ii + jj;
-        % ssom_transl_err = ii + jj;
-        % manopt_sep_exec_time = ii + jj;
-        % procrustes_exec_time = ii + jj;
-        % ssom_exec_time = ii + jj;
-        % ssom_scale_ratio = ii + jj;
-        % ssom_transl_err_norm = ii + jj;
-        % ssom_scale_err = ii + jj;
-        % rs_success_bool = false;
+
 
         manopt_sep_rot_errs_per_sigma(:, jj) = manopt_sep_rot_err;
         manopt_sep_transl_errs_per_sigma(:, jj) = manopt_sep_transl_err;
@@ -146,6 +145,10 @@ for tdata = testdatas
         procrustes_transl_errs_per_sigma(:, jj) = procrustes_transl_err;
         procrustes_scale_errs_per_sigma(:, jj) = 10.0;
         procrustes_exec_times_per_sigma(:, jj) = procrustes_exec_time;
+        procrustes_qp_rot_errs_per_sigma(:, jj) = procrustes_qp_rot_err;
+        procrustes_qp_transl_errs_per_sigma(:, jj) = procrustes_qp_transl_err;
+        procrustes_qp_scale_errs_per_sigma(:, jj) = 10.0;
+        procrustes_qp_exec_times_per_sigma(:, jj) = procrustes_qp_exec_time;
         manopt_rs_rot_errs_per_sigma(:, jj) = ssom_rot_err;
         manopt_rs_transl_errs_per_sigma(:, jj) = ssom_transl_err;
         manopt_rs_scale_errs_per_sigma(:, jj) = ssom_scale_err;
@@ -166,6 +169,10 @@ for tdata = testdatas
     procrustes_transl_errs(ii) = mean(procrustes_transl_errs_per_sigma,"all");
     procrustes_scale_errs(ii) = mean(procrustes_scale_errs_per_sigma,"all");
     procrustes_exec_times(ii) = mean(procrustes_exec_times_per_sigma, "all");
+    procrustes_qp_rot_errs(ii) = mean(procrustes_qp_rot_errs_per_sigma,"all");
+    procrustes_qp_transl_errs(ii) = mean(procrustes_qp_transl_errs_per_sigma,"all");
+    procrustes_qp_scale_errs(ii) = mean(procrustes_qp_scale_errs_per_sigma,"all");
+    procrustes_qp_exec_times(ii) = mean(procrustes_qp_exec_times_per_sigma, "all");
     manopt_rs_rot_errs(ii) = mean(manopt_rs_rot_errs_per_sigma,"all");
     manopt_rs_transl_errs(ii) = mean(manopt_rs_transl_errs_per_sigma,"all");
     manopt_rs_scale_errs(ii) = mean(manopt_rs_scale_errs_per_sigma,"all");
@@ -210,6 +217,15 @@ disp(procrustes_transl_errs);
 disp("procrustes_scale_errs");
 disp(procrustes_scale_errs);
 
+disp("procrustes_qp_rot_errs");
+disp(procrustes_qp_rot_errs);
+
+disp("procrustes_qp_transl_errs");
+disp(procrustes_qp_transl_errs);
+
+disp("procrustes_qp_scale_errs");
+disp(procrustes_qp_scale_errs);
+
 disp("manopt_rs_rot_errs");
 disp(manopt_rs_rot_errs);
 
@@ -225,6 +241,9 @@ disp(manopt_sep_exec_times);
 disp("procrustes_exec_times");
 disp(procrustes_exec_times);
 
+disp("procrustes_qp_exec_times");
+disp(procrustes_qp_exec_times);
+
 disp("manopt_rs_exec_times");
 disp(manopt_rs_exec_times);
 
@@ -236,6 +255,10 @@ results = struct("manopt_sep_rot_errs", manopt_sep_rot_errs, ...
     "procrustes_transl_errs", procrustes_transl_errs, ...
     "procrustes_scale_errs", procrustes_scale_errs, ...
     "procrustes_exec_times", procrustes_exec_times, ...
+    "procrustes_qp_rot_errs", procrustes_qp_rot_errs, ...
+    "procrustes_qp_transl_errs", procrustes_qp_transl_errs, ...
+    "procrustes_qp_scale_errs", procrustes_qp_scale_errs, ...
+    "procrustes_qp_exec_times", procrustes_qp_exec_times, ...
     "manopt_rs_rot_errs", manopt_rs_rot_errs, ...
     "manopt_rs_transl_errs", manopt_rs_transl_errs, ...
     "manopt_rs_scale_errs", manopt_rs_scale_errs, ...
@@ -258,6 +281,9 @@ xlabel('sigma')
 % ylabel('[°]')
 plot (sigmas, results.procrustes_rot_errs, 'bs', ...
     "DisplayName", "TPGO-PROCRUSTES mean rot error", 'markersize', 15)
+plot (sigmas, results.procrustes_qp_rot_errs, '+', ...
+    "Color", [0.5 0 0.5], ...
+    "DisplayName", "TPGO-PROCRUSTES-QP mean rot error", 'markersize', 15)
 plot (sigmas, results.manopt_rs_rot_errs, 'g+', ...
     "DisplayName", "TPGO-RS mean rot error", 'markersize', 15);
 legend;
@@ -276,6 +302,9 @@ xlabel('sigma')
 % ylabel('[m]')
 plot (sigmas, results.procrustes_transl_errs, 'bs', ...
     "DisplayName", "TPGO-PROCRUSTES mean transl error", 'markersize', 10)
+plot (sigmas, results.procrustes_qp_transl_errs,  '+', ...
+    "Color", [0.5 0 0.5], ...
+    "DisplayName", "TPGO-PROCRUSTES-QP mean transl error", 'markersize', 10)
 plot (sigmas, results.manopt_rs_transl_errs, 'g+', ...
     "DisplayName", "TPGO-RS mean transl error", 'markersize', 10)
 legend;
@@ -293,6 +322,9 @@ xlabel('sigma')
 % ylabel('[m]')
 plot (sigmas, results.procrustes_scale_errs, 'bs', ...
     "DisplayName", "TPGO-PROCRUSTES mean scale error", 'markersize', 10)
+plot (sigmas, results.procrustes_qp_scale_errs,  '+', ...
+    "Color", [0.5 0 0.5], ...
+    "DisplayName", "TPGO-PROCRUSTES-QP mean scale error", 'markersize', 10)
 plot (sigmas, results.manopt_rs_scale_errs, 'g+', ...
     "DisplayName", "TPGO-RS mean scale error", 'markersize', 10)
 legend;
@@ -310,6 +342,9 @@ xlabel('sigma')
 ylabel('[s]')
 plot (sigmas, results.procrustes_exec_times, 'bs', ...
     "DisplayName", "TPGO-PROCRUSTES mean exec time", 'markersize', 10)
+plot (sigmas, results.procrustes_qp_exec_times,  '+', ...
+    "Color", [0.5 0 0.5], ...
+    "DisplayName", "TPGO-PROCRUSTES-QP mean exec time", 'markersize', 10)
 plot (sigmas, results.manopt_rs_exec_times, 'g+', ...
     "DisplayName", "TPGO-RS mean exec time", 'markersize', 15)
 legend

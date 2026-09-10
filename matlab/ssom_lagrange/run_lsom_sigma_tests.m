@@ -37,8 +37,9 @@ hessian_mode = 'manual';
 initguess_is_available = false;
 rand_initguess = true;
 use_pim = true;
-enable_manopt_icp = true;
-enable_procrustes = true;
+enable_manopt_icp = false;
+enable_procrustes = false;
+enable_procrustes_qp = true;
 enable_ssom = false;
 enable_lsom = false;
 enable_rs = false;
@@ -58,6 +59,7 @@ som_params = struct('N', N, 'd', d, 'd_aff', d_aff, ...
     'use_pim', use_pim, ...
     'enable_manopt_icp', enable_manopt_icp, ...
     'enable_procrustes', enable_procrustes, ...
+    'enable_procrustes_qp', enable_procrustes_qp, ...
     'enable_ssom', enable_ssom, ...
     'enable_lsom', enable_lsom, ...
     'mu', mu, ...
@@ -90,6 +92,9 @@ manopt_sep_exec_times = zeros(size(sigmas));
 procrustes_rot_errs = zeros(size(sigmas));
 procrustes_transl_errs = zeros(size(sigmas));
 procrustes_exec_times = zeros(size(sigmas));
+procrustes_qp_rot_errs = zeros(size(sigmas));
+procrustes_qp_transl_errs = zeros(size(sigmas));
+procrustes_qp_exec_times = zeros(size(sigmas));
 ssom_rot_errs = zeros(size(sigmas));
 ssom_transl_errs = zeros(size(sigmas));
 ssom_exec_times = zeros(size(sigmas));
@@ -109,6 +114,9 @@ for ii = 1:size(sigmas,1)
     procrustes_rot_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
     procrustes_transl_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
     procrustes_exec_times_per_sigma = zeros(1, num_tests_per_sigma); %column-wise just to keep a similar notation to the error vectors
+    procrustes_qp_rot_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
+    procrustes_qp_transl_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
+    procrustes_qp_exec_times_per_sigma = zeros(1, num_tests_per_sigma); %column-wise just to keep a similar notation to the error vectors
     ssom_rot_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
     ssom_transl_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
     ssom_exec_times_per_sigma = zeros(1, num_tests_per_sigma); %column-wise just to keep a similar notation to the error vectors
@@ -119,8 +127,9 @@ for ii = 1:size(sigmas,1)
         fprintf("ii %g jj %g\n", ii, jj);
         [manopt_sep_rot_err, manopt_sep_transl_err, ...
             procrustes_rot_err, procrustes_transl_err, ...
+            procrustes_qp_rot_err, procrustes_qp_transl_err, ...
             ssom_rot_err, ssom_transl_err, ...
-            manopt_sep_exec_time, procrustes_exec_time, ssom_exec_time, ...
+            manopt_sep_exec_time, procrustes_exec_time, procrustes_qp_exec_time, ssom_exec_time, ...
             ssom_scale_ratio,ssom_transl_err_norm, ...
             rs_success_bool] = ...
             do_ssom(testdata, sigma, mu, som_params); % do_...();
@@ -130,6 +139,9 @@ for ii = 1:size(sigmas,1)
         procrustes_rot_errs_per_sigma(:, jj) = procrustes_rot_err;
         procrustes_transl_errs_per_sigma(:, jj) = procrustes_transl_err;
         procrustes_exec_times_per_sigma(:, jj) = procrustes_exec_time;
+        procrustes_qp_rot_errs_per_sigma(:, jj) = procrustes_qp_rot_err;
+        procrustes_qp_transl_errs_per_sigma(:, jj) = procrustes_qp_transl_err;
+        procrustes_qp_exec_times_per_sigma(:, jj) = procrustes_qp_exec_time;
         ssom_rot_errs_per_sigma(:, jj) = ssom_rot_err;
         ssom_transl_errs_per_sigma(:, jj) = ssom_transl_err;
         ssom_exec_times_per_sigma(:, jj) = ssom_exec_time;
@@ -146,6 +158,9 @@ for ii = 1:size(sigmas,1)
     procrustes_rot_errs(ii) = mean(procrustes_rot_errs_per_sigma,"all");
     procrustes_transl_errs(ii) = mean(procrustes_transl_errs_per_sigma,"all");
     procrustes_exec_times(ii) = mean(procrustes_exec_times_per_sigma);
+    procrustes_qp_rot_errs(ii) = mean(procrustes_qp_rot_errs_per_sigma,"all");
+    procrustes_qp_transl_errs(ii) = mean(procrustes_qp_transl_errs_per_sigma,"all");
+    procrustes_qp_exec_times(ii) = mean(procrustes_qp_exec_times_per_sigma);
     ssom_rot_errs(ii) = mean(ssom_rot_errs_per_sigma,"all");
     ssom_transl_errs(ii) = mean(ssom_transl_errs_per_sigma,"all");
     ssom_exec_times(ii) = mean(ssom_exec_times_per_sigma);
@@ -179,6 +194,12 @@ disp(procrustes_rot_errs);
 disp("procrustes_transl_errs");
 disp(procrustes_transl_errs);
 
+disp("procrustes_qp_rot_errs");
+disp(procrustes_qp_rot_errs);
+
+disp("procrustes_qp_transl_errs");
+disp(procrustes_qp_transl_errs);
+
 disp("ssom_rot_errs");
 disp(ssom_rot_errs);
 
@@ -190,6 +211,9 @@ disp(manopt_sep_exec_times);
 
 disp("procrustes_exec_times");
 disp(procrustes_exec_times);
+
+disp("procrustes_qp_exec_times");
+disp(procrustes_qp_exec_times);
 
 disp("ssom_exec_times");
 disp(ssom_exec_times);
@@ -207,6 +231,9 @@ results = struct("manopt_sep_rot_errs", manopt_sep_rot_errs, ...
     "procrustes_rot_errs", procrustes_rot_errs, ...
     "procrustes_transl_errs", procrustes_transl_errs, ...
     "procrustes_exec_times", procrustes_exec_times, ...
+    "procrustes_qp_rot_errs", procrustes_qp_rot_errs, ...
+    "procrustes_qp_transl_errs", procrustes_qp_transl_errs, ...
+    "procrustes_qp_exec_times", procrustes_qp_exec_times, ...
     "ssom_rot_errs", ssom_rot_errs, ...
     "ssom_transl_errs", ssom_transl_errs, ...
     "ssom_exec_times", ssom_exec_times, ...

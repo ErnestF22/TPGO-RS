@@ -1,7 +1,8 @@
 function [rotation_error_manopt,translation_error_manopt, ...
     rotation_error_procrustes,translation_error_procrustes, ...
+    rotation_error_procrustes_qp,translation_error_procrustes_qp, ...
     rotation_error_ssom,translation_error_ssom, ...
-    exectime_manopt,exectime_procrustes,exectime_ssom, ...
+    exectime_manopt,exectime_procrustes,exectime_procrustes_qp,exectime_ssom, ...
     scale_ratios_ssom,transl_err_norm_ssom, ssom_scale_err,...
     rs_success_bool, rot_dets_ok, lambdas_acceptable, rs_actually_useful, ...
     R_out, T_out, lambdas_out] = ...
@@ -166,7 +167,16 @@ else
 end
 exectime_procrustes = toc(procrustes_start_time);
 
-% 3c) execute with step 1 through Manopt with Riemannian Staircase
+% 3c) execute with step 1 through PROCRUSTES
+procrustes_qp_start_time = tic();
+if params.enable_procrustes_qp
+    transf_procrustes_qp = ssom_procrustes_qp(T_globalframe_nois, lambdas_initguess, tijs_nois, edges, params);
+else
+    transf_procrustes_qp = repmat(eye(d+1), 1, 1, N);
+end
+exectime_procrustes_qp = toc(procrustes_qp_start_time);
+
+% 3d) execute with step 1 through Manopt with Riemannian Staircase
 % ssom_start_time = tic();
 % save('tmp.mat')
 if params.enable_ssom
@@ -203,7 +213,7 @@ else
 end
 % exectime_ssom = toc(ssom_start_time);
 
-% 3c) execute with step 1 through Manopt with Riemannian Staircase
+% 3e) execute with step 1 through Manopt with Riemannian Staircase
 ssom_start_time = tic();
 % save('tmp.mat')
 if params.enable_lsom
@@ -294,6 +304,9 @@ if params.enable_lsom
 else
     rs_success_bool = boolean(0);
     transf_ssom = repmat(eye(d+1), 1, 1, N);
+    rot_dets_ok = false;
+    lambdas_acceptable = false;
+    rs_actually_useful = false;
 
     R_out = G2R(transf_ssom);
     T_out = G2T(transf_ssom);
@@ -313,6 +326,11 @@ testdata.gi = transf_manopt;
 testdata.gi = transf_procrustes;
 [rotation_error_procrustes,translation_error_procrustes] = testNetworkComputeErrors(testdata);
 
+testdata.gi = transf_procrustes_qp;
+[rotation_error_procrustes_qp,translation_error_procrustes_qp] = testNetworkComputeErrors(testdata);
+
+% !! scale estimation error evaluation is relevant also for comparison
+% methods
 testdata.gi = transf_ssom;
 testdata.lambdaij = lambdas_ssom_out;
 %TODO: change this back to what it should be after correcting PIM, 
