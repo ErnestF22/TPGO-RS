@@ -158,31 +158,24 @@ else
 end
 exectime_manopt_icp = toc(manopt_icp_start_time);
 
-scale_error_manopt_icp = compute_scale_error(lambdas_manopt_icp, X_gt.lambda);
 
 % 3b) execute with step 1 through PROCRUSTES
 procrustes_start_time = tic();
 if params.enable_procrustes
-    [transf_procrustes, lambdas_procrustes] = ssom_procrustes(T_globalframe_nois, lambdas_initguess, tijs_nois, edges, params);
+    [transf_procrustes = ssom_procrustes(T_globalframe_nois, lambdas_initguess, tijs_nois, edges, params);
 else
     transf_procrustes = repmat(eye(d+1), 1, 1, N);
-    lambdas_procrustes = 100*rand(num_edges, 1);
 end
 exectime_procrustes = toc(procrustes_start_time);
-
-scale_error_procrustes = compute_scale_error(lambdas_procrustes, X_gt.lambda);
 
 % 3c) execute with step 1 through PROCRUSTES
 procrustes_qp_start_time = tic();
 if params.enable_procrustes_qp
-    [transf_procrustes_qp, lambdas_procrustes_qp] = ssom_procrustes_qp(T_globalframe_nois, lambdas_initguess, tijs_nois, edges, params);
+    transf_procrustes_qp = ssom_procrustes_qp(T_globalframe_nois, lambdas_initguess, tijs_nois, edges, params);
 else
     transf_procrustes_qp = repmat(eye(d+1), 1, 1, N);
-    lambdas_procrustes_qp = 100*rand(num_edges, 1);
 end
 exectime_procrustes_qp = toc(procrustes_qp_start_time);
-
-scale_error_procrustes_qp = compute_scale_error(lambdas_procrustes_qp, X_gt.lambda);
 
 % 3d) execute with step 1 through Manopt with Riemannian Staircase
 % ssom_start_time = tic();
@@ -217,8 +210,7 @@ else
     T_out = G2T(transf_ssom);
     lambdas_ssom_out = ones(size(lambdas_initguess));
     lambdas_out = ones(size(lambdas_initguess));
-    ssom_scale_err.mean = 1e+2;
-    ssom_scale_err.max = 1e+3;
+    ssom_scale_err = 1e+6;
 end
 % exectime_ssom = toc(ssom_start_time);
 
@@ -256,6 +248,8 @@ if params.enable_lsom
     lsom_cost_initguess = lsom_cost(transf_initguess_struct, testdata);
     disp("LSOM cost initguess.m")
     disp(lsom_cost_initguess)    
+
+    
 
     % figure(12)
     % % testdata = problem_data;
@@ -307,9 +301,7 @@ if params.enable_lsom
     R_out = G2R(transf_ssom);
     T_out = G2T(transf_ssom);
     lambdas_out = lambdas_ssom_out;
-    % ssom_scale_err = norm(lambdas_ssom_out - X_gt.lambda);
-
-    ssom_scale_err = compute_scale_error(lambdas_procrustes_qp, X_gt.lambda);
+    ssom_scale_err = norm(lambdas_ssom_out - X_gt.lambda);
 else
     rs_success_bool = boolean(0);
     transf_ssom = repmat(eye(d+1), 1, 1, N);
@@ -321,8 +313,7 @@ else
     T_out = G2T(transf_ssom);
     lambdas_ssom_out = ones(size(lambdas_initguess));
     lambdas_out = ones(size(lambdas_initguess));
-    ssom_scale_err.mean = 1e+2;
-    ssom_scale_err.max = 1e+3;
+    ssom_scale_err = 1e+6;
 end
 exectime_ssom = toc(ssom_start_time);
 

@@ -38,7 +38,7 @@ initguess_is_available = false;
 rand_initguess = true;
 use_pim = true;
 enable_manopt_icp = false;
-enable_procrustes = false;
+enable_procrustes = true;
 enable_procrustes_qp = true;
 enable_ssom = false;
 enable_lsom = false;
@@ -89,17 +89,25 @@ som_params.node_degrees = node_degrees;
 manopt_sep_rot_errs = zeros(size(sigmas));
 manopt_sep_transl_errs = zeros(size(sigmas));
 manopt_sep_exec_times = zeros(size(sigmas));
+manopt_sep_scale_errs_max = zeros(size(sigmas));
+manopt_sep_scale_errs_mean = zeros(size(sigmas));
 procrustes_rot_errs = zeros(size(sigmas));
 procrustes_transl_errs = zeros(size(sigmas));
 procrustes_exec_times = zeros(size(sigmas));
+procrustes_scale_errs_max = zeros(size(sigmas));
+procrustes_scale_errs_mean = zeros(size(sigmas));
 procrustes_qp_rot_errs = zeros(size(sigmas));
 procrustes_qp_transl_errs = zeros(size(sigmas));
 procrustes_qp_exec_times = zeros(size(sigmas));
+procrustes_qp_scale_errs_max = zeros(size(sigmas));
+procrustes_qp_scale_errs_mean = zeros(size(sigmas));
 ssom_rot_errs = zeros(size(sigmas));
 ssom_transl_errs = zeros(size(sigmas));
 ssom_exec_times = zeros(size(sigmas));
 ssom_scale_ratios = zeros(size(sigmas));
 ssom_transl_errs_norm = zeros(size(sigmas));
+ssom_scale_errs_max = zeros(size(sigmas));
+ssom_scale_errs_mean = zeros(size(sigmas));
 rs_success_bools = zeros(length(sigmas), num_tests_per_sigma);
 
 %when multple sigmas and mus, and multiple tests per each pair
@@ -111,40 +119,56 @@ for ii = 1:size(sigmas,1)
     manopt_sep_rot_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
     manopt_sep_transl_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
     manopt_sep_exec_times_per_sigma = zeros(1, num_tests_per_sigma); %column-wise just to keep a similar notation to the error vectors
+    manopt_sep_scale_err_max_per_sigma = zeros(1, num_tests_per_sigma);
+    manopt_sep_scale_err_mean_per_sigma = zeros(1, num_tests_per_sigma);
     procrustes_rot_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
     procrustes_transl_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
     procrustes_exec_times_per_sigma = zeros(1, num_tests_per_sigma); %column-wise just to keep a similar notation to the error vectors
+    procrustes_scale_err_max_per_sigma = zeros(1, num_tests_per_sigma);
+    procrustes_scale_err_mean_per_sigma = zeros(1, num_tests_per_sigma);
     procrustes_qp_rot_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
     procrustes_qp_transl_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
     procrustes_qp_exec_times_per_sigma = zeros(1, num_tests_per_sigma); %column-wise just to keep a similar notation to the error vectors
+    procrustes_qp_scale_err_max_per_sigma = zeros(1, num_tests_per_sigma);
+    procrustes_qp_scale_err_mean_per_sigma = zeros(1, num_tests_per_sigma);
     ssom_rot_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
     ssom_transl_errs_per_sigma = zeros(num_edges, num_tests_per_sigma);
     ssom_exec_times_per_sigma = zeros(1, num_tests_per_sigma); %column-wise just to keep a similar notation to the error vectors
     ssom_scale_ratios_per_sigma = zeros(num_edges, num_tests_per_sigma);
     ssom_transl_errs_norm_per_sigma = zeros(num_edges, num_tests_per_sigma);
+    ssom_scale_err_max_per_sigma = zeros(1, num_tests_per_sigma);
+    ssom_scale_err_mean_per_sigma = zeros(1, num_tests_per_sigma);
 
     for jj = 1:num_tests_per_sigma
         fprintf("ii %g jj %g\n", ii, jj);
-        [manopt_sep_rot_err, manopt_sep_transl_err, ...
-            procrustes_rot_err, procrustes_transl_err, ...
-            procrustes_qp_rot_err, procrustes_qp_transl_err, ...
+        [manopt_sep_rot_err, manopt_sep_transl_err, manopt_sep_scale_err, ...
+            procrustes_rot_err, procrustes_transl_err, procrustes_scale_err, ...
+            procrustes_qp_rot_err, procrustes_qp_transl_err, procrustes_qp_scale_err, ...
             ssom_rot_err, ssom_transl_err, ...
             manopt_sep_exec_time, procrustes_exec_time, procrustes_qp_exec_time, ssom_exec_time, ...
-            ssom_scale_ratio,ssom_transl_err_norm, ...
+            ssom_scale_ratio,ssom_transl_err_norm, ssom_scale_err, ...
             rs_success_bool] = ...
             do_ssom(testdata, sigma, mu, som_params); % do_...();
         manopt_sep_rot_errs_per_sigma(:, jj) = manopt_sep_rot_err;
         manopt_sep_transl_errs_per_sigma(:, jj) = manopt_sep_transl_err;
         manopt_sep_exec_times_per_sigma(:, jj) = manopt_sep_exec_time;
+        manopt_sep_scale_err_max_per_sigma(:, jj) = manopt_sep_scale_err.max;
+        manopt_sep_scale_err_mean_per_sigma(:, jj) = manopt_sep_scale_err.mean;
         procrustes_rot_errs_per_sigma(:, jj) = procrustes_rot_err;
         procrustes_transl_errs_per_sigma(:, jj) = procrustes_transl_err;
         procrustes_exec_times_per_sigma(:, jj) = procrustes_exec_time;
+        procrustes_scale_err_max_per_sigma(:, jj) = procrustes_scale_err.max;
+        procrustes_scale_err_mean_per_sigma(:, jj) = procrustes_scale_err.mean;
         procrustes_qp_rot_errs_per_sigma(:, jj) = procrustes_qp_rot_err;
         procrustes_qp_transl_errs_per_sigma(:, jj) = procrustes_qp_transl_err;
         procrustes_qp_exec_times_per_sigma(:, jj) = procrustes_qp_exec_time;
+        procrustes_qp_scale_err_max_per_sigma(:, jj) = procrustes_qp_scale_err.max;
+        procrustes_qp_scale_err_mean_per_sigma(:, jj) = procrustes_qp_scale_err.mean;
         ssom_rot_errs_per_sigma(:, jj) = ssom_rot_err;
         ssom_transl_errs_per_sigma(:, jj) = ssom_transl_err;
         ssom_exec_times_per_sigma(:, jj) = ssom_exec_time;
+        ssom_scale_err_max_per_sigma(:,jj) = ssom_scale_err.max;
+        ssom_scale_err_mean_per_sigma(:,jj) = ssom_scale_err.mean;
         ssom_scale_ratios_per_sigma(:, jj) = ssom_scale_ratio;
         ssom_transl_errs_norm_per_sigma(:, jj) = ssom_transl_err_norm;
         rs_success_bools(ii,jj) = rs_success_bool;
@@ -155,18 +179,26 @@ for ii = 1:size(sigmas,1)
     manopt_sep_rot_errs(ii) = mean(manopt_sep_rot_errs_per_sigma,"all");
     manopt_sep_transl_errs(ii) = mean(manopt_sep_transl_errs_per_sigma,"all");
     manopt_sep_exec_times(ii) = mean(manopt_sep_exec_times_per_sigma);
+    manopt_sep_scale_errs_max(ii) = mean(manopt_sep_scale_err_max_per_sigma);
+    manopt_sep_scale_errs_mean(ii) = mean(manopt_sep_scale_err_mean_per_sigma);
     procrustes_rot_errs(ii) = mean(procrustes_rot_errs_per_sigma,"all");
     procrustes_transl_errs(ii) = mean(procrustes_transl_errs_per_sigma,"all");
     procrustes_exec_times(ii) = mean(procrustes_exec_times_per_sigma);
+    procrustes_scale_errs_max(ii) = mean(procrustes_scale_err_max_per_sigma);
+    procrustes_scale_errs_mean(ii) = mean(procrustes_scale_err_mean_per_sigma);
     procrustes_qp_rot_errs(ii) = mean(procrustes_qp_rot_errs_per_sigma,"all");
     procrustes_qp_transl_errs(ii) = mean(procrustes_qp_transl_errs_per_sigma,"all");
     procrustes_qp_exec_times(ii) = mean(procrustes_qp_exec_times_per_sigma);
+    procrustes_qp_scale_errs_max(ii) = mean(procrustes_qp_scale_err_max_per_sigma);
+    procrustes_qp_scale_errs_mean(ii) = mean(procrustes_qp_scale_err_mean_per_sigma);
     ssom_rot_errs(ii) = mean(ssom_rot_errs_per_sigma,"all");
     ssom_transl_errs(ii) = mean(ssom_transl_errs_per_sigma,"all");
     ssom_exec_times(ii) = mean(ssom_exec_times_per_sigma);
     ssom_scale_ratios(ii) = abs(max(ssom_scale_ratios_per_sigma, [], "all") - ...
         min(ssom_scale_ratios_per_sigma, [], "all"));
     ssom_transl_errs_norm(ii) = mean(ssom_transl_errs_norm_per_sigma, "all");
+    ssom_scale_errs_max(ii) = mean(ssom_scale_err_max_per_sigma);
+    ssom_scale_errs_mean(ii) = mean(ssom_scale_err_mean_per_sigma);
 
 end    
 
@@ -188,11 +220,23 @@ disp(manopt_sep_rot_errs);
 disp("manopt_sep_transl_errs");
 disp(manopt_sep_transl_errs);
 
+disp("manopt_sep_scale_errs_max")
+disp(manopt_sep_scale_errs_max)
+
+disp("manopt_sep_scale_errs_mean")
+disp(manopt_sep_scale_errs_mean)
+
 disp("procrustes_rot_errs");
 disp(procrustes_rot_errs);
 
 disp("procrustes_transl_errs");
 disp(procrustes_transl_errs);
+
+disp("procrustes_scale_errs_max")
+disp(procrustes_scale_errs_max)
+
+disp("procrustes_scale_errs_mean")
+disp(procrustes_scale_errs_mean)
 
 disp("procrustes_qp_rot_errs");
 disp(procrustes_qp_rot_errs);
@@ -200,11 +244,23 @@ disp(procrustes_qp_rot_errs);
 disp("procrustes_qp_transl_errs");
 disp(procrustes_qp_transl_errs);
 
+disp("procrustes_qp_scale_errs_max")
+disp(procrustes_qp_scale_errs_max)
+
+disp("procrustes_qp_scale_errs_mean")
+disp(procrustes_qp_scale_errs_mean)
+
 disp("ssom_rot_errs");
 disp(ssom_rot_errs);
 
 disp("ssom_transl_errs");
 disp(ssom_transl_errs);
+
+disp("ssom_scale_errs_max")
+disp(ssom_scale_errs_max)
+
+disp("ssom_scale_errs_mean")
+disp(ssom_scale_errs_mean)
 
 disp("manopt_sep_exec_times");
 disp(manopt_sep_exec_times);
@@ -228,16 +284,23 @@ disp(ssom_transl_errs_norm);
 results = struct("manopt_sep_rot_errs", manopt_sep_rot_errs, ...
     "manopt_sep_transl_errs", manopt_sep_transl_errs, ...
     "manopt_sep_exec_times", manopt_sep_exec_times, ...
+    "manopt_sep_scale_errs_max", manopt_sep_scale_errs_max, ...
+    "manopt_sep_scale_errs_mean", manopt_sep_scale_errs_mean, ...
     "procrustes_rot_errs", procrustes_rot_errs, ...
     "procrustes_transl_errs", procrustes_transl_errs, ...
     "procrustes_exec_times", procrustes_exec_times, ...
+    "procrustes_scale_errs_max", procrustes_scale_errs_max, ...
+    "procrustes_scale_errs_mean", procrustes_scale_errs_mean, ...
     "procrustes_qp_rot_errs", procrustes_qp_rot_errs, ...
     "procrustes_qp_transl_errs", procrustes_qp_transl_errs, ...
     "procrustes_qp_exec_times", procrustes_qp_exec_times, ...
+    "procrustes_qp_scale_errs_max", procrustes_qp_scale_errs_max, ...
+    "procrustes_qp_scale_errs_mean", procrustes_qp_scale_errs_mean, ...
     "ssom_rot_errs", ssom_rot_errs, ...
     "ssom_transl_errs", ssom_transl_errs, ...
     "ssom_exec_times", ssom_exec_times, ...
-    ...
+    "ssom_scale_errs_max", ssom_scale_errs_max, ...
+    "ssom_scale_errs_mean", ssom_scale_errs_mean, ...
     "ssom_scale_ratios", ssom_scale_ratios, ...
     "ssom_transl_errs_norm", ssom_transl_errs_norm);
 
