@@ -68,24 +68,37 @@ if True:
         print("transl_errs_mean_rs")
         print(transl_errs_mean_rs)
 
-        # scale errs
-        scale_errs = np.array([], dtype=np.float64)
-        file_scale_errs = folder + "/" + testid + "lambda_errors_mean.txt"
-        print("file_scale_errs")
-        print(file_scale_errs)
-        with open(file_scale_errs, "r") as f:
+        # scale mean errs
+        scale_mean_errs = np.array([], dtype=np.float64)
+        file_scale_mean_errs = folder + "/" + testid + "lambda_mean_errors_mean.txt"
+        print("file_scale_mean_errs")
+        print(file_scale_mean_errs)
+        with open(file_scale_mean_errs, "r") as f:
             for count, line in enumerate(f, start=1):
                 if count % 2 == 0:
                     # print(line)
-                    scale_errs = np.append(scale_errs, float(line))
+                    scale_mean_errs = np.append(scale_mean_errs, float(line))
+        scale_mean_errs_mean_rs = np.average(scale_mean_errs)
+        print("scale_mean_errs_mean_rs")
+        print(scale_mean_errs_mean_rs)                    
 
-        scale_errs_mean_rs = np.average(scale_errs)
-        print("scale_errs_mean_rs")
-        print(scale_errs_mean_rs)
+        # scale max errs
+        scale_max_errs = np.array([], dtype=np.float64)
+        file_scale_max_errs = folder + "/" + testid + "lambda_max_errors_mean.txt"
+        print("file_scale_max_errs")
+        print(file_scale_max_errs)
+        with open(file_scale_max_errs, "r") as f:
+            for count, line in enumerate(f, start=1):
+                if count % 2 == 0:
+                    # print(line)
+                    scale_max_errs = np.append(scale_max_errs, float(line))
+        scale_max_errs_mean_rs = np.average(scale_max_errs)
+        print("scale_max_errs_mean_rs")
+        print(scale_max_errs_mean_rs)
 
         # exec time
         exec_times = np.array([], dtype=np.float64)
-        file_exec_times = folder + "/" + testid + "exec_times.txt"
+        file_exec_times = folder + "/" + testid + "exec_times_mean.txt"
         print("file_exec_times")
         print(file_exec_times)
         with open(file_exec_times, "r") as f:
@@ -104,7 +117,8 @@ if True:
             sigma,
             rot_errs_mean_rs,
             transl_errs_mean_rs,
-            scale_errs_mean_rs,
+            scale_mean_errs_mean_rs,
+            scale_max_errs_mean_rs,
             exec_times_mean_rs,
         )
         tuples_rs.append(tuple_rs)
@@ -188,9 +202,38 @@ for f in folders:
     transl_errs_mean_icp = np.average(transl_errs)
     print("transl_errs_mean_icp")
     print(transl_errs_mean_icp)
+    
+    #scale mean errs
+    scale_mean_errs = np.array([], dtype=np.float64)
+    file_scale_mean_errs = folder + "/" + testid + "lambda_mean_errors_mean.txt"
+    print("file_scale_mean_errs")
+    print(file_scale_mean_errs)
+    with open(file_scale_mean_errs, 'r') as f:
+        for count, line in enumerate(f, start=1):
+            if count % 2 == 0:
+                # print(line)
+                scale_mean_errs = np.append(scale_mean_errs, float(line))
+    scale_mean_errs_mean_icp = np.average(scale_mean_errs)
+    print("scale_mean_errs_mean_icp")
+    print(scale_mean_errs_mean_icp)
+
+    #scale max errs
+    scale_max_errs = np.array([], dtype=np.float64)
+    file_scale_max_errs = folder + "/" + testid + "lambda_max_errors_mean.txt"
+    print("file_scale_max_errs")
+    print(file_scale_max_errs)
+    with open(file_scale_max_errs, 'r') as f:
+        for count, line in enumerate(f, start=1):
+            if count % 2 == 0:
+                # print(line)
+                scale_max_errs = np.append(scale_max_errs, float(line))
+    scale_max_errs_mean_icp = np.average(scale_max_errs)
+    print("scale_max_errs_mean_icp")
+    print(scale_max_errs_mean_icp)
+
     #exec time
     exec_times = np.array([], dtype=np.float64)
-    file_exec_times = folder + "/" + testid + "exec_times.txt"
+    file_exec_times = folder + "/" + testid + "exec_times_mean.txt"
     print("file_exec_times")
     print(file_exec_times)
     with open(file_exec_times, 'r') as f:
@@ -203,7 +246,7 @@ for f in folders:
     print("exec_times_mean_icp")
     print(exec_times_mean_icp)
 
-    tuple_icp = (n, mindeg, sigma, rot_errs_mean_icp, transl_errs_mean_icp, exec_times_mean_icp)
+    tuple_icp = (n, mindeg, sigma, rot_errs_mean_icp, transl_errs_mean_icp, scale_mean_errs_mean_icp, scale_max_errs_mean_icp, exec_times_mean_icp)
     tuples_icp.append(tuple_icp)
 
 ############################
@@ -271,10 +314,39 @@ for f in folders:
     transl_errs_mean_procrustes = np.average(transl_errs)
     print("transl_errs_mean_procrustes")
     print(transl_errs_mean_procrustes)
+    
+    #scale mean errs
+    scale_mean_errs = np.array([], dtype=np.float64)
+    file_scale_errs = folder + "/" + testid + "lambda_mean_errors_mean.txt"
+    print("file_scale_errs")
+    print(file_scale_errs)
+    with open(file_scale_errs, 'r') as f:
+        for count, line in enumerate(f, start=1):
+            if count % 2 == 0:
+                # print(line)
+                scale_mean_errs = np.append(scale_mean_errs, float(line))
+    
+    scale_mean_errs_mean_procrustes = np.average(scale_mean_errs)
+    print("scale_mean_errs_mean_procrustes")
+    print(scale_mean_errs_mean_procrustes)
+    
+    #scale max errs
+    scale_max_errs = np.array([], dtype=np.float64)
+    file_scale_max_errs = folder + "/" + testid + "lambda_max_errors_mean.txt"
+    print("file_scale_max_errs")
+    print(file_scale_max_errs)
+    with open(file_scale_max_errs, 'r') as f:
+        for count, line in enumerate(f, start=1):
+            if count % 2 == 0:
+                # print(line)
+                scale_max_errs = np.append(scale_max_errs, float(line))
+    scale_max_errs_mean_procrustes = np.average(scale_max_errs)
+    print("scale_max_errs_mean_procrustes")
+    print(scale_max_errs_mean_procrustes)
 
     #exec time
     exec_times = np.array([], dtype=np.float64)
-    file_exec_times = folder + "/" + testid + "exec_times.txt"
+    file_exec_times = folder + "/" + testid + "exec_times_mean.txt"
     print("file_exec_times")
     print(file_exec_times)
     with open(file_exec_times, 'r') as f:
@@ -287,7 +359,7 @@ for f in folders:
     print("exec_times_mean_procrustes")
     print(exec_times_mean_procrustes)
 
-    tuple_procrustes = (n, mindeg, sigma, rot_errs_mean_procrustes, transl_errs_mean_procrustes, exec_times_mean_procrustes)
+    tuple_procrustes = (n, mindeg, sigma, rot_errs_mean_procrustes, transl_errs_mean_procrustes, scale_mean_errs_mean_procrustes, scale_max_errs_mean_procrustes, exec_times_mean_procrustes)
     tuples_procrustes.append(tuple_procrustes)
 
 ############################ PLOT ############################
@@ -304,7 +376,8 @@ if True:
 
     rot_errs_rs = np.zeros_like(xpoints, dtype=np.float64)
     transl_errs_rs = np.zeros_like(xpoints, dtype=np.float64)
-    scale_errs_rs = np.zeros_like(xpoints, dtype=np.float64)
+    scale_mean_errs_rs = np.zeros_like(xpoints, dtype=np.float64)
+    scale_max_errs_rs = np.zeros_like(xpoints, dtype=np.float64)
     exec_times_rs = np.zeros_like(xpoints, dtype=np.float64)
 
     num_tests_per_instance = 2  # must match what was used in the C++ tests
@@ -320,13 +393,15 @@ if True:
         t_sigma = t[2]
         t_rot_errs_mean_rs = t[3]
         t_transl_errs_mean_rs = t[4]
-        t_scale_errs_mean_rs = t[5]
-        t_exec_times_mean_rs = t[6]
+        t_scale_mean_errs_mean_rs = t[5]
+        t_scale_max_errs_mean_rs = t[6]
+        t_exec_times_mean_rs = t[7]
 
         sigma_index = np.where(xpoints == t_sigma)
         rot_errs_rs[sigma_index] = t_rot_errs_mean_rs
         transl_errs_rs[sigma_index] = t_transl_errs_mean_rs
-        scale_errs_rs[sigma_index] = t_scale_errs_mean_rs
+        scale_mean_errs_rs[sigma_index] = t_scale_mean_errs_mean_rs
+        scale_max_errs_rs[sigma_index] = t_scale_max_errs_mean_rs
         exec_times_rs[sigma_index] = t_exec_times_mean_rs
         
 
@@ -387,6 +462,8 @@ if True:
 
 rot_errs_icp = np.zeros_like(xpoints, dtype=np.float64)
 transl_errs_icp = np.zeros_like(xpoints, dtype=np.float64)
+scale_mean_errs_icp = np.zeros_like(xpoints, dtype=np.float64)
+scale_max_errs_icp = np.zeros_like(xpoints, dtype=np.float64)
 exec_times_icp = np.zeros_like(xpoints, dtype=np.float64)
 
 for t in tuples_icp:
@@ -397,17 +474,23 @@ for t in tuples_icp:
     t_sigma = t[2]
     t_rot_errs_mean_icp = t[3]
     t_transl_errs_mean_icp = t[4]
-    t_exec_times_mean_icp = t[5]
+    t_scale_mean_errs_mean_icp = t[5]
+    t_scale_max_errs_mean_icp = t[6]
+    t_exec_times_mean_icp = t[7]
 
     sigma_index = np.where(xpoints == t_sigma)
     rot_errs_icp[sigma_index] = t_rot_errs_mean_icp
     transl_errs_icp[sigma_index] = t_transl_errs_mean_icp
+    scale_mean_errs_icp[sigma_index] = t_scale_mean_errs_mean_icp
+    scale_max_errs_icp[sigma_index] = t_scale_max_errs_mean_icp
     exec_times_icp[sigma_index] = t_exec_times_mean_icp
 
 ############################ PLOT PROCRUSTES ############################
 
 rot_errs_procrustes = np.zeros_like(xpoints, dtype=np.float64)
 transl_errs_procrustes = np.zeros_like(xpoints, dtype=np.float64)
+scale_mean_errs_procrustes = np.zeros_like(xpoints, dtype=np.float64)
+scale_max_errs_procrustes = np.zeros_like(xpoints, dtype=np.float64)
 exec_times_procrustes = np.zeros_like(xpoints, dtype=np.float64)
 
 for t in tuples_procrustes:
@@ -418,16 +501,22 @@ for t in tuples_procrustes:
     t_sigma = t[2]
     t_rot_errs_mean_procrustes = t[3]
     t_transl_errs_mean_procrustes = t[4]
-    t_exec_times_mean_procrustes = t[5]
+    t_scale_mean_errs_mean_procrustes = t[5]
+    t_scale_max_errs_mean_procrustes = t[6]
+    t_exec_times_mean_procrustes = t[7]
 
     sigma_index = np.where(xpoints == t_sigma)
     rot_errs_procrustes[sigma_index] = t_rot_errs_mean_procrustes
     transl_errs_procrustes[sigma_index] = t_transl_errs_mean_procrustes
+    scale_mean_errs_procrustes[sigma_index] = t_scale_mean_errs_mean_procrustes
+    scale_max_errs_procrustes[sigma_index] = t_scale_max_errs_mean_procrustes
     exec_times_procrustes[sigma_index] = t_exec_times_mean_procrustes
 
 
+
+
 fig = plt.figure()
-gs = fig.add_gridspec(3, hspace=1)
+gs = fig.add_gridspec(5, hspace=1)
 axs = gs.subplots(sharex=True)
 fig.suptitle("mindeg " + str(mindeg_to_plot))
 axs[0].plot(xpoints, rot_errs_rs, "o", label="TPGO-RS", color="green")
@@ -435,25 +524,41 @@ axs[0].set_title("Rotation errors")
 # axs[0].set_ylim(-0.1, 3.14)
 axs[1].plot(xpoints, transl_errs_rs, "o", label="TPGO-RS", color="green")
 axs[1].set_title("Translation errors")
-
-axs[2].plot(xpoints, exec_times_rs, "o", label="TPGO-RS", color="green")
-axs[2].set_title("Execution times [ms]")
-# axs[2].set_ylim()
+axs[2].plot(xpoints, np.minimum(scale_mean_errs_rs, 10), "o", label="TPGO-RS", color="green")
+axs[2].set_ylim(top=10)
+axs[2].set_title("Scale errors avg (mean)")
+axs[3].plot(xpoints, np.minimum(scale_max_errs_procrustes, 10), 'o', label="TPGO-PROCR", color='blue')
+axs[3].set_title('Scale errors avg (max)')
+axs[3].set_ylim(top=10)
+axs[4].plot(xpoints, exec_times_rs, "o", label="TPGO-RS", color="green")
+axs[4].set_title("Execution times [ms]")
+# axs[3].set_ylim()
 
 axs[0].plot(xpoints, rot_errs_icp, 'o', label="TPGO-ICP", color='red')
 axs[0].set_title('Rotation errors')
 axs[1].plot(xpoints, transl_errs_icp, 'o', label="TPGO-ICP", color='red')
 axs[1].set_title('Translation errors')
-
-axs[2].plot(xpoints, exec_times_icp, 'o', label="TPGO-ICP", color='red')
-axs[2].set_title('Execution times [ms]')
+axs[2].plot(xpoints, np.minimum(scale_mean_errs_icp, 10), 'o', label="TPGO-ICP", color='red')
+axs[2].set_title('Scale errors avg (mean)')
+axs[2].set_ylim(top=10)
+axs[3].plot(xpoints, np.minimum(scale_max_errs_icp, 10), 'o', label="TPGO-ICP", color='red')
+axs[3].set_title('Scale errors avg (max)')
+axs[3].set_ylim(top=10)
+axs[4].plot(xpoints, exec_times_icp, 'o', label="TPGO-ICP", color='red')
+axs[4].set_title('Execution times [ms]')
 
 axs[0].plot(xpoints, rot_errs_procrustes, 'o', label="TPGO-PROCR", color='blue')
 axs[0].set_title('Rotation errors')
 axs[1].plot(xpoints, transl_errs_procrustes, 'o', label="TPGO-PROCR", color='blue')
 axs[1].set_title('Translation errors')
-axs[2].plot(xpoints, exec_times_procrustes, 'o', label="TPGO-PROCR", color='blue')
-axs[2].set_title('Execution times [ms]')
+axs[2].plot(xpoints, np.minimum(scale_mean_errs_procrustes, 10), 'o', label="TPGO-PROCR", color='blue')
+axs[2].set_title('Scale errors avg (mean)')
+axs[2].set_ylim(top=10)
+axs[3].plot(xpoints, np.minimum(scale_max_errs_procrustes, 10), 'o', label="TPGO-PROCR", color='blue')
+axs[3].set_title('Scale errors avg (max)')
+axs[3].set_ylim(top=10)
+axs[4].plot(xpoints, exec_times_procrustes, 'o', label="TPGO-PROCR", color='blue')
+axs[4].set_title('Execution times [ms]')
 
 
 

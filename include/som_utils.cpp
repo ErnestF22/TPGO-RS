@@ -868,7 +868,7 @@ namespace SomUtils
     void computeErrorsSingleSsom(const Eigen::MatrixXi &edges,
                                  const SomUtils::VecMatD &R, const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
                                  const SomUtils::VecMatD &Rgt, const SomUtils::MatD &Tgt, const SomUtils::MatD &LambdasGt,
-                                 std::vector<double> &rotErrs, std::vector<double> &translErrs, std::vector<double> &scaleErrs)
+                                 std::vector<double> &rotErrs, std::vector<double> &translErrs, std::vector<double> &scaleErrsMean, std::vector<double> &scaleErrsMax)
     {
         // Compute errors
         ROFL_VAR1("Printing R, T, Lambdas out")
@@ -931,8 +931,38 @@ namespace SomUtils
             rotErrs[e] = rotDistEdge;
             translErrs[e] = translDistEdge;
 
-            scaleErrs[e] = abs(Lambdas(e, 0) - LambdasGt(e, 0));
-            ROFL_VAR2(e, scaleErrs[e]);
+            // if any(lambdas_in < 1)
+            //     scale_err.mean = 1e+6;
+            //     scale_err.max = 1e+10;
+            // end
+
+            if ((Lambdas.array() < 1.0).any())
+            {
+                scaleErrsMean[e] = 1e+6;
+                scaleErrsMax[e] = 1e+10;
+            }
+            else
+            {
+                // lambdas_in_factor = lambdas_in(1);
+                // lambdas_in_norm = lambdas_in / lambdas_in_factor;
+
+                double lambdasInFactor = Lambdas(e, 0);
+                Eigen::VectorXd lambdasInNorm = Lambdas / lambdasInFactor;
+
+                ROFL_ASSERT(Lambdas.size() == LambdasGt.size())
+
+                double gIn = std::pow(lambdasInNorm.prod(), 1.0 / lambdasInNorm.size());
+
+                Eigen::VectorXd lambdasGtNorm = LambdasGt / LambdasGt(0);
+                double gGt = std::pow(lambdasGtNorm.prod(), 1.0 / lambdasGtNorm.size());
+
+                scaleErrsMean[e] = abs(gGt - gIn);
+
+                scaleErrsMax[e] = (lambdasGtNorm - lambdasInNorm).cwiseAbs().maxCoeff();
+
+                ROFL_VAR2(e, scaleErrsMean[e]);
+                ROFL_VAR2(e, scaleErrsMax[e]);
+            }
         }
     }
 

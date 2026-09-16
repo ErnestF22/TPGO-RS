@@ -3,6 +3,8 @@ function scale_err = compute_scale_error(lambdas_in, lambdas_gt)
 if any(lambdas_in < 1)
     scale_err.mean = 1e+6;
     scale_err.max = 1e+10;
+    
+    return;
 end
 
 lambdas_in_factor = lambdas_in(1);

@@ -68,14 +68,15 @@ int main(int argc, char **argv)
     for (auto &entry : fs::directory_iterator(folderIn))
         sortedByName.insert(entry.path());
 
-    std::vector<std::vector<std::vector<double>>> rotErrsAll, translErrsAll, lambdaErrsAll;
+    std::vector<std::vector<std::vector<double>>> rotErrsAll, translErrsAll, lambdaMeanErrsAll, lambdaMaxErrsAll;
     std::vector<std::vector<double>> execTimesAll;
     std::vector<std::vector<double>> staircaseStepOutIdxAll;
 
     // declaring ofstreams
     std::ofstream rotErrsOfstream;
     std::ofstream translErrsOfstream;
-    std::ofstream lambdaErrsOfstream;
+    std::ofstream lambdaMeanErrsOfstream;
+    std::ofstream lambdaMaxErrsOfstream;
     std::ofstream execTimesOfstream;
     std::ofstream staircaseStepOutIdxOfstream;
     std::ofstream rsSuccessOfstream;
@@ -84,7 +85,8 @@ int main(int argc, char **argv)
     std::ofstream rsActuallyUsefulOfstream;
     std::ofstream rotErrsMeanOfstream;
     std::ofstream translErrsMeanOfstream;
-    std::ofstream lambdaErrsMeanOfstream;
+    std::ofstream lambdaMeanErrsMeanOfstream;
+    std::ofstream lambdaMaxErrsMeanOfstream;
     std::ofstream execTimesMeanOfstream;
 
     std::string folderAppendNameStamped = SomUtils::generateStampedString("", "");
@@ -244,14 +246,14 @@ int main(int argc, char **argv)
             ROFL_ASSERT(0)
         }
         // Lambda
-        std::string lambdaErrsFilename = resultsBasePath + folderAppendName + "_" + folderAppendNameStamped + "/" + folderAppendName + "_lambda_errors.txt";
-        if (lambdaErrsOfstream.is_open())
+        std::string lambdaMeanErrsFilename = resultsBasePath + folderAppendName + "_" + folderAppendNameStamped + "/" + folderAppendName + "_lambda_mean_errors.txt";
+        if (lambdaMeanErrsOfstream.is_open())
         {
-            lambdaErrsOfstream.close();
-            lambdaErrsOfstream.clear(); // clear flags
+            lambdaMeanErrsOfstream.close();
+            lambdaMeanErrsOfstream.clear(); // clear flags
         }
-        lambdaErrsOfstream.open(lambdaErrsFilename);
-        if (!lambdaErrsOfstream)
+        lambdaMeanErrsOfstream.open(lambdaMeanErrsFilename);
+        if (!lambdaMeanErrsOfstream)
         {
             ROFL_ERR("Error opening output file")
             ROFL_ASSERT(0)
@@ -359,14 +361,14 @@ int main(int argc, char **argv)
             ROFL_ERR("Error opening output file")
             ROFL_ASSERT(0)
         }
-        std::string lambdaErrsMeanFilename = resultsBasePath + folderAppendName + "_" + folderAppendNameStamped + "/" + folderAppendName + "_lambda_errors_mean.txt";
-        if (lambdaErrsMeanOfstream.is_open())
+        std::string lambdaMeanErrsMeanFilename = resultsBasePath + folderAppendName + "_" + folderAppendNameStamped + "/" + folderAppendName + "_lambda_mean_errors_mean.txt";
+        if (lambdaMeanErrsMeanOfstream.is_open())
         {
-            lambdaErrsMeanOfstream.close();
-            lambdaErrsMeanOfstream.clear(); // clear flags
+            lambdaMeanErrsMeanOfstream.close();
+            lambdaMeanErrsMeanOfstream.clear(); // clear flags
         }
-        lambdaErrsMeanOfstream.open(lambdaErrsMeanFilename);
-        if (!lambdaErrsMeanOfstream)
+        lambdaMeanErrsMeanOfstream.open(lambdaMeanErrsMeanFilename);
+        if (!lambdaMeanErrsMeanOfstream)
         {
             ROFL_ERR("Error opening output file")
             ROFL_ASSERT(0)
@@ -385,8 +387,8 @@ int main(int argc, char **argv)
         }
 
         // Declare and init error metrics (for each instances)
-        double rotMeanErr = 1e+6, translMeanErr = 1e+6, lambdaMeanErr = 1e+6, execTimeMean = 1e+6;
-        std::vector<std::vector<double>> rotErrs(numTestsPerInstance), translErrs(numTestsPerInstance), lambdaErrs(numTestsPerInstance);
+        double rotMeanErr = 1e+6, translMeanErr = 1e+6, lambdaMeanErr = 1e+6, lambdaMaxErr = 1e+6, execTimeMean = 1e+6;
+        std::vector<std::vector<double>> rotErrs(numTestsPerInstance), translErrs(numTestsPerInstance), lambdaMeanErrs(numTestsPerInstance), lambdaMaxErrs(numTestsPerInstance);
         std::vector<double> execTimes(numTestsPerInstance), staircaseStepOutIdx(numTestsPerInstance);
         std::vector<bool> rsSuccess(numTestsPerInstance), rotDetsOk(numTestsPerInstance), lambdasAcceptable(numTestsPerInstance), rsActuallyUseful(numTestsPerInstance);
 
@@ -478,22 +480,24 @@ int main(int argc, char **argv)
                     startxofs.close();
                 }
 
-                std::vector<double> rotErrsTestjd(numEdges, 1e+6), translErrsTestjd(numEdges, 1e+6), lambdaErrsTestjd(numEdges, 1e+6);
+                std::vector<double> rotErrsTestjd(numEdges, 1e+6), translErrsTestjd(numEdges, 1e+6), lambdaMeanErrsTestjd(numEdges, 1e+6), lambdaMaxErrsTestjd(numEdges, 1e+6);
                 SomUtils::computeErrorsSingleSsom(edges,
                                                   Rout, Tout, LambdasOut,
                                                   RgtEig, TgtEig, LambdasGtEig,
-                                                  rotErrsTestjd, translErrsTestjd, lambdaErrsTestjd);
+                                                  rotErrsTestjd, translErrsTestjd, lambdaMeanErrsTestjd, lambdaMaxErrsTestjd);
 
                 double execTimeIJ = runSsomRStimer.elapsedTimeMs();
                 ROFL_VAR3(entry, testjd, execTimeIJ)
 
                 rotErrs[testjd].resize(numEdges, 1e+6);
                 translErrs[testjd].resize(numEdges, 1e+6);
-                lambdaErrs[testjd].resize(numEdges, 1e+6);
+                lambdaMeanErrs[testjd].resize(numEdges, 1e+6);
+                lambdaMaxErrs[testjd].resize(numEdges, 1e+6);
 
                 rotErrs[testjd] = rotErrsTestjd;
                 translErrs[testjd] = translErrsTestjd;
-                lambdaErrs[testjd] = lambdaErrsTestjd;
+                lambdaMeanErrs[testjd] = lambdaMeanErrsTestjd;
+                lambdaMaxErrs[testjd] = lambdaMaxErrsTestjd;
 
                 execTimes[testjd] = execTimeIJ;
                 staircaseStepOutIdx[testjd] = staircaseStepIdxOutIJ;
@@ -510,8 +514,10 @@ int main(int argc, char **argv)
                     rotErrsOfstream << rotErrs[testjd][k] << std::endl;
                     translErrsOfstream << "testjd " + std::to_string(testjd) + " k " << std::to_string(k) << std::endl;
                     translErrsOfstream << translErrs[testjd][k] << std::endl;
-                    lambdaErrsOfstream << "testjd " + std::to_string(testjd) + " k " << std::to_string(k) << std::endl;
-                    lambdaErrsOfstream << lambdaErrs[testjd][k] << std::endl;
+                    lambdaMeanErrsOfstream << "testjd " + std::to_string(testjd) + " k " << std::to_string(k) << std::endl;
+                    lambdaMeanErrsOfstream << lambdaMeanErrs[testjd][k] << std::endl;
+                    lambdaMaxErrsOfstream << "testjd " + std::to_string(testjd) + " k " << std::to_string(k) << std::endl;
+                    lambdaMaxErrsOfstream << lambdaMaxErrs[testjd][k] << std::endl;
                     ROFL_VAR2(rotErrs[testjd][k], translErrs[testjd][k])
                 }
                 execTimesOfstream << "j " + std::to_string(testjd) << std::endl;
@@ -530,14 +536,17 @@ int main(int argc, char **argv)
                 // Finding mean error of current instance-testjd pair
                 rotMeanErr = SomUtils::stlVecDoublesMean(rotErrs[testjd]);
                 translMeanErr = SomUtils::stlVecDoublesMean(translErrs[testjd]);
-                lambdaMeanErr = SomUtils::stlVecDoublesMean(lambdaErrs[testjd]);
+                lambdaMeanErr = SomUtils::stlVecDoublesMean(lambdaMeanErrs[testjd]);
+                lambdaMaxErr = SomUtils::stlVecDoublesMean(lambdaMaxErrs[testjd]);
                 rotErrsMeanOfstream << "j " + std::to_string(testjd) << std::endl;
                 rotErrsMeanOfstream << rotMeanErr << std::endl;
                 translErrsMeanOfstream << "j " + std::to_string(testjd) << std::endl;
                 translErrsMeanOfstream << translMeanErr << std::endl;
-                lambdaErrsMeanOfstream << "j " + std::to_string(testjd) << std::endl;
-                lambdaErrsMeanOfstream << lambdaMeanErr << std::endl;
-                ROFL_VAR3(rotMeanErr, translMeanErr, lambdaMeanErr)
+                lambdaMeanErrsOfstream << "j " + std::to_string(testjd) << std::endl;
+                lambdaMeanErrsOfstream << lambdaMeanErr << std::endl;
+                lambdaMaxErrsOfstream << "j " + std::to_string(testjd) << std::endl;
+                lambdaMaxErrsOfstream << lambdaMaxErr << std::endl;
+                ROFL_VAR4(rotMeanErr, translMeanErr, lambdaMeanErr, lambdaMaxErr)
 
                 execTimeMean = SomUtils::stlVecDoublesMean(execTimes);
             } // end of ssom RS execution scope
@@ -551,9 +560,9 @@ int main(int argc, char **argv)
             {
                 // output 2
                 // ROFL_VAR4(entry, j, rotErrs[i][j], translErrs[i][j]);
-                ROFL_VAR3(rotErrs[j][k], translErrs[j][k], lambdaErrs[j][k])
+                ROFL_VAR4(rotErrs[j][k], translErrs[j][k], lambdaMeanErrs[j][k], lambdaMaxErrs[j][k])
             }
-            ROFL_VAR3(rotMeanErr, translMeanErr, lambdaMeanErr)
+            ROFL_VAR4(rotMeanErr, translMeanErr, lambdaMeanErr, lambdaMaxErr)
         }
 
         // execTimesMeanOfstream << "i " + std::to_string(i) << std::endl;
@@ -561,7 +570,8 @@ int main(int argc, char **argv)
 
         rotErrsAll.push_back(rotErrs);
         translErrsAll.push_back(translErrs);
-        lambdaErrsAll.push_back(lambdaErrs);
+        lambdaMeanErrsAll.push_back(lambdaMeanErrs);
+        lambdaMaxErrsAll.push_back(lambdaMaxErrs);
         execTimesAll.push_back(execTimes);
 
         inst++; // current instance idx
@@ -569,7 +579,8 @@ int main(int argc, char **argv)
 
     rotErrsOfstream.close();
     translErrsOfstream.close();
-    lambdaErrsOfstream.close();
+    lambdaMeanErrsOfstream.close();
+    lambdaMaxErrsOfstream.close();
     execTimesOfstream.close();
     staircaseStepOutIdxOfstream.close();
     rsSuccessOfstream.close();
@@ -578,7 +589,8 @@ int main(int argc, char **argv)
     rsActuallyUsefulOfstream.close();
     rotErrsMeanOfstream.close();
     translErrsMeanOfstream.close();
-    lambdaErrsMeanOfstream.close();
+    lambdaMeanErrsMeanOfstream.close();
+    lambdaMaxErrsMeanOfstream.close();
     execTimesMeanOfstream.close();
 
     for (int i = 0; i < numInstances; ++i) // i already declared
@@ -588,12 +600,12 @@ int main(int argc, char **argv)
             if (!rotErrsAll.empty())
             {
                 for (int k = 0; k < rotErrsAll[i][j].size(); ++k)
-                    ROFL_VAR6(i, j, k, rotErrsAll[i][j][k], translErrsAll[i][j][k], lambdaErrsAll[i][j][k]);
+                    ROFL_VAR7(i, j, k, rotErrsAll[i][j][k], translErrsAll[i][j][k], lambdaMeanErrsAll[i][j][k], lambdaMaxErrsAll[i][j][k]);
             }
             else
                 continue;
 
-            ROFL_VAR4(SomUtils::stlVecDoublesMean(rotErrsAll[i][j]), SomUtils::stlVecDoublesMean(translErrsAll[i][j]), SomUtils::stlVecDoublesMean(lambdaErrsAll[i][j]), SomUtils::stlVecDoublesMean(execTimesAll[i]));
+            ROFL_VAR5(SomUtils::stlVecDoublesMean(rotErrsAll[i][j]), SomUtils::stlVecDoublesMean(translErrsAll[i][j]), SomUtils::stlVecDoublesMean(lambdaMeanErrsAll[i][j]), SomUtils::stlVecDoublesMean(lambdaMaxErrsAll[i][j]), SomUtils::stlVecDoublesMean(execTimesAll[i]));
         }
     }
 
