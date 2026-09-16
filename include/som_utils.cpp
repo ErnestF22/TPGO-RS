@@ -946,22 +946,22 @@ namespace SomUtils
                 // lambdas_in_factor = lambdas_in(1);
                 // lambdas_in_norm = lambdas_in / lambdas_in_factor;
 
-                double lambdasInFactor = Lambdas(e, 0);
+                double lambdasInFactor = Lambdas(0, 0);
                 Eigen::VectorXd lambdasInNorm = Lambdas / lambdasInFactor;
 
                 ROFL_ASSERT(Lambdas.size() == LambdasGt.size())
 
                 double gIn = std::pow(lambdasInNorm.prod(), 1.0 / lambdasInNorm.size());
 
-                Eigen::VectorXd lambdasGtNorm = LambdasGt / LambdasGt(0);
+                Eigen::VectorXd lambdasGtNorm = LambdasGt / LambdasGt(0, 0);
                 double gGt = std::pow(lambdasGtNorm.prod(), 1.0 / lambdasGtNorm.size());
 
                 scaleErrsMean[e] = abs(gGt - gIn);
 
                 scaleErrsMax[e] = (lambdasGtNorm - lambdasInNorm).cwiseAbs().maxCoeff();
 
-                ROFL_VAR2(e, scaleErrsMean[e]);
-                ROFL_VAR2(e, scaleErrsMax[e]);
+                ROFL_VAR2(e, scaleErrsMean[e]); // TODO: all edges should be equal... temporary fix as the means will be the same, but unnecessary to compute for all edges -> FIX later
+                ROFL_VAR2(e, scaleErrsMax[e]); // TODO: all edges should be equal... temporary fix as the means will be the same, but unnecessary to compute for all edges -> FIX later
             }
         }
     }

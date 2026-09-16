@@ -66,7 +66,7 @@ int main(int argc, char **argv)
     std::vector<std::vector<double>> execTimesAll;
 
     // declaring ofstreams
-    std::ofstream rotErrsOfstream;    
+    std::ofstream rotErrsOfstream;
     std::ofstream translErrsOfstream;
     std::ofstream rotErrsMeanOfstream;
     std::ofstream translErrsMeanOfstream;
@@ -326,7 +326,7 @@ int main(int argc, char **argv)
         }
 
         // Declare and init error metrics (for each instances)
-        double rotMeanErr = 1e+6, translMeanErr = 1e+6, execTimeMean = 1e+6, LambdasMeanErr = 1e+6, LambdasMaxErr = 1e+6;
+        double rotMeanErr = 1e+6, translMeanErr = 1e+6, execTimeMean = 1e+6, LambdasMeanErrMean = 1e+6, LambdasMaxErrMean = 1e+6;
         std::vector<std::vector<double>> rotErrs(numTestsPerInstance), translErrs(numTestsPerInstance), LambdasMeanErrs(numTestsPerInstance), LambdasMaxErrs(numTestsPerInstance);
         std::vector<double> execTimes(numTestsPerInstance);
 
@@ -413,19 +413,23 @@ int main(int argc, char **argv)
                 // Finding mean error of current instance-testjd pair
                 rotMeanErr = SomUtils::stlVecDoublesMean(rotErrs[testjd]);
                 translMeanErr = SomUtils::stlVecDoublesMean(translErrs[testjd]);
-                LambdasMeanErr = SomUtils::stlVecDoublesMean(LambdasMeanErrs[testjd]);
-                LambdasMaxErr = SomUtils::stlVecDoublesMean(LambdasMaxErrs[testjd]);
+                LambdasMeanErrMean = SomUtils::stlVecDoublesMean(LambdasMeanErrs[testjd]);
+                LambdasMaxErrMean = SomUtils::stlVecDoublesMean(LambdasMaxErrs[testjd]);
                 rotErrsMeanOfstream << "j " + std::to_string(testjd) << std::endl;
                 rotErrsMeanOfstream << rotMeanErr << std::endl;
                 translErrsMeanOfstream << "j " + std::to_string(testjd) << std::endl;
                 translErrsMeanOfstream << translMeanErr << std::endl;
-                LambdasMeanErrsOfstream << "j " + std::to_string(testjd) << std::endl;
-                LambdasMeanErrsOfstream << LambdasMeanErr << std::endl;
-                LambdasMaxErrsOfstream << "j " + std::to_string(testjd) << std::endl;
-                LambdasMaxErrsOfstream << LambdasMaxErr << std::endl;
-                ROFL_VAR4(rotMeanErr, translMeanErr, LambdasMeanErr, LambdasMaxErr)
+                LambdasMeanErrsMeanOfstream << "j " + std::to_string(testjd) << std::endl;
+                LambdasMeanErrsMeanOfstream << LambdasMeanErrMean << std::endl;
+                LambdasMaxErrsMeanOfstream << "j " + std::to_string(testjd) << std::endl;
+                LambdasMaxErrsMeanOfstream << LambdasMaxErrMean << std::endl;
+                ROFL_VAR4(rotMeanErr, translMeanErr, LambdasMeanErrMean, LambdasMaxErrMean)
 
                 execTimeMean = SomUtils::stlVecDoublesMean(execTimes);
+
+                execTimesMeanOfstream << "j " + std::to_string(testjd) << std::endl;
+                execTimesMeanOfstream << execTimeMean << std::endl;
+
             } // end of rsom RS execution scope
             // break; //testjd loop
             // startX.Delete();
@@ -439,7 +443,7 @@ int main(int argc, char **argv)
                 // ROFL_VAR4(entry, j, rotErrs[i][j], translErrs[i][j]);
                 ROFL_VAR4(rotErrs[j][k], translErrs[j][k], LambdasMeanErrs[j][k], LambdasMaxErrs[j][k])
             }
-            ROFL_VAR4(rotMeanErr, translMeanErr, LambdasMeanErr, LambdasMaxErr)
+            ROFL_VAR4(rotMeanErr, translMeanErr, LambdasMeanErrMean, LambdasMaxErrMean)
         }
 
         // execTimesMeanOfstream << "i " + std::to_string(i) << std::endl;
@@ -477,7 +481,7 @@ int main(int argc, char **argv)
             else
                 continue;
 
-            ROFL_VAR5(SomUtils::stlVecDoublesMean(rotErrsAll[i][j]), SomUtils::stlVecDoublesMean(translErrsAll[i][j]), SomUtils::stlVecDoublesMean(LambdasMeanErrsAll[i][j]), SomUtils::stlVecDoublesMean(LambdasMaxErrsAll[i][j]),    
+            ROFL_VAR5(SomUtils::stlVecDoublesMean(rotErrsAll[i][j]), SomUtils::stlVecDoublesMean(translErrsAll[i][j]), SomUtils::stlVecDoublesMean(LambdasMeanErrsAll[i][j]), SomUtils::stlVecDoublesMean(LambdasMaxErrsAll[i][j]),
                       SomUtils::stlVecDoublesMean(execTimesAll[i]));
         }
     }

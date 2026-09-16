@@ -267,7 +267,7 @@ int main(int argc, char **argv)
         }
 
         // Declare and init error metrics (for each instances)
-        double rotMeanErr = 1e+6, translMeanErr = 1e+6, LambdasMeanErr = 1e+6, LambdasMaxErr = 1e+6, execTimeMean = 1e+6;
+        double rotMeanErr = 1e+6, translMeanErr = 1e+6, LambdasMeanErrMean = 1e+6, LambdasMaxErrMean = 1e+6, execTimeMean = 1e+6;
         std::vector<std::vector<double>> rotErrs(numTestsPerInstance), translErrs(numTestsPerInstance), LambdasMeanErrs(numTestsPerInstance), LambdasMaxErrs(numTestsPerInstance);
         std::vector<double> execTimes(numTestsPerInstance);
 
@@ -387,17 +387,17 @@ int main(int argc, char **argv)
                 // Finding mean error of current instance-testjd pair
                 rotMeanErr = SomUtils::stlVecDoublesMean(rotErrs[testjd]);
                 translMeanErr = SomUtils::stlVecDoublesMean(translErrs[testjd]);
-                LambdasMeanErr = SomUtils::stlVecDoublesMean(LambdasMeanErrs[testjd]);
-                LambdasMaxErr = SomUtils::stlVecDoublesMean(LambdasMaxErrs[testjd]);
+                LambdasMeanErrMean = SomUtils::stlVecDoublesMean(LambdasMeanErrs[testjd]);
+                LambdasMaxErrMean = SomUtils::stlVecDoublesMean(LambdasMaxErrs[testjd]);
                 rotErrsMeanOfstream << "j " + std::to_string(testjd) << std::endl;
                 rotErrsMeanOfstream << rotMeanErr << std::endl;
                 translErrsMeanOfstream << "j " + std::to_string(testjd) << std::endl;
                 translErrsMeanOfstream << translMeanErr << std::endl;
                 LambdasMeanErrsMeanOfstream << "j " + std::to_string(testjd) << std::endl;
-                LambdasMeanErrsMeanOfstream << LambdasMeanErr << std::endl;
+                LambdasMeanErrsMeanOfstream << LambdasMeanErrMean << std::endl;
                 LambdasMaxErrsMeanOfstream << "j " + std::to_string(testjd) << std::endl;
-                LambdasMaxErrsMeanOfstream << LambdasMaxErr << std::endl;
-                ROFL_VAR4(rotMeanErr, translMeanErr, LambdasMeanErr, LambdasMaxErr)
+                LambdasMaxErrsMeanOfstream << LambdasMaxErrMean << std::endl;
+                ROFL_VAR4(rotMeanErr, translMeanErr, LambdasMeanErrMean, LambdasMaxErrMean)
 
                 execTimeMean = SomUtils::stlVecDoublesMean(execTimes);
             } // end of rsom RS execution scope
@@ -413,7 +413,7 @@ int main(int argc, char **argv)
                 // ROFL_VAR4(entry, j, rotErrs[i][j], translErrs[i][j]);
                 ROFL_VAR4(rotErrs[j][k], translErrs[j][k], LambdasMeanErrs[j][k], LambdasMaxErrs[j][k])
             }
-            ROFL_VAR4(rotMeanErr, translMeanErr, LambdasMeanErr, LambdasMaxErr)
+            ROFL_VAR4(rotMeanErr, translMeanErr, LambdasMeanErrMean, LambdasMaxErrMean)
         }
 
         // execTimesMeanOfstream << "i " + std::to_string(i) << std::endl;
