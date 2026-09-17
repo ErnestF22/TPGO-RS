@@ -307,7 +307,139 @@ results = struct("manopt_sep_rot_errs", manopt_sep_rot_errs, ...
 %plot results
 plot_results_ssom(sigmas, results, "ssom");
 
+%plot results
+%     plot_results(sigmas, results, "rsom_procrustes_manopt_rs_genproc");
 
+%manopt and procrustes together on the same graph (easier to compare)
+
+test_str = strcat("_n", string(testdata.NNodes), ...
+    "_", ...
+    "mindeg", string(mindeg));
+
+figure("Name", "rot errors"); %figure 1
+plot(sigmas, results.manopt_sep_rot_errs, 'r.', ...
+    "DisplayName", "TPGO-ICP mean rot error", 'markersize', 15);
+hold on
+xlabel('sigma')
+% ylabel('[°]')
+plot(sigmas, results.procrustes_rot_errs, 'bs', ...
+    "DisplayName", "TPGO-PROCRUSTES mean rot error", 'markersize', 15)
+plot(sigmas, results.procrustes_qp_rot_errs, '+', ...
+    "Color", [0.5 0 0.5], ...
+    "DisplayName", "TPGO-PROCRUSTES-QP mean rot error", 'markersize', 15)
+plot(sigmas, results.ssom_rot_errs, 'g+', ...
+    "DisplayName", "TPGO-RS mean rot error", 'markersize', 15);
+legend;
+% file_name_appendix = sprintf('%03d',100*tdata.sigma);
+rot_fig_name = convertStringsToChars(strcat("rot_errors", test_str));
+savefigure(rot_fig_name,'epsc',[3 4])
+% Save as PDF with vector graphics (best quality for text/lines)
+exportgraphics(gcf, strcat(rot_fig_name, '.pdf'), 'ContentType', 'vector');
+hold off
+
+figure("Name", "transl errors"); %figure 2
+plot(sigmas, results.manopt_sep_transl_errs, 'r.', ...
+    "DisplayName", "TPGO-ICP mean transl error", 'markersize', 10)
+hold on
+xlabel('sigma')
+% ylabel('[m]')
+plot(sigmas, results.procrustes_transl_errs, 'bs', ...
+    "DisplayName", "TPGO-PROCRUSTES mean transl error", 'markersize', 10)
+plot(sigmas, results.procrustes_qp_transl_errs,  '+', ...
+    "Color", [0.5 0 0.5], ...
+    "DisplayName", "TPGO-PROCRUSTES-QP mean transl error", 'markersize', 10)
+plot(sigmas, results.ssom_transl_errs, 'g+', ...
+    "DisplayName", "TPGO-RS mean transl error", 'markersize', 10)
+legend;
+transl_fig_name = convertStringsToChars(strcat('transl_errors', test_str));
+savefigure(transl_fig_name,'epsc',[3 4])
+% Save as PDF with vector graphics (best quality for text/lines)
+exportgraphics(gcf, strcat(transl_fig_name, '.pdf'), 'ContentType', 'vector');
+hold off
+
+figure("Name", "execution times"); %figure 3
+plot(sigmas, results.manopt_sep_exec_times, 'r.', ...
+    "DisplayName", "TPGO-ICP mean exec time", 'markersize', 15)
+hold on
+xlabel('sigma')
+ylabel('[s]')
+plot(sigmas, results.procrustes_exec_times, 'bs', ...
+    "DisplayName", "TPGO-PROCRUSTES mean exec time", 'markersize', 10)
+plot(sigmas, results.procrustes_qp_exec_times,  '+', ...
+    "Color", [0.5 0 0.5], ...
+    "DisplayName", "TPGO-PROCRUSTES-QP mean exec time", 'markersize', 10)
+plot(sigmas, results.ssom_exec_times, 'g+', ...
+    "DisplayName", "TPGO-RS mean exec time", 'markersize', 15)
+legend
+exectimes_fig_name = convertStringsToChars(strcat('exec_times', test_str));
+savefigure(exectimes_fig_name,'epsc',[3 4])
+% Save as PDF with vector graphics (best quality for text/lines)
+exportgraphics(gcf, strcat(exectimes_fig_name, '.pdf'), 'ContentType', 'vector');
+hold off
+
+figure("Name", "max scale error (mean over repeated tests with same sigma)"); %figure 4
+plot(sigmas, results.ssom_scale_errs_max, 'g+', ...
+    "DisplayName", "TPGO-RS max scale error mean", 'markersize', 15, ...
+    'LineWidth',10);
+hold on
+xlabel('sigma')
+% ylabel('[°]')
+plot(sigmas, results.manopt_sep_scale_errs_max, 'r.', ...
+    "DisplayName", "TPGO-ICP max scale error mean", 'markersize', 15, ...
+    'LineWidth',10)
+plot(sigmas, results.procrustes_scale_errs_max, 'bs', ...
+    "DisplayName", "TPGO-PROCRUSTES max scale error mean", 'markersize', 15, ...
+    'LineWidth',10)
+plot(sigmas, results.procrustes_qp_scale_errs_max, '+', ...
+    "Color", [0.5 0 0.5], ...
+    "DisplayName", "TPGO-PROCRUSTES-QP max scale error mean", 'markersize', 15, ...
+    'LineWidth',10)
+legend
+max_scale_err_fig_name = convertStringsToChars(strcat('max_scale_err', test_str));
+% set(legend,'FontSize',30);
+savefigure(max_scale_err_fig_name,'epsc',[3 4])
+% Save as PDF with vector graphics (best quality for text/lines)
+exportgraphics(gcf, strcat(max_scale_err_fig_name, '.pdf'), 'ContentType', 'vector');
+% legend;
+hold off
+
+figure("Name", "geometric mean scale error (averaged over repeated tests with same sigma)"); %figure 5
+plot(sigmas, results.ssom_scale_errs_mean, 'g+', ...
+    "DisplayName", "TPGO-RS mean scale error avg", 'markersize', 15, ...
+    'LineWidth',10);
+hold on
+xlabel('sigma')
+% ylabel('[°]')
+plot(sigmas, results.manopt_sep_scale_errs_mean, 'r.', ...
+    "DisplayName", "TPGO-ICP geometric mean scale error avg", 'markersize', 15, ...
+    'LineWidth',10)
+plot(sigmas, results.procrustes_scale_errs_mean, 'bs', ...
+    "DisplayName", "TPGO-PROCRUSTES geometric mean scale error avg", 'markersize', 15, ...
+    'LineWidth',10)
+plot(sigmas, results.procrustes_qp_scale_errs_mean, '+', ...
+    "Color", [0.5 0 0.5], ...
+    "DisplayName", "TPGO-PROCRUSTES-QP geometric mean scale error avg", 'markersize', 15, ...
+    'LineWidth',10)
+% plot(sigmas, results.manopt_rs_rot_errs, 'g+', ...
+%     "DisplayName", "manopt\_rs mean rot error", 'markersize', 15, ...
+%     'LineWidth',15);
+legend
+mean_scale_err_fig_name = convertStringsToChars(strcat('mean_scale_err', test_str));
+% set(legend,'FontSize',30);
+savefigure(mean_scale_err_fig_name,'epsc',[3 4])
+% Save as PDF with vector graphics (best quality for text/lines)
+exportgraphics(gcf, strcat(mean_scale_err_fig_name, '.pdf'), 'ContentType', 'vector');
+% legend;
+hold off
+
+% save(convertStringsToChars(strcat('rs_success_bools', test_str, ".csv")), "rs_success_bools", '-ascii', '-tabs')
+% save(convertStringsToChars(strcat('rot_dets_ok', test_str, ".csv")), "rot_dets_ok", '-ascii', '-tabs')
+% save(convertStringsToChars(strcat('lambdas_acceptable', test_str, ".csv")), "lambdas_acceptable", '-ascii', '-tabs')
+% save(convertStringsToChars(strcat('rs_actually_useful', test_str, ".csv")), "lambdas_acceptable", '-ascii', '-tabs')
+
+save(test_str)
+
+close all;
 save(string(datetime("now")))
 
 
