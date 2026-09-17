@@ -5,7 +5,7 @@ from matplotlib.colors import ListedColormap
 
 if True:
 
-    ssom_rs_results_path = "../results_lsom/"
+    ssom_rs_results_path = "results_lsom/"
     folders = os.listdir(ssom_rs_results_path)
     tuples_rs = []
     tuples_lambdas_acceptable = []
@@ -98,7 +98,7 @@ if True:
 
         # exec time
         exec_times = np.array([], dtype=np.float64)
-        file_exec_times = folder + "/" + testid + "exec_times_mean.txt"
+        file_exec_times = folder + "/" + testid + "exec_times.txt"
         print("file_exec_times")
         print(file_exec_times)
         with open(file_exec_times, "r") as f:
@@ -142,7 +142,7 @@ if True:
 
 ############################
 
-ssom_icp_results_path = "../results_ssom_icp/"
+ssom_icp_results_path = "results_ssom_icp/"
 folders = os.listdir(ssom_icp_results_path)
 
 tuples_icp = []
@@ -152,16 +152,18 @@ for f in folders:
     print("f")
     print(f)
 
-    folder = ssom_icp_results_path + f
+    folder = ssom_icp_results_path + "/" + f
+    
     print("folder")
     print(folder)
 
-    testid = folder[20: 40]
+    testid = folder[len(ssom_icp_results_path) + 1 : len(folder) - len_timestamp]
 
     print("testid")
     print(testid)
 
     testid_split = testid.split("_")
+    
     n = int(testid_split[0][1:])
     mindeg = int(testid_split[1][6:])
     sigma = float(testid_split[2][5:]) /100
@@ -233,7 +235,7 @@ for f in folders:
 
     #exec time
     exec_times = np.array([], dtype=np.float64)
-    file_exec_times = folder + "/" + testid + "exec_times_mean.txt"
+    file_exec_times = folder + "/" + testid + "exec_times.txt"
     print("file_exec_times")
     print(file_exec_times)
     with open(file_exec_times, 'r') as f:
@@ -252,7 +254,7 @@ for f in folders:
 ############################
 
 
-ssom_procrustes_results_path = "../results_ssom_procrustes/"
+ssom_procrustes_results_path = "results_ssom_procrustes/"
 folders = os.listdir(ssom_procrustes_results_path)
 
 tuples_procrustes = []
@@ -262,12 +264,12 @@ for f in folders:
     print("f")
     print(f)
 
-    folder = ssom_procrustes_results_path + f
+    folder = ssom_procrustes_results_path + "/" + f
 
     print("folder")
     print(folder)
 
-    testid = folder[27:47]
+    testid = folder[len(ssom_procrustes_results_path) + 1 : len(folder) - len_timestamp]
 
     print("testid")
     print(testid)
@@ -346,7 +348,7 @@ for f in folders:
 
     #exec time
     exec_times = np.array([], dtype=np.float64)
-    file_exec_times = folder + "/" + testid + "exec_times_mean.txt"
+    file_exec_times = folder + "/" + testid + "exec_times.txt"
     print("file_exec_times")
     print(file_exec_times)
     with open(file_exec_times, 'r') as f:
@@ -527,7 +529,7 @@ axs[1].set_title("Translation errors")
 axs[2].plot(xpoints, np.minimum(scale_mean_errs_rs, 10), "o", label="TPGO-RS", color="green")
 axs[2].set_ylim(top=10)
 axs[2].set_title("Scale errors avg (mean)")
-axs[3].plot(xpoints, np.minimum(scale_max_errs_procrustes, 10), 'o', label="TPGO-PROCR", color='blue')
+axs[3].plot(xpoints, np.minimum(scale_max_errs_rs, 10), 'o', label="TPGO-RS", color='green')
 axs[3].set_title('Scale errors avg (max)')
 axs[3].set_ylim(top=10)
 axs[4].plot(xpoints, exec_times_rs, "o", label="TPGO-RS", color="green")

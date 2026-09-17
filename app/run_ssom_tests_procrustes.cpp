@@ -416,7 +416,7 @@ int main(int argc, char **argv)
             ROFL_VAR4(rotMeanErr, translMeanErr, LambdasMeanErrMean, LambdasMaxErrMean)
         }
 
-        // execTimesMeanOfstream << "i " + std::to_string(i) << std::endl;
+        execTimesMeanOfstream << "j " + std::to_string(testjd) << std::endl;
         execTimesMeanOfstream << execTimeMean << std::endl;
 
         rotErrsAll.push_back(rotErrs);

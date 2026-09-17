@@ -39,11 +39,11 @@ rand_initguess = true;
 use_pim = true;
 enable_manopt_icp = false;
 enable_procrustes = true;
-enable_procrustes_qp = true;
+enable_procrustes_qp = false;
 enable_ssom = false;
 enable_lsom = false;
 enable_rs = false;
-perform_globalization = false;
+perform_globalization = true;
 relu_scale_compensation = false;
 read_from_file = false;
 
@@ -76,7 +76,7 @@ sigmas = readmatrix("data/sigmas.txt"); %sigma = stdev, sigma.^2 = variance
 mus = readmatrix("data/mus.txt"); %OBS. generally, mus can be d-dimensional; here, we just assume them as scalar (i.e. a d-dimensional vector with all coordinates equal)
 
 % sigmas = sigmas(4);
-sigmas = 0.0;
+sigmas = 0.01;
 % mus = mus(2);
 
 node_degrees = sum(testdata.A, 2);

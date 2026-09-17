@@ -53,6 +53,7 @@ results_ssom/
 results_ssom_icp/
 results_ssom_procrustes/
 results_lsom/
+results_lsom1/
 results_lsom_matlab/
 
 .vscode/

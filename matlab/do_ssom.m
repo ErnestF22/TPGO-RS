@@ -27,7 +27,9 @@ end
 N = params.N;
 d = params.d;
 
-% mu = params.mu;
+testdata.mu = params.mu;
+testdata.z = params.z;
+testdata.y = params.y;
 
 if sigma == 0
     params.noisy_test = boolean(0);
@@ -63,7 +65,7 @@ else
     edges = (testdata.E);
     num_edges = size(edges, 1);
     testdata.edges = edges; % 2 notation for edges struct member
-    
+
     %% 1) add noise to data
     %set gt 
     % transf_gt = testdata.gitruth;
@@ -223,6 +225,8 @@ end
 % exectime_ssom = toc(ssom_start_time);
 
 % 3e) execute with step 1 through Manopt with Riemannian Staircase
+testdata.noisy_test = params.noisy_test;
+testdata.node_degrees = params.node_degrees;
 ssom_start_time = tic();
 % save('tmp.mat')
 if params.enable_lsom
@@ -234,8 +238,6 @@ if params.enable_lsom
     testdata.edges = testdata.E; %edges field name is used in rsom/ssom project, E in testnetwork benchmark testdata generator
     testdata.tijs_gt = G2T(testdata.gijtruth);
     testdata.tijs = tijs_nois; % !!
-    testdata.noisy_test = params.noisy_test;
-    testdata.node_degrees = params.node_degrees;
     testdata.z = params.z;
     testdata.y = params.y;
     testdata.mu = params.mu;
@@ -326,6 +328,14 @@ else
 end
 exectime_ssom = toc(ssom_start_time);
 
+
+%% tmp) mixed methods
+testdata.tijs = tijs_nois;
+[transf_mm_icp, lambdas_mm_icp] = ssom_mm_icp(testdata, transf_procrustes, lambdas_procrustes, params);
+transf_procrustes = transf_mm_icp;
+transf_procrustes_qp = transf_mm_icp;
+scale_error_manopt_icp = compute_scale_error(lambdas_mm_icp, X_gt.lambda);
+scale_error_procrustes_qp = compute_scale_error(lambdas_mm_icp, X_gt.lambda);
 
 %% 4) Compare output results
 
