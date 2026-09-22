@@ -216,19 +216,19 @@ end
 run_repeated_test(testdatas, sigmas, mus);
 testdatas = [];
 
-for ss = 1:size(sigmas,1)      
-    s = sigmas(ss);
-
-    N = 25;
-    mindeg = 3;
-    testdata = [];
-    testdata = testNetwork_params(3, N, 'banded', mindeg, 0.0, s);
-    testdata.mindeg = mindeg;
-    testdata.sigma = s;
-    testdata.rho = 0;
-    testdata.a = 2.0;
-    testdatas = [testdatas, testdata];
-end
-
-run_repeated_test(testdatas, sigmas, mus);
-testdatas = [];
+% for ss = 1:size(sigmas,1)      
+%     s = sigmas(ss);
+% 
+%     N = 25;
+%     mindeg = 3;
+%     testdata = [];
+%     testdata = testNetwork_params(3, N, 'banded', mindeg, 0.0, s);
+%     testdata.mindeg = mindeg;
+%     testdata.sigma = s;
+%     testdata.rho = 0;
+%     testdata.a = 2.0;
+%     testdatas = [testdatas, testdata];
+% end
+% 
+% run_repeated_test(testdatas, sigmas, mus);
+% testdatas = [];

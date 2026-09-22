@@ -311,7 +311,7 @@ if params.enable_lsom
     lambdas_out = lambdas_ssom_out;
     % ssom_scale_err = norm(lambdas_ssom_out - X_gt.lambda);
 
-    ssom_scale_err = compute_scale_error(lambdas_procrustes_qp, X_gt.lambda);
+    ssom_scale_err = compute_scale_error(lambdas_ssom_out, X_gt.lambda);
 else
     rs_success_bool = boolean(0);
     transf_ssom = repmat(eye(d+1), 1, 1, N);
@@ -332,21 +332,24 @@ exectime_ssom = toc(ssom_start_time);
 %% tmp) mixed methods
 testdata.tijs = tijs_nois;
 [transf_mm_icp, lambdas_mm_icp] = ssom_mm_icp(testdata, transf_procrustes, lambdas_procrustes, params);
-transf_procrustes = transf_mm_icp;
+% transf_procrustes = transf_mm_icp;
 transf_procrustes_qp = transf_mm_icp;
-scale_error_manopt_icp = compute_scale_error(lambdas_mm_icp, X_gt.lambda);
+% scale_error_manopt_icp = compute_scale_error(lambdas_mm_icp, X_gt.lambda);
 scale_error_procrustes_qp = compute_scale_error(lambdas_mm_icp, X_gt.lambda);
 
 %% 4) Compare output results
 
 testdata.gi = transf_manopt_icp;
+testdata.lambdaij = lambdas_manopt_icp;
 % [rotErr,translErr,scale_ratio,translErrNorm] = testNetworkComputeErrors(testdata)
 [rotation_error_manopt_icp,translation_error_manopt_icp] = testNetworkComputeErrors(testdata);
 
 testdata.gi = transf_procrustes;
+testdata.lambdaij = lambdas_procrustes;
 [rotation_error_procrustes,translation_error_procrustes] = testNetworkComputeErrors(testdata);
 
 testdata.gi = transf_procrustes_qp;
+testdata.lambdaij = lambdas_procrustes_qp;
 [rotation_error_procrustes_qp,translation_error_procrustes_qp] = testNetworkComputeErrors(testdata);
 
 % !! scale estimation error evaluation is relevant also for comparison

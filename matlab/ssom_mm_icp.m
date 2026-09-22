@@ -498,13 +498,8 @@ disp(X_recovered_global.lambda);
 disp('multidet(R_recovered_global)')
 disp(multidet(R_recovered_global))
 
-
-
 disp("cost_last")
 disp(cost_last)
-
-
-
 
 cost_out_global = ssom_cost(X_recovered_global, problem_data);
 disp("[cost_out_global, cost_out_rs, cost_out_after_recovery")

@@ -3,6 +3,8 @@ import os
 import numpy as np
 from matplotlib.colors import ListedColormap
 
+#Note: relative paths are relative to the som project root, not this file's location
+
 if True:
 
     ssom_rs_results_path = "results_lsom/"

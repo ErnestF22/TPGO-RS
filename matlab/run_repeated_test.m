@@ -51,11 +51,11 @@ for tdata = testdatas
     initguess_is_available = false;
     rand_initguess = true;
     use_pim = true;
-    enable_manopt_icp = false;
+    enable_manopt_icp = true;
     enable_procrustes = true;
-    enable_procrustes_qp = true;
+    enable_procrustes_qp = false;
     enable_ssom = false;
-    enable_lsom = false;
+    enable_lsom = true;
     enable_rs = false;
     perform_globalization = true;
     relu_scale_compensation = false;
@@ -65,7 +65,7 @@ for tdata = testdatas
 
     %% ADMM params
     % z = ones(num_edges, 1); % better to initialize this as lambdas initguess
-    z = tdata.lambdaij;
+    z = tdata.lambdaij(:);
     y = zeros(num_edges, 1);
     mu = 0.5; % !!
 

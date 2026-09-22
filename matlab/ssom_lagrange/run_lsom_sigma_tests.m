@@ -37,11 +37,11 @@ hessian_mode = 'manual';
 initguess_is_available = false;
 rand_initguess = true;
 use_pim = true;
-enable_manopt_icp = false;
+enable_manopt_icp = true;
 enable_procrustes = true;
-enable_procrustes_qp = false;
+enable_procrustes_qp = false; %tmp substituted by procrustes + LSOM RS
 enable_ssom = false;
-enable_lsom = false;
+enable_lsom = true;
 enable_rs = false;
 perform_globalization = true;
 relu_scale_compensation = false;
@@ -305,14 +305,11 @@ results = struct("manopt_sep_rot_errs", manopt_sep_rot_errs, ...
     "ssom_transl_errs_norm", ssom_transl_errs_norm);
 
 %plot results
-plot_results_ssom(sigmas, results, "ssom");
-
-%plot results
 %     plot_results(sigmas, results, "rsom_procrustes_manopt_rs_genproc");
 
 %manopt and procrustes together on the same graph (easier to compare)
 
-test_str = strcat("_n", string(testdata.NNodes), ...
+test_str = strcat("_n", string(N), ...
     "_", ...
     "mindeg", string(mindeg));
 
@@ -330,7 +327,7 @@ plot(sigmas, results.procrustes_qp_rot_errs, '+', ...
 plot(sigmas, results.ssom_rot_errs, 'g+', ...
     "DisplayName", "TPGO-RS mean rot error", 'markersize', 15);
 legend;
-% file_name_appendix = sprintf('%03d',100*tdata.sigma);
+% file_name_appendix = sprintf('%03d',100*testdata.sigma);
 rot_fig_name = convertStringsToChars(strcat("rot_errors", test_str));
 savefigure(rot_fig_name,'epsc',[3 4])
 % Save as PDF with vector graphics (best quality for text/lines)
@@ -432,7 +429,7 @@ exportgraphics(gcf, strcat(mean_scale_err_fig_name, '.pdf'), 'ContentType', 'vec
 % legend;
 hold off
 
-% save(convertStringsToChars(strcat('rs_success_bools', test_str, ".csv")), "rs_success_bools", '-ascii', '-tabs')
+save(convertStringsToChars(strcat('rs_success_bools', test_str, ".csv")), "rs_success_bools", '-ascii', '-tabs')
 % save(convertStringsToChars(strcat('rot_dets_ok', test_str, ".csv")), "rot_dets_ok", '-ascii', '-tabs')
 % save(convertStringsToChars(strcat('lambdas_acceptable', test_str, ".csv")), "lambdas_acceptable", '-ascii', '-tabs')
 % save(convertStringsToChars(strcat('rs_actually_useful', test_str, ".csv")), "lambdas_acceptable", '-ascii', '-tabs')
@@ -440,6 +437,7 @@ hold off
 save(test_str)
 
 close all;
+
 save(string(datetime("now")))
 
 
