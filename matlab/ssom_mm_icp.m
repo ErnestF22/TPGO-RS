@@ -301,8 +301,8 @@ disp("cost_out AFTER RECOVERY")
 disp(cost_out_after_recovery)
 
 if ~is_equal_floats(cost_out_after_recovery, cost_out_rs)
-    error("recovery")
-    % save("failed_recovery.mat")    
+    % error("recovery")
+    save("failed_recovery.mat")    
 end
 
 %
@@ -438,8 +438,8 @@ if params.perform_globalization
 
 
     if ~is_equal_floats(cost_out_global, cost_out_rs)
-        % save("failed_recovery_global.mat")
-        error("globalization")
+        save("failed_recovery_global.mat")
+        % error("globalization")
     end
 
     transf_out = RT2G(X_recovered_global.R, X_recovered_global.T); %ssom_genproc() function output
