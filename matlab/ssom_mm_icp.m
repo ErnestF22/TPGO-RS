@@ -11,7 +11,7 @@ X_gt.T = problem_data.T_gt;
 cost_last = ssom_cost(X, problem_data);
 
 d = 3;
-r0 = d+1;
+% r0 = d+1;
 
 N = params.N;
 
@@ -22,7 +22,23 @@ num_edges = size(edges, 1);
 
 lambda_pim_out = -1;
 
-for staircase_step_idx = r0:num_edges*d*N+1
+cost_pre_rs = cost_last;
+
+rs_usefulness_struct.at_least_one_step = false;
+    
+% disp("lsom_cost X")
+% disp(lsom_cost(X, problem_data))
+% 
+% disp("ssom_cost X")
+% disp(ssom_cost(X, problem_data))
+
+% X_prev = X;
+staircase_step_idx = d;
+
+while lambda_pim_out < 0 % maybe change RS stopping conditions
+
+    staircase_step_idx = staircase_step_idx + 1;
+
     problem_data_next.sz = [staircase_step_idx, d, N];
     problem_data_next.tijs = problem_data.tijs;
     problem_data_next.edges = problem_data.edges;
@@ -32,138 +48,136 @@ for staircase_step_idx = r0:num_edges*d*N+1
     problem_data_next.mu = params.mu;
     problem_data_next.y = params.y;
     problem_data_next.z = params.z;    
-    
-    disp("lsom_cost X")
-    disp(lsom_cost(X, problem_data))
-    
-    disp("ssom_cost X")
-    disp(ssom_cost(X, problem_data))
 
-    X_prev = X;
+    % problem_data_next.sz(1) = problem_data_next.sz(1) + 1;
+    nrs = problem_data_next.sz(1);    
+
+    [Y0, lambda_pim_out, v_pim_out, eigenvalue_check_ok] = lsom_pim_hessian_genproc(X, problem_data_next, 1e-5, 5000);
     
-    while lambda_pim_out < 0 % maybe change RS stopping conditions
+    disp("lambda_pim_out")
+    disp(lambda_pim_out)
     
-        % problem_data_next.sz(1) = problem_data_next.sz(1) + 1;
-        nrs = problem_data_next.sz(1);    
-    
-        [Y0, lambda_pim_out, v_pim_out, eigenvalue_check_ok] = lsom_pim_hessian_genproc(X, problem_data_next, 1e-5, 5000);
+    if lambda_pim_out < 0 
+
+        rs_usefulness_struct.at_least_one_step = true;
+
+        %check whether cost has actually gone down
         
-        disp("lambda_pim_out")
-        disp(lambda_pim_out)
+        % disp("lsom_cost X")
+        % disp(lsom_cost(X, problem_data))
+        % 
+        % disp("ssom_cost X")
+        % disp(ssom_cost(X, problem_data))
+        % 
+        % disp("lsom_cost Y0 a.k.a. new starting pt")
+        % disp(lsom_cost(Y0, problem_data_next))
+        % 
+        % disp("ssom_cost Y0 a.k.a. new starting pt")
+        % disp(ssom_cost(Y0, problem_data_next))
+
+        transf_initguess_struct.R = Y0.R;
+        transf_initguess_struct.T = Y0.T;
+        lambdas_initguess = Y0.lambda;
+
+        iter_admm = 0;
+        admm_stopping_condition_reached = false;
+
+        while iter_admm < 40 && ~admm_stopping_condition_reached
+
+            z_prev = params.z;
+            % [X] = lsom_rtr_rs(nrs, d, N, problem_data, params, transf_initguess_struct, lambdas_initguess);
+            
+            [X] = lsom_rtr(nrs, d, N, problem_data, params, transf_initguess_struct, lambdas_initguess);
+            
+            % staircase_step_idx = size(X.R, 1) + 1;
         
-        if lambda_pim_out < 0 
-            %check whether cost has actually gone down
-            
-            disp("lsom_cost X")
-            disp(lsom_cost(X, problem_data))
+            %% ADMM UPDATE
         
-            disp("ssom_cost X")
-            disp(ssom_cost(X, problem_data))
+            lambdas_out = X.lambda;
         
-            disp("lsom_cost Y0 a.k.a. new starting pt")
-            disp(lsom_cost(Y0, problem_data_next))
+            % choose between re-initializing lambdas_initguess or using previous
+            % step output
+            lambdas_initguess = lambdas_out;
+            
+            % if params.relu_scale_compensation
+            %     lambdas_initguess=5*ones(num_edges, 1);
+            % else
+            %     lambdas_initguess=10*ones(num_edges, 1);
+            % end
         
-            disp("ssom_cost Y0 a.k.a. new starting pt")
-            disp(ssom_cost(Y0, problem_data_next))
-    
-            transf_initguess_struct.R = Y0.R;
-            transf_initguess_struct.T = Y0.T;
-            lambdas_initguess = Y0.lambda;
-    
-            iter_admm = 0;
-            admm_stopping_condition_reached = false;
-    
-            while iter_admm < 40 && ~admm_stopping_condition_reached
-    
-                z_prev = params.z;
-                % [X] = lsom_rtr_rs(nrs, d, N, problem_data, params, transf_initguess_struct, lambdas_initguess);
-                
-                [X] = lsom_rtr(nrs, d, N, problem_data, params, transf_initguess_struct, lambdas_initguess);
-                
-                staircase_step_idx = size(X.R, 1) + 1;
-            
-                %% ADMM UPDATE
-            
-                lambdas_out = X.lambda;
-            
-                % choose between re-initializing lambdas_initguess or using previous
-                % step output
-                lambdas_initguess = lambdas_out;
-                
-                % if params.relu_scale_compensation
-                %     lambdas_initguess=5*ones(num_edges, 1);
-                % else
-                %     lambdas_initguess=10*ones(num_edges, 1);
-                % end
-            
-                transf_initguess_struct.R = X.R;
-                transf_initguess_struct.T = X.T;
-            
-                nrs = size(X.T, 1);
-            
-                params.z = max(ones(size(lambdas_out)), lambdas_out);
-                params.y = params.y + params.mu *(params.z-lambdas_out);
-            
-                problem_data.z = params.z;
-                problem_data.y = params.y;
-            
-                disp("[lambdas, params.z, params.y]") 
-                disp([lambdas_out, params.z, params.y])
-            
-                iter_admm = iter_admm + 1;
-                disp("iter_admm")
-                disp(iter_admm)
-            
-                % penalty_param = params.mu;
-                x_k = lambdas_out;
-                z_k = params.z;
-                disp("params.mu before update_lsom_penalty_param()")
-                params_mu_prev = params.mu;
-                disp(params.mu)
-                [params.mu, r_k, s_k] = update_lsom_penalty_param(params.mu, x_k, z_k, z_prev);
-                disp("params.mu before update_lsom_penalty_param()")
-                params_mu_next = params.mu;
-                disp(params.mu)
-                if params_mu_next ~= params_mu_prev
-                    disp(" ")
-                end
-            
-                % When a varying penalty parameter is used in the scaled form of
-                % ADMM, the scaled dual variable must also be rescaled
-                y_k = params.y;
-            
-                disp("norm(s_k)")
-                disp(norm(s_k))
-                disp("norm(r_k)")
-                disp(norm(r_k))
-            
-                % close all;
-                
-                % figure(101)
-                % plot_vars = [plot_vars; iter_admm * ones(size(lambdas_initguess)), lambdas];
-                % plot(plot_vars(:,1), plot_vars(:,2), '.')
-                % plot_r_s = [plot_r_s; iter_admm * ones(2,1), [norm(r_k); norm(s_k)]];
-                % % hold on;
-                % figure(102)
-                % plot(plot_r_s(1:2:end,1), plot_r_s(1:2:end,2), 'r+')
-                % hold on;
-                % plot(plot_r_s(2:2:end,1), plot_r_s(2:2:end,2), 'g^')
-                % hold off;
-    
-                if size(X.R, 1) == size(X.R, 2)
-                    disp("multidet(X.R)")
-                    disp(multidet(X.R))
-                end
-            
-                admm_stopping_condition_reached = check_admm_stopping_condition(x_k, y_k, z_k, r_k, s_k, num_edges, 1e-8, 1e-8);
+            transf_initguess_struct.R = X.R;
+            transf_initguess_struct.T = X.T;
+        
+            nrs = size(X.T, 1);
+        
+            params.z = max(ones(size(lambdas_out)), lambdas_out);
+            params.y = params.y + params.mu *(params.z-lambdas_out);
+        
+            problem_data.z = params.z;
+            problem_data.y = params.y;
+        
+            disp("[lambdas, params.z, params.y]") 
+            disp([lambdas_out, params.z, params.y])
+        
+            iter_admm = iter_admm + 1;
+            disp("iter_admm")
+            disp(iter_admm)
+        
+            % penalty_param = params.mu;
+            x_k = lambdas_out;
+            z_k = params.z;
+            disp("params.mu before update_lsom_penalty_param()")
+            params_mu_prev = params.mu;
+            disp(params.mu)
+            [params.mu, r_k, s_k] = update_lsom_penalty_param(params.mu, x_k, z_k, z_prev);
+            disp("params.mu before update_lsom_penalty_param()")
+            params_mu_next = params.mu;
+            disp(params.mu)
+            if params_mu_next ~= params_mu_prev
+                disp(" ")
             end
+        
+            % When a varying penalty parameter is used in the scaled form of
+            % ADMM, the scaled dual variable must also be rescaled
+            y_k = params.y;
+        
+            disp("norm(s_k)")
+            disp(norm(s_k))
+            disp("norm(r_k)")
+            disp(norm(r_k))
+        
+            % close all;
+            
+            % figure(101)
+            % plot_vars = [plot_vars; iter_admm * ones(size(lambdas_initguess)), lambdas];
+            % plot(plot_vars(:,1), plot_vars(:,2), '.')
+            % plot_r_s = [plot_r_s; iter_admm * ones(2,1), [norm(r_k); norm(s_k)]];
+            % % hold on;
+            % figure(102)
+            % plot(plot_r_s(1:2:end,1), plot_r_s(1:2:end,2), 'r+')
+            % hold on;
+            % plot(plot_r_s(2:2:end,1), plot_r_s(2:2:end,2), 'g^')
+            % hold off;
+
+            if size(X.R, 1) == size(X.R, 2)
+                disp("multidet(X.R)")
+                disp(multidet(X.R))
+            end
+        
+            admm_stopping_condition_reached = check_admm_stopping_condition(x_k, y_k, z_k, r_k, s_k, num_edges, 1e-8, 1e-8);
         end
+    else
+        disp("No negative eigenvalue found; exiting RS")
+        break;
     end
-    disp("lsom_cost(X_prev, problem_data)");
-    disp(lsom_cost(X_prev, problem_data));
-    disp("lsom_cost(X, problem_data)");
-    disp(lsom_cost(X, problem_data));
+
+
 end
+% disp("lsom_cost(X_prev, problem_data)");
+% disp(lsom_cost(X_prev, problem_data));
+% disp("lsom_cost(X, problem_data)");
+% disp(lsom_cost(X, problem_data));
+
 
 
 if params.relu_scale_compensation
@@ -174,7 +188,18 @@ end
 disp("cost_out_rs")
 disp(cost_out_rs)
 
-if staircase_step_idx > d+1
+staircase_step_idx = size(X.R, 1); % otherwise RS step would be increased by 1 due to additional try
+
+if staircase_step_idx >= d+1
+
+    rs_usefulness_struct.ok = false;
+    if (cost_pre_rs > cost_out_rs)
+        % disp("lsom_cost(X, problem_data)");
+        % disp(lsom_cost(X, problem_data));
+        disp("lsom_cost(X, problem_data)");
+        disp(lsom_cost(X, problem_data));
+        rs_usefulness_struct.ok = true;
+    end
 
     % if ~problem_data.noisy_test && staircase_step_idx > d+ %Note: noisy_test unset atm
     %     % save("rs_going_further.mat");
@@ -300,9 +325,13 @@ end
 disp("cost_out AFTER RECOVERY")
 disp(cost_out_after_recovery)
 
+timestamp = string(datetime('now','Format','yyyyMMdd_HHmmss'));
 if ~is_equal_floats(cost_out_after_recovery, cost_out_rs)
     % error("recovery")
     save("failed_recovery.mat")    
+    save(timestamp + ".mat")
+    rs_usefulness_struct.ok = false;
+    rs_usefulness_struct.rec = false;
 end
 
 %
@@ -437,9 +466,11 @@ if params.perform_globalization
     disp(multidet(R_recovered_global))
 
 
-    if ~is_equal_floats(cost_out_global, cost_out_rs)
+    if ~is_equal_floats(cost_out_global, cost_out_after_recovery)
         save("failed_recovery_global.mat")
         % error("globalization")
+        rs_usefulness_struct.ok = false;
+        rs_usefulness_struct.glob = false;
     end
 
     transf_out = RT2G(X_recovered_global.R, X_recovered_global.T); %ssom_genproc() function output
@@ -504,5 +535,8 @@ disp(cost_last)
 cost_out_global = ssom_cost(X_recovered_global, problem_data);
 disp("[cost_out_global, cost_out_rs, cost_out_after_recovery")
 disp([cost_out_global, cost_out_rs, cost_out_after_recovery])
+
+disp("rs_usefulness_struct")
+disp(rs_usefulness_struct.ok)
 
 end
