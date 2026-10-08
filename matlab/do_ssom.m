@@ -1,12 +1,13 @@
-function [rotation_error_manopt,translation_error_manopt, ...
-    rotation_error_procrustes,translation_error_procrustes, ...
+function [rotation_error_manopt_icp,translation_error_manopt_icp, scale_error_manopt_icp, ...
+    rotation_error_procrustes,translation_error_procrustes, scale_error_procrustes, ...
+    rotation_error_procrustes_qp,translation_error_procrustes_qp, scale_error_procrustes_qp, ...
     rotation_error_ssom,translation_error_ssom, ...
-    exectime_manopt,exectime_procrustes,exectime_ssom, ...
-    scale_ratios_ssom,transl_err_norm_ssom, ssom_scale_err,...
+    exectime_manopt_icp,exectime_procrustes,exectime_procrustes_qp,exectime_ssom, ...
+    scale_ratios_ssom, transl_err_norm_ssom, ssom_scale_err,...
     rs_success_bool, rot_dets_ok, lambdas_acceptable, rs_actually_useful, ...
     R_out, T_out, lambdas_out] = ...
         do_ssom(testdata, sigma, mu, params)
-%DO_SOM_PROCRUSTES_MANOPT_RIEMANNIAN_STAIRCASE
+%DO_SSOM
 %Function that executes the Shape of Motion algorithms through
 %Manopt and Procrustes pipelines, as well as the Manopt with the added 
 %Riemannian Staircase ICP, returning rotation and translation
@@ -26,7 +27,9 @@ end
 N = params.N;
 d = params.d;
 
-% mu = params.mu;
+testdata.mu = params.mu;
+testdata.z = params.z;
+testdata.y = params.y;
 
 if sigma == 0
     params.noisy_test = boolean(0);
@@ -62,7 +65,7 @@ else
     edges = (testdata.E);
     num_edges = size(edges, 1);
     testdata.edges = edges; % 2 notation for edges struct member
-    
+
     %% 1) add noise to data
     %set gt 
     % transf_gt = testdata.gitruth;
@@ -146,27 +149,44 @@ end
 
 %% 3) Run methods
 
-% 3a) execute with step 1 through MANOPT
-manopt_start_time = tic();
+% 3a) execute with step 1 through MANOPT ICP
+manopt_icp_start_time = tic();
 if params.enable_manopt_icp
-    transf_manopt = ssom_manopt(T_globalframe_nois, lambdas_initguess, tijs_nois, edges, params, transf_initguess);
+    [transf_manopt_icp, lambdas_manopt_icp] = ssom_manopt(T_globalframe_nois, lambdas_initguess, tijs_nois, edges, params, transf_initguess);
     % manopt_end_time = tic();
 else
-    transf_manopt = repmat(eye(d+1), 1, 1, N);
+    transf_manopt_icp = repmat(eye(d+1), 1, 1, N);
+    lambdas_manopt_icp = 100*rand(num_edges, 1);
 end
-exectime_manopt = toc(manopt_start_time);
+exectime_manopt_icp = toc(manopt_icp_start_time);
 
+scale_error_manopt_icp = compute_scale_error(lambdas_manopt_icp, X_gt.lambda);
 
 % 3b) execute with step 1 through PROCRUSTES
 procrustes_start_time = tic();
 if params.enable_procrustes
-    transf_procrustes = ssom_procrustes(T_globalframe_nois, lambdas_initguess, tijs_nois, edges, params);
+    [transf_procrustes, lambdas_procrustes] = ssom_procrustes(T_globalframe_nois, lambdas_initguess, tijs_nois, edges, params);
 else
     transf_procrustes = repmat(eye(d+1), 1, 1, N);
+    lambdas_procrustes = 100*rand(num_edges, 1);
 end
 exectime_procrustes = toc(procrustes_start_time);
 
-% 3c) execute with step 1 through Manopt with Riemannian Staircase
+scale_error_procrustes = compute_scale_error(lambdas_procrustes, X_gt.lambda);
+
+% 3c) execute with step 1 through PROCRUSTES
+procrustes_qp_start_time = tic();
+if params.enable_procrustes_qp
+    [transf_procrustes_qp, lambdas_procrustes_qp] = ssom_procrustes_qp(T_globalframe_nois, lambdas_initguess, tijs_nois, edges, params);
+else
+    transf_procrustes_qp = repmat(eye(d+1), 1, 1, N);
+    lambdas_procrustes_qp = 100*rand(num_edges, 1);
+end
+exectime_procrustes_qp = toc(procrustes_qp_start_time);
+
+scale_error_procrustes_qp = compute_scale_error(lambdas_procrustes_qp, X_gt.lambda);
+
+% 3d) execute with step 1 through Manopt with Riemannian Staircase
 % ssom_start_time = tic();
 % save('tmp.mat')
 if params.enable_ssom
@@ -199,11 +219,14 @@ else
     T_out = G2T(transf_ssom);
     lambdas_ssom_out = ones(size(lambdas_initguess));
     lambdas_out = ones(size(lambdas_initguess));
-    ssom_scale_err = 1e+6;
+    ssom_scale_err.mean = 1e+2;
+    ssom_scale_err.max = 1e+3;
 end
 % exectime_ssom = toc(ssom_start_time);
 
-% 3c) execute with step 1 through Manopt with Riemannian Staircase
+% 3e) execute with step 1 through Manopt with Riemannian Staircase
+testdata.noisy_test = params.noisy_test;
+testdata.node_degrees = params.node_degrees;
 ssom_start_time = tic();
 % save('tmp.mat')
 if params.enable_lsom
@@ -215,8 +238,6 @@ if params.enable_lsom
     testdata.edges = testdata.E; %edges field name is used in rsom/ssom project, E in testnetwork benchmark testdata generator
     testdata.tijs_gt = G2T(testdata.gijtruth);
     testdata.tijs = tijs_nois; % !!
-    testdata.noisy_test = params.noisy_test;
-    testdata.node_degrees = params.node_degrees;
     testdata.z = params.z;
     testdata.y = params.y;
     testdata.mu = params.mu;
@@ -237,8 +258,6 @@ if params.enable_lsom
     lsom_cost_initguess = lsom_cost(transf_initguess_struct, testdata);
     disp("LSOM cost initguess.m")
     disp(lsom_cost_initguess)    
-
-    
 
     % figure(12)
     % % testdata = problem_data;
@@ -290,29 +309,51 @@ if params.enable_lsom
     R_out = G2R(transf_ssom);
     T_out = G2T(transf_ssom);
     lambdas_out = lambdas_ssom_out;
-    ssom_scale_err = norm(lambdas_ssom_out - X_gt.lambda);
+    % ssom_scale_err = norm(lambdas_ssom_out - X_gt.lambda);
+
+    ssom_scale_err = compute_scale_error(lambdas_ssom_out, X_gt.lambda);
 else
     rs_success_bool = boolean(0);
     transf_ssom = repmat(eye(d+1), 1, 1, N);
+    rot_dets_ok = false;
+    lambdas_acceptable = false;
+    rs_actually_useful = false;
 
     R_out = G2R(transf_ssom);
     T_out = G2T(transf_ssom);
     lambdas_ssom_out = ones(size(lambdas_initguess));
     lambdas_out = ones(size(lambdas_initguess));
-    ssom_scale_err = 1e+6;
+    ssom_scale_err.mean = 1e+2;
+    ssom_scale_err.max = 1e+3;
 end
 exectime_ssom = toc(ssom_start_time);
 
 
+%% tmp) mixed methods
+testdata.tijs = tijs_nois;
+[transf_mm_icp, lambdas_mm_icp] = ssom_mm_icp(testdata, transf_procrustes, lambdas_procrustes, params);
+% transf_procrustes = transf_mm_icp;
+transf_procrustes_qp = transf_mm_icp;
+% scale_error_manopt_icp = compute_scale_error(lambdas_mm_icp, X_gt.lambda);
+scale_error_procrustes_qp = compute_scale_error(lambdas_mm_icp, X_gt.lambda);
+
 %% 4) Compare output results
 
-testdata.gi = transf_manopt;
+testdata.gi = transf_manopt_icp;
+testdata.lambdaij = lambdas_manopt_icp;
 % [rotErr,translErr,scale_ratio,translErrNorm] = testNetworkComputeErrors(testdata)
-[rotation_error_manopt,translation_error_manopt] = testNetworkComputeErrors(testdata);
+[rotation_error_manopt_icp,translation_error_manopt_icp] = testNetworkComputeErrors(testdata);
 
 testdata.gi = transf_procrustes;
+testdata.lambdaij = lambdas_procrustes;
 [rotation_error_procrustes,translation_error_procrustes] = testNetworkComputeErrors(testdata);
 
+testdata.gi = transf_procrustes_qp;
+testdata.lambdaij = lambdas_procrustes_qp;
+[rotation_error_procrustes_qp,translation_error_procrustes_qp] = testNetworkComputeErrors(testdata);
+
+% !! scale estimation error evaluation is relevant also for comparison
+% methods
 testdata.gi = transf_ssom;
 testdata.lambdaij = lambdas_ssom_out;
 %TODO: change this back to what it should be after correcting PIM, 

@@ -268,11 +268,11 @@ int main(int argc, char **argv)
         exectime = timer.elapsedTimeMs();
     }
 
-    std::vector<double> rotErrs(numEdges, 1e+6), translErrs(numEdges, 1e+6), scaleErrs(numEdges, 1e+6);
+    std::vector<double> rotErrs(numEdges, 1e+6), translErrs(numEdges, 1e+6), scaleMeanErrs(numEdges, 1e+6), scaleMaxErrs(numEdges, 1e+6);
     SomUtils::computeErrorsSingleSsom(edges,
                                       Rout, Tout, lambdasOut,
                                       RgtEig, TgtEig, LambdasGtEig,
-                                      rotErrs, translErrs, scaleErrs);
+                                      rotErrs, translErrs, scaleMeanErrs, scaleMaxErrs);
     ROFL_VAR1(exectime)
 
     return 0;
