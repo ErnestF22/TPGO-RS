@@ -4,7 +4,7 @@ function [rotation_error_manopt_icp,translation_error_manopt_icp, scale_error_ma
     rotation_error_ssom,translation_error_ssom, ...
     exectime_manopt_icp,exectime_procrustes,exectime_procrustes_qp,exectime_ssom, ...
     scale_ratios_ssom, transl_err_norm_ssom, ssom_scale_err,...
-    rs_success_bool, rot_dets_ok, lambdas_acceptable, rs_actually_useful, ...
+    rs_success_bool, rot_dets_ok, lambdas_acceptable, rs_actually_useful, rs_usefulness_struct_mm, ...
     R_out, T_out, lambdas_out] = ...
         do_ssom(testdata, sigma, mu, params)
 %DO_SSOM
@@ -331,11 +331,14 @@ exectime_ssom = toc(ssom_start_time);
 
 %% tmp) mixed methods
 testdata.tijs = tijs_nois;
-[transf_mm_icp, lambdas_mm_icp] = ssom_mm_icp(testdata, transf_procrustes, lambdas_procrustes, params);
+procrustes_qp_start_time = tic();
+[transf_mm, lambdas_mm, rs_usefulness_struct_mm] = ssom_mm_icp(testdata, transf_procrustes, lambdas_procrustes, params);
+exectime_procrustes_qp = toc(procrustes_qp_start_time);
 % transf_procrustes = transf_mm_icp;
-transf_procrustes_qp = transf_mm_icp;
-% scale_error_manopt_icp = compute_scale_error(lambdas_mm_icp, X_gt.lambda);
-scale_error_procrustes_qp = compute_scale_error(lambdas_mm_icp, X_gt.lambda);
+transf_procrustes_qp = transf_mm;
+lambdas_procrustes_qp = lambdas_mm;
+% scale_error_manopt_icp = compute_scale_error(lambdas_mm, X_gt.lambda);
+scale_error_procrustes_qp = compute_scale_error(lambdas_mm, X_gt.lambda);
 
 %% 4) Compare output results
 

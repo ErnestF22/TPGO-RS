@@ -2792,4 +2792,666 @@ namespace ROPTLIB
         return costOut;
     }
 
+    double runSsomMM(ROPTLIB::LsomProblem &Prob,
+                   const ROPTLIB::Vector &startX,
+                   int src,
+                   SomUtils::VecMatD &Rout,
+                   SomUtils::MatD &Tout,
+                   SomUtils::MatD &lambdasOut,
+                   int &staircaseStepIdx,
+                   bool &rsSuccess, bool &rotDetsOk, bool &lambdasAcceptable, bool &rsActuallyUseful)
+    {
+        ROFL_VAR1("Start of runLsom()")
+
+        if (Prob.reluScaleCompensation_)
+        {
+            ROFL_VAR1(Prob.costEigenRelu(Prob.Rgt_, Prob.Tgt_, Prob.LambdasGt_));
+        }
+        else
+        {
+            ROFL_VAR1(Prob.costEigen(Prob.Rgt_, Prob.Tgt_, Prob.LambdasGt_));
+        }
+
+        auto rGt = Prob.Rgt_;
+        auto tGt = Prob.Tgt_;
+        auto lambdasGt = Prob.LambdasGt_;
+
+        int d = Prob.sz_.d_;
+        int n = Prob.sz_.n_;
+        int e = Prob.numEdges_;
+
+        double costOut = std::numeric_limits<double>::infinity();
+
+        bool admmStoppingConditionReached = false;
+
+        SomUtils::MatD zAdmm(SomUtils::MatD::Zero(e, 1));
+
+        // zAdmm = Prob.zAdmm_;
+        if (Prob.firstZadmmLambdas_)
+        {
+            SomUtils::MatD startXEig(Prob.fullSz_, 1);
+            Prob.RoptToEig(startX, startXEig);
+            SomUtils::MatD lambdasInitguess = SomUtils::MatD::Zero(e, 1);
+            Prob.getScales(startXEig, lambdasInitguess);
+            zAdmm = lambdasInitguess; // TODO: use setter instead of direct access
+        }
+        else
+        {
+            zAdmm = Prob.zAdmm_; // TODO: use setter instead of direct access
+        }
+
+        SomUtils::MatD yAdmm(SomUtils::MatD::Zero(e, 1));
+        yAdmm = Prob.yAdmm_;
+        double muAdmm = Prob.muAdmm_;
+
+        ROFL_VAR1("ADMM init:")
+        ROFL_VAR1(zAdmm.transpose())
+        ROFL_VAR1(yAdmm.transpose())
+        ROFL_VAR1(muAdmm)
+
+        ROPTLIB::Vector startXlocal = startX;
+        // startX.CopyTo(startXlocal);
+
+        if (Prob.ssomInitguess_)
+        {
+            SsomProblem ssomProb(Prob.sz_, Prob.tijs_, Prob.edges_);
+            ssomProb.setReluScaleCompensation(Prob.reluScaleCompensation_);
+
+            // integer numoftypes = 3;
+            // ROPTLIB::Stiefel mani1next(d, d);
+            // mani1next.ChooseParamsSet2();
+            // ROPTLIB::Euclidean mani2next(somSzNext.p_, somSzNext.n_);
+            // ROPTLIB::ProductManifold ProdMani(numoftypes,
+            //                                       &mani1next, numofmani1, &mani2next, numofmani2, &mani3, numofmani3);
+            ssomProb.SetDomain(Prob.GetDomain());
+
+            ssomProb.setUsePIM(true);           // same as default
+            ssomProb.setPimMaxIterations(5000); // same as default
+            ssomProb.setGt(rGt, tGt, lambdasGt);
+
+            ssomProb.setRho(0.0); // TODO: make this settable from outside, and maybe also make it adaptive as in ADMM?
+
+            ROFL_VAR1("Using SSOM initguess")
+
+            if (ssomProb.reluScaleCompensation_)
+            {
+                ROFL_VAR1(ssomProb.costEigenRelu(ssomProb.Rgt_, ssomProb.Tgt_, ssomProb.LambdasGt_));
+            }
+            else
+            {
+                ROFL_VAR1(ssomProb.costEigen(ssomProb.Rgt_, ssomProb.Tgt_, ssomProb.LambdasGt_));
+            }
+
+            // output the parameters of the manifold of domain
+            startXlocal.Print("startXlocal before SSOM optimization");
+            ROPTLIB::RTRNewton *RTRNewtonSolver = new ROPTLIB::RTRNewton(&ssomProb, &startXlocal);
+            RTRNewtonSolver->Verbose = ROPTLIB::ITERRESULT;
+            // RTRNewtonSolver->Max_Iteration = 500;
+            // RTRNewtonSolver->Max_Inner_Iter = 500;
+            // ROPTLIB::PARAMSMAP solverParams = {std::pair<std::string, double>("Max_Inner_Iter", 10)};
+            // RTRNewtonSolver->SetParams(solverParams);
+            RTRNewtonSolver->CheckParams();
+
+            RTRNewtonSolver->Run();
+            // Numerically check gradient consistency (optional).
+            auto Xopt = RTRNewtonSolver->GetXopt();
+            auto XoptCost = RTRNewtonSolver->Getfinalfun();
+
+            Xopt.CopyTo(startXlocal);
+
+            delete RTRNewtonSolver;
+        }
+
+        auto Xbackup = startXlocal;
+
+        if (!Prob.enableRs_)
+        {
+            std::cout << "RS disabled: skipping staircase and returning directly with costOut = costLast" << std::endl;
+
+            int iterAdmm = 0;
+
+            SomUtils::MatD rK(SomUtils::MatD::Zero(e, 1));
+            SomUtils::MatD sK(SomUtils::MatD::Zero(e, 1));
+
+            // while iter_admm < 100 && ~admm_stopping_condition_reached
+            while (iterAdmm < Prob.maxIterAdmm_ && !admmStoppingConditionReached)
+            {
+                ROFL_VAR2(iterAdmm, Prob.maxIterAdmm_)
+
+                auto ProbAdmm = Prob;
+                ProbAdmm.costCurr_ = costOut; // TODO: use setter instead of direct access
+                ProbAdmm.setZAdmm(zAdmm);
+                ProbAdmm.setYAdmm(yAdmm);
+                ProbAdmm.setMuAdmm(muAdmm);
+
+                // lsomRTR(nrs, d, N, problem_data, params, transf_initguess_struct, lambdas_initguess)
+                ROPTLIB::RTRNewton *RTRNewtonSolver = new ROPTLIB::RTRNewton(&ProbAdmm, &startXlocal); // USE INITGUESS HERE!
+                RTRNewtonSolver->Verbose = ROPTLIB::ITERRESULT;
+                // RTRNewtonSolver->Max_Iteration = 500;
+                // RTRNewtonSolver->Max_Inner_Iter = 500;
+                // ROPTLIB::PARAMSMAP solverParams = {std::pair<std::string, double>("Max_Inner_Iter", 10)};
+                // RTRNewtonSolver->SetParams(solverParams);
+                RTRNewtonSolver->CheckParams();
+
+                ROFL_VAR1(iterAdmm)
+                // startX.Print("startx in ADMM loop");
+
+                // % Solve.
+                // [x, xcost, info, options] = trustregions(problem);
+                RTRNewtonSolver->Run();
+                // Numerically check gradient consistency (optional).
+                auto Xopt = RTRNewtonSolver->GetXopt();
+                auto XoptCost = RTRNewtonSolver->Getfinalfun();
+                costOut = XoptCost;
+
+                // ROFL_VAR1("")
+                // Prob.CheckGradHessian(Xopt);
+
+                // std::cout << "Prob.GetUseGrad() " << Prob.GetUseGrad() << std::endl;
+                // std::cout << "Prob.GetUseHess() " << Prob.GetUseHess() << std::endl;
+                // std::cout << "Prob.GetNumGradHess() " << Prob.GetNumGradHess() << std::endl;
+
+                // params.z = max(ones(size(lambdas_manopt_out)), lambdas_manopt_out);
+                // params.y = params.y + params.mu *(params.z-lambdas_manopt_out);
+
+                SomUtils::MatD LambdasManoptOutEig = SomUtils::MatD::Zero(e, 1);
+                SomUtils::MatD XoptEig = SomUtils::MatD::Zero(d * d * n + d * n + e, 1);
+                ProbAdmm.RoptToEig(Xopt, XoptEig);
+                ProbAdmm.getScales(XoptEig, LambdasManoptOutEig);
+                // SomUtils::MatD tmp = LambdasManoptOutEig - (yAdmm / muAdmm); // as in Overleaf, but this is not what Matlab code does
+                SomUtils::MatD tmp = LambdasManoptOutEig; // as in Matlab
+                zAdmm = tmp.cwiseMax(1.0);
+                yAdmm += muAdmm * (zAdmm - LambdasManoptOutEig);
+
+                ROFL_VAR1("ADMM updates")
+                ROFL_VAR1(zAdmm.transpose())
+                ROFL_VAR1(yAdmm.transpose())
+
+                Xopt.CopyTo(startXlocal);
+
+                // Outputs
+                Xopt.Print("Xopt");
+                std::cout << "XoptCost " << XoptCost << std::endl; // x cost
+
+                delete RTRNewtonSolver;
+                // end of lsomRTR()
+
+                // [params.mu, r_k, s_k] = update_lsom_penalty_param(params.mu, x_k, z_k, z_prev);
+                // params_mu_next = params.mu;
+                // disp(params.mu)
+                ProbAdmm.updateLsomPenaltyParam(ProbAdmm.muAdmm_, LambdasManoptOutEig, zAdmm, ProbAdmm.zAdmm_, muAdmm, rK, sK);
+                ROFL_VAR1(muAdmm)
+
+                // disp(norm(s_k))
+                // disp(norm(r_k))
+                ROFL_VAR2(rK.norm(), sK.norm())
+
+                // if size (X_manopt_out.R, 1) == size(X_manopt_out.R, 2)
+                //     disp("multidet(X_manopt_out.R)")
+                //     disp(multidet(X_manopt_out.R))
+
+                SomUtils::VecMatD RadmmOut(n, SomUtils::MatD::Zero(d, d));
+                std::vector<double> rotDetsOk(n, -1.0);
+                ProbAdmm.getRotations(XoptEig, RadmmOut);
+                SomUtils::multidet(RadmmOut, rotDetsOk);
+
+                // admm_stopping_condition_reached = check_admm_stopping_condition(x_k, y_k, z_k, r_k, s_k, num_edges, 1e-8, 1e-8);
+                admmStoppingConditionReached = ProbAdmm.checkAdmmStoppingCondition(rK, sK, ProbAdmm.tolAdmmPrimal_, ProbAdmm.tolAdmmDual_);
+                ROFL_VAR1(admmStoppingConditionReached)
+
+                iterAdmm++;
+            }
+        }
+        else
+        {
+            rsActuallyUseful = true;
+
+            // // RS
+            int r0 = d + 1;
+
+            integer numoftypes = 3; // 2 i.e. (3D) Stiefel + Euclidean
+            integer numofmani1 = n; // num of Stiefel manifolds
+            integer numofmani2 = 1;
+            integer numofmani3 = 1;
+
+            ROPTLIB::Stiefel mani1(d, d);
+            mani1.ChooseParamsSet2();
+            ROPTLIB::Euclidean mani2(d, n);
+            ROPTLIB::Euclidean mani3(e);
+            ROPTLIB::ProductManifold ProdManiLsom(numoftypes,
+                                                  &mani1, numofmani1, &mani2, numofmani2, &mani3, numofmani3);
+
+            SomUtils::MatD XoptEigVec(SomUtils::MatD::Zero(d * d * n + d * n + e, 1));
+            Prob.RoptToEig(startXlocal, XoptEigVec);
+            // ROFL_VAR3(XoptEigVec.transpose(), XoptEigVec.rows(), e)
+
+            double costLast = std::numeric_limits<double>::infinity();
+            auto ProbPrev = Prob;
+            // int staircaseStepIdx;
+            SomUtils::VecMatD RmanoptOutEig(n, SomUtils::MatD::Zero(d, d));
+            SomUtils::MatD TmanoptOutEig(SomUtils::MatD::Zero(d, n));
+            SomUtils::MatD LambdaManoptOutEig(SomUtils::MatD::Zero(e, 1));
+
+            for (staircaseStepIdx = r0; staircaseStepIdx <= d * d * n + 1; ++staircaseStepIdx)
+            {
+                ROFL_VAR1(staircaseStepIdx)
+                ROFL_VAR1(costLast)
+
+                SomUtils::VecMatD R(n, SomUtils::MatD::Zero(staircaseStepIdx - 1, d));
+                SomUtils::MatD T(SomUtils::MatD::Zero(staircaseStepIdx - 1, n));
+                SomUtils::MatD Lambdas(SomUtils::MatD::Zero(e, 1));
+                {
+                    SomUtils::SomSize somSzScope(staircaseStepIdx - 1, d, n); // TODO: improve getRotations() and getTranslations() and avoid local scope
+                    ROPTLIB::LsomProblem ProbScope(somSzScope, Prob.tijs_, Prob.edges_);
+
+                    // auto XoptLocal = XoptNext;
+                    ROFL_VAR1("Calling getRotations()")
+                    ProbScope.getRotations(XoptEigVec, R);
+                    ProbScope.getTranslations(XoptEigVec, T);
+                    ProbScope.getScales(XoptEigVec, Lambdas);
+
+                    int iterAdmm = 0;
+
+                    SomUtils::MatD rK(SomUtils::MatD::Zero(e, 1));
+                    SomUtils::MatD sK(SomUtils::MatD::Zero(e, 1));
+
+                    // ProbScope.EigToRopt(XoptEigVec, RmanoptOutEig, TmanoptOutEig, LambdaManoptOutEig);
+
+                    // while iter_admm < 100 && ~admm_stopping_condition_reached
+                    while (iterAdmm < Prob.maxIterAdmm_ && !admmStoppingConditionReached)
+                    {
+                        ROFL_VAR2(iterAdmm, Prob.maxIterAdmm_)
+
+                        auto ProbAdmm = Prob;
+                        ProbAdmm.costCurr_ = costOut; // TODO: use setter instead of direct access
+                        ProbAdmm.setZAdmm(zAdmm);
+                        ProbAdmm.setYAdmm(yAdmm);
+                        ProbAdmm.setMuAdmm(muAdmm);
+
+                        // lsomRTR(nrs, d, N, problem_data, params, transf_initguess_struct, lambdas_initguess)
+                        ROPTLIB::RTRNewton *RTRNewtonSolver = new ROPTLIB::RTRNewton(&ProbAdmm, &startXlocal); // USE INITGUESS HERE!
+                        RTRNewtonSolver->Verbose = ROPTLIB::ITERRESULT;
+                        // RTRNewtonSolver->Max_Iteration = 500;
+                        // RTRNewtonSolver->Max_Inner_Iter = 500;
+                        // ROPTLIB::PARAMSMAP solverParams = {std::pair<std::string, double>("Max_Inner_Iter", 10)};
+                        // RTRNewtonSolver->SetParams(solverParams);
+                        RTRNewtonSolver->CheckParams();
+
+                        ROFL_VAR1(iterAdmm)
+                        // startX.Print("startx in ADMM loop");
+
+                        // % Solve.
+                        // [x, xcost, info, options] = trustregions(problem);
+                        RTRNewtonSolver->Run();
+                        // Numerically check gradient consistency (optional).
+                        auto Xopt = RTRNewtonSolver->GetXopt();
+                        auto XoptCost = RTRNewtonSolver->Getfinalfun();
+                        costOut = XoptCost;
+
+                        // ROFL_VAR1("")
+                        // Prob.CheckGradHessian(Xopt);
+
+                        // std::cout << "Prob.GetUseGrad() " << Prob.GetUseGrad() << std::endl;
+                        // std::cout << "Prob.GetUseHess() " << Prob.GetUseHess() << std::endl;
+                        // std::cout << "Prob.GetNumGradHess() " << Prob.GetNumGradHess() << std::endl;
+
+                        // params.z = max(ones(size(lambdas_manopt_out)), lambdas_manopt_out);
+                        // params.y = params.y + params.mu *(params.z-lambdas_manopt_out);
+
+                        SomUtils::MatD LambdasManoptOutEig = SomUtils::MatD::Zero(e, 1);
+                        SomUtils::MatD XoptEig = SomUtils::MatD::Zero(d * d * n + d * n + e, 1);
+                        ProbAdmm.RoptToEig(Xopt, XoptEig);
+                        ProbAdmm.getScales(XoptEig, LambdasManoptOutEig);
+                        // SomUtils::MatD tmp = LambdasManoptOutEig - (yAdmm / muAdmm); // as in Overleaf, but this is not what Matlab code does
+                        SomUtils::MatD tmp = LambdasManoptOutEig; // as in Matlab
+                        zAdmm = tmp.cwiseMax(1.0);
+                        yAdmm += muAdmm * (zAdmm - LambdasManoptOutEig);
+
+                        ROFL_VAR1("ADMM updates")
+                        ROFL_VAR1(zAdmm.transpose())
+                        ROFL_VAR1(yAdmm.transpose())
+
+                        Xopt.CopyTo(startXlocal);
+
+                        // Outputs
+                        Xopt.Print("Xopt");
+                        std::cout << "XoptCost " << XoptCost << std::endl; // x cost
+
+                        delete RTRNewtonSolver;
+                        // end of lsomRTR()
+
+                        // [params.mu, r_k, s_k] = update_lsom_penalty_param(params.mu, x_k, z_k, z_prev);
+                        // params_mu_next = params.mu;
+                        // disp(params.mu)
+                        ProbAdmm.updateLsomPenaltyParam(ProbAdmm.muAdmm_, LambdasManoptOutEig, zAdmm, ProbAdmm.zAdmm_, muAdmm, rK, sK);
+                        ROFL_VAR1(muAdmm)
+
+                        // disp(norm(s_k))
+                        // disp(norm(r_k))
+                        ROFL_VAR2(rK.norm(), sK.norm())
+
+                        // if size (X_manopt_out.R, 1) == size(X_manopt_out.R, 2)
+                        //     disp("multidet(X_manopt_out.R)")
+                        //     disp(multidet(X_manopt_out.R))
+
+                        SomUtils::VecMatD RadmmOut(n, SomUtils::MatD::Zero(d, d));
+                        std::vector<double> rotDetsOk(n, -1.0);
+                        ProbAdmm.getRotations(XoptEig, RadmmOut);
+                        SomUtils::multidet(RadmmOut, rotDetsOk);
+
+                        // admm_stopping_condition_reached = check_admm_stopping_condition(x_k, y_k, z_k, r_k, s_k, num_edges, 1e-8, 1e-8);
+                        admmStoppingConditionReached = ProbAdmm.checkAdmmStoppingCondition(rK, sK, ProbAdmm.tolAdmmPrimal_, ProbAdmm.tolAdmmDual_);
+                        ROFL_VAR1(admmStoppingConditionReached)
+
+                        iterAdmm++;
+                    }
+                }
+
+                // SomUtils::VecMatD Rnext(n, SomUtils::MatD::Zero(staircaseStepIdx, d));
+                // SomUtils::MatD Tnext(SomUtils::MatD::Zero(staircaseStepIdx, n));
+                // SomUtils::MatD LambdasNext(SomUtils::MatD::Zero(e, 1));
+
+                // SomUtils::catZeroRow3dArray(R, Rnext);
+                // SomUtils::catZeroRow(T, Tnext);
+
+                SomUtils::SomSize somSzNext(staircaseStepIdx, d, n);
+                ROPTLIB::LsomProblem ProbNext(somSzNext, Prob.tijs_, Prob.edges_);
+
+                ProbNext.setGt(rGt, tGt, lambdasGt);
+                ProbNext.setRho(Prob.rho_);
+
+                if (Prob.reluScaleCompensation_)
+                {
+                    ROFL_VAR1(ProbNext.costEigenRelu(ProbNext.Rgt_, ProbNext.Tgt_, ProbNext.LambdasGt_));
+                    ROFL_VAR1(ProbNext.costEigenRelu(R, T, Lambdas));
+                }
+                else
+                {
+                    ROFL_VAR1(ProbNext.costEigen(ProbNext.Rgt_, ProbNext.Tgt_, ProbNext.LambdasGt_));
+                    ROFL_VAR1(ProbNext.costEigen(R, T, Lambdas));
+                }
+
+                ROPTLIB::Stiefel mani1next(somSzNext.p_, somSzNext.d_);
+                mani1next.ChooseParamsSet2();
+                ROPTLIB::Euclidean mani2next(somSzNext.p_, somSzNext.n_);
+                ROPTLIB::ProductManifold ProdManiNext(numoftypes,
+                                                      &mani1next, numofmani1, &mani2next, numofmani2, &mani3, numofmani3);
+                ROPTLIB::Vector Y0;
+                SomUtils::VecMatD vR(n, SomUtils::MatD::Zero(somSzNext.p_, somSzNext.d_));
+                SomUtils::MatD vT(SomUtils::MatD::Zero(somSzNext.p_, somSzNext.n_));
+                SomUtils::MatD vLambdas(SomUtils::MatD::Zero(Prob.numEdges_, 1));
+                ProbPrev.setCostCurr(costLast);
+                // for (auto &Rm : R)
+                //     ROFL_VAR1(ProbPrev.checkIsOnStiefel(Rm))
+
+                double lambda;
+                if (Prob.usePIM_)
+                {
+                    ROFL_VAR1("Calling Prob.lsomEscapeHessianGenprocEigenPIM()")
+                    ProbNext.lsomPimHessianGenprocEigen(1e-5, R, T, Lambdas, Y0, lambda, vR, vT, vLambdas); //!! catZeroRows() increase is being done inside
+                }
+                else
+                {
+                    ROFL_VAR1("Calling ProbPrev.lsomEscapeHessianGenprocEigen()")
+                    ProbPrev.lsomEscapeHessianGenprocEigen(R, T, Lambdas, Y0, lambda, vR, vT, vLambdas);
+                }
+
+                if (lambda > -1e-8)
+                {
+                    ROFL_VAR2(lambda, "R, T eigenvals > 0: exiting stsaircase")
+                    // staircaseStepSkipped = 0;
+                    RmanoptOutEig = R;
+                    TmanoptOutEig = T;
+                    LambdaManoptOutEig = Lambdas;
+
+                    costOut = costLast;
+
+                    break;
+                }
+
+                Y0.Print("Y0 before costNewStart");
+                double costNewStart = ProbNext.f(Y0);
+                ROFL_VAR1(costNewStart)
+
+                // Run next step of staircase with found initial guess
+
+                Y0.Print("Y0");
+
+                // Set Prob params
+                ProbNext.SetDomain(&ProdManiNext);
+                ProbNext.SetUseGrad(true);
+                ProbNext.SetUseHess(true);
+
+                ROPTLIB::RTRNewton *RTRNewtonSolverNext = new ROPTLIB::RTRNewton(&ProbNext, &Y0); // USE INITGUESS HERE!
+                RTRNewtonSolverNext->Verbose = ROPTLIB::ITERRESULT;
+                // RTRNewtonSolverNext->Max_Iteration = 500;
+                // RTRNewtonSolverNext->Max_Inner_Iter = 500;
+                // ROPTLIB::PARAMSMAP solverParams = {std::pair<std::string, double>("Max_Inner_Iter", 10)};
+                // RTRNewtonSolverNext->SetParams(solverParams);
+                RTRNewtonSolverNext->CheckParams();
+
+                // Solve.
+                // [x, xcost, info, options] = trustregions(problem);
+                RTRNewtonSolverNext->Run();
+                auto XoptNext = RTRNewtonSolverNext->GetXopt();
+                realdp XoptNextCost = RTRNewtonSolverNext->Getfinalfun();
+                // Numerically check gradient consistency (optional).
+                ProbNext.CheckGradHessian(XoptNext);
+
+                costLast = XoptNextCost;
+
+                ROFL_VAR1(costLast)
+
+                XoptEigVec.resize(staircaseStepIdx * d * n + staircaseStepIdx * n + e, 1);
+                ProbNext.RoptToEig(XoptNext, XoptEigVec);
+                XoptNext.Print("XoptNext");
+                SomUtils::VecMatD XoptNextR(n, SomUtils::MatD::Zero(staircaseStepIdx, d));
+                SomUtils::MatD XoptNextT(SomUtils::MatD::Zero(staircaseStepIdx, n));
+                SomUtils::MatD XoptNextLambdas(SomUtils::MatD::Zero(e, 1));
+                ROFL_VAR1("Calling getRotations()")
+                ProbNext.getRotations(XoptEigVec, XoptNextR);
+                ProbNext.getTranslations(XoptEigVec, XoptNextT);
+                ProbNext.getScales(XoptEigVec, XoptNextLambdas);
+
+                // std::cout << "Prob.GetUseGrad() " << Prob.GetUseGrad() << std::endl;
+                // std::cout << "Prob.GetUseHess() " << Prob.GetUseHess() << std::endl;
+                // std::cout << "Prob.GetNumGradHess() " << Prob.GetNumGradHess() << std::endl;
+
+                // Outputs
+                XoptNext.Print("XoptNext");
+                XoptNext.CopyTo(startXlocal);
+                std::cout << "XoptNextCost " << XoptNextCost << std::endl; // x cost
+
+                ProbNext.RoptToEig(XoptNext, XoptEigVec);
+                ROFL_VAR1(XoptEigVec.transpose())
+
+                ProbPrev = ProbNext;
+
+                // save output
+                for (int i = 0; i < n; ++i)
+                {
+                    RmanoptOutEig[i].resize(staircaseStepIdx, d);
+                }
+                TmanoptOutEig.resize(staircaseStepIdx, n);
+
+                RmanoptOutEig = XoptNextR;
+                TmanoptOutEig = XoptNextT;
+                LambdaManoptOutEig = XoptNextLambdas;
+
+                // // Rank stopping condition
+                // ROFL_VAR1(staircaseStepIdx)
+                // SomUtils::MatD XoutRhSt(SomUtils::MatD::Zero(staircaseStepIdx, d * n));
+                // SomUtils::hstack(RmanoptOutEig, XoutRhSt);
+                // Eigen::FullPivLU<SomUtils::MatD> luDecomp(XoutRhSt);
+                // auto rank = luDecomp.rank();
+                // if (rank < staircaseStepIdx)
+                // {
+                //     staircaseStepIdx++;
+                //     ROFL_VAR1("Rank stopping condition reached -> Exiting RS");
+                //     break;
+                // }
+
+                delete RTRNewtonSolverNext;
+
+                // break; // uncomment this to run only one step of staircase
+            }
+
+            // // Recovery procedure
+
+            ROFL_VAR1("Running recovery procedure")
+
+            // back to SE(d)^N
+
+            for (int i = 0; i < n; ++i)
+            {
+                ROFL_VAR2(i, RmanoptOutEig[i])
+            }
+            ROFL_VAR1(TmanoptOutEig)
+            ROFL_VAR1(LambdaManoptOutEig)
+
+            ROFL_VAR1(staircaseStepIdx) // unused in ProbPrev.recoverySEdN() anyway
+
+            SomUtils::VecMatD Rrecovered(n, SomUtils::MatD::Zero(d, d));
+            SomUtils::MatD Trecovered(SomUtils::MatD::Zero(d, n));
+            SomUtils::MatD LambdasRecovered(SomUtils::MatD::Zero(e, 1));
+            bool recSEDNsuccess = ProbPrev.recoverySEdN(staircaseStepIdx,
+                                                        RmanoptOutEig, TmanoptOutEig, LambdaManoptOutEig,
+                                                        Rrecovered, Trecovered, LambdasRecovered);
+
+            if (!recSEDNsuccess)
+            {
+                ROFL_VAR1("Recovery procedure failed")
+                // SomUtils::MatD XbackupEig(SomUtils::MatD::Zero(d * d * n + d * n + e, 1));
+                // Prob.RoptToEig(Xbackup, XbackupEig);
+                // Prob.getRotations(XbackupEig, Rrecovered);
+                // Prob.getTranslations(XbackupEig, Trecovered);
+                // Prob.getScales(XbackupEig, LambdasRecovered);
+                Xbackup.CopyTo(startXlocal);
+                rsActuallyUseful = false; // TODO: set this flag to true if recovery procedure is actually useful
+            }
+
+            ROFL_VAR1("Printing R, T, lambdas after recovery")
+            for (auto &m : Rrecovered)
+                ROFL_VAR1(m)
+            ROFL_VAR1(Trecovered)
+            ROFL_VAR1(LambdasRecovered)
+
+            ROFL_VAR1(recSEDNsuccess)
+            rsSuccess = recSEDNsuccess;
+        }
+
+        ROFL_VAR1("End of ADMM")
+
+        //
+        std::vector<double> Rdets(n);
+        SomUtils::VecMatD Rrecovered(n, SomUtils::MatD::Zero(d, d));
+        SomUtils::MatD Trecovered(SomUtils::MatD::Zero(d, n));
+        SomUtils::MatD LambdasRecovered(SomUtils::MatD::Zero(e, 1));
+        SomUtils::VecMatD RmanoptOutEig(n, SomUtils::MatD::Zero(staircaseStepIdx, d));
+        SomUtils::MatD TmanoptOutEig(SomUtils::MatD::Zero(staircaseStepIdx, n));
+        SomUtils::MatD LambdaManoptOutEig(SomUtils::MatD::Zero(e, 1));
+        SomUtils::MatD XoptEig(SomUtils::MatD::Zero(d * d * n + d * n + e, 1));
+        Prob.RoptToEig(startXlocal, XoptEig);
+        Prob.getRotations(XoptEig, Rrecovered);
+        Prob.getTranslations(XoptEig, Trecovered);
+        Prob.getScales(XoptEig, LambdasRecovered);
+        SomUtils::multidet(Rrecovered, Rdets);
+
+        rotDetsOk = true;
+        for (int i = 0; i < n; ++i)
+        {
+            // ROFL_VAR2(i, Rdets[i])
+            if (!SomUtils::isEqualDoubles(fabs(Rdets[i]), 1))
+            {
+                rotDetsOk = false;
+                ROFL_VAR1("Rotation determinant condition failed")
+                break;
+            }
+        }
+
+        lambdasAcceptable = true;
+        for (int i = 0; i < e; ++i)
+        {
+            if (LambdasRecovered(i, 0) < 1)
+            {
+                lambdasAcceptable = false;
+                ROFL_VAR1("Lambda negativity condition failed")
+                break;
+            }
+        }
+
+        // globalize
+
+        Rout.resize(n, SomUtils::MatD::Zero(d, d));
+        Tout.resize(d, n);
+        Tout.setZero();
+        lambdasOut.resize(e, 1);
+        lambdasOut.setZero();
+
+        bool globalRecoverySuccess = true; // TODO: implement globalization procedure and set this flag accordingly
+
+        if (Prob.performGlobalization_)
+        {
+            ROFL_VAR1("Running globalization procedure")
+            bool globalRecoverySuccess = Prob.globalize(src, Rrecovered, Trecovered, LambdasRecovered,
+                                                        Rout, Tout, lambdasOut);
+            if (!globalRecoverySuccess)
+            {
+                ROFL_VAR1("Globalization procedure failed")
+                Rout = Rrecovered;
+                Tout = Trecovered;
+                lambdasOut = LambdasRecovered;
+
+                rsActuallyUseful = false; // TODO: set this flag to true if globalization procedure is actually useful
+
+                SomUtils::MatD XbackupEig(SomUtils::MatD::Zero(d * d * n + d * n + e, 1));
+                SomUtils::VecMatD Rbackup(n, SomUtils::MatD::Zero(d, d));
+                SomUtils::MatD Tbackup(SomUtils::MatD::Zero(d, n));
+                SomUtils::MatD LambdasBackup(SomUtils::MatD::Zero(e, 1));
+                Prob.RoptToEig(Xbackup, XbackupEig);
+                Prob.getRotations(XbackupEig, Rbackup);
+                Prob.getTranslations(XbackupEig, Tbackup);
+                Prob.getScales(XbackupEig, LambdasBackup);
+                bool globalRecoverySuccess = Prob.globalize(src, Rbackup, Tbackup, LambdasBackup,
+                                                            Rout, Tout, lambdasOut);
+            }
+        }
+        else
+        {
+            ROFL_VAR1("Skipping globalization procedure")
+            Rout = Rrecovered;
+            Tout = Trecovered;
+            lambdasOut = LambdasRecovered;
+        }
+
+        for (int i = 0; i < n; ++i)
+        {
+            ROFL_VAR2(i, Rout[i])
+            if (!SomUtils::isEqualDoubles(((Rout[i] - rGt[i]).cwiseAbs().maxCoeff()), 0.0))
+            {
+                rotDetsOk = false;
+                ROFL_VAR1("Rotations changed")
+                break;
+            }
+        }
+        ROFL_VAR1(Tout)
+
+        if (!SomUtils::isEqualDoubles(((Tout - tGt).cwiseAbs().maxCoeff()), 0.0))
+        {
+            rotDetsOk = false;
+            ROFL_VAR1("Translations changed")
+        }
+
+        ROFL_VAR1(lambdasOut)
+        if (!SomUtils::isEqualDoubles(((lambdasOut - lambdasGt).cwiseAbs().maxCoeff()), 0.0))
+        {
+            rotDetsOk = false;
+            ROFL_VAR1("Lambdas changed")
+        }
+
+        ROFL_VAR1(globalRecoverySuccess)
+
+        return costOut;
+    }
+
 } // end of namespace ROPTLIB

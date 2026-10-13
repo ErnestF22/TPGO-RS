@@ -7,12 +7,12 @@ if any(lambdas_in < 1)
     return;
 end
 
-lambdas_in_factor = lambdas_in(1);
+lambdas_in_factor = min(lambdas_in, [], "all");
 lambdas_in_norm = lambdas_in / lambdas_in_factor;
 
 g_in = geomean(lambdas_in_norm);
 
-lambdas_gt_factor = lambdas_gt(1);
+lambdas_gt_factor = min(lambdas_gt, [], "all");
 lambdas_gt_norm = lambdas_gt / lambdas_gt_factor;
 
 g_gt = geomean(lambdas_gt_norm);

@@ -4,7 +4,7 @@ assert(size(testdatas, 2) == size(sigmas, 1))
 
 ii = 1;
 
-num_tests_per_sigma = 2;
+num_tests_per_sigma = 30;
 
 manopt_sep_rot_errs = zeros(size(sigmas));
 manopt_sep_transl_errs = zeros(size(sigmas));
@@ -32,6 +32,8 @@ rs_success_bools = zeros(length(sigmas), num_tests_per_sigma);
 rot_dets_ok = zeros(length(sigmas), num_tests_per_sigma);
 lambdas_acceptable = zeros(length(sigmas), num_tests_per_sigma);
 rs_actually_useful = zeros(length(sigmas), num_tests_per_sigma);
+rs_usefulness_structs_mm = repmat(struct('at_least_one_step', [], 'ok', [], 'rec', [], 'glob', []), ...
+    length(sigmas), num_tests_per_sigma);
 
 for tdata = testdatas
 
@@ -133,6 +135,8 @@ for tdata = testdatas
     ssom_transl_errs_norm_per_sigma = zeros(num_edges, num_tests_per_sigma);
     ssom_scale_err_max_per_sigma = zeros(1, num_tests_per_sigma);
     ssom_scale_err_mean_per_sigma = zeros(1, num_tests_per_sigma);
+
+    
     for jj = 1:num_tests_per_sigma
         %           rs_success_bool   = false; % if rs is not executed
         fprintf("ii %g jj %g\n", ii, jj);
@@ -142,7 +146,7 @@ for tdata = testdatas
             ssom_rot_err, ssom_transl_err, ...
             manopt_sep_exec_time, procrustes_exec_time, procrustes_qp_exec_time, ssom_exec_time, ...
             ssom_scale_ratio,ssom_transl_err_norm, ssom_scale_err, ...
-            rs_success_bool, rot_dets_ok_ij, lambdas_acceptable_ij, rs_actually_useful_ij] = ...
+            rs_success_bool, rot_dets_ok_ij, lambdas_acceptable_ij, rs_actually_useful_ij, rs_usefulness_struct_mm_ij] = ...
             do_ssom(tdata, sigma, mu, som_params); % do_ssom();
 
         manopt_sep_rot_errs_per_sigma(:, jj) = manopt_sep_rot_err;
@@ -171,11 +175,12 @@ for tdata = testdatas
         rot_dets_ok(ii,jj) = rot_dets_ok_ij;
         lambdas_acceptable(ii,jj) = lambdas_acceptable_ij;
         rs_actually_useful(ii,jj) = rs_actually_useful_ij;
+        rs_usefulness_structs_mm(ii,jj) = rs_usefulness_struct_mm_ij;
         disp("ssom_exec_time")
         disp(ssom_exec_time)
     end
 
-     manopt_sep_rot_errs(ii) = mean(manopt_sep_rot_errs_per_sigma,"all");
+    manopt_sep_rot_errs(ii) = mean(manopt_sep_rot_errs_per_sigma,"all");
     manopt_sep_transl_errs(ii) = mean(manopt_sep_transl_errs_per_sigma,"all");
     manopt_sep_exec_times(ii) = mean(manopt_sep_exec_times_per_sigma);
     manopt_sep_scale_errs_max(ii) = mean(manopt_sep_scale_err_max_per_sigma);
@@ -204,9 +209,12 @@ for tdata = testdatas
 
     ii = ii + 1;
 
+
+    
     
     
 end
+
 
 
 % 4b)
@@ -430,6 +438,18 @@ save(convertStringsToChars(strcat('rot_dets_ok', test_str, ".csv")), "rot_dets_o
 save(convertStringsToChars(strcat('lambdas_acceptable', test_str, ".csv")), "lambdas_acceptable", '-ascii', '-tabs')
 save(convertStringsToChars(strcat('rs_actually_useful', test_str, ".csv")), "lambdas_acceptable", '-ascii', '-tabs')
 
+
+sigmaTags = cellstr(compose("%03d", round(sigmas(:) * 100)));
+
+for nn = 1:length(sigmas)
+    T = struct2table(rs_usefulness_structs_mm(nn, :));
+    writetable(T, convertStringsToChars(strcat('rs_usefulness_structs', test_str, "_sigma", sigmaTags(nn),  ".csv")));
+
+end
+
+
+
 save(test_str)
+
 
 close all;

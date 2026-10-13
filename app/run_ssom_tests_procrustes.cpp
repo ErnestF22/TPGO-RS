@@ -295,7 +295,7 @@ int main(int argc, char **argv)
             ROFL_VAR1(startX)
 
             { // RSOM Procrustes execution scope
-                rofl::ScopedTimer runProcrTimer("runRsomProcrustes");
+                rofl::ScopedTimer runProcrTimer("runSsomProcrustes");
 
                 // method initialization and run
                 SsomProcrustes sp(somSzD, Tijs, edges);

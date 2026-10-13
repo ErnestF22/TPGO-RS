@@ -1061,7 +1061,7 @@ namespace ROPTLIB
    };
 
    /**
-    * @brief Solve an instance of the LSOM problem using RS
+    * @brief Solve an instance of the LSOM problem using ADMM
     */
    double runLsom(ROPTLIB::LsomProblem &Prob,
                   const ROPTLIB::Vector &startX,
@@ -1070,7 +1070,19 @@ namespace ROPTLIB
                   SomUtils::MatD &Tout,
                   SomUtils::MatD &lambdasOut,
                   int &staircaseStepIdx,
-                  bool &rsSuccess, bool &rotDetsOk, bool &lambdasAcceptable, bool& rsActuallyUseful);
+                  bool &rsSuccess, bool &rotDetsOk, bool &lambdasAcceptable, bool &rsActuallyUseful);
+
+   /**
+    * @brief Solve an instance of the LSOM problem using Procrustes + RS (+ADMM)
+    */
+   double runSsomMM(ROPTLIB::LsomProblem &Prob,
+                  const ROPTLIB::Vector &startX,
+                  int src,
+                  SomUtils::VecMatD &Rout,
+                  SomUtils::MatD &Tout,
+                  SomUtils::MatD &lambdasOut,
+                  int &staircaseStepIdx,
+                  bool &rsSuccess, bool &rotDetsOk, bool &lambdasAcceptable, bool &rsActuallyUseful);
 
 } // end of namespace ROPTLIB
 

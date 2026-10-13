@@ -3,7 +3,7 @@
 % close all;
 
 N = 5;
-mindeg = 2;
+mindeg = 3;
 
 % 1a) PW TRANSLATION DATA INPUT: R, T are the gt, Tijs_nois are the input data
 % testdata = testNetwork_params(3, N, 'banded', mindeg); %4 would be the default
@@ -27,7 +27,7 @@ N = testdata.NNodes;
 d = 3;
 d_aff = d+1;
 global_camera_id = 1;
-num_tests_per_sigma = 50;
+num_tests_per_sigma = 30;
 transf_end_thresh = 1;
 max_icp_iterations = 25;
 num_edges_full = N*N;
@@ -109,6 +109,9 @@ ssom_transl_errs_norm = zeros(size(sigmas));
 ssom_scale_errs_max = zeros(size(sigmas));
 ssom_scale_errs_mean = zeros(size(sigmas));
 rs_success_bools = zeros(length(sigmas), num_tests_per_sigma);
+rs_usefulness_structs_mm = repmat(struct('at_least_one_step', [], 'ok', [], 'rec', [], 'glob', []), ...
+    length(sigmas), num_tests_per_sigma);
+
 
 %when multple sigmas and mus, and multiple tests per each pair
 for ii = 1:size(sigmas,1)
@@ -147,7 +150,8 @@ for ii = 1:size(sigmas,1)
             ssom_rot_err, ssom_transl_err, ...
             manopt_sep_exec_time, procrustes_exec_time, procrustes_qp_exec_time, ssom_exec_time, ...
             ssom_scale_ratio,ssom_transl_err_norm, ssom_scale_err, ...
-            rs_success_bool] = ...
+            rs_success_bool, rot_dets_ok, lambdas_acceptable, rs_actually_useful, rs_usefulness_struct_mm, ...
+            R_out, T_out, lambdas_out] = ...
             do_ssom(testdata, sigma, mu, som_params); % do_...();
         manopt_sep_rot_errs_per_sigma(:, jj) = manopt_sep_rot_err;
         manopt_sep_transl_errs_per_sigma(:, jj) = manopt_sep_transl_err;
@@ -172,6 +176,7 @@ for ii = 1:size(sigmas,1)
         ssom_scale_ratios_per_sigma(:, jj) = ssom_scale_ratio;
         ssom_transl_errs_norm_per_sigma(:, jj) = ssom_transl_err_norm;
         rs_success_bools(ii,jj) = rs_success_bool;
+        rs_usefulness_structs_mm(ii,jj) = rs_usefulness_struct_mm;
         disp("ssom_exec_time")
         disp(ssom_exec_time)
     end
@@ -433,6 +438,8 @@ save(convertStringsToChars(strcat('rs_success_bools', test_str, ".csv")), "rs_su
 % save(convertStringsToChars(strcat('rot_dets_ok', test_str, ".csv")), "rot_dets_ok", '-ascii', '-tabs')
 % save(convertStringsToChars(strcat('lambdas_acceptable', test_str, ".csv")), "lambdas_acceptable", '-ascii', '-tabs')
 % save(convertStringsToChars(strcat('rs_actually_useful', test_str, ".csv")), "lambdas_acceptable", '-ascii', '-tabs')
+T = struct2table(rs_usefulness_structs_mm);
+writetable(T, convertStringsToChars(strcat('rs_usefulness_structs', test_str, ".csv")));
 
 save(test_str)
 

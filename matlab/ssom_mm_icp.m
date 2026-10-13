@@ -1,8 +1,10 @@
-function [transf_out, lambdas_out] = ssom_mm_icp(problem_data, transf_initguess, lambdas_initguess, params)
+function [transf_out, lambdas_out, rs_usefulness_struct_mm] = ssom_mm_icp(problem_data, transf_initguess, lambdas_initguess, params)
 
 X.T = G2T(transf_initguess);
 X.R = G2R(transf_initguess);
 X.lambda = lambdas_initguess;
+
+X_rs_input = X;
 
 X_gt.lambda = problem_data.lambda_gt;
 X_gt.R = problem_data.R_gt;
@@ -24,7 +26,10 @@ lambda_pim_out = -1;
 
 cost_pre_rs = cost_last;
 
-rs_usefulness_struct.at_least_one_step = false;
+rs_usefulness_struct_mm.at_least_one_step = false;
+rs_usefulness_struct_mm.rec = true;
+rs_usefulness_struct_mm.glob = true;
+rs_usefulness_struct_mm.ok = false;
     
 % disp("lsom_cost X")
 % disp(lsom_cost(X, problem_data))
@@ -59,7 +64,7 @@ while lambda_pim_out < 0 % maybe change RS stopping conditions
     
     if lambda_pim_out < 0 
 
-        rs_usefulness_struct.at_least_one_step = true;
+        rs_usefulness_struct_mm.at_least_one_step = true;
 
         %check whether cost has actually gone down
         
@@ -192,13 +197,13 @@ staircase_step_idx = size(X.R, 1); % otherwise RS step would be increased by 1 d
 
 if staircase_step_idx >= d+1
 
-    rs_usefulness_struct.ok = false;
+    % rs_usefulness_struct_mm.ok = false;
     if (cost_pre_rs > cost_out_rs)
         % disp("lsom_cost(X, problem_data)");
         % disp(lsom_cost(X, problem_data));
         disp("lsom_cost(X, problem_data)");
         disp(lsom_cost(X, problem_data));
-        rs_usefulness_struct.ok = true;
+        rs_usefulness_struct_mm.ok = true;
     end
 
     % if ~problem_data.noisy_test && staircase_step_idx > d+ %Note: noisy_test unset atm
@@ -328,10 +333,11 @@ disp(cost_out_after_recovery)
 timestamp = string(datetime('now','Format','yyyyMMdd_HHmmss'));
 if ~is_equal_floats(cost_out_after_recovery, cost_out_rs)
     % error("recovery")
-    save("failed_recovery.mat")    
-    save(timestamp + ".mat")
-    rs_usefulness_struct.ok = false;
-    rs_usefulness_struct.rec = false;
+    save("failed_recovery.mat")    %!!
+    sigmaTag = compose("%03d", round(problem_data.sigma * 100));
+    save(timestamp + "_N" + string(N) + "_mindeg" + string(problem_data.mindeg) + "_sigma" + string(sigmaTag) + ".mat")
+    rs_usefulness_struct_mm.ok = false;
+    rs_usefulness_struct_mm.rec = false;
 end
 
 %
@@ -340,7 +346,7 @@ disp([matStackH(X_gt.R); matStackH(R_recovered)]);
 
 base_node_id = 1; %TODO: make this settable from params
 
-save("tmp.mat");
+% save("tmp.mat");
 
 if params.perform_globalization
     R_global = R_recovered(:,:,base_node_id) * X_gt.R(:,:,base_node_id)'; %!!
@@ -469,8 +475,8 @@ if params.perform_globalization
     if ~is_equal_floats(cost_out_global, cost_out_after_recovery)
         save("failed_recovery_global.mat")
         % error("globalization")
-        rs_usefulness_struct.ok = false;
-        rs_usefulness_struct.glob = false;
+        rs_usefulness_struct_mm.ok = false;
+        rs_usefulness_struct_mm.glob = false;
     end
 
     transf_out = RT2G(X_recovered_global.R, X_recovered_global.T); %ssom_genproc() function output
@@ -537,6 +543,11 @@ disp("[cost_out_global, cost_out_rs, cost_out_after_recovery")
 disp([cost_out_global, cost_out_rs, cost_out_after_recovery])
 
 disp("rs_usefulness_struct")
-disp(rs_usefulness_struct.ok)
+disp(rs_usefulness_struct_mm.ok)
+
+if (~rs_usefulness_struct_mm.ok)
+    transf_out = RT2G(X_rs_input.R, X_rs_input.T);
+    lambdas_out = X_rs_input.lambda;
+end
 
 end

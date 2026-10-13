@@ -149,6 +149,9 @@ target_link_libraries(run_ssom_tests_procrustes ${rofl_LIBRARIES} roptlib_local 
 add_executable(run_ssom_tests app/run_ssom_tests.cpp include/som_utils.cpp)
 target_link_libraries(run_ssom_tests ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
 
+add_executable(run_ssom_tests_mm app/run_ssom_tests_mm.cpp include/som_utils.cpp include/ssom_procrustes.cpp)
+target_link_libraries(run_ssom_tests_mm ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
+
 add_executable(run_testnetwork_tests app/run_testnetwork_tests.cpp include/som_utils.cpp)
 target_link_libraries(run_testnetwork_tests ${rofl_LIBRARIES} roptlib_local qru m blas lapack boost_iostreams boost_system boost_filesystem)
 
