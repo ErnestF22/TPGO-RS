@@ -268,7 +268,8 @@ int main(int argc, char **argv)
         exectime = timer.elapsedTimeMs();
     }
 
-    std::vector<double> rotErrs(numEdges, 1e+6), translErrs(numEdges, 1e+6), scaleMeanErrs(numEdges, 1e+6), scaleMaxErrs(numEdges, 1e+6);
+    std::vector<double> rotErrs(numEdges, 1e+6), translErrs(numEdges, 1e+6);
+    double scaleMeanErrs = 1e+6, scaleMaxErrs = 1e+6;
     SomUtils::computeErrorsSingleSsom(edges,
                                       Rout, Tout, lambdasOut,
                                       RgtEig, TgtEig, LambdasGtEig,

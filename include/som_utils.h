@@ -326,11 +326,11 @@ namespace SomUtils
     void computeErrorsSingleSsom(const Eigen::MatrixXi &edges,
                                  const SomUtils::VecMatD &R, const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
                                  const SomUtils::VecMatD &Rgt, const SomUtils::MatD &Tgt, const SomUtils::MatD &LambdasGt,
-                                 std::vector<double> &rotErrs, std::vector<double> &translErrs, std::vector<double> &scaleMeanErrs, std::vector<double> &scaleMaxErrs);                                 
+                                 std::vector<double> &rotErrs, std::vector<double> &translErrs, double &scaleMeanErr, double &scaleMaxErr);
 
     /**
      * Apply ReLU to double input @param x and return the result
-     */                                 
+     */
     double ReLU(double x);
 
 } // end of namespace SomUtils

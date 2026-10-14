@@ -868,7 +868,7 @@ namespace SomUtils
     void computeErrorsSingleSsom(const Eigen::MatrixXi &edges,
                                  const SomUtils::VecMatD &R, const SomUtils::MatD &T, const SomUtils::MatD &Lambdas,
                                  const SomUtils::VecMatD &Rgt, const SomUtils::MatD &Tgt, const SomUtils::MatD &LambdasGt,
-                                 std::vector<double> &rotErrs, std::vector<double> &translErrs, std::vector<double> &scaleErrsMean, std::vector<double> &scaleErrsMax)
+                                 std::vector<double> &rotErrs, std::vector<double> &translErrs, double &scaleErrMean, double &scaleErrMax)
     {
         // Compute errors
         ROFL_VAR1("Printing R, T, Lambdas out")
@@ -935,34 +935,34 @@ namespace SomUtils
             //     scale_err.mean = 1e+6;
             //     scale_err.max = 1e+10;
             // end
+        }
 
-            if ((Lambdas.array() < 1.0).any())
-            {
-                scaleErrsMean[e] = 1e+6;
-                scaleErrsMax[e] = 1e+10;
-            }
-            else
-            {
-                // lambdas_in_factor = lambdas_in(1);
-                // lambdas_in_norm = lambdas_in / lambdas_in_factor;
+        if ((Lambdas.array() < 1.0).any())
+        {
+            scaleErrMean = 1e+6;
+            scaleErrMax = 1e+10;
+        }
+        else
+        {
+            // lambdas_in_factor = lambdas_in(1);
+            // lambdas_in_norm = lambdas_in / lambdas_in_factor;
 
-                double lambdasInFactor = Lambdas(0, 0);
-                Eigen::VectorXd lambdasInNorm = Lambdas / lambdasInFactor;
+            double lambdasInFactor = Lambdas.minCoeff();
+            Eigen::VectorXd lambdasInNorm = Lambdas / lambdasInFactor;
 
-                ROFL_ASSERT(Lambdas.size() == LambdasGt.size())
+            ROFL_ASSERT(Lambdas.size() == LambdasGt.size())
 
-                double gIn = std::pow(lambdasInNorm.prod(), 1.0 / lambdasInNorm.size());
+            double gIn = std::pow(lambdasInNorm.prod(), 1.0 / lambdasInNorm.size());
 
-                Eigen::VectorXd lambdasGtNorm = LambdasGt / LambdasGt(0, 0);
-                double gGt = std::pow(lambdasGtNorm.prod(), 1.0 / lambdasGtNorm.size());
+            double lambdasGtFactor = LambdasGt.minCoeff();
+            Eigen::VectorXd lambdasGtNorm = LambdasGt / lambdasGtFactor;
+            double gGt = std::pow(lambdasGtNorm.prod(), 1.0 / lambdasGtNorm.size());
 
-                scaleErrsMean[e] = abs(gGt - gIn);
+            scaleErrMean = abs(gGt - gIn);
 
-                scaleErrsMax[e] = (lambdasGtNorm - lambdasInNorm).cwiseAbs().maxCoeff();
+            scaleErrMax = (lambdasGtNorm - lambdasInNorm).cwiseAbs().maxCoeff();
 
-                ROFL_VAR2(e, scaleErrsMean[e]); // TODO: all edges should be equal... temporary fix as the means will be the same, but unnecessary to compute for all edges -> FIX later
-                ROFL_VAR2(e, scaleErrsMax[e]); // TODO: all edges should be equal... temporary fix as the means will be the same, but unnecessary to compute for all edges -> FIX later
-            }
+            ROFL_VAR2(scaleErrMean, scaleErrMax); // TODO: all edges should be equal... temporary fix as the means will be the same, but unnecessary to compute for all edges -> FIX later
         }
     }
 
