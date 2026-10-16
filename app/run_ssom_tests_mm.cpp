@@ -433,7 +433,6 @@ int main(int argc, char **argv)
                     ROFL_ERR("Error opening file")
                     ROFL_ASSERT(0)
                 }
-
             startX.Print("startX");
 
             SomUtils::MatD startXeig = SomUtils::MatD::Zero(d * d * n + d * n + numEdges, 1);
@@ -444,6 +443,10 @@ int main(int argc, char **argv)
             else
                 scalesInitguess = 10.0 * SomUtils::MatD::Ones(numEdges, 1);
             startXeig.block(d * d * n + d * n, 0, numEdges, 1) = scalesInitguess;
+
+            startXeig = XgtVecEig; // TODO: for testing, use GT as starting guess
+
+            ROFL_VAR1(startXeig)
 
             Prob.setFirstZadmmLambdas(firstZadmmEqualToLambdas);
 
@@ -475,7 +478,6 @@ int main(int argc, char **argv)
                 rofl::ScopedTimer timer("ssomRS");
 
                 // method initialization and run
-                SsomProcrustes sp(somSzD, tijsNois, edges);
 
                 SomUtils::MatD Xgt = SomUtils::MatD::Random(somSzD.d_ * somSzD.d_ * somSzD.n_ + somSzD.d_ * somSzD.n_ + numEdges, 1);
 
@@ -498,24 +500,53 @@ int main(int argc, char **argv)
                 SomUtils::MatD LambdasGt = SomUtils::MatD::Random(numEdges, 1);
                 LambdasGt = Xgt.block(somSzD.d_ * somSzD.d_ * somSzD.n_ + somSzD.d_ * somSzD.n_, 0, numEdges, 1);
 
-                // auto Tstart = Tgt;
-                sp.setTstart(Tstart);
-                sp.setLambdasStart(LambdasStart);
+                SomUtils::VecMatD RoutProcr(n, SomUtils::MatD::Identity(d, d));
+                SomUtils::MatD ToutProcr(SomUtils::MatD::Zero(d, n));
+                SomUtils::MatD LambdasOutProcr(SomUtils::MatD::Zero(numEdges, 1));
 
-                sp.setTgt(Tgt);
-                sp.setRgt(Rgt);
-                sp.setLambdasGt(LambdasGt);
+                // version with Procrustes
+                {
+                    SsomProcrustes sp(somSzD, tijsNois, edges);
 
-                sp.run();
+                    // auto Tstart = Tgt;
+                    sp.setTstart(Tstart);
+                    sp.setLambdasStart(LambdasStart);
 
-                SomUtils::MatD ToutProcr = sp.getTout();
-                SomUtils::VecMatD RoutProcr = sp.getRout();
-                SomUtils::MatD LambdasOutProcr = sp.getLambdasOut();
+                    sp.setTgt(Tgt);
+                    sp.setRgt(Rgt);
+                    sp.setLambdasGt(LambdasGt);
+
+                    sp.run();
+
+                    ToutProcr = sp.getTout();
+                    RoutProcr = sp.getRout();
+                    LambdasOutProcr = sp.getLambdasOut();
+                }
+
+                // version with ICP
+                // {
+                //     ROPTLIB::SsomProblem ProbSsom(somSzD, tijs, edges);
+                //     ProbSsom.RoptToEig(xGt, XgtVecEig);
+                //     ProbSsom.SetDomain(&ProdManiLsom);
+                //     ProbSsom.getRotations(XgtVecEig, RgtEig);
+                //     ProbSsom.getTranslations(XgtVecEig, TgtEig);
+                //     ProbSsom.getScales(XgtVecEig, LambdasGtEig);
+                //     ProbSsom.setGt(RgtEig, TgtEig, LambdasGtEig);
+                //     ProbSsom.setRho(rho);
+                //     double costOutProcr = ROPTLIB::runSsomICP(ProbSsom, startX, srcNodeIdx, RoutProcr, ToutProcr, LambdasOutProcr); // note: startX is needed (even if random) in ROPTLIB;
+                // }
 
                 SomUtils::MatD startX2eig = SomUtils::MatD::Zero(d * d * n + d * n + numEdges, 1);
-                startX2eig.block(0, 0, d * d * n, 1) = RgtVec;
-                startX2eig.block(d * d * n, 0, d * n, 1) = Tgt.reshaped<Eigen::ColMajor>(d * n, 1);
-                startX2eig.block(d * d * n + d * n, 0, numEdges, 1) = LambdasOut;
+
+                for (int i = 0; i < n; ++i)
+                {
+                    startX2eig.block(d * d * i, 0, d * d, 1) = RoutProcr[i].reshaped<Eigen::ColMajor>(d * d, 1);
+                    ROFL_VAR3(i, RoutProcr[i], RoutProcr[i].determinant())
+                }
+                startX2eig.block(d * d * n, 0, d * n, 1) = ToutProcr.reshaped<Eigen::ColMajor>(d * n, 1);
+                ROFL_VAR1(ToutProcr)
+                startX2eig.block(d * d * n + d * n, 0, numEdges, 1) = LambdasOutProcr;
+                ROFL_VAR1(LambdasOutProcr)
 
                 ROPTLIB::Vector startX2 = ProdManiLsom.RandominManifold();
 
@@ -624,7 +655,7 @@ int main(int argc, char **argv)
                 lambdaMaxErrsMeanOfstream << lambdaMaxErrMean << std::endl;
                 ROFL_VAR4(rotMeanErr, translMeanErr, lambdaMeanErrMean, lambdaMaxErrMean)
             } // end of ssom RS execution scope
-            // break; //testjd loop
+            return 0; // test only one instance for now
             // startX.Delete();
         } // end of for testjd = 0 : numTestsPerInstance
         // break; //entries/instances loop
@@ -650,6 +681,7 @@ int main(int argc, char **argv)
         execTimesAll.push_back(execTimes);
 
         inst++; // current instance idx
+        break;  // test only one instance for now
     }
 
     rotErrsOfstream.close();
@@ -682,7 +714,6 @@ int main(int argc, char **argv)
 
             ROFL_VAR5(SomUtils::stlVecDoublesMean(rotErrsAll[i][j]), SomUtils::stlVecDoublesMean(translErrsAll[i][j]), SomUtils::stlVecDoublesMean(lambdaMeanErrsAll[i]), SomUtils::stlVecDoublesMean(lambdaMaxErrsAll[i]), SomUtils::stlVecDoublesMean(execTimesAll[i]));
         }
-        
     }
 
     return 0;

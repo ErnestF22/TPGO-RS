@@ -2991,7 +2991,7 @@ namespace ROPTLIB
                 ProbPrev.lsomEscapeHessianGenprocEigen(R, T, Lambdas, Y0, lambda, vR, vT, vLambdas);
             }
 
-            if (lambda > 0)
+            if (lambda >= 0)
             {
                 ROFL_VAR2(lambda, "R, T eigenvals > 0: exiting stsaircase")
                 // staircaseStepSkipped = 0;
@@ -3005,7 +3005,7 @@ namespace ROPTLIB
             }
             else
             {
-                ROFL_VAR1("Found negative eigenvalue: continuing staircase")
+                ROFL_VAR2(lambda, "Found negative eigenvalue: continuing staircase")
             }
 
             Y0.Print("Y0 before costNewStart");

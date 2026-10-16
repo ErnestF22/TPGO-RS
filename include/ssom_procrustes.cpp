@@ -127,7 +127,7 @@ void SsomProcrustes::stepTwo(const SomUtils::VecMatD &R, const SomUtils::MatD &L
     // transl_out = A\(-b);
 
     // ROFL_VAR2(A, b)
-    SomUtils::MatD TcurrVec = A.colPivHouseholderQr().solve(-b);
+    SomUtils::MatD TcurrVec = A.completeOrthogonalDecomposition().solve(-b);
     // ROFL_VAR3(A, b, TcurrVec)
     // ROFL_VAR2("Residuals:", A * TcurrVec + b)
     Tcurr_ = TcurrVec.reshaped<Eigen::ColMajor>(sz_.d_, sz_.n_); // HP) this resize does the intended job
@@ -291,9 +291,9 @@ void SsomProcrustes::makeAb(const SomUtils::VecMatD &Rgf, SomUtils::MatD &A, Som
     {
         int ii = edges_(e, 0) - 1;
         int jj = edges_(e, 1) - 1;
-        A.block(sz_.d_ * e, sz_.d_ * ii, sz_.d_, sz_.d_) = Rgf[ii].transpose();  // HP) copilot made the indices correct
-        A.block(sz_.d_ * e, sz_.d_ * jj, sz_.d_, sz_.d_) = -Rgf[ii].transpose(); // HP) copilot made the indices correct
-        b.block(sz_.d_ * e, 0, sz_.d_, 1) = TijsScaled.col(e);                        // HP) copilot made the indices correct
+        A.block(sz_.d_ * e, sz_.d_ * ii, sz_.d_, sz_.d_) = Rgf[ii].transpose();  // HP) copilot made the indices correctly
+        A.block(sz_.d_ * e, sz_.d_ * jj, sz_.d_, sz_.d_) = -Rgf[ii].transpose(); // HP) copilot made the indices correctly
+        b.block(sz_.d_ * e, 0, sz_.d_, 1) = TijsScaled.col(e);                        // HP) copilot made the indices correctly
     }
 
     // ROFL_VAR2(A, b.transpose())

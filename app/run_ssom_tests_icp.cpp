@@ -352,7 +352,7 @@ int main(int argc, char **argv)
             { // Ssom RS execution scope
                 rofl::ScopedTimer runSsomICPtimer("runSsomICP");
 
-                // RUN SSOM RS
+                // RUN SSOM ICP
                 SomUtils::VecMatD Rout(n, SomUtils::MatD::Identity(d, d));
                 SomUtils::MatD Tout(SomUtils::MatD::Zero(d, n));
                 SomUtils::MatD LambdasOut(SomUtils::MatD::Zero(e, 1));
