@@ -486,6 +486,7 @@ namespace ROPTLIB
             // ROFL_VAR6(e, a_, b_, lambdaE, costLambdaEe, scaleCompensation);
 
             cost += costLambdaEe + rho_ * scaleCompensation;
+            // ROFL_VAR2(e, rho_ * scaleCompensation)
         }
         SomUtils::MatD LambdasEigen(numEdges_, 1);
         getScales(xEigen, LambdasEigen); // TODO: can be called before for loop to save some time, but should be fine for now
@@ -2576,10 +2577,6 @@ namespace ROPTLIB
                 // Numerically check gradient consistency (optional).
                 ProbNext.CheckGradHessian(XoptNext);
 
-                costLast = XoptNextCost;
-
-                ROFL_VAR1(costLast)
-
                 XoptEigVec.resize(staircaseStepIdx * d * n + staircaseStepIdx * n + e, 1);
                 ProbNext.RoptToEig(XoptNext, XoptEigVec);
                 XoptNext.Print("XoptNext");
@@ -2616,6 +2613,17 @@ namespace ROPTLIB
                 TmanoptOutEig = XoptNextT;
                 LambdaManoptOutEig = XoptNextLambdas;
 
+                ROFL_VAR2(costLast, XoptNextCost)
+
+                if (costLast <= XoptNextCost)
+                {
+                    ROFL_VAR2(costLast, XoptNextCost)
+                    ROFL_VAR1("Cost not deceasing after staircase step -> Exiting RS")
+                    break;
+                }
+
+                costLast = XoptNextCost;
+
                 // // Rank stopping condition
                 // ROFL_VAR1(staircaseStepIdx)
                 // SomUtils::MatD XoutRhSt(SomUtils::MatD::Zero(staircaseStepIdx, d * n));
@@ -2634,7 +2642,7 @@ namespace ROPTLIB
                 // break; // uncomment this to run only one step of staircase
             }
 
-            // // Recovery procedure
+            // Recovery procedure
 
             ROFL_VAR1("Running recovery procedure")
 
@@ -2801,7 +2809,7 @@ namespace ROPTLIB
                      int &staircaseStepIdx,
                      bool &rsSuccess, bool &rotDetsOk, bool &lambdasAcceptable, bool &rsActuallyUseful)
     {
-        ROFL_VAR1("Start of runLsom()")
+        ROFL_VAR1("Start of runSsomMM()")
 
         if (Prob.reluScaleCompensation_)
         {
@@ -2927,20 +2935,36 @@ namespace ROPTLIB
         // ROFL_VAR3(XoptEigVec.transpose(), XoptEigVec.rows(), e)
 
         double costLast = Prob.f(startX);
+
         auto ProbPrev = Prob;
         // int staircaseStepIdx;
-        SomUtils::VecMatD RmanoptOutEig(n, SomUtils::MatD::Zero(d, d));
-        SomUtils::MatD TmanoptOutEig(SomUtils::MatD::Zero(d, n));
-        SomUtils::MatD LambdaManoptOutEig(SomUtils::MatD::Zero(e, 1));
+        SomUtils::VecMatD RoutRS(n, SomUtils::MatD::Zero(d, d)); // resized during RS if needed
+        SomUtils::MatD ToutRS(SomUtils::MatD::Zero(d, n));
+        SomUtils::MatD LambdasOutRS(SomUtils::MatD::Zero(e, 1));
+
+        SomUtils::MatD startXeig = SomUtils::MatD::Zero(d * d * n + d * n + e, 1);
+        Prob.RoptToEig(startXlocal, startXeig);
+
+        SomUtils::VecMatD Rprev(n, SomUtils::MatD::Zero(r0 - 1, d));
+        ProbPrev.getRotations(startXeig, Rprev);
+        SomUtils::MatD Tprev(SomUtils::MatD::Zero(r0 - 1, n));
+        ProbPrev.getTranslations(startXeig, Tprev);
+        SomUtils::MatD LambdasPrev(SomUtils::MatD::Zero(e, 1));
+        ProbPrev.getScales(startXeig, LambdasPrev);
+
+        SomUtils::MatD XoptNextEig = SomUtils::MatD::Zero(d * d * n + d * n + e, 1);
 
         for (staircaseStepIdx = r0; staircaseStepIdx <= d * d * n + 1; ++staircaseStepIdx)
         {
+
             ROFL_VAR1(staircaseStepIdx)
             ROFL_VAR1(costLast)
 
-            SomUtils::VecMatD R(n, SomUtils::MatD::Zero(staircaseStepIdx - 1, d));
-            SomUtils::MatD T(SomUtils::MatD::Zero(staircaseStepIdx - 1, n));
-            SomUtils::MatD Lambdas(SomUtils::MatD::Zero(e, 1));
+            ROFL_VAR1(startXeig)
+
+            SomUtils::VecMatD R = Rprev;
+            SomUtils::MatD T = Tprev;
+            SomUtils::MatD Lambdas = LambdasPrev;
 
             // SomUtils::VecMatD Rnext(n, SomUtils::MatD::Zero(staircaseStepIdx, d));
             // SomUtils::MatD Tnext(SomUtils::MatD::Zero(staircaseStepIdx, n));
@@ -2952,8 +2976,19 @@ namespace ROPTLIB
             SomUtils::SomSize somSzNext(staircaseStepIdx, d, n);
             ROPTLIB::LsomProblem ProbNext(somSzNext, Prob.tijs_, Prob.edges_);
 
-            ProbNext.setGt(rGt, tGt, lambdasGt);
+            SomUtils::VecMatD rGtNext(n, SomUtils::MatD::Zero(staircaseStepIdx, d));
+            SomUtils::MatD tGtNext(SomUtils::MatD::Zero(staircaseStepIdx, n));
+            SomUtils::MatD lambdasGtNext = lambdasGt;
+
+            SomUtils::catZeroRows3dArray(rGt, rGtNext, staircaseStepIdx - d);
+            SomUtils::catZeroRows(tGt, tGtNext, staircaseStepIdx - d);
+
+            ProbNext.setGt(rGtNext, tGtNext, lambdasGtNext);
             ProbNext.setRho(Prob.rho_);
+            ProbNext.setMuAdmm(muAdmm);
+            ProbNext.setZAdmm(Prob.zAdmm_);
+            ProbNext.setYAdmm(yAdmm);
+            ProbNext.setFirstZadmmLambdas(Prob.firstZadmmLambdas_);
 
             if (Prob.reluScaleCompensation_)
             {
@@ -2971,7 +3006,7 @@ namespace ROPTLIB
             ROPTLIB::Euclidean mani2next(somSzNext.p_, somSzNext.n_);
             ROPTLIB::ProductManifold ProdManiNext(numoftypes,
                                                   &mani1next, numofmani1, &mani2next, numofmani2, &mani3, numofmani3);
-            ROPTLIB::Vector Y0;
+            ROPTLIB::Vector Y0 = ProdManiNext.RandominManifold(); // PIM output
             SomUtils::VecMatD vR(n, SomUtils::MatD::Zero(somSzNext.p_, somSzNext.d_));
             SomUtils::MatD vT(SomUtils::MatD::Zero(somSzNext.p_, somSzNext.n_));
             SomUtils::MatD vLambdas(SomUtils::MatD::Zero(Prob.numEdges_, 1));
@@ -2979,25 +3014,25 @@ namespace ROPTLIB
             // for (auto &Rm : R)
             //     ROFL_VAR1(ProbPrev.checkIsOnStiefel(Rm))
 
-            double lambda;
+            double lambdaPim;
             if (Prob.usePIM_)
             {
                 ROFL_VAR1("Calling Prob.lsomEscapeHessianGenprocEigenPIM()")
-                ProbNext.lsomPimHessianGenprocEigen(1e-5, R, T, Lambdas, Y0, lambda, vR, vT, vLambdas); //!! catZeroRows() increase is being done inside
+                ProbNext.lsomPimHessianGenprocEigen(1e-5, R, T, Lambdas, Y0, lambdaPim, vR, vT, vLambdas); //!! catZeroRows() increase is being done inside
             }
             else
             {
                 ROFL_VAR1("Calling ProbPrev.lsomEscapeHessianGenprocEigen()")
-                ProbPrev.lsomEscapeHessianGenprocEigen(R, T, Lambdas, Y0, lambda, vR, vT, vLambdas);
+                ProbPrev.lsomEscapeHessianGenprocEigen(R, T, Lambdas, Y0, lambdaPim, vR, vT, vLambdas);
             }
 
-            if (lambda >= 0)
+            if (lambdaPim >= 0)
             {
-                ROFL_VAR2(lambda, "R, T eigenvals > 0: exiting stsaircase")
+                ROFL_VAR2(lambdaPim, "R, T, Lambda eigenvals > 0: exiting stsaircase")
                 // staircaseStepSkipped = 0;
-                RmanoptOutEig = R;
-                TmanoptOutEig = T;
-                LambdaManoptOutEig = Lambdas;
+                RoutRS = R;
+                ToutRS = T;
+                LambdasOutRS = Lambdas;
 
                 costOut = costLast;
 
@@ -3005,7 +3040,16 @@ namespace ROPTLIB
             }
             else
             {
-                ROFL_VAR2(lambda, "Found negative eigenvalue: continuing staircase")
+                ROFL_VAR2(lambdaPim, "Found negative eigenvalue: continuing staircase")
+
+                for (int i = 0; i < n; ++i)
+                {
+                    Rprev[i].resize(staircaseStepIdx, d); // TODO: double check size
+                }
+                Tprev.resize(staircaseStepIdx, n);
+                LambdasPrev.resize(e, 1);
+
+                XoptEigVec.resize(staircaseStepIdx * d * n + staircaseStepIdx * n + e, 1);
             }
 
             Y0.Print("Y0 before costNewStart");
@@ -3022,16 +3066,13 @@ namespace ROPTLIB
             ProbNext.SetUseHess(true);
 
             auto Y0local = Y0;
+            XoptNextEig.resize(staircaseStepIdx * d * n + staircaseStepIdx * n + e, 1);
 
             {
                 SomUtils::SomSize somSzScope(staircaseStepIdx - 1, d, n); // TODO: improve getRotations() and getTranslations() and avoid local scope
-                ROPTLIB::LsomProblem ProbScope(somSzScope, Prob.tijs_, Prob.edges_);
+                ROPTLIB::LsomProblem ProbScope(somSzScope, ProbNext.tijs_, ProbNext.edges_);
 
                 // auto XoptLocal = XoptNext;
-                ROFL_VAR1("Calling getRotations()")
-                ProbScope.getRotations(XoptEigVec, R);
-                ProbScope.getTranslations(XoptEigVec, T);
-                ProbScope.getScales(XoptEigVec, Lambdas);
 
                 int iterAdmm = 0;
 
@@ -3041,7 +3082,7 @@ namespace ROPTLIB
                 // ProbScope.EigToRopt(XoptEigVec, RmanoptOutEig, TmanoptOutEig, LambdaManoptOutEig);
 
                 // while iter_admm < 100 && ~admm_stopping_condition_reached
-                while (iterAdmm < Prob.maxIterAdmm_ && !admmStoppingConditionReached)
+                while (iterAdmm < ProbNext.maxIterAdmm_ && !admmStoppingConditionReached)
                 {
                     ROFL_VAR2(iterAdmm, Prob.maxIterAdmm_)
 
@@ -3073,7 +3114,10 @@ namespace ROPTLIB
                     auto XoptNextCost = RTRNewtonSolverNext->Getfinalfun();
                     costOut = XoptNextCost;
 
-                    // ROFL_VAR1("")
+                    ProbNext.RoptToEig(XoptNext, XoptNextEig);
+
+                    ROFL_VAR1(XoptNextEig.transpose())
+
                     // Prob.CheckGradHessian(Xopt);
 
                     // std::cout << "Prob.GetUseGrad() " << Prob.GetUseGrad() << std::endl;
@@ -3083,14 +3127,13 @@ namespace ROPTLIB
                     // params.z = max(ones(size(lambdas_manopt_out)), lambdas_manopt_out);
                     // params.y = params.y + params.mu *(params.z-lambdas_manopt_out);
 
-                    SomUtils::MatD LambdasManoptOutEig = SomUtils::MatD::Zero(e, 1);
-                    SomUtils::MatD XoptNextEig = SomUtils::MatD::Zero(staircaseStepIdx * d * n + staircaseStepIdx * n + e, 1);
-                    ProbAdmm.RoptToEig(XoptNext, XoptNextEig);
-                    ProbAdmm.getScales(XoptNextEig, LambdasManoptOutEig);
+
+                    // ProbAdmm.RoptToEig(XoptNext, XoptNextEig);
+                    ProbAdmm.getScales(XoptNextEig, LambdasOutRS);
                     // SomUtils::MatD tmp = LambdasManoptOutEig - (yAdmm / muAdmm); // as in Overleaf, but this is not what Matlab code does
-                    SomUtils::MatD tmp = LambdasManoptOutEig; // as in Matlab
+                    SomUtils::MatD tmp = LambdasOutRS; // as in Matlab
                     zAdmm = tmp.cwiseMax(1.0);
-                    yAdmm += muAdmm * (zAdmm - LambdasManoptOutEig);
+                    yAdmm += muAdmm * (zAdmm - tmp);
 
                     ROFL_VAR1("ADMM updates")
                     ROFL_VAR1(zAdmm.transpose())
@@ -3110,7 +3153,7 @@ namespace ROPTLIB
                     // [params.mu, r_k, s_k] = update_lsom_penalty_param(params.mu, x_k, z_k, z_prev);
                     // params_mu_next = params.mu;
                     // disp(params.mu)
-                    ProbAdmm.updateLsomPenaltyParam(ProbAdmm.muAdmm_, LambdasManoptOutEig, zAdmm, ProbAdmm.zAdmm_, muAdmm, rK, sK);
+                    ProbAdmm.updateLsomPenaltyParam(ProbAdmm.muAdmm_, LambdasOutRS, zAdmm, ProbAdmm.zAdmm_, muAdmm, rK, sK);
                     ROFL_VAR1(muAdmm)
 
                     // disp(norm(s_k))
@@ -3121,6 +3164,7 @@ namespace ROPTLIB
                     //     disp("multidet(X_manopt_out.R)")
                     //     disp(multidet(X_manopt_out.R))
 
+                    ROFL_VAR1("Calling getRotations()")
                     SomUtils::VecMatD RadmmOut(n, SomUtils::MatD::Zero(staircaseStepIdx, d));
                     ProbAdmm.getRotations(XoptNextEig, RadmmOut);
 
@@ -3128,7 +3172,6 @@ namespace ROPTLIB
                     {
                         ROFL_VAR2(i, RadmmOut[i])
                     }
-                    
 
                     // admm_stopping_condition_reached = check_admm_stopping_condition(x_k, y_k, z_k, r_k, s_k, num_edges, 1e-8, 1e-8);
                     admmStoppingConditionReached = ProbAdmm.checkAdmmStoppingCondition(rK, sK, ProbAdmm.tolAdmmPrimal_, ProbAdmm.tolAdmmDual_);
@@ -3136,42 +3179,50 @@ namespace ROPTLIB
 
                     iterAdmm++;
                 }
+                ROFL_VAR1(costOut)
             }
 
             ROFL_VAR1(costLast)
 
-            XoptEigVec.resize(staircaseStepIdx * d * n + staircaseStepIdx * n + e, 1);
-            ProbNext.RoptToEig(Y0local, XoptEigVec);
-            Y0local.Print("XoptNext");
-            SomUtils::VecMatD XoptNextR(n, SomUtils::MatD::Zero(staircaseStepIdx, d));
-            SomUtils::MatD XoptNextT(SomUtils::MatD::Zero(staircaseStepIdx, n));
-            SomUtils::MatD XoptNextLambdas(SomUtils::MatD::Zero(e, 1));
+            RoutRS.resize(n, SomUtils::MatD::Zero(staircaseStepIdx, d));
+            ToutRS.resize(staircaseStepIdx, n);
+            // LambdasOutRS.resize(e, 1);
             ROFL_VAR1("Calling getRotations()")
-            ProbNext.getRotations(XoptEigVec, XoptNextR);
-            ProbNext.getTranslations(XoptEigVec, XoptNextT);
-            ProbNext.getScales(XoptEigVec, XoptNextLambdas);
 
-            RmanoptOutEig = XoptNextR;
-            TmanoptOutEig = XoptNextT;
-            LambdaManoptOutEig = XoptNextLambdas;
+            ProbPrev = ProbNext;
+
+            ROFL_VAR4(XoptNextEig.rows(), XoptNextEig.cols(), RoutRS[0].rows(), ToutRS.rows())
+
+            ProbPrev.getRotations(XoptNextEig, RoutRS);
+            ProbPrev.getTranslations(XoptNextEig, ToutRS);
+            ProbPrev.getScales(XoptNextEig, LambdasOutRS);
+
+            ROFL_VAR2(costLast, costOut)
+
+            if (costLast <= costOut)
+            {
+                ROFL_VAR2(costLast, costOut)
+                ROFL_VAR1("Cost not deceasing after staircase step -> Exiting RS")
+                break;
+            }
 
             // std::cout << "Prob.GetUseGrad() " << Prob.GetUseGrad() << std::endl;
             // std::cout << "Prob.GetUseHess() " << Prob.GetUseHess() << std::endl;
             // std::cout << "Prob.GetNumGradHess() " << Prob.GetNumGradHess() << std::endl;
 
             // Outputs
-            Y0local.Print("XoptNext");
             // Y0local.CopyTo(startXlocal);
-            std::cout << "XoptNextCost " << costOut << std::endl; // x cost
 
-            ProbPrev = ProbNext;
+            Rprev = RoutRS;
+            Tprev = ToutRS;
+            LambdasPrev = LambdasOutRS;
 
             // save output
             for (int i = 0; i < n; ++i)
             {
-                RmanoptOutEig[i].resize(staircaseStepIdx, d);
+                RoutRS[i].resize(staircaseStepIdx, d);
             }
-            TmanoptOutEig.resize(staircaseStepIdx, n);
+            ToutRS.resize(staircaseStepIdx, n);
 
             // // Rank stopping condition
             // ROFL_VAR1(staircaseStepIdx)
@@ -3197,10 +3248,10 @@ namespace ROPTLIB
 
         for (int i = 0; i < n; ++i)
         {
-            ROFL_VAR2(i, RmanoptOutEig[i])
+            ROFL_VAR2(i, RoutRS[i])
         }
-        ROFL_VAR1(TmanoptOutEig)
-        ROFL_VAR1(LambdaManoptOutEig)
+        ROFL_VAR1(ToutRS)
+        ROFL_VAR1(LambdasOutRS)
 
         ROFL_VAR1(staircaseStepIdx) // unused in ProbPrev.recoverySEdN() anyway
 
@@ -3208,7 +3259,7 @@ namespace ROPTLIB
         SomUtils::MatD Trecovered(SomUtils::MatD::Zero(d, n));
         SomUtils::MatD LambdasRecovered(SomUtils::MatD::Zero(e, 1));
         bool recSEDNsuccess = ProbPrev.recoverySEdN(staircaseStepIdx,
-                                                    RmanoptOutEig, TmanoptOutEig, LambdaManoptOutEig,
+                                                    RoutRS, ToutRS, LambdasOutRS,
                                                     Rrecovered, Trecovered, LambdasRecovered);
 
         if (!recSEDNsuccess)
@@ -3232,15 +3283,18 @@ namespace ROPTLIB
         ROFL_VAR1(recSEDNsuccess)
         rsSuccess = recSEDNsuccess;
 
+        ROFL_VAR1(Prob.costEigen(RoutRS, ToutRS, LambdasOutRS))
+        ROFL_VAR1(Prob.costEigen(Rrecovered, Trecovered, LambdasRecovered))
+
         ROFL_VAR1("End of ADMM")
 
         //
         std::vector<double> Rdets(n);
-        SomUtils::MatD XoptEig(SomUtils::MatD::Zero(d * d * n + d * n + e, 1));
-        Prob.RoptToEig(startXlocal, XoptEig);
-        Prob.getRotations(XoptEig, Rrecovered);
-        Prob.getTranslations(XoptEig, Trecovered);
-        Prob.getScales(XoptEig, LambdasRecovered);
+        // SomUtils::MatD XoptEig(SomUtils::MatD::Zero(d * d * n + d * n + e, 1));
+        // Prob.RoptToEig(startXlocal, XoptEig);
+        // Prob.getRotations(XoptEig, Rrecovered);
+        // Prob.getTranslations(XoptEig, Trecovered);
+        // Prob.getScales(XoptEig, LambdasRecovered);
         SomUtils::multidet(Rrecovered, Rdets);
 
         rotDetsOk = true;

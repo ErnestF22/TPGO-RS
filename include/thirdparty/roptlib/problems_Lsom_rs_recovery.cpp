@@ -3136,33 +3136,18 @@ namespace ROPTLIB
         {
             ROFL_VAR1("There are low degree nodes!");
 
-            // Qalign = align3d(RT_stacked_high_deg);
-            // tijs = problem_data.tijs; %TODO!! improve naming
-            // Tijs_scaled = make_tijs_scaled(lambdas_manopt_out, tijs);
-
-            SomUtils::MatD Qalign(SomUtils::MatD::Zero(nrs, nrs));
+            SomUtils::MatD Qalign = SomUtils::MatD::Zero(nrs, nrs);
             align3d(RTstackedHighDeg, Qalign);
             SomUtils::MatD TijsScaled(SomUtils::MatD::Zero(sz_.d_, numEdges_));
             makeTijsScaled(tijs_, LambdasManoptOut, TijsScaled);
 
-            // problem_data.d = d;
-            // Tij_2deg_recovery = [];
-            // Tij_tilde_2deg_recovery = [];
-            // for node_id = 1:N
-            //     if problem_data.node_degrees(node_id) == low_deg
-            //         [Tij1j2, Tij1j2_tilde] = ...
-            //             make_Tij1j2s_edges( ...
-            //             node_id, T_edges, Tijs_scaled, edges, problem_data);
-            //         Tij_2deg_recovery = cat(3, Tij_2deg_recovery, Tij1j2);
-            //         Tij_tilde_2deg_recovery = cat( ...
-            //             3, Tij_tilde_2deg_recovery, Tij1j2_tilde);
-
             SomUtils::VecMatD Tij2degRecovery(numNodesLowDeg, SomUtils::MatD::Zero(sz_.d_, lowDeg));
             SomUtils::VecMatD TijTilde2degRecovery(numNodesLowDeg, SomUtils::MatD::Zero(nrs, lowDeg));
             int lowDegId = 0;
-            for (int nodeId = 0; nodeId < sz_.n_; ++nodeId)
+
+            for (int nodeId = 0; nodeId < sz_.n_; nodeId++)
             {
-                if (nodeDegrees(nodeId, 0) == lowDeg)
+                if (nodeDegrees[nodeId] == lowDeg)
                 {
                     SomUtils::MatD Tij1j2(SomUtils::MatD::Zero(sz_.d_, lowDeg));
                     SomUtils::MatD Tij1j2Tilde(SomUtils::MatD::Zero(nrs, lowDeg));
@@ -3173,109 +3158,80 @@ namespace ROPTLIB
                 }
             }
 
-            // Tij_tilde_2deg_recovery=multiprod(Qalign, Tij_tilde_2deg_recovery);
-            // RitildeEst = RbRecovery(multiprod(Qalign, R_manopt_out(:,:,nodes_low_deg)), Tij_tilde_2deg_recovery);
-            // R_recovered(:,:,nodes_low_deg) = RitildeEst(1:d,:,:);
-
             SomUtils::VecMatD TijTilde2degRecoveryShifted(TijTilde2degRecovery.size(), SomUtils::MatD::Zero(nrs, lowDeg)); // OBS. different naming than MATLAB (where it's just overwritten)!
             for (int i = 0; i < TijTilde2degRecovery.size(); ++i)
             {
                 TijTilde2degRecoveryShifted[i] = Qalign * TijTilde2degRecovery[i];
             }
-            SomUtils::VecMatD RbRecoveryInput(numNodesLowDeg, SomUtils::MatD::Zero(nrs, sz_.d_));
-            lowDegId = 0;
-            for (int i = 0; i < sz_.n_; ++i)
+
+            // X.R(:,:,nodes_low_deg)
+            SomUtils::VecMatD Rlow;
+            for (int nodeId = 0; nodeId < sz_.n_; nodeId++)
             {
-                if (nodesLowDeg(i, 0) != 0)
+                if (nodeDegrees[nodeId] == lowDeg)
                 {
-                    RbRecoveryInput[lowDegId] = Qalign * RmanoptOut[i];
-                    lowDegId++;
+                    Rlow.push_back(RmanoptOut[nodeId]);
                 }
             }
-            ROFL_ASSERT(lowDegId == numNodesLowDeg)
 
             SomUtils::VecMatD RiTildeEst(numNodesLowDeg, SomUtils::MatD::Zero(sz_.d_, sz_.d_));
-            // RbRecovery(RbRecoveryInput, TijTilde2degRecoveryShifted, RiTildeEst);
+            SomUtils::VecMatD QxEdges(numNodesLowDeg, SomUtils::MatD::Zero(nrs, nrs));
+            SomUtils::VecMatD QbRecovery(numNodesLowDeg, SomUtils::MatD::Zero(sz_.d_, sz_.d_));
+            // const SomUtils::VecMatD &Ri_tilde2,
+            // const SomUtils::VecMatD &Tij_tilde,
+            // SomUtils::VecMatD &Ri_est,
+            // SomUtils::VecMatD &Qx,
+            // SomUtils::VecMatD &Qb,
+            RbRecoveryLsom(RmanoptOut, TijTilde2degRecoveryShifted, RiTildeEst, QxEdges, QbRecovery); //missing plus/minus RbEst param...
 
-            // R_tilde2_HD = multiprod(repmat(Qalign, 1, 1, sum(nodes_high_deg)), R_manopt_out(:,:,nodes_high_deg));
-            // R_recovered(:,:,nodes_high_deg) = R_tilde2_HD(1:d,:,:);
-            SomUtils::VecMatD Rtilde2HD(numNodesHighDeg, SomUtils::MatD::Zero(nrs, sz_.d_));
-            int highDegId = 0;
+            // R_recovered(:,:,nodes_low_deg) = RitildeEst(1:d,:,:)
+            for (size_t k = 0; k < nodesLowDeg.size(); k++)
+                Rrecovered[nodesLowDeg[k]] = RiTildeEst[k].topRows(sz_.d_);
+
+            // R_tilde2_HD = multiprod(repmat(Qalign,...), X.R(:,:,nodes_high_deg))
+            SomUtils::VecMatD Rtilde2HD;
+            for (int idx : nodesHighDeg)
+                Rtilde2HD.push_back(Qalign * RmanoptOut[idx]);
+
+            // R_recovered(:,:,nodes_high_deg) = R_tilde2_HD(1:d,:,:)
+            for (size_t k = 0; k < nodesHighDeg.size(); k++)
+                Rrecovered[nodesHighDeg[k]] = Rtilde2HD[k].topRows(sz_.d_);
+
+            // low_deg_nodes_ids = find(node_degrees <= low_deg)
+            std::vector<int> lowDegNodesIds;
+            for (int i = 0; i < sz_.n_; i++)
+                if (nodeDegrees[i] <= lowDeg)
+                    lowDegNodesIds.push_back(i);
+
+            for (int ii = 0; ii < sz_.n_; ii++)
+            {
+                auto it = std::find(lowDegNodesIds.begin(), lowDegNodesIds.end(), ii);
+                if (it != lowDegNodesIds.end())
+                {
+                    int idLowDeg = it - lowDegNodesIds.begin();
+                    SomUtils::MatD Pi = SomUtils::MatD::Zero(sz_.d_, sz_.d_);
+                    recoverRdeg2(TijTilde2degRecovery, idLowDeg, Pi);
+                    Rrecovered[ii] = Pi * Rrecovered[ii];
+                }
+            }
+
+            std::cout << "multidet(R_recovered)" << std::endl;
+            std::vector<double> multidetRrecovered(sz_.n_);
+            SomUtils::multidet(Rrecovered, multidetRrecovered);
             for (int i = 0; i < sz_.n_; ++i)
             {
-                if (nodesHighDeg(i, 0) != 0)
-                {
-                    Rtilde2HD[highDegId] = Qalign * RmanoptOut[i];
-                    highDegId++;
-                }
-            }
-            ROFL_ASSERT(highDegId == numNodesHighDeg)
-
-            highDegId = 0;
-            for (int i = 0; i < sz_.n_; ++i) // TODO: avoid double for (Rrecovered can probably be filled directly in previous for)
-            {
-                if (nodesHighDeg(i, 0) != 0)
-                {
-                    ROFL_ASSERT(Rrecovered[i].rows() == sz_.d_ && Rrecovered[i].cols() == sz_.d_)
-                    Rrecovered[i] = Rtilde2HD[highDegId].block(0, 0, sz_.d_, sz_.d_);
-                    highDegId++;
-                }
-            }
-            ROFL_ASSERT(highDegId == numNodesHighDeg)
-
-            // low_deg_nodes_ids = find(problem_data.node_degrees <= low_deg); %[1 5]'
-            // for ii = 1:N
-            //     if ismember(ii, low_deg_nodes_ids)
-            //         id_low_deg = find(low_deg_nodes_ids == ii);
-            //         P_i = recover_R_deg2(Tij_tilde_2deg_recovery, id_low_deg, d);
-            //         R_recovered(:,:,ii) = P_i * R_recovered(:,:,ii);
-
-            for (int nodeId = 0; nodeId < sz_.n_; ++nodeId)
-            {
-                if (nodeDegrees(nodeId, 0) == lowDeg)
-                {
-                    int idLowDeg = -1;
-                    int countLowDeg = 0;
-                    for (int j = 0; j < sz_.n_; ++j)
-                    {
-                        if (nodeDegrees(j, 0) == lowDeg)
-                        {
-                            if (j == nodeId)
-                            {
-                                idLowDeg = countLowDeg;
-                                break;
-                            }
-                            countLowDeg++;
-                        }
-                    }
-                    ROFL_ASSERT(idLowDeg != -1)
-
-                    SomUtils::MatD Pi(SomUtils::MatD::Zero(sz_.d_, sz_.d_));
-                    recoverRdeg2(TijTilde2degRecoveryShifted, idLowDeg, Pi);
-                    Rrecovered[nodeId] = Pi * Rrecovered[nodeId];
-                }
+                ROFL_VAR2(i, multidetRrecovered[i])
             }
 
-            // disp("multidet(R_recovered)")
-            // disp(multidet(R_recovered))
-            ROFL_VAR1("multidet(R_recovered)")
-            for (int i = 0; i < sz_.n_; ++i)
-            {
-                ROFL_VAR2(i, Rrecovered[i].determinant())
-            }
+            SomUtils::MatD TdiffsShifted = Qalign * Tedges; // this has last rows to 0
+            SomUtils::MatD T_recovered_pre = SomUtils::MatD::Zero(sz_.d_, numEdges_);
+            recoverTedges(TdiffsShifted.topRows(sz_.d_),
+                          nodeDegrees,
+                          lowDeg, TijTilde2degRecovery, T_recovered_pre);
+            Trecovered = SomUtils::MatD::Zero(sz_.d_, sz_.n_);
+            edgeDiffs2T(src_, T_recovered_pre, sz_.n_, Trecovered);
 
-            // T_diffs_shifted = Qalign * T_edges; %this has last rows to 0
-            // T_recovered_pre = recover_T_edges(T_diffs_shifted(1:d,:), ...
-            //     edges, d, problem_data.node_degrees, low_deg, Tij_tilde_2deg_recovery);
-            // T_recovered = edge_diffs_2_T(T_recovered_pre, edges, N);
-
-            SomUtils::MatD TdiffsShifted = Qalign * Tedges; // this has last row to 0
-                                                            // SomUtils::MatD TrecoveredPre(SomUtils::MatD::Zero(sz_.d_, sz_.n_));
-                                                            // recoverTedges(TdiffsShifted.block(0, 0, sz_.d_, TdiffsShifted.cols()), TrecoveredPre);
-            edgeDiffs2T(src_, TdiffsShifted.block(0, 0, sz_.d_, TdiffsShifted.cols()), sz_.n_, Trecovered);
-
-            // lambdas_recovered = X_manopt_out.lambda;
-            LambdasRecovered = LambdasManoptOut; // TODO: probably this copy is mostly a waste of space/time
+            auto lambdas_recovered = LambdasManoptOut; // TODO: check if this is correct
         }
 
         // // checking that cost has not changed during "recovery" X_recovered.T = T_recovered;
@@ -3315,6 +3271,12 @@ namespace ROPTLIB
 
         std::vector<double> multidetRrecovered(sz_.n_);
         SomUtils::multidet(Rrecovered, multidetRrecovered);
+
+        ROFL_VAR1("multidet(R_recovered)")
+        for (int i = 0; i < sz_.n_; ++i)
+        {
+            ROFL_VAR2(i, multidetRrecovered[i])
+        }
 
         // Verify each determinant is either +1 or -1 (within tolerance)
         const double tol = 1e-6;
@@ -3476,8 +3438,6 @@ namespace ROPTLIB
 
         Rout = RrecoveredGlobal;
         Tout = TrecoveredGlobal;
-
-        
 
         if (reluScaleCompensation_)
         {
@@ -3685,6 +3645,63 @@ namespace ROPTLIB
         }
     }
 
+    // Single-pose base case
+    void LsomProblem::RbRecoveryLsom(const SomUtils::MatD &RiTilde2, const SomUtils::MatD &TijTilde, bool pmRbEst,
+                                     SomUtils::MatD &RiEst, SomUtils::MatD &Qx, SomUtils::MatD &Qb) const
+    {
+        int d = RiTilde2.cols();
+        int p = RiTilde2.rows();
+
+        // Initialize Qx as the identity matrix
+        // Qx.resize(p, p);
+        // Qx.setIdentity();
+        align2dNbPoses(TijTilde, Qx);
+        SomUtils::MatD Qbot = Qx.rightCols(p - d).transpose();             // Qx(:,d+1:end)'
+        SomUtils::MatD Rcal_bot = Qx.bottomRows(p - 2) * RiTilde2;         // Qx(3:end,:)*Ri_tilde2
+        SomUtils::MatD Qbot_right = Qbot.rightCols(Qbot.cols() - (d - 1)); // Qbot(:,d:end)
+
+        Eigen::JacobiSVD<SomUtils::MatD> svd(Rcal_bot, Eigen::ComputeFullU);
+        SomUtils::MatD URCal_bot = svd.matrixU();
+        SomUtils::MatD Rcal_bot_N = URCal_bot.rightCols(URCal_bot.cols() - 1); // URCal_bot(:,2:end)
+
+        SomUtils::MatD RbEst = SomUtils::MatD::Zero(p - 2, p - 2); // Initialize RbEst with the correct size
+        if (pmRbEst)
+        {
+            procrustesR(Qbot_right.transpose(), Rcal_bot_N, RbEst);
+        }
+        else
+            procrustesR(Qbot_right.transpose(), -Rcal_bot_N, RbEst);
+
+        // Qb = blkdiag(eye(2), Rb_est')
+        Qb = SomUtils::MatD::Zero(p, p);
+        Qb.topLeftCorner(2, 2) = SomUtils::MatD::Identity(2, 2);
+        Qb.bottomRightCorner(RbEst.cols(), RbEst.rows()) = RbEst.transpose();
+
+        RiEst = Qx.transpose() * Qb * Qx * RiTilde2;
+    }
+
+    // Multi-pose version
+    void LsomProblem::RbRecoveryLsom(const SomUtils::VecMatD &Ri_tilde2,
+                                     const SomUtils::VecMatD &Tij_tilde,
+                                     SomUtils::VecMatD &Ri_est,
+                                     SomUtils::VecMatD &Qx,
+                                     SomUtils::VecMatD &Qb,
+                                     bool pmRbEst) const
+    {
+        int nbPoses = Ri_tilde2.size();
+
+        // Ri_est.resize(nbPoses, SomUtils::MatD::Zero(Ri_tilde2[0].rows(), Ri_tilde2[0].cols()));
+        // Qx.resize(nbPoses, SomUtils::MatD::Zero(Ri_tilde2[0].rows(), Ri_tilde2[0].rows()));
+        // Qb.resize(nbPoses, SomUtils::MatD::Zero(Ri_tilde2[0].rows(), Ri_tilde2[0].rows()));
+
+        for (int iPose = 0; iPose < nbPoses; iPose++)
+        {
+            // recursive call in MATLAB doesn't forward pmRbEst, so it defaults to true
+            RbRecoveryLsom(Ri_tilde2[iPose], Tij_tilde[iPose], true,
+                       Ri_est[iPose], Qx[iPose], Qb[iPose]);
+        }
+    }
+
     void LsomProblem::recoverRdeg2(const SomUtils::VecMatD &TijTilde2degRecovery, int lowDegNodeId,
                                    SomUtils::MatD &P) const
     {
@@ -3700,6 +3717,34 @@ namespace ROPTLIB
         P.resize(sz_.d_, sz_.d_);
         P = Eigen::Matrix3d::Identity();
         P -= 2 * (vVersor * vVersor.transpose());
+    }
+
+    void LsomProblem::recoverTedges(const SomUtils::MatD &Tedges,
+                                    const Eigen::ArrayXi &nodeDegrees, int lowDeg,
+                                    const SomUtils::VecMatD &TijTilde2degRecovery, SomUtils::MatD &TedgesShifted) const
+    {
+        TedgesShifted = Tedges;
+
+        // low_deg_nodes_ids = find(node_degrees <= low_deg)
+        std::vector<int> lowDegNodesIds;
+        for (int i = 0; i < (int)nodeDegrees.size(); i++)
+            if (nodeDegrees(i,0) <= lowDeg)
+                lowDegNodesIds.push_back(i);
+
+        SomUtils::MatD P = SomUtils::MatD::Identity(sz_.d_, sz_.d_); // declared once, filled by reference inside recover_R_deg2
+
+        for (int ee = 0; ee < edges_.rows(); ee++)
+        {
+            int ii = (int)edges_(ee, 0);
+
+            auto it = std::find(lowDegNodesIds.begin(), lowDegNodesIds.end(), ii);
+            if (it != lowDegNodesIds.end())
+            {
+                int id_low_deg = it - lowDegNodesIds.begin();
+                recoverRdeg2(TijTilde2degRecovery, id_low_deg, P);
+                TedgesShifted.col(ee) = P * Tedges.col(ee);
+            }
+        }
     }
 
 } // end of namespace ROPTLIB

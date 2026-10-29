@@ -273,6 +273,17 @@ namespace SomUtils
     void catZeroRow3dArray(const SomUtils::VecMatD &mIn, SomUtils::VecMatD &mOut);
 
     /**
+     * @brief Return @param mOut as a copy of @param mIn but with extra @param numRowsAdded zero-rows at the bottom of the matrix
+     */
+    void catZeroRows(const SomUtils::MatD &mIn, SomUtils::MatD &mOut, int numRowsAdded);
+
+    /**
+     * @brief 3D version of catZeroRows where catZeroRows is applied to each pair of elements
+     * in @param muIn, @param muOut
+     */
+    void catZeroRows3dArray(const SomUtils::VecMatD &mIn, SomUtils::VecMatD &mOut, int numRowsAdded);
+
+    /**
      * @brief Return whether floating point elements matrices @param a, @param b are equal
      * up to a difference of @param thr
      * @return true is they are equal, @return false otherwise

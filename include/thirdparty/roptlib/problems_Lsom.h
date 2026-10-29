@@ -1054,10 +1054,24 @@ namespace ROPTLIB
       void RbRecovery(const SomUtils::VecMatD &RiTilde2, const SomUtils::VecMatD &TijTilde,
                       SomUtils::VecMatD &RiEst, SomUtils::VecMatD &Qx, SomUtils::VecMatD &Qb) const;
 
+      // Single-pose base case
+      void RbRecoveryLsom(const SomUtils::MatD &Ri_tilde2, const SomUtils::MatD &Tij_tilde, bool pmRbEst,
+                          SomUtils::MatD &Ri_est, SomUtils::MatD &Qx, SomUtils::MatD &Qb) const;
+
+      // Multi-pose version
+      void RbRecoveryLsom(const SomUtils::VecMatD &Ri_tilde2,
+                          const SomUtils::VecMatD &Tij_tilde,
+                          SomUtils::VecMatD &Ri_est,
+                          SomUtils::VecMatD &Qx,
+                          SomUtils::VecMatD &Qb,
+                          bool pmRbEst = true) const;
+
       void recoverRdeg2(const SomUtils::VecMatD &TijTilde2degRecovery, int lowDegNodeId,
                         SomUtils::MatD &P) const;
 
-      // void recoverTedges(); //probably just wrong and not needed (neither in MATLAB)
+      void recoverTedges(const SomUtils::MatD &Tedges,
+                         const Eigen::ArrayXi &nodeDegrees, int lowDeg,
+                         const SomUtils::VecMatD &TijTilde2degRecovery, SomUtils::MatD &TedgesShifted) const;
    };
 
    /**
@@ -1076,13 +1090,13 @@ namespace ROPTLIB
     * @brief Solve an instance of the LSOM problem using Procrustes + RS (+ADMM)
     */
    double runSsomMM(ROPTLIB::LsomProblem &Prob,
-                  const ROPTLIB::Vector &startX,
-                  int src,
-                  SomUtils::VecMatD &Rout,
-                  SomUtils::MatD &Tout,
-                  SomUtils::MatD &lambdasOut,
-                  int &staircaseStepIdx,
-                  bool &rsSuccess, bool &rotDetsOk, bool &lambdasAcceptable, bool &rsActuallyUseful);
+                    const ROPTLIB::Vector &startX,
+                    int src,
+                    SomUtils::VecMatD &Rout,
+                    SomUtils::MatD &Tout,
+                    SomUtils::MatD &lambdasOut,
+                    int &staircaseStepIdx,
+                    bool &rsSuccess, bool &rotDetsOk, bool &lambdasAcceptable, bool &rsActuallyUseful);
 
 } // end of namespace ROPTLIB
 

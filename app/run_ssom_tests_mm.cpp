@@ -55,7 +55,7 @@ int main(int argc, char **argv)
     params.getParam<int>("srcNodeIdx", srcNodeIdx, 0);
     params.getParam<double>("rho", rho, 0.0);
     params.getParam<bool>("firstZadmmEqualToLambdas", firstZadmmEqualToLambdas, false);
-    params.getParam<double>("muAdmm", muAdmm, 0.1);
+    params.getParam<double>("muAdmm", muAdmm, 0.5);
 
     std::cout << "Params:" << std::endl;
     params.write(std::cout);
@@ -500,6 +500,9 @@ int main(int argc, char **argv)
                 SomUtils::MatD LambdasGt = SomUtils::MatD::Random(numEdges, 1);
                 LambdasGt = Xgt.block(somSzD.d_ * somSzD.d_ * somSzD.n_ + somSzD.d_ * somSzD.n_, 0, numEdges, 1);
 
+                Prob.setZAdmm(LambdasGt);
+                ROFL_VAR1(Prob.costEigenVec(Xgt))
+
                 SomUtils::VecMatD RoutProcr(n, SomUtils::MatD::Identity(d, d));
                 SomUtils::MatD ToutProcr(SomUtils::MatD::Zero(d, n));
                 SomUtils::MatD LambdasOutProcr(SomUtils::MatD::Zero(numEdges, 1));
@@ -551,6 +554,8 @@ int main(int argc, char **argv)
                 ROPTLIB::Vector startX2 = ProdManiLsom.RandominManifold();
 
                 EigToRopt(startX2eig, Prob, &startX2);
+
+                ROFL_VAR1(Prob.costEigenVec(startX2eig));
 
                 double costOut = ROPTLIB::runSsomMM(Prob, startX2, srcNodeIdx, // !! startX2 used here!
                                                     Rout, Tout, LambdasOut,

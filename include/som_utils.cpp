@@ -723,6 +723,26 @@ namespace SomUtils
         }
     }
 
+    void catZeroRows(const SomUtils::MatD &mIn, SomUtils::MatD &mOut, int numRowsAdded)
+    {
+        ROFL_ASSERT(mOut.rows() == mIn.rows() + numRowsAdded);
+        ROFL_ASSERT(mOut.cols() == mIn.cols());
+
+        mOut.setZero();
+        mOut.block(0, 0, mIn.rows(), mIn.cols()) = mIn;
+    }
+
+    void catZeroRows3dArray(const SomUtils::VecMatD &mIn, SomUtils::VecMatD &mOut, int numRowsAdded)
+    {
+        ROFL_ASSERT(mIn.size() == mOut.size())
+
+        int n = mIn.size();
+        for (int i = 0; i < n; ++i)
+        {
+            catZeroRows(mIn[i], mOut[i], numRowsAdded);
+        }
+    }
+
     bool isEqualFloats(const SomUtils::MatD &a, const SomUtils::MatD &b, double thr)
     {
         ROFL_ASSERT(a.rows() == b.rows() && a.cols() == b.cols())

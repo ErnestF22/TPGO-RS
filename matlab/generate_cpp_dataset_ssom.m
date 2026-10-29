@@ -94,13 +94,13 @@ for ii = 1:size(sigmas,1)
     testdata.sigma = s;
     testdatas = [testdatas, testdata];
     
-    % N = 10;
-    % mindeg = 2;
-    % testdata = [];
-    % testdata = testNetwork_params(3, N, 'banded', mindeg, 0.0, s);
-    % testdata.mindeg = mindeg;
-    % testdata.sigma = s;
-    % testdatas = [testdatas, testdata];
+    N = 10;
+    mindeg = 2;
+    testdata = [];
+    testdata = testNetwork_params(3, N, 'banded', mindeg, 0.0, s);
+    testdata.mindeg = mindeg;
+    testdata.sigma = s;
+    testdatas = [testdatas, testdata];
     
     N = 10;
     mindeg = 3;
@@ -109,14 +109,46 @@ for ii = 1:size(sigmas,1)
     testdata.mindeg = mindeg;
     testdata.sigma = s;
     testdatas = [testdatas, testdata];
-    
-    N = 25;
+
+    N = 11;
+    mindeg = 2;
+    testdata = [];
+    testdata = testNetwork_params(3, N, 'banded', mindeg, 0.0, s);
+    testdata.mindeg = mindeg;
+    testdata.sigma = s;
+    testdatas = [testdatas, testdata];
+
+    N = 11;
     mindeg = 3;
     testdata = [];
     testdata = testNetwork_params(3, N, 'banded', mindeg, 0.0, s);
     testdata.mindeg = mindeg;
     testdata.sigma = s;
     testdatas = [testdatas, testdata];
+
+    N = 12;
+    mindeg = 2;
+    testdata = [];
+    testdata = testNetwork_params(3, N, 'banded', mindeg, 0.0, s);
+    testdata.mindeg = mindeg;
+    testdata.sigma = s;
+    testdatas = [testdatas, testdata];
+
+    N = 12;
+    mindeg = 3;
+    testdata = [];
+    testdata = testNetwork_params(3, N, 'banded', mindeg, 0.0, s);
+    testdata.mindeg = mindeg;
+    testdata.sigma = s;
+    testdatas = [testdatas, testdata];
+    
+    % N = 25;
+    % mindeg = 3;
+    % testdata = [];
+    % testdata = testNetwork_params(3, N, 'banded', mindeg, 0.0, s);
+    % testdata.mindeg = mindeg;
+    % testdata.sigma = s;
+    % testdatas = [testdatas, testdata];
 end
 
 
