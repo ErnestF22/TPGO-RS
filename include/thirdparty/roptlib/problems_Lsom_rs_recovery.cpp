@@ -3057,12 +3057,13 @@ namespace ROPTLIB
 
         int nrs = TmanoptOut.rows();
 
+        LambdasRecovered = LambdasManoptOut;
+
         if (nrs == sz_.d_)
         {
             ROFL_VAR1("nrs == d case -> direct assignment")
             Rrecovered = RmanoptOut;
             Trecovered = TmanoptOut;
-            LambdasRecovered = LambdasManoptOut;
             rsRecoverySuccess_ = true;
             return rsRecoverySuccess_;
         }
@@ -3130,7 +3131,6 @@ namespace ROPTLIB
             ROFL_ASSERT(highDegId == numNodesHighDeg)
             SomUtils::MatD TdiffsShifted = QxEdges * Tedges; // this has last row to 0
             edgeDiffs2T(src_, TdiffsShifted.block(0, 0, sz_.d_, TdiffsShifted.cols()), sz_.n_, Trecovered);
-            LambdasRecovered = LambdasManoptOut;
         }
         else
         {
@@ -3182,20 +3182,43 @@ namespace ROPTLIB
             // SomUtils::VecMatD &Ri_est,
             // SomUtils::VecMatD &Qx,
             // SomUtils::VecMatD &Qb,
-            RbRecoveryLsom(RmanoptOut, TijTilde2degRecoveryShifted, RiTildeEst, QxEdges, QbRecovery); //missing plus/minus RbEst param...
+
+            ROFL_VAR1(numNodesLowDeg)
+            ROFL_VAR1(TijTilde2degRecoveryShifted.size())
+            RbRecoveryLsom(Rlow, TijTilde2degRecoveryShifted, RiTildeEst, QxEdges, QbRecovery); // missing plus/minus RbEst param...
 
             // R_recovered(:,:,nodes_low_deg) = RitildeEst(1:d,:,:)
-            for (size_t k = 0; k < nodesLowDeg.size(); k++)
-                Rrecovered[nodesLowDeg[k]] = RiTildeEst[k].topRows(sz_.d_);
+            ROFL_VAR1(nodesLowDeg)
+            int lowDegId2 = 0;
+            for (int nodeId = 0; nodeId < sz_.n_; nodeId++)
+            {
+                if (nodeDegrees[nodeId] <= lowDeg)
+                {
+                    Rrecovered[nodeId] = RiTildeEst[lowDegId2].topRows(sz_.d_);
+                    lowDegId2++;
+                }
+            }
 
             // R_tilde2_HD = multiprod(repmat(Qalign,...), X.R(:,:,nodes_high_deg))
             SomUtils::VecMatD Rtilde2HD;
-            for (int idx : nodesHighDeg)
-                Rtilde2HD.push_back(Qalign * RmanoptOut[idx]);
+            for (int nodeId = 0; nodeId < sz_.n_; nodeId++)
+            {
+                if (nodeDegrees[nodeId] > lowDeg)
+                {
+                    Rtilde2HD.push_back(Qalign * RmanoptOut[nodeId]);
+                }
+            }
 
             // R_recovered(:,:,nodes_high_deg) = R_tilde2_HD(1:d,:,:)
-            for (size_t k = 0; k < nodesHighDeg.size(); k++)
-                Rrecovered[nodesHighDeg[k]] = Rtilde2HD[k].topRows(sz_.d_);
+            int highDegId2 = 0;
+            for (int nodeId = 0; nodeId < sz_.n_; nodeId++)
+            {
+                if (nodeDegrees[nodeId] > lowDeg)
+                {
+                    Rrecovered[nodeId] = Rtilde2HD[highDegId2].topRows(sz_.d_);
+                    highDegId2++;
+                }
+            }
 
             // low_deg_nodes_ids = find(node_degrees <= low_deg)
             std::vector<int> lowDegNodesIds;
@@ -3490,6 +3513,9 @@ namespace ROPTLIB
         // r=size(v,2);
         // [U,S,V]=svd(v);
         // vOrth=U(:,r+1:end);
+
+        // ROFL_VAR2(v, Qx);
+
         int tmp1rows = 0, tmp1cols = 0;
         {
             int r = v.cols();
@@ -3546,6 +3572,7 @@ namespace ROPTLIB
 
         Qx.resize(v.size(), SomUtils::MatD::Zero(v[0].rows(), v[0].rows()));
         int nbPoses = v.size();
+        ROFL_VAR2(nbPoses, Qx.size());
         for (int iPose = 0; iPose < nbPoses; ++iPose)
         {
             align2dNbPoses(v[iPose], Qx[iPose]);
@@ -3655,6 +3682,10 @@ namespace ROPTLIB
         // Initialize Qx as the identity matrix
         // Qx.resize(p, p);
         // Qx.setIdentity();
+        ROFL_VAR2(p, d);
+        ROFL_VAR1(RiTilde2);
+        ROFL_VAR1(TijTilde);
+        ROFL_VAR1(Qx);
         align2dNbPoses(TijTilde, Qx);
         SomUtils::MatD Qbot = Qx.rightCols(p - d).transpose();             // Qx(:,d+1:end)'
         SomUtils::MatD Rcal_bot = Qx.bottomRows(p - 2) * RiTilde2;         // Qx(3:end,:)*Ri_tilde2
@@ -3689,6 +3720,7 @@ namespace ROPTLIB
                                      bool pmRbEst) const
     {
         int nbPoses = Ri_tilde2.size();
+        ROFL_VAR1(nbPoses);
 
         // Ri_est.resize(nbPoses, SomUtils::MatD::Zero(Ri_tilde2[0].rows(), Ri_tilde2[0].cols()));
         // Qx.resize(nbPoses, SomUtils::MatD::Zero(Ri_tilde2[0].rows(), Ri_tilde2[0].rows()));
@@ -3697,8 +3729,13 @@ namespace ROPTLIB
         for (int iPose = 0; iPose < nbPoses; iPose++)
         {
             // recursive call in MATLAB doesn't forward pmRbEst, so it defaults to true
+
+            ROFL_VAR1(iPose)
+
             RbRecoveryLsom(Ri_tilde2[iPose], Tij_tilde[iPose], true,
-                       Ri_est[iPose], Qx[iPose], Qb[iPose]);
+                           Ri_est[iPose], Qx[iPose], Qb[iPose]);
+
+            ROFL_VAR5(Ri_tilde2[iPose], Tij_tilde[iPose], Ri_est[iPose], Qx[iPose], Qb[iPose])
         }
     }
 
@@ -3728,7 +3765,7 @@ namespace ROPTLIB
         // low_deg_nodes_ids = find(node_degrees <= low_deg)
         std::vector<int> lowDegNodesIds;
         for (int i = 0; i < (int)nodeDegrees.size(); i++)
-            if (nodeDegrees(i,0) <= lowDeg)
+            if (nodeDegrees(i, 0) <= lowDeg)
                 lowDegNodesIds.push_back(i);
 
         SomUtils::MatD P = SomUtils::MatD::Identity(sz_.d_, sz_.d_); // declared once, filled by reference inside recover_R_deg2

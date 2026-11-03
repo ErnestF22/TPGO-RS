@@ -3127,7 +3127,6 @@ namespace ROPTLIB
                     // params.z = max(ones(size(lambdas_manopt_out)), lambdas_manopt_out);
                     // params.y = params.y + params.mu *(params.z-lambdas_manopt_out);
 
-
                     // ProbAdmm.RoptToEig(XoptNext, XoptNextEig);
                     ProbAdmm.getScales(XoptNextEig, LambdasOutRS);
                     // SomUtils::MatD tmp = LambdasManoptOutEig - (yAdmm / muAdmm); // as in Overleaf, but this is not what Matlab code does
@@ -3270,7 +3269,7 @@ namespace ROPTLIB
             // Prob.getRotations(XbackupEig, Rrecovered);
             // Prob.getTranslations(XbackupEig, Trecovered);
             // Prob.getScales(XbackupEig, LambdasRecovered);
-            Xbackup.CopyTo(startXlocal);
+            // Xbackup.CopyTo(startXlocal);
             rsActuallyUseful = false; // TODO: set this flag to true if recovery procedure is actually useful
         }
 
@@ -3330,6 +3329,8 @@ namespace ROPTLIB
 
         bool globalRecoverySuccess = true; // TODO: implement globalization procedure and set this flag accordingly
 
+        lambdasOut = LambdasRecovered; //in case subsequent globalization procedure fails, we still want to return the recovered lambdas
+
         if (Prob.performGlobalization_)
         {
             ROFL_VAR1("Running globalization procedure")
@@ -3340,7 +3341,6 @@ namespace ROPTLIB
                 ROFL_VAR1("Globalization procedure failed")
                 Rout = Rrecovered;
                 Tout = Trecovered;
-                lambdasOut = LambdasRecovered;
 
                 rsActuallyUseful = false; // TODO: set this flag to true if globalization procedure is actually useful
 
@@ -3352,6 +3352,7 @@ namespace ROPTLIB
                 Prob.getRotations(XbackupEig, Rbackup);
                 Prob.getTranslations(XbackupEig, Tbackup);
                 Prob.getScales(XbackupEig, LambdasBackup);
+                ROFL_VAR1(XbackupEig.transpose())
                 bool globalRecoverySuccess = Prob.globalize(src, Rbackup, Tbackup, LambdasBackup,
                                                             Rout, Tout, lambdasOut);
             }

@@ -660,7 +660,7 @@ int main(int argc, char **argv)
                 lambdaMaxErrsMeanOfstream << lambdaMaxErrMean << std::endl;
                 ROFL_VAR4(rotMeanErr, translMeanErr, lambdaMeanErrMean, lambdaMaxErrMean)
             } // end of ssom RS execution scope
-            return 0; // test only one instance for now
+            // return 0; // test only one instance for now
             // startX.Delete();
         } // end of for testjd = 0 : numTestsPerInstance
         // break; //entries/instances loop
@@ -686,7 +686,7 @@ int main(int argc, char **argv)
         execTimesAll.push_back(execTimes);
 
         inst++; // current instance idx
-        break;  // test only one instance for now
+        // break;  // test only one instance for now
     }
 
     rotErrsOfstream.close();
