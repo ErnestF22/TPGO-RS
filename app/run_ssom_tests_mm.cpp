@@ -444,7 +444,7 @@ int main(int argc, char **argv)
                 scalesInitguess = 10.0 * SomUtils::MatD::Ones(numEdges, 1);
             startXeig.block(d * d * n + d * n, 0, numEdges, 1) = scalesInitguess;
 
-            startXeig = XgtVecEig; // TODO: for testing, use GT as starting guess
+            // startXeig = XgtVecEig; // TODO: for testing, use GT as starting guess
 
             ROFL_VAR1(startXeig)
 

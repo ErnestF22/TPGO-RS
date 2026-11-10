@@ -495,6 +495,7 @@ namespace ROPTLIB
         ROFL_ASSERT_VAR2(admmCost1.rows() == 1 && admmCost1.cols() == 1, admmCost1.rows(), admmCost1.cols());
         double admmCost = admmCost1(0, 0) + 0.5 * muAdmm_ * ((zAdmm_ - LambdasEigen).squaredNorm());
         ROFL_VAR2(cost, admmCost);
+        
         return cost + admmCost;
     }
 
@@ -2954,6 +2955,8 @@ namespace ROPTLIB
 
         SomUtils::MatD XoptNextEig = SomUtils::MatD::Zero(d * d * n + d * n + e, 1);
 
+        bool foundNegativeEigenvalue = false;
+
         for (staircaseStepIdx = r0; staircaseStepIdx <= d * d * n + 1; ++staircaseStepIdx)
         {
 
@@ -3040,6 +3043,7 @@ namespace ROPTLIB
             }
             else
             {
+                foundNegativeEigenvalue = true;
                 ROFL_VAR2(lambdaPim, "Found negative eigenvalue: continuing staircase")
 
                 for (int i = 0; i < n; ++i)
@@ -3288,19 +3292,19 @@ namespace ROPTLIB
         ROFL_VAR1("End of ADMM")
 
         //
-        std::vector<double> Rdets(n);
+        std::vector<double> RdetsRecovered(n);
         // SomUtils::MatD XoptEig(SomUtils::MatD::Zero(d * d * n + d * n + e, 1));
         // Prob.RoptToEig(startXlocal, XoptEig);
         // Prob.getRotations(XoptEig, Rrecovered);
         // Prob.getTranslations(XoptEig, Trecovered);
         // Prob.getScales(XoptEig, LambdasRecovered);
-        SomUtils::multidet(Rrecovered, Rdets);
+        SomUtils::multidet(Rrecovered, RdetsRecovered);
 
         rotDetsOk = true;
         for (int i = 0; i < n; ++i)
         {
             // ROFL_VAR2(i, Rdets[i])
-            if (!SomUtils::isEqualDoubles(fabs(Rdets[i]), 1))
+            if (!SomUtils::isEqualDoubles(fabs(RdetsRecovered[i]), 1))
             {
                 rotDetsOk = false;
                 ROFL_VAR1("Rotation determinant condition failed")
@@ -3329,7 +3333,7 @@ namespace ROPTLIB
 
         bool globalRecoverySuccess = true; // TODO: implement globalization procedure and set this flag accordingly
 
-        lambdasOut = LambdasRecovered; //in case subsequent globalization procedure fails, we still want to return the recovered lambdas
+        lambdasOut = LambdasRecovered; // in case subsequent globalization procedure fails, we still want to return the recovered lambdas
 
         if (Prob.performGlobalization_)
         {
@@ -3363,6 +3367,51 @@ namespace ROPTLIB
             Rout = Rrecovered;
             Tout = Trecovered;
             lambdasOut = LambdasRecovered;
+        }
+
+        std::vector<double> RdetsGlobal(n);
+        SomUtils::multidet(Rout, RdetsGlobal);
+
+        rsActuallyUseful = true; // TODO: set this flag to false if globalization procedure is actually useful
+        for (int i = 0; i < n; ++i)
+        {
+            if (!SomUtils::isEqualDoubles(RdetsGlobal[i], 1.0))
+            {
+                rotDetsOk = false;
+                rsActuallyUseful = false; // TODO: set this flag to true if globalization procedure is actually useful
+                ROFL_VAR1("Global rotation determinant is not 1")
+                for (int j = 0; j<n; ++j)
+                {
+                    ROFL_VAR3(j, RdetsRecovered[j], RdetsGlobal[j])
+                }
+                break;
+            }
+        }
+
+        if (foundNegativeEigenvalue && rsActuallyUseful) // only check costs if we actually did a staircase step and determinants are ok
+        {
+            auto costRS = Prob.costEigen(RoutRS, ToutRS, LambdasOutRS);
+            auto costGlobal = Prob.costEigen(Rout, Tout, lambdasOut);
+            auto costRecovered = Prob.costEigen(Rrecovered, Trecovered, LambdasRecovered);
+            if (!SomUtils::isEqualDoubles(costGlobal, costRS) || !SomUtils::isEqualDoubles(costGlobal, costRecovered))
+            {
+                ROFL_VAR3(costRS, costGlobal, costRecovered)
+                rsActuallyUseful = false; // TODO: set this flag to true if globalization procedure is actually useful
+                ROFL_VAR1("Globalization procedure increased cost")
+            }
+            else
+            {
+                rsActuallyUseful = true;
+            }
+        }
+
+        if (rsActuallyUseful)
+        {
+            ROFL_VAR1("RS actually useful!")
+        }
+        else
+        {
+            ROFL_VAR1("RS NOT actually useful!")
         }
 
         for (int i = 0; i < n; ++i)

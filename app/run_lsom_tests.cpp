@@ -442,7 +442,7 @@ int main(int argc, char **argv)
             if (Prob.reluScaleCompensation_)
                 scalesInitguess = 5.0 * SomUtils::MatD::Ones(numEdges, 1);
             else
-                scalesInitguess = 10.0 * SomUtils::MatD::Ones(numEdges, 1);
+                scalesInitguess = 10.0 * SomUtils::MatD::Ones(numEdges, 1); // Matlab init is tdata.lambdaij
             startXeig.block(d * d * n + d * n, 0, numEdges, 1) = scalesInitguess;
 
             Prob.setFirstZadmmLambdas(firstZadmmEqualToLambdas);
