@@ -57,6 +57,7 @@ results_lsom1/
 results_ssom_mm/
 results_lsom_matlab/
 results_lsom_prev/
+plot_cpp/
 
 .vscode/
 

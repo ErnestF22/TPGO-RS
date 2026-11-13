@@ -1,576 +1,332 @@
 import os
+from collections import Counter
 
 import numpy as np
+import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 
-#Note: relative paths are relative to the som project root, not this file's location
+# Note: relative paths are relative to the som project root, not this file's location
 
-if True:
+LEN_TIMESTAMP = 17  # length of the timestamp suffix in each result folder name
+NUM_TESTS_PER_INSTANCE = 10  # must match what was used in the C++ tests
+MINDEG_TO_PLOT = 3
 
-    ssom_rs_results_path = "results_lsom/"
-    folders = os.listdir(ssom_rs_results_path)
-    tuples_rs = []
-    tuples_lambdas_acceptable = []
+# Each sigma appears once (the original list had 0.01, 0.02, 0.05 twice)
+XPOINTS = np.array([0.0, 0.01, 0.02, 0.05, 0.1, 0.15, 0.2, 0.5, 1, 2])
 
-    for f in folders:
-        print("f")
-        print(f)
+SAVE_DIR = "/home/rimlab/workspace/matlab_ws/som/plot_cpp/"
+SAVE_FORMATS = ("png", "jpg", "pdf", "eps")
 
-        folder = ssom_rs_results_path + "/" + f
 
-        print("folder")
-        print(folder)
+def save_figure(fig, basename):
+    """Saves the figure as png, pdf and eps in SAVE_DIR."""
+    for ext in SAVE_FORMATS:
+        fig.savefig(os.path.join(SAVE_DIR, f"{basename}.{ext}"), dpi=150)
 
-        len_timestamp = 17
-        testid = folder[len(ssom_rs_results_path) + 1 : len(folder) - len_timestamp]
 
-        print("testid")
-        print(testid)
 
-        testid_split = testid.split("_")
-        n = int(testid_split[0][1:])
-        mindeg = int(testid_split[1][6:])
-        sigma = float(testid_split[2][5:]) / 100  #!! /100
-        print("n")
-        print(n)
-        print("mindeg")
-        print(mindeg)
-        print("sigma")
-        print(sigma)
 
-        # rot errs
-        rot_errs = np.array([], dtype=np.float64)
-        if testid[-1] != "_":
-            testid = testid + "_"  # temporary fix
-        file_rot_errs = folder + "/" + testid + "rot_errors_mean.txt"
-        print("file_rot_errs")
-        print(file_rot_errs)
-        with open(file_rot_errs, "r") as f:
-            for count, line in enumerate(f, start=1):
-                if count % 2 == 0:
-                    # print(line)
-                    rot_errs = np.append(rot_errs, float(line))
-
-        rot_errs_mean_rs = np.average(rot_errs)
-        print("rot_errs_mean_rs")
-        print(rot_errs_mean_rs)
-
-        # transl errs
-        transl_errs = np.array([], dtype=np.float64)
-        file_transl_errs = folder + "/" + testid + "transl_errors_mean.txt"
-        print("file_transl_errs")
-        print(file_transl_errs)
-        with open(file_transl_errs, "r") as f:
-            for count, line in enumerate(f, start=1):
-                if count % 2 == 0:
-                    # print(line)
-                    transl_errs = np.append(transl_errs, float(line))
-
-        transl_errs_mean_rs = np.average(transl_errs)
-        print("transl_errs_mean_rs")
-        print(transl_errs_mean_rs)
-
-        # scale mean errs
-        scale_mean_errs = np.array([], dtype=np.float64)
-        file_scale_mean_errs = folder + "/" + testid + "lambda_mean_errors_mean.txt"
-        print("file_scale_mean_errs")
-        print(file_scale_mean_errs)
-        with open(file_scale_mean_errs, "r") as f:
-            for count, line in enumerate(f, start=1):
-                if count % 2 == 0:
-                    # print(line)
-                    scale_mean_errs = np.append(scale_mean_errs, float(line))
-        scale_mean_errs_mean_rs = np.average(scale_mean_errs)
-        print("scale_mean_errs_mean_rs")
-        print(scale_mean_errs_mean_rs)                    
-
-        # scale max errs
-        scale_max_errs = np.array([], dtype=np.float64)
-        file_scale_max_errs = folder + "/" + testid + "lambda_max_errors_mean.txt"
-        print("file_scale_max_errs")
-        print(file_scale_max_errs)
-        with open(file_scale_max_errs, "r") as f:
-            for count, line in enumerate(f, start=1):
-                if count % 2 == 0:
-                    # print(line)
-                    scale_max_errs = np.append(scale_max_errs, float(line))
-        scale_max_errs_mean_rs = np.average(scale_max_errs)
-        print("scale_max_errs_mean_rs")
-        print(scale_max_errs_mean_rs)
-
-        # exec time
-        exec_times = np.array([], dtype=np.float64)
-        file_exec_times = folder + "/" + testid + "exec_times.txt"
-        print("file_exec_times")
-        print(file_exec_times)
-        with open(file_exec_times, "r") as f:
-            for count, line in enumerate(f, start=1):
-                if count % 2 == 0:
-                    # print(line)
-                    exec_times = np.append(exec_times, float(line))
-
-        exec_times_mean_rs = np.average(exec_times)
-        print("exec_times_mean_rs")
-        print(exec_times_mean_rs)
-
-        tuple_rs = (
-            n,
-            mindeg,
-            sigma,
-            rot_errs_mean_rs,
-            transl_errs_mean_rs,
-            scale_mean_errs_mean_rs,
-            scale_max_errs_mean_rs,
-            exec_times_mean_rs,
+def read_every_other_line(path):
+    """Values are stored on every 2nd line (the odd lines are labels)."""
+    with open(path, "r") as fh:
+        return np.array(
+            [float(line) for count, line in enumerate(fh, start=1) if count % 2 == 0],
+            dtype=np.float64,
         )
-        tuples_rs.append(tuple_rs)
-
-        ### plot acceptable lambdas
-        lambdas_acceptable = np.array([], dtype=np.float64)
-        file_lambdas_acceptable = folder + "/" + testid + "lambdas_acceptable.txt"
-        print("file_lambdas_acceptable")
-        print(file_lambdas_acceptable)
-        with open(file_lambdas_acceptable, "r") as f:
-            for count, line in enumerate(f, start=1):
-                if count % 2 == 0:
-                    # print(line)
-                    lambdas_acceptable = np.append(lambdas_acceptable, float(line))
-        print("lambdas_acceptable")
-        print(lambdas_acceptable)
-
-        # Store the acceptable lambdas
-        tuple_lambdas_acceptable = (n, mindeg, sigma, lambdas_acceptable)
-        tuples_lambdas_acceptable.append(tuple_lambdas_acceptable)
-
-############################
-
-ssom_icp_results_path = "results_ssom_icp/"
-folders = os.listdir(ssom_icp_results_path)
-
-tuples_icp = []
-
-for f in folders:
-
-    print("f")
-    print(f)
-
-    folder = ssom_icp_results_path + "/" + f
-    
-    print("folder")
-    print(folder)
-
-    testid = folder[len(ssom_icp_results_path) + 1 : len(folder) - len_timestamp]
-
-    print("testid")
-    print(testid)
-
-    testid_split = testid.split("_")
-    
-    n = int(testid_split[0][1:])
-    mindeg = int(testid_split[1][6:])
-    sigma = float(testid_split[2][5:]) /100
-    print("n")
-    print(n)
-    print("mindeg")
-    print(mindeg)
-    print("sigma")
-    print(sigma)
-
-    #rot errs
-    rot_errs = np.array([], dtype=np.float64)
-    if (testid[-1] != "_"):
-        testid = testid + "_" #temporary fix
-    file_rot_errs = folder + "/" + testid + "rot_errors_mean.txt"
-    print("file_rot_errs")
-    print(file_rot_errs)
-    with open(file_rot_errs, 'r') as f:
-        for count, line in enumerate(f, start=1):
-            if count % 2 == 0:
-                # print(line)
-                rot_errs = np.append(rot_errs, float(line))
-
-    rot_errs_mean_icp = np.average(rot_errs)
-    print("rot_errs_mean_icp")
-    print(rot_errs_mean_icp)
-
-    #transl errs
-    transl_errs = np.array([], dtype=np.float64)
-    file_transl_errs = folder + "/" + testid + "transl_errors_mean.txt"
-    print("file_transl_errs")
-    print(file_transl_errs)
-    with open(file_transl_errs, 'r') as f:
-        for count, line in enumerate(f, start=1):
-            if count % 2 == 0:
-                # print(line)
-                transl_errs = np.append(transl_errs, float(line))
-    transl_errs_mean_icp = np.average(transl_errs)
-    print("transl_errs_mean_icp")
-    print(transl_errs_mean_icp)
-    
-    #scale mean errs
-    scale_mean_errs = np.array([], dtype=np.float64)
-    file_scale_mean_errs = folder + "/" + testid + "lambda_mean_errors_mean.txt"
-    print("file_scale_mean_errs")
-    print(file_scale_mean_errs)
-    with open(file_scale_mean_errs, 'r') as f:
-        for count, line in enumerate(f, start=1):
-            if count % 2 == 0:
-                # print(line)
-                scale_mean_errs = np.append(scale_mean_errs, float(line))
-    scale_mean_errs_mean_icp = np.average(scale_mean_errs)
-    print("scale_mean_errs_mean_icp")
-    print(scale_mean_errs_mean_icp)
-
-    #scale max errs
-    scale_max_errs = np.array([], dtype=np.float64)
-    file_scale_max_errs = folder + "/" + testid + "lambda_max_errors_mean.txt"
-    print("file_scale_max_errs")
-    print(file_scale_max_errs)
-    with open(file_scale_max_errs, 'r') as f:
-        for count, line in enumerate(f, start=1):
-            if count % 2 == 0:
-                # print(line)
-                scale_max_errs = np.append(scale_max_errs, float(line))
-    scale_max_errs_mean_icp = np.average(scale_max_errs)
-    print("scale_max_errs_mean_icp")
-    print(scale_max_errs_mean_icp)
-
-    #exec time
-    exec_times = np.array([], dtype=np.float64)
-    file_exec_times = folder + "/" + testid + "exec_times.txt"
-    print("file_exec_times")
-    print(file_exec_times)
-    with open(file_exec_times, 'r') as f:
-        for count, line in enumerate(f, start=1):
-            if count % 2 == 0:
-                # print(line)
-                exec_times = np.append(exec_times, float(line))
-
-    exec_times_mean_icp = np.average(exec_times)
-    print("exec_times_mean_icp")
-    print(exec_times_mean_icp)
-
-    tuple_icp = (n, mindeg, sigma, rot_errs_mean_icp, transl_errs_mean_icp, scale_mean_errs_mean_icp, scale_max_errs_mean_icp, exec_times_mean_icp)
-    tuples_icp.append(tuple_icp)
-
-############################
 
 
-ssom_procrustes_results_path = "results_ssom_procrustes/"
-folders = os.listdir(ssom_procrustes_results_path)
+def parse_testid(name):
+    """Returns (n, mindeg, sigma, file_prefix) from a result folder name."""
+    testid = name[: len(name) - LEN_TIMESTAMP]
+    n_s, mindeg_s, sigma_s = testid.split("_")[:3]
+    n = int(n_s[1:])
+    mindeg = int(mindeg_s[6:])
+    sigma = float(sigma_s[5:]) / 100  # !! /100
+    prefix = testid if testid.endswith("_") else testid + "_"  # temporary fix
+    return n, mindeg, sigma, prefix
 
-tuples_procrustes = []
 
-for f in folders:
+def parse_bool(token):
+    token = token.strip().lower()
+    if token in ("true", "t", "yes"):
+        return 1
+    if token in ("false", "f", "no"):
+        return 0
+    return int(float(token) != 0)
 
-    print("f")
-    print(f)
 
-    folder = ssom_procrustes_results_path + "/" + f
+def load_bool_results(results_path, suffix):
+    """
+    Loads a per-test boolean file (one value per test, every 2nd line) from every folder.
+    Returns a list of (n, mindeg, sigma, array_of_0_1).
+    """
+    out = []
+    for name in sorted(os.listdir(results_path)):
+        n, mindeg, sigma, prefix = parse_testid(name)
+        path = os.path.join(results_path, name, prefix + suffix)
+        with open(path, "r") as fh:
+            vals = [parse_bool(line) for count, line in enumerate(fh, start=1) if count % 2 == 0]
+        out.append((n, mindeg, sigma, np.array(vals, dtype=int)))
+    return out
 
-    print("folder")
-    print(folder)
 
-    testid = folder[len(ssom_procrustes_results_path) + 1 : len(folder) - len_timestamp]
+def load_results(results_path, load_lambdas=False):
+    """
+    Returns (tuples, tuples_lambdas_acceptable).
+    tuples: (n, mindeg, sigma, rot, transl, scale_mean, scale_max, exec_time)
+    tuples_lambdas_acceptable: (n, mindeg, sigma, lambdas_acceptable) -- only if load_lambdas
+    """
+    tuples = []
+    tuples_lambdas = []
 
-    print("testid")
-    print(testid)
+    for name in sorted(os.listdir(results_path)):
+        folder = os.path.join(results_path, name)
+        n, mindeg, sigma, prefix = parse_testid(name)
 
-    testid_split = testid.split("_")
-    n = int(testid_split[0][1:])
-    mindeg = int(testid_split[1][6:])
-    sigma = float(testid_split[2][5:]) /100
-    print("n")
-    print(n)
-    print("mindeg")
-    print(mindeg)
-    print("sigma")
-    print(sigma)
+        def mean_of(filename):
+            return read_every_other_line(os.path.join(folder, prefix + filename)).mean()
 
-    #rot errs
-    rot_errs = np.array([], dtype=np.float64)
-    if (testid[-1] != "_"):
-        testid = testid + "_" #temporary fix
-    file_rot_errs = folder + "/" + testid + "rot_errors_mean.txt"
-    print("file_rot_errs")
-    print(file_rot_errs)
-    with open(file_rot_errs, 'r') as f:
-        for count, line in enumerate(f, start=1):
-            if count % 2 == 0:
-                # print(line)
-                rot_errs = np.append(rot_errs, float(line))
+        tuples.append(
+            (
+                n,
+                mindeg,
+                sigma,
+                mean_of("rot_errors_mean.txt"),
+                mean_of("transl_errors_mean.txt"),
+                mean_of("lambda_mean_errors_mean.txt"),
+                mean_of("lambda_max_errors_mean.txt"),
+                mean_of("exec_times.txt"),
+            )
+        )
 
-    rot_errs_mean_procrustes = np.average(rot_errs)
-    print("rot_errs_mean_procrustes")
-    print(rot_errs_mean_procrustes)
+        if load_lambdas:
+            lam = read_every_other_line(os.path.join(folder, prefix + "lambdas_acceptable.txt"))
+            tuples_lambdas.append((n, mindeg, sigma, lam))
 
-    #transl errs
-    transl_errs = np.array([], dtype=np.float64)
-    file_transl_errs = folder + "/" + testid + "transl_errors_mean.txt"
-    print("file_transl_errs")
-    print(file_transl_errs)
-    with open(file_transl_errs, 'r') as f:
-        for count, line in enumerate(f, start=1):
-            if count % 2 == 0:
-                # print(line)
-                transl_errs = np.append(transl_errs, float(line))
+    return tuples, tuples_lambdas
 
-    transl_errs_mean_procrustes = np.average(transl_errs)
-    print("transl_errs_mean_procrustes")
-    print(transl_errs_mean_procrustes)
-    
-    #scale mean errs
-    scale_mean_errs = np.array([], dtype=np.float64)
-    file_scale_errs = folder + "/" + testid + "lambda_mean_errors_mean.txt"
-    print("file_scale_errs")
-    print(file_scale_errs)
-    with open(file_scale_errs, 'r') as f:
-        for count, line in enumerate(f, start=1):
-            if count % 2 == 0:
-                # print(line)
-                scale_mean_errs = np.append(scale_mean_errs, float(line))
-    
-    scale_mean_errs_mean_procrustes = np.average(scale_mean_errs)
-    print("scale_mean_errs_mean_procrustes")
-    print(scale_mean_errs_mean_procrustes)
-    
-    #scale max errs
-    scale_max_errs = np.array([], dtype=np.float64)
-    file_scale_max_errs = folder + "/" + testid + "lambda_max_errors_mean.txt"
-    print("file_scale_max_errs")
-    print(file_scale_max_errs)
-    with open(file_scale_max_errs, 'r') as f:
-        for count, line in enumerate(f, start=1):
-            if count % 2 == 0:
-                # print(line)
-                scale_max_errs = np.append(scale_max_errs, float(line))
-    scale_max_errs_mean_procrustes = np.average(scale_max_errs)
-    print("scale_max_errs_mean_procrustes")
-    print(scale_max_errs_mean_procrustes)
 
-    #exec time
-    exec_times = np.array([], dtype=np.float64)
-    file_exec_times = folder + "/" + testid + "exec_times.txt"
-    print("file_exec_times")
-    print(file_exec_times)
-    with open(file_exec_times, 'r') as f:
-        for count, line in enumerate(f, start=1):
-            if count % 2 == 0:
-                # print(line)
-                exec_times = np.append(exec_times, float(line))
+def to_series(tuples, mindeg=None):
+    """Map result tuples (filtered by mindeg) onto XPOINTS. Missing sigmas stay NaN."""
+    if mindeg is None:
+        mindeg = MINDEG_TO_PLOT
+    keys = ["rot", "transl", "scale_mean", "scale_max", "exec"]
+    series = {k: np.full_like(XPOINTS, np.nan, dtype=np.float64) for k in keys}
 
-    exec_times_mean_procrustes = np.average(exec_times)
-    print("exec_times_mean_procrustes")
-    print(exec_times_mean_procrustes)
-
-    tuple_procrustes = (n, mindeg, sigma, rot_errs_mean_procrustes, transl_errs_mean_procrustes, scale_mean_errs_mean_procrustes, scale_max_errs_mean_procrustes, exec_times_mean_procrustes)
-    tuples_procrustes.append(tuple_procrustes)
-
-############################ PLOT ############################
-
-import matplotlib.pyplot as plt
-
-mindeg_to_plot = 2
-
-xpoints = np.array([0.0, 0.01, 0.02, 0.05,0.01,0.02,0.05,0.1,0.2,0.5,1,2])
-# xpoints = np.array([0.0, 0.1, 0.2, 0.5, 1, 2])
-############################ PLOT RS ############################
-
-if True:
-
-    rot_errs_rs = np.zeros_like(xpoints, dtype=np.float64)
-    transl_errs_rs = np.zeros_like(xpoints, dtype=np.float64)
-    scale_mean_errs_rs = np.zeros_like(xpoints, dtype=np.float64)
-    scale_max_errs_rs = np.zeros_like(xpoints, dtype=np.float64)
-    exec_times_rs = np.zeros_like(xpoints, dtype=np.float64)
-
-    num_tests_per_instance = 2  # must match what was used in the C++ tests
-    print("xpoints.shape[0]")
-    print(xpoints.shape[0])
-    lambdas_acceptable = np.zeros([xpoints.shape[0], num_tests_per_instance], dtype=np.float64)  # will be binary (0 or 1) for plotting
-
-    for t in tuples_rs:
-        t_n = t[0]
-        t_mindeg = t[1]
-        if t_mindeg != mindeg_to_plot:
+    for t in tuples:
+        if t[1] != mindeg:
             continue
-        t_sigma = t[2]
-        t_rot_errs_mean_rs = t[3]
-        t_transl_errs_mean_rs = t[4]
-        t_scale_mean_errs_mean_rs = t[5]
-        t_scale_max_errs_mean_rs = t[6]
-        t_exec_times_mean_rs = t[7]
-
-        sigma_index = np.where(xpoints == t_sigma)
-        rot_errs_rs[sigma_index] = t_rot_errs_mean_rs
-        transl_errs_rs[sigma_index] = t_transl_errs_mean_rs
-        scale_mean_errs_rs[sigma_index] = t_scale_mean_errs_mean_rs
-        scale_max_errs_rs[sigma_index] = t_scale_max_errs_mean_rs
-        exec_times_rs[sigma_index] = t_exec_times_mean_rs
-        
-
-    n_tmp = 5
-    for t in enumerate(tuples_lambdas_acceptable):
-        t_n = t[0]
-        t_mindeg = t[1]
-        if t_n != n_tmp:
+        idx = np.where(np.isclose(XPOINTS, t[2]))[0]  # tolerant float matching
+        if idx.size == 0:
+            print(f"Warning: sigma={t[2]} not in XPOINTS, skipping")
             continue
-        if t_mindeg != mindeg_to_plot:
-            continue
-        t_sigma = t[2]
+        for k, value in zip(keys, t[3:8]):
+            series[k][idx] = value
+    return series
 
-        sigma_index = np.where(xpoints == t_sigma)
-        lambdas_acceptable[sigma_index, :] = t[3]  # Assuming this is already binary (0 or 1) for each sigma   
-        
-    # print("lambdas_acceptable")
-    # print(lambdas_acceptable)
 
-    # Build a binary matrix for acceptable lambdas and plot as red/green squares.
-    rows = []
-    for idx, t in enumerate(tuples_lambdas_acceptable):
-        if t[1] == mindeg_to_plot:
-            rows.append((t[0], idx))  # (n, original_index)
-    rows.sort(key=lambda x: x[0])
+# ############################ LOAD ############################
 
-    # Build binary matrix from tuples_lambdas_acceptable filtered & sorted in `rows`
-    num_rows = len(rows)
-    if num_rows == 0:
-        print("No acceptable-lambda rows to plot for mindeg", mindeg_to_plot)
-    else:
-        mat = np.zeros((num_rows, num_tests_per_instance), dtype=int)
-        ylabels = []
-        for i, (n_val, orig_idx) in enumerate(rows):
-            t = tuples_lambdas_acceptable[orig_idx]
-            arr = np.asarray(t[3], dtype=int)
-            # Ensure length matches expected number of tests
-            if arr.size != num_tests_per_instance:
-                tmp = np.zeros(num_tests_per_instance, dtype=int)
-                tmp[: min(arr.size, num_tests_per_instance)] = arr[: min(arr.size, num_tests_per_instance)]
-                arr = tmp
-            mat[i, :] = arr
-            ylabels.append(f"n={n_val}, σ={t[2]}")
+tuples_rs, tuples_lambdas_acceptable = load_results("results_lsom/", load_lambdas=True)
+tuples_icp, _ = load_results("results_ssom_icp/")
+tuples_procrustes, _ = load_results("results_ssom_procrustes/")
+tuples_mm, _ = load_results("results_ssom_mm/")
+tuples_rs_useful = load_bool_results("results_ssom_mm/", "rs_actually_useful.txt")
 
-        # Plot binary matrix: 0 -> red, 1 -> green
-        fig_table, ax_table = plt.subplots(figsize=(max(6, num_tests_per_instance), max(3, num_rows * 0.3)))
-        cmap = ListedColormap(["red", "green"])
-        im = ax_table.imshow(mat, cmap=cmap, aspect="auto", interpolation="nearest", vmin=0, vmax=1)
+# # ############################ ACCEPTABLE LAMBDAS (RS) ############################
 
-        ax_table.set_yticks(np.arange(num_rows))
-        ax_table.set_yticklabels(ylabels, fontsize=8)
-        ax_table.set_xticks(np.arange(num_tests_per_instance))
-        ax_table.set_xticklabels([f"run {i+1}" for i in range(num_tests_per_instance)])
-        ax_table.set_title("Acceptable lambdas (red=0, green=1)")
-        plt.tight_layout()
+# rows = [(t[0], idx) for idx, t in enumerate(tuples_lambdas_acceptable) if t[1] == MINDEG_TO_PLOT]
+# rows.sort(key=lambda x: x[0])
 
-############################ PLOT ICP ############################
+# if not rows:
+#     print("No acceptable-lambda rows to plot for mindeg", MINDEG_TO_PLOT)
+# else:
+#     mat = np.zeros((len(rows), NUM_TESTS_PER_INSTANCE), dtype=int)
+#     ylabels = []
+#     for i, (n_val, orig_idx) in enumerate(rows):
+#         t = tuples_lambdas_acceptable[orig_idx]
+#         arr = np.asarray(t[3], dtype=int)
+#         k = min(arr.size, NUM_TESTS_PER_INSTANCE)  # pad/truncate to expected length
+#         mat[i, :k] = arr[:k]
+#         ylabels.append(f"n={n_val}, σ={t[2]}")
 
-rot_errs_icp = np.zeros_like(xpoints, dtype=np.float64)
-transl_errs_icp = np.zeros_like(xpoints, dtype=np.float64)
-scale_mean_errs_icp = np.zeros_like(xpoints, dtype=np.float64)
-scale_max_errs_icp = np.zeros_like(xpoints, dtype=np.float64)
-exec_times_icp = np.zeros_like(xpoints, dtype=np.float64)
+#     fig_table, ax_table = plt.subplots(
+#         figsize=(max(6, NUM_TESTS_PER_INSTANCE), max(3, len(rows) * 0.3))
+#     )
+#     ax_table.imshow(
+#         mat, cmap=ListedColormap(["red", "green"]), aspect="auto",
+#         interpolation="nearest", vmin=0, vmax=1,
+#     )
+#     ax_table.set_yticks(np.arange(len(rows)))
+#     ax_table.set_yticklabels(ylabels, fontsize=8)
+#     ax_table.set_xticks(np.arange(NUM_TESTS_PER_INSTANCE))
+#     ax_table.set_xticklabels([f"run {i + 1}" for i in range(NUM_TESTS_PER_INSTANCE)])
+#     ax_table.set_title("Acceptable lambdas (red=0, green=1)")
+#     fig_table.tight_layout()
 
-for t in tuples_icp:
-    t_n = t[0]
-    t_mindeg = t[1]
-    if (t_mindeg != mindeg_to_plot):
+# ############################ RS USEFULNESS (SSOM MM) ############################
+
+MAX_SIGMA_USEFULNESS = 0.2  # exclude the "too noisy" results
+tuples_rs_useful = [t for t in tuples_rs_useful if t[2] <= MAX_SIGMA_USEFULNESS + 1e-9]
+
+# Overall percentage of useful tests
+all_flags = np.concatenate([t[3] for t in tuples_rs_useful]) if tuples_rs_useful else np.array([])
+if all_flags.size:
+    print(f"RS usefulness, all mindeg: {100 * all_flags.mean():.1f}% ({all_flags.sum()}/{all_flags.size})")
+
+# Use all N / sigma values so every N appears on the axis (empty if no data for given mindeg)
+ns = sorted({t[0] for t in tuples_rs_useful})
+sigmas = sorted({t[2] for t in tuples_rs_useful})
+
+for useful_mindeg in (2, 3):
+    useful_rows = [t for t in tuples_rs_useful if t[1] == useful_mindeg]
+    if not useful_rows:
+        print("No RS usefulness rows to plot for mindeg", useful_mindeg)
         continue
-    t_sigma = t[2]
-    t_rot_errs_mean_icp = t[3]
-    t_transl_errs_mean_icp = t[4]
-    t_scale_mean_errs_mean_icp = t[5]
-    t_scale_max_errs_mean_icp = t[6]
-    t_exec_times_mean_icp = t[7]
 
-    sigma_index = np.where(xpoints == t_sigma)
-    rot_errs_icp[sigma_index] = t_rot_errs_mean_icp
-    transl_errs_icp[sigma_index] = t_transl_errs_mean_icp
-    scale_mean_errs_icp[sigma_index] = t_scale_mean_errs_mean_icp
-    scale_max_errs_icp[sigma_index] = t_scale_max_errs_mean_icp
-    exec_times_icp[sigma_index] = t_exec_times_mean_icp
+    flags = np.concatenate([t[3] for t in useful_rows])
+    pct = 100 * flags.mean()
+    print(f"RS usefulness, mindeg {useful_mindeg}: {pct:.1f}% ({flags.sum()}/{flags.size})")
 
-############################ PLOT PROCRUSTES ############################
+    cell = {(t[0], t[2]): t[3] for t in useful_rows}
 
-rot_errs_procrustes = np.zeros_like(xpoints, dtype=np.float64)
-transl_errs_procrustes = np.zeros_like(xpoints, dtype=np.float64)
-scale_mean_errs_procrustes = np.zeros_like(xpoints, dtype=np.float64)
-scale_max_errs_procrustes = np.zeros_like(xpoints, dtype=np.float64)
-exec_times_procrustes = np.zeros_like(xpoints, dtype=np.float64)
+    fig_useful, ax_u = plt.subplots(
+        figsize=(max(6, len(ns) * 1.2), max(4, len(sigmas) * 0.8))
+    )
+    pad = 0.1  # gap between neighbouring cells
+    for xi, n_val in enumerate(ns):
+        for yi, s_val in enumerate(sigmas):
+            arr = cell.get((n_val, s_val))
+            if arr is None:
+                continue  # no data for this (N, sigma): leave empty
+            k = max(NUM_TESTS_PER_INSTANCE, arr.size)
+            bar_w = (1 - 2 * pad) / k
+            for j in range(k):
+                if j >= arr.size:
+                    continue  # missing test result: leave empty
+                color = "green" if arr[j] else "red"
+                ax_u.add_patch(
+                    plt.Rectangle(
+                        (xi - 0.5 + pad + j * bar_w, yi - 0.5 + pad),
+                        bar_w * 0.85, 1 - 2 * pad,
+                        facecolor=color, edgecolor="none",
+                    )
+                )
 
-for t in tuples_procrustes:
-    t_n = t[0]
-    t_mindeg = t[1]
-    if (t_mindeg != mindeg_to_plot):
-        continue
-    t_sigma = t[2]
-    t_rot_errs_mean_procrustes = t[3]
-    t_transl_errs_mean_procrustes = t[4]
-    t_scale_mean_errs_mean_procrustes = t[5]
-    t_scale_max_errs_mean_procrustes = t[6]
-    t_exec_times_mean_procrustes = t[7]
+    ax_u.set_xlim(-0.5, len(ns) - 0.5)
+    ax_u.set_ylim(-0.5, len(sigmas) - 0.5)
+    ax_u.set_xticks(np.arange(len(ns)))
+    ax_u.set_xticklabels([str(n_val) for n_val in ns])
+    ax_u.set_yticks(np.arange(len(sigmas)))
+    ax_u.set_yticklabels([str(s_val) for s_val in sigmas])
+    ax_u.set_xlabel("N")
+    ax_u.set_ylabel("σ (noise)")
+    ax_u.set_title(
+        f"SSOM MM: RS usefulness, mindeg {useful_mindeg} "
+        f"(overall {pct:.1f}%; green=useful, red=not)"
+    )
+    ax_u.set_xticks(np.arange(len(ns) + 1) - 0.5, minor=True)
+    ax_u.set_yticks(np.arange(len(sigmas) + 1) - 0.5, minor=True)
+    ax_u.grid(which="minor", color="lightgray", linewidth=0.5)
+    ax_u.tick_params(which="minor", length=0)
+    fig_useful.tight_layout()
+    save_figure(fig_useful, f"rs_usefulness_mindeg{useful_mindeg}")
+    plt.close(fig_useful)
 
-    sigma_index = np.where(xpoints == t_sigma)
-    rot_errs_procrustes[sigma_index] = t_rot_errs_mean_procrustes
-    transl_errs_procrustes[sigma_index] = t_transl_errs_mean_procrustes
-    scale_mean_errs_procrustes[sigma_index] = t_scale_mean_errs_mean_procrustes
-    scale_max_errs_procrustes[sigma_index] = t_scale_max_errs_mean_procrustes
-    exec_times_procrustes[sigma_index] = t_exec_times_mean_procrustes
+# ############################ MAIN PLOT ############################
 
+methods = {
+    "TPGO-RS": (to_series(tuples_rs), "green"),
+    "TPGO-ICP": (to_series(tuples_icp), "red"),
+    "TPGO-PROCR": (to_series(tuples_procrustes), "blue"),
+    "SSOM MM": (to_series(tuples_mm), "orange"),
+}
 
-
+panels = [
+    ("rot", "Rotation errors", None),
+    ("transl", "Translation errors", None),
+    ("scale_mean", "Scale errors avg (mean)", 10),
+    ("scale_max", "Scale errors avg (max)", 10),
+    ("exec", "Execution times [ms]", None),
+]
 
 fig = plt.figure()
-gs = fig.add_gridspec(5, hspace=1)
+gs = fig.add_gridspec(len(panels), hspace=1)
 axs = gs.subplots(sharex=True)
-fig.suptitle("mindeg " + str(mindeg_to_plot))
-axs[0].plot(xpoints, rot_errs_rs, "o", label="TPGO-RS", color="green")
-axs[0].set_title("Rotation errors")
-# axs[0].set_ylim(-0.1, 3.14)
-axs[1].plot(xpoints, transl_errs_rs, "o", label="TPGO-RS", color="green")
-axs[1].set_title("Translation errors")
-axs[2].plot(xpoints, np.minimum(scale_mean_errs_rs, 10), "o", label="TPGO-RS", color="green")
-axs[2].set_ylim(top=10)
-axs[2].set_title("Scale errors avg (mean)")
-axs[3].plot(xpoints, np.minimum(scale_max_errs_rs, 10), 'o', label="TPGO-RS", color='green')
-axs[3].set_title('Scale errors avg (max)')
-axs[3].set_ylim(top=10)
-axs[4].plot(xpoints, exec_times_rs, "o", label="TPGO-RS", color="green")
-axs[4].set_title("Execution times [ms]")
-# axs[3].set_ylim()
-
-axs[0].plot(xpoints, rot_errs_icp, 'o', label="TPGO-ICP", color='red')
-axs[0].set_title('Rotation errors')
-axs[1].plot(xpoints, transl_errs_icp, 'o', label="TPGO-ICP", color='red')
-axs[1].set_title('Translation errors')
-axs[2].plot(xpoints, np.minimum(scale_mean_errs_icp, 10), 'o', label="TPGO-ICP", color='red')
-axs[2].set_title('Scale errors avg (mean)')
-axs[2].set_ylim(top=10)
-axs[3].plot(xpoints, np.minimum(scale_max_errs_icp, 10), 'o', label="TPGO-ICP", color='red')
-axs[3].set_title('Scale errors avg (max)')
-axs[3].set_ylim(top=10)
-axs[4].plot(xpoints, exec_times_icp, 'o', label="TPGO-ICP", color='red')
-axs[4].set_title('Execution times [ms]')
-
-axs[0].plot(xpoints, rot_errs_procrustes, 'o', label="TPGO-PROCR", color='blue')
-axs[0].set_title('Rotation errors')
-axs[1].plot(xpoints, transl_errs_procrustes, 'o', label="TPGO-PROCR", color='blue')
-axs[1].set_title('Translation errors')
-axs[2].plot(xpoints, np.minimum(scale_mean_errs_procrustes, 10), 'o', label="TPGO-PROCR", color='blue')
-axs[2].set_title('Scale errors avg (mean)')
-axs[2].set_ylim(top=10)
-axs[3].plot(xpoints, np.minimum(scale_max_errs_procrustes, 10), 'o', label="TPGO-PROCR", color='blue')
-axs[3].set_title('Scale errors avg (max)')
-axs[3].set_ylim(top=10)
-axs[4].plot(xpoints, exec_times_procrustes, 'o', label="TPGO-PROCR", color='blue')
-axs[4].set_title('Execution times [ms]')
+fig.suptitle("mindeg " + str(MINDEG_TO_PLOT))
 
 
+
+# ############################ PER-N ERROR PLOTS (ROT, TRANSL, LAMBDAS) ############################
+
+METHODS_PER_N = {
+    "LSOM": tuples_rs,
+    "SSOM ICP": tuples_icp,
+    "SSOM Procrustes": tuples_procrustes,
+    "SSOM MM": tuples_mm,
+}
+METRICS_PER_N = {
+    "rot": "Rotation error",
+    "transl": "Translation error",
+    "scale_mean": "Lambda mean error",
+    "scale_max": "Lambda max error",
+}
+
+all_ns = sorted({t[0] for tuples in METHODS_PER_N.values() for t in tuples})
+for mindeg_val in (2, 3):
+    for n_val in all_ns:
+        series_per_method = {
+            name: to_series([t for t in tuples if t[0] == n_val], mindeg=mindeg_val)
+            for name, tuples in METHODS_PER_N.items()
+        }
+        for metric, metric_label in METRICS_PER_N.items():
+            fig_n, ax_n = plt.subplots(figsize=(7, 4.5))
+            for name, series in series_per_method.items():
+                ax_n.plot(XPOINTS, series[metric], marker="o", linestyle="none", label=name)
+            ax_n.set_xlabel("sigma")
+            ax_n.set_ylabel(metric_label)
+            ax_n.set_title(f"{metric_label} vs sigma (n={n_val}, mindeg={mindeg_val})")
+            ax_n.grid(True, color="0.85")  # solid gray instead of alpha
+            ax_n.legend(framealpha=1.0)  # opaque legend background
+            fig_n.tight_layout()
+
+            save_figure(fig_n, f"n{n_val}_mindeg{mindeg_val}_{metric}")
+            plt.close(fig_n)
+
+for ax, (key, title, clip) in zip(axs, panels):
+    for label, (series, color) in methods.items():
+        y = series[key]
+        if clip is not None:
+            y = np.minimum(y, clip)  # NaN stays NaN
+        ax.plot(XPOINTS, y, "o", label=label, color=color)
+    if clip is not None:
+        ax.set_ylim(top=clip)
+    ax.set_title(title)
 
 # Hide x labels and tick labels for all but bottom plot.
 for ax in axs:
     ax.label_outer()
-    ax.legend()
+    ax.legend(framealpha=1.0)  # opaque legend background
 
-    
+# save_figure(fig, f"main_mindeg{MINDEG_TO_PLOT}")
+
+def close_on_key(event):
+    plt.close("all")
+
+
+for num in plt.get_fignums():
+    plt.figure(num).canvas.mpl_connect("key_press_event", close_on_key)
 
 plt.show()
+
+# per_key = Counter()
+# for n, mindeg, sigma, arr in tuples_rs_useful:
+#     per_key[(mindeg, n, sigma)] += arr.size
+#     print(f"mindeg={mindeg} n={n} sigma={sigma} tests={arr.size}")
+
+# for mindeg in (2, 3):
+#     rows = [(k, v) for k, v in per_key.items() if k[0] == mindeg]
+#     print(f"mindeg {mindeg}: {len(rows)} (n, sigma) keys, {sum(v for _, v in rows)} tests")
+
+# dupes = [k for k, v in Counter((t[1], t[0], t[2]) for t in tuples_rs_useful).items() if v > 1]
+# print("Duplicate (mindeg, n, sigma) folders:", dupes)
