@@ -18,12 +18,14 @@ SAVE_DIR = "/home/rimlab/workspace/matlab_ws/som/plot_cpp/"
 SAVE_FORMATS = ("png", "jpg", "pdf", "eps")
 
 
+def close_on_key(event):
+    plt.close("all")
+
+
 def save_figure(fig, basename):
     """Saves the figure as png, pdf and eps in SAVE_DIR."""
     for ext in SAVE_FORMATS:
         fig.savefig(os.path.join(SAVE_DIR, f"{basename}.{ext}"), dpi=150)
-
-
 
 
 def read_every_other_line(path):
@@ -65,7 +67,11 @@ def load_bool_results(results_path, suffix):
         n, mindeg, sigma, prefix = parse_testid(name)
         path = os.path.join(results_path, name, prefix + suffix)
         with open(path, "r") as fh:
-            vals = [parse_bool(line) for count, line in enumerate(fh, start=1) if count % 2 == 0]
+            vals = [
+                parse_bool(line)
+                for count, line in enumerate(fh, start=1)
+                if count % 2 == 0
+            ]
         out.append((n, mindeg, sigma, np.array(vals, dtype=int)))
     return out
 
@@ -100,7 +106,9 @@ def load_results(results_path, load_lambdas=False):
         )
 
         if load_lambdas:
-            lam = read_every_other_line(os.path.join(folder, prefix + "lambdas_acceptable.txt"))
+            lam = read_every_other_line(
+                os.path.join(folder, prefix + "lambdas_acceptable.txt")
+            )
             tuples_lambdas.append((n, mindeg, sigma, lam))
 
     return tuples, tuples_lambdas
@@ -170,9 +178,15 @@ MAX_SIGMA_USEFULNESS = 0.2  # exclude the "too noisy" results
 tuples_rs_useful = [t for t in tuples_rs_useful if t[2] <= MAX_SIGMA_USEFULNESS + 1e-9]
 
 # Overall percentage of useful tests
-all_flags = np.concatenate([t[3] for t in tuples_rs_useful]) if tuples_rs_useful else np.array([])
+all_flags = (
+    np.concatenate([t[3] for t in tuples_rs_useful])
+    if tuples_rs_useful
+    else np.array([])
+)
 if all_flags.size:
-    print(f"RS usefulness, all mindeg: {100 * all_flags.mean():.1f}% ({all_flags.sum()}/{all_flags.size})")
+    print(
+        f"RS usefulness, all mindeg: {100 * all_flags.mean():.1f}% ({all_flags.sum()}/{all_flags.size})"
+    )
 
 # Use all N / sigma values so every N appears on the axis (empty if no data for given mindeg)
 ns = sorted({t[0] for t in tuples_rs_useful})
@@ -186,7 +200,9 @@ for useful_mindeg in (2, 3):
 
     flags = np.concatenate([t[3] for t in useful_rows])
     pct = 100 * flags.mean()
-    print(f"RS usefulness, mindeg {useful_mindeg}: {pct:.1f}% ({flags.sum()}/{flags.size})")
+    print(
+        f"RS usefulness, mindeg {useful_mindeg}: {pct:.1f}% ({flags.sum()}/{flags.size})"
+    )
 
     cell = {(t[0], t[2]): t[3] for t in useful_rows}
 
@@ -208,8 +224,10 @@ for useful_mindeg in (2, 3):
                 ax_u.add_patch(
                     plt.Rectangle(
                         (xi - 0.5 + pad + j * bar_w, yi - 0.5 + pad),
-                        bar_w * 0.85, 1 - 2 * pad,
-                        facecolor=color, edgecolor="none",
+                        bar_w * 0.85,
+                        1 - 2 * pad,
+                        facecolor=color,
+                        edgecolor="none",
                     )
                 )
 
@@ -256,7 +274,6 @@ axs = gs.subplots(sharex=True)
 fig.suptitle("mindeg " + str(MINDEG_TO_PLOT))
 
 
-
 # ############################ PER-N ERROR PLOTS (ROT, TRANSL, LAMBDAS) ############################
 
 METHODS_PER_N = {
@@ -282,7 +299,9 @@ for mindeg_val in (2, 3):
         for metric, metric_label in METRICS_PER_N.items():
             fig_n, ax_n = plt.subplots(figsize=(7, 4.5))
             for name, series in series_per_method.items():
-                ax_n.plot(XPOINTS, series[metric], marker="o", linestyle="none", label=name)
+                ax_n.plot(
+                    XPOINTS, series[metric], marker="o", linestyle="none", label=name
+                )
             ax_n.set_xlabel("sigma")
             ax_n.set_ylabel(metric_label)
             ax_n.set_title(f"{metric_label} vs sigma (n={n_val}, mindeg={mindeg_val})")
@@ -303,21 +322,18 @@ for ax, (key, title, clip) in zip(axs, panels):
         ax.set_ylim(top=clip)
     ax.set_title(title)
 
-# Hide x labels and tick labels for all but bottom plot.
-for ax in axs:
-    ax.label_outer()
-    ax.legend(framealpha=1.0)  # opaque legend background
+# # Hide x labels and tick labels for all but bottom plot.
+# for ax in axs:
+#     ax.label_outer()
+#     ax.legend(framealpha=1.0)  # opaque legend background
 
-# save_figure(fig, f"main_mindeg{MINDEG_TO_PLOT}")
-
-def close_on_key(event):
-    plt.close("all")
+# # save_figure(fig, f"main_mindeg{MINDEG_TO_PLOT}")
 
 
-for num in plt.get_fignums():
-    plt.figure(num).canvas.mpl_connect("key_press_event", close_on_key)
+# for num in plt.get_fignums():
+#     plt.figure(num).canvas.mpl_connect("key_press_event", close_on_key)
 
-plt.show()
+# plt.show()
 
 # per_key = Counter()
 # for n, mindeg, sigma, arr in tuples_rs_useful:
