@@ -436,7 +436,7 @@ hold off
 save(convertStringsToChars(strcat('rs_success_bools', test_str, ".csv")), "rs_success_bools", '-ascii', '-tabs')
 save(convertStringsToChars(strcat('rot_dets_ok', test_str, ".csv")), "rot_dets_ok", '-ascii', '-tabs')
 save(convertStringsToChars(strcat('lambdas_acceptable', test_str, ".csv")), "lambdas_acceptable", '-ascii', '-tabs')
-save(convertStringsToChars(strcat('rs_actually_useful', test_str, ".csv")), "lambdas_acceptable", '-ascii', '-tabs')
+save(convertStringsToChars(strcat('rs_actually_useful', test_str, ".csv")), "rs_actually_useful", '-ascii', '-tabs')
 
 
 sigmaTags = cellstr(compose("%03d", round(sigmas(:) * 100)));

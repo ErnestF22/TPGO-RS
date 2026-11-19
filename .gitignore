@@ -75,6 +75,7 @@ matlab/ssom_lagrange/*.pdf
 matlab/ssom_lagrange/*.eps
 matlab/ssom_lagrange/*.csv
 matlab/ssom_lagrange/*.mat
+matlab/ssom_lagrange/lsom_results/
 matlab/20*
 matlab/*.mat
 matlab/*.pdf
